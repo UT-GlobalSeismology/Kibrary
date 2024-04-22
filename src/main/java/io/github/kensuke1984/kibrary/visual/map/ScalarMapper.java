@@ -16,13 +16,11 @@ import io.github.kensuke1984.kibrary.math.Interpolation;
 import io.github.kensuke1984.kibrary.perturbation.ScalarListFile;
 import io.github.kensuke1984.kibrary.perturbation.ScalarType;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
-import io.github.kensuke1984.kibrary.util.FileAid;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 
 /**
  * Creates shellscripts to map {@link ScalarListFile}.
- * The values of input files should be in percent.
  *
  * @see Interpolation#inEachMapLayer(Map, double, double, boolean, double, boolean, boolean)
  * @author otsuru
@@ -45,11 +43,11 @@ public class ScalarMapper extends Operation {
     private boolean appendFolderDate;
 
     /**
-     * Path of perturbation file.
+     * Path of scalar file.
      */
-    private Path perturbationPath;
+    private Path scalarPath;
     /**
-     * Path of perturbation file to be used as mask.
+     * Path of scalar file to be used as mask.
      */
     private Path maskPath;
 
@@ -95,9 +93,9 @@ public class ScalarMapper extends Operation {
             pw.println("##(boolean) Whether to append date string at end of output folder name. (true)");
             pw.println("#appendFolderDate false");
             pw.println("##Path of perturbation file, must be set.");
-            pw.println("#perturbationPath vsPercent.lst");
+            pw.println("#scalarPath scalar.Vs.PERCENT.lst");
             pw.println("##Path of perturbation file for mask, when mask is to be applied.");
-            pw.println("#maskPath vsPercentRatio.lst");
+            pw.println("#maskPath scalar.Vs.PERCENT_RATIO.lst");
             pw.println("##(double[]) The display values of each layer boundary, listed from the inside using spaces. (0 50 100 150 200 250 300 350 400)");
             pw.println("#boundaries ");
             pw.println("##(int[]) Indices of layers to display, listed from the inside using spaces, when specific layers are to be displayed.");
@@ -137,7 +135,7 @@ public class ScalarMapper extends Operation {
         if (property.containsKey("folderTag")) folderTag = property.parseStringSingle("folderTag", null);
         appendFolderDate = property.parseBoolean("appendFolderDate", "true");
 
-        perturbationPath = property.parsePath("perturbationPath", null, true, workPath);
+        scalarPath = property.parsePath("scalarPath", null, true, workPath);
         if (property.containsKey("maskPath")) {
             maskPath = property.parsePath("maskPath", null, true, workPath);
         }
@@ -173,7 +171,7 @@ public class ScalarMapper extends Operation {
     public void run() throws IOException {
 
         // read input file
-        ScalarListFile inputFile = new ScalarListFile(perturbationPath);
+        ScalarListFile inputFile = new ScalarListFile(scalarPath);
         VariableType variable = inputFile.getVariable();
         ScalarType scalarType = inputFile.getScalarType();
         Map<FullPosition, Double> discreteMap = inputFile.getValueMap();
@@ -186,12 +184,12 @@ public class ScalarMapper extends Operation {
         double gridInterval = ScalarMapShellscript.decideGridSampling(positions);
 
         // create output folder
-        Path outPath = DatasetAid.createOutputFolder(workPath, "perturbationMap", folderTag, appendFolderDate, null);
+        Path outPath = DatasetAid.createOutputFolder(workPath, "scalarMap", folderTag, appendFolderDate, null);
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         // copy discrete perturbation file to outPath
         Path outputDiscretePath = outPath.resolve(ScalarListFile.generateFileName(variable, scalarType));
-        Files.copy(perturbationPath, outputDiscretePath);
+        Files.copy(scalarPath, outputDiscretePath);
         // output interpolated perturbation file
         Map<FullPosition, Double> interpolatedMap = Interpolation.inEachMapLayer(discreteMap, gridInterval,
                 marginLatitudeRaw, setMarginLatitudeByKm, marginLongitudeRaw, setMarginLongitudeByKm, mosaic);
@@ -210,19 +208,15 @@ public class ScalarMapper extends Operation {
             ScalarListFile.write(interpolatedMaskMap, crossDateLine, outputInterpolatedMaskPath);
         }
 
-        String fileNameRoot = FileAid.extractNameRoot(perturbationPath);
-        String maskFileNameRoot = null;
-        maskFileNameRoot = FileAid.extractNameRoot(maskPath) + "_forMask";
-
         // output shellscripts
-        ScalarMapShellscript script;
-        script = new ScalarMapShellscript(variable, radii, boundaries, mapRegion, gridInterval, scale, fileNameRoot, nPanelsPerRow);
+        ScalarMapShellscript script = new ScalarMapShellscript(variable, scalarType, radii, boundaries,
+                mapRegion, gridInterval, scale, nPanelsPerRow);
         if (displayLayers != null) script.setDisplayLayers(displayLayers);
-        if (maskPath != null) script.setMask(maskFileNameRoot, maskThreshold);
+        if (maskPath != null) script.setMask(maskThreshold);
         script.write(outPath);
+        String fileNameRoot = script.getPlotFileNameRoot();
         System.err.println("After this finishes, please enter " + outPath
                 + "/ and run " + fileNameRoot + "Grid.sh and " + fileNameRoot + "Map.sh");
     }
-
 
 }

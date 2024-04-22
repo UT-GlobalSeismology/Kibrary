@@ -95,10 +95,6 @@ public class PerturbationVoxel {
         return perturbedMedium.get(type);
     }
 
-    public double getPercent(VariableType type) {
-        return (perturbedMedium.get(type) / referenceMedium.get(type) - 1.) * 100;
-    }
-
     public FullPosition getPosition() {
         return position;
     }

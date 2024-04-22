@@ -18,8 +18,9 @@ import io.github.kensuke1984.kibrary.elastic.VariableType;
 import io.github.kensuke1984.kibrary.fusion.FusionDesign;
 import io.github.kensuke1984.kibrary.fusion.FusionInformationFile;
 import io.github.kensuke1984.kibrary.math.Interpolation;
-import io.github.kensuke1984.kibrary.perturbation.ScalarListFile;
 import io.github.kensuke1984.kibrary.perturbation.PerturbationModel;
+import io.github.kensuke1984.kibrary.perturbation.ScalarListFile;
+import io.github.kensuke1984.kibrary.perturbation.ScalarType;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
@@ -247,23 +248,24 @@ public class ModelMapper extends Operation {
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         for (VariableType variable : variableTypes) {
-            String variableName = variable.toString().toLowerCase();
             // output discrete perturbation file
-            Map<FullPosition, Double> discreteMap = model.getPercentForType(variable);
-            Path outputDiscretePath = outPath.resolve(variableName + "Percent.lst");
+            Map<FullPosition, Double> discreteMap = model.getMap(variable, ScalarType.PERCENT);
+            Path outputDiscretePath = outPath.resolve(ScalarListFile.generateFileName(variable, ScalarType.PERCENT));
             ScalarListFile.write(discreteMap, outputDiscretePath);
             // output interpolated perturbation file, in range [0:360) when crossDateLine==true so that mapping will succeed
             Map<FullPosition, Double> interpolatedMap = Interpolation.inEachMapLayer(discreteMap, gridInterval,
                     marginLatitudeRaw, setMarginLatitudeByKm, marginLongitudeRaw, setMarginLongitudeByKm, mosaic);
-            Path outputInterpolatedPath = outPath.resolve(variableName + "PercentXY.lst");
+            Path outputInterpolatedPath = outPath.resolve(ScalarListFile.generateFileName(variable, ScalarType.PERCENT, "XY"));
             ScalarListFile.write(interpolatedMap, crossDateLine, outputInterpolatedPath);
+
             // output shellscripts
-            ScalarMapShellscript script = new ScalarMapShellscript(variable, radii, boundaries, mapRegion,
-                    gridInterval, scale, variableName + "Percent", nPanelsPerRow);
+            ScalarMapShellscript script = new ScalarMapShellscript(variable, ScalarType.PERCENT, radii, boundaries,
+                    mapRegion, gridInterval, scale, nPanelsPerRow);
             if (displayLayers != null) script.setDisplayLayers(displayLayers);
             script.write(outPath);
-            System.err.println("After this finishes, please enter " + outPath + "/ and run " + variableName + "PercentGrid.sh and "
-                    + variableName + "PercentMap.sh");
+            String fileNameRoot = script.getPlotFileNameRoot();
+            System.err.println("After this finishes, please enter " + outPath
+                    + "/ and run " + fileNameRoot + "Grid.sh and " + fileNameRoot + "Map.sh");
         }
     }
 

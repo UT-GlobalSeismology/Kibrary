@@ -19,8 +19,9 @@ import io.github.kensuke1984.kibrary.fusion.FusionDesign;
 import io.github.kensuke1984.kibrary.fusion.FusionInformationFile;
 import io.github.kensuke1984.kibrary.inversion.solve.InverseMethodEnum;
 import io.github.kensuke1984.kibrary.math.Interpolation;
-import io.github.kensuke1984.kibrary.perturbation.ScalarListFile;
 import io.github.kensuke1984.kibrary.perturbation.PerturbationModel;
+import io.github.kensuke1984.kibrary.perturbation.ScalarListFile;
+import io.github.kensuke1984.kibrary.perturbation.ScalarType;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
@@ -282,15 +283,14 @@ public class ModelSetMapper extends Operation {
                 Files.createDirectories(outBasisPath);
 
                 for (VariableType variable : variableTypes) {
-                    String variableName = variable.toString().toLowerCase();
                     // output discrete perturbation file
-                    Map<FullPosition, Double> discreteMap = model.getPercentForType(variable);
-                    Path outputDiscretePath = outBasisPath.resolve(variableName + "Percent.lst");
+                    Map<FullPosition, Double> discreteMap = model.getMap(variable, ScalarType.PERCENT);
+                    Path outputDiscretePath = outBasisPath.resolve(ScalarListFile.generateFileName(variable, ScalarType.PERCENT));
                     ScalarListFile.write(discreteMap, outputDiscretePath);
                     // output interpolated perturbation file, in range [0:360) when crossDateLine==true so that mapping will succeed
                     Map<FullPosition, Double> interpolatedMap = Interpolation.inEachMapLayer(discreteMap, gridInterval,
                             marginLatitudeRaw, setMarginLatitudeByKm, marginLongitudeRaw, setMarginLongitudeByKm, mosaic);
-                    Path outputInterpolatedPath = outBasisPath.resolve(variableName + "PercentXY.lst");
+                    Path outputInterpolatedPath = outBasisPath.resolve(ScalarListFile.generateFileName(variable, ScalarType.PERCENT, "XY"));
                     ScalarListFile.write(interpolatedMap, crossDateLine, outputInterpolatedPath);
                 }
             }
@@ -298,17 +298,17 @@ public class ModelSetMapper extends Operation {
 
         // write shellscripts for mapping
         for (VariableType variable : variableTypes) {
-            String variableName = variable.toString().toLowerCase();
-            writeParentShellscript(variableName, outPath.resolve(variableName + "PercentAllMap.sh"));
-            ScalarMapShellscript script = new ScalarMapShellscript(variable, radii, boundaries, mapRegion,
-                    gridInterval, scale, variableName + "Percent", nPanelsPerRow);
+            ScalarMapShellscript script = new ScalarMapShellscript(variable, ScalarType.PERCENT, radii, boundaries,
+                    mapRegion, gridInterval, scale, nPanelsPerRow);
             if (displayLayers != null) script.setDisplayLayers(displayLayers);
             script.write(outPath);
-            System.err.println("After this finishes, please enter " + outPath + "/ and run " + variableName + "PercentAllMap.sh");
+            String fileNameRoot = script.getPlotFileNameRoot();
+            writeParentShellscript(fileNameRoot, outPath.resolve(fileNameRoot + "AllMap.sh"));
+            System.err.println("After this finishes, please enter " + outPath + "/ and run " + fileNameRoot + "AllMap.sh");
         }
     }
 
-    private void writeParentShellscript(String paramName, Path outputPath) throws IOException {
+    private void writeParentShellscript(String fileNameRoot, Path outputPath) throws IOException {
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath))) {
             pw.println("#!/bin/sh");
             for (InverseMethodEnum method : inverseMethods) {
@@ -316,16 +316,16 @@ public class ModelSetMapper extends Operation {
                 pw.println("for i in `seq 1 " + maxNum + "`");
                 pw.println("do");
                 pw.println("    cd " + method.simpleName() + "$i");
-                pw.println("    ln -s ../" + paramName + "PercentGrid.sh .");
-                pw.println("    ln -s ../" + paramName + "PercentMap.sh .");
+                pw.println("    ln -s ../" + fileNameRoot + "Grid.sh .");
+                pw.println("    ln -s ../" + fileNameRoot + "Map.sh .");
                 pw.println("    ln -s ../cp_master.cpt .");
-                pw.println("    sh " + paramName + "PercentGrid.sh");
+                pw.println("    sh " + fileNameRoot + "Grid.sh");
                 pw.println("    wait");
-                pw.println("    sh " + paramName + "PercentMap.sh");
+                pw.println("    sh " + fileNameRoot + "Map.sh");
                 pw.println("    wait");
                 pw.println("    rm -rf *.grd gmt.* cp.cpt");
-                pw.println("    unlink " + paramName + "PercentGrid.sh");
-                pw.println("    unlink " + paramName + "PercentMap.sh");
+                pw.println("    unlink " + fileNameRoot + "Grid.sh");
+                pw.println("    unlink " + fileNameRoot + "Map.sh");
                 pw.println("    unlink cp_master.cpt");
                 pw.println("    cd ..");
                 pw.println("done");

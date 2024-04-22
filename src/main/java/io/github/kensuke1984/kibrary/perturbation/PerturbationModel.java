@@ -100,23 +100,6 @@ public class PerturbationModel {
     }
 
     /**
-     * Get perturbation values (in [%]) for a certain variable at all voxels.
-     * @param type ({@link VariableType})
-     * @return (LinkedHashMap of {@link FullPosition}, Double) Correspondence of position and perturbation value (in [%])
-     *
-     * @author otsuru
-     * @since 2023/3/4
-     */
-    public Map<FullPosition, Double> getPercentForType(VariableType type) {
-        // This is created as LinkedHashMap to preserve the order of voxels
-        Map<FullPosition, Double> map = new LinkedHashMap<>();
-        for (PerturbationVoxel voxel : voxelList) {
-            map.put(voxel.getPosition(), voxel.getPercent(type));
-        }
-        return map;
-    }
-
-    /**
      * Get absolute perturbed values for a certain variable at all voxels.
      * @param type ({@link VariableType})
      * @return (LinkedHashMap of {@link FullPosition}, Double) Correspondence of position and absolute perturbed value

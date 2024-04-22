@@ -18,8 +18,8 @@ import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.RealVector;
 
 import io.github.kensuke1984.kibrary.Summon;
+import io.github.kensuke1984.kibrary.elastic.VariableType;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
-import io.github.kensuke1984.kibrary.util.FileAid;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 
 /**
@@ -77,9 +77,16 @@ public class PerturbationComparison {
         Path denominatorPath = Paths.get(cmdLine.getOptionValue("d"));
 
         // read input files
-        // These will be obtained as unmodifiable LinkedHashMap
-        Map<FullPosition, Double> numeratorMap = ScalarListFile.read(numeratorPath);
-        Map<FullPosition, Double> denominatorMap = ScalarListFile.read(denominatorPath);
+        ScalarListFile numeratorFile = new ScalarListFile(numeratorPath);
+        ScalarListFile denominatorFile = new ScalarListFile(denominatorPath);
+        VariableType variable = numeratorFile.getVariable();
+        if (denominatorFile.getVariable() != variable)
+            throw new IllegalArgumentException("Variable types do not match: " + variable + " " + denominatorFile.getVariable());
+        if (numeratorFile.getScalarType() != ScalarType.PERCENT || denominatorFile.getScalarType() != ScalarType.PERCENT)
+            throw new IllegalArgumentException("Scalar type must be PERCENT: " + numeratorFile.getScalarType() + " " + denominatorFile.getScalarType());
+        // These will be obtained as unmodifiable LinkedHashMap:
+        Map<FullPosition, Double> numeratorMap = numeratorFile.getValueMap();
+        Map<FullPosition, Double> denominatorMap = denominatorFile.getValueMap();
 
         // reconstruct the list of values in each map
         // This is done because the number of voxels and/or their order may be different.
@@ -107,11 +114,10 @@ public class PerturbationComparison {
         Path outPath = DatasetAid.createOutputFolder(Paths.get(""), "comparison", folderTag, appendFolderDate, null);
 
         // output ratio and difference maps as perturbation list files
-        String fileNameRoot = FileAid.extractNameRoot(numeratorPath);
-        Path ratioMapPath = outPath.resolve(fileNameRoot + "Ratio.lst");
-        Path differenceMapPath = outPath.resolve(fileNameRoot + "Difference.lst");
-        ScalarListFile.write(constructMapFromVector(positions, ratioVector), ratioMapPath);
+        Path differenceMapPath = outPath.resolve(ScalarListFile.generateFileName(variable, ScalarType.PERCENT_DIFFERENCE));
+        Path ratioMapPath = outPath.resolve(ScalarListFile.generateFileName(variable, ScalarType.PERCENT_RATIO));
         ScalarListFile.write(constructMapFromVector(positions, differenceVector), differenceMapPath);
+        ScalarListFile.write(constructMapFromVector(positions, ratioVector), ratioMapPath);
 
         // output similarity and distance in a txt file
         Path comparisonPath = outPath.resolve("comparison.txt");
