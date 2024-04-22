@@ -23,75 +23,122 @@ import io.github.kensuke1984.kibrary.util.earth.FullPosition;
  */
 public class PerturbationListFile {
 
-    public static void writeAbsoluteForType(VariableType type, PerturbationModel model, Path outputPath, OpenOption... options)
-            throws IOException {
+    private final VariableType variable;
+    private final ScalarType scalarType;
+    // This is created as LinkedHashMap to preserve the order of voxels
+    private final Map<FullPosition, Double> valueMap = new LinkedHashMap<>();
 
-        List<PerturbationVoxel> voxels = model.getVoxels();
-
-        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath, options))) {
-            for (PerturbationVoxel voxel : voxels) {
-                pw.println(voxel.getPosition() + " " + MathAid.roundForPrecision(voxel.getAbsolute(type)));
-            }
-        }
+    public static String generateFileName(VariableType variable, ScalarType scalarType) {
+        return generateFileName(variable, scalarType, null);
     }
 
-    public static void writePercentForType(VariableType type, PerturbationModel model, Path outputPath, OpenOption... options)
+    public static String generateFileName(VariableType variable, ScalarType scalarType, String tag) {
+        return "scalar" + ((tag != null) ? ("_" + tag) : "") + "." + variable.toString() + "." + scalarType.toString() + ".lst";
+    }
+
+    /**
+     * Write file of a certain variable of a model in the specified scalar type.
+     * @param model ({@link PerturbationModel}) Model to write.
+     * @param variable ({@link VariableType}) Variable to write for.
+     * @param scalarType ({@link ScalarType}) Scalar type to write values in.
+     * @param outputPath (Path) Output file path.
+     * @param options (OpenOption...)
+     * @throws IOException
+     *
+     * @author otsuru
+     * @since 2024/4/22
+     */
+    public static void write(PerturbationModel model, VariableType variable, ScalarType scalarType, Path outputPath, OpenOption... options)
             throws IOException {
-
+        // get list of voxels
         List<PerturbationVoxel> voxels = model.getVoxels();
-
+        // write for each voxel
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath, options))) {
             for (PerturbationVoxel voxel : voxels) {
-                pw.println(voxel.getPosition() + " " + MathAid.roundForPrecision(voxel.getPercent(type)));
+                pw.println(voxel.getPosition() + " " + MathAid.roundForPrecision(voxel.getValue(variable, scalarType)));
             }
         }
     }
 
     /**
      * Output file from map of position to value.
-     * @param perturbationMap (Map of FullPosition to Double) Values at each position. Should be LinkedHashMap for the lines to be sorted.
-     * @param outputPath (Path) Output file path
+     * @param valueMap (Map of FullPosition to Double) Values at each position. Should be LinkedHashMap for the lines to be sorted.
+     * @param outputPath (Path) Output file path.
      * @param options (OpenOption...)
      * @throws IOException
      */
-    public static void write(Map<FullPosition, Double> perturbationMap, Path outputPath, OpenOption... options) throws IOException {
-        write(perturbationMap, false, outputPath, options);
+    public static void write(Map<FullPosition, Double> valueMap, Path outputPath, OpenOption... options) throws IOException {
+        write(valueMap, false, outputPath, options);
     }
 
     /**
      * Output file from map of position to value.
-     * @param perturbationMap (Map of FullPosition to Double) Values at each position. Should be LinkedHashMap for the lines to be sorted.
+     * @param valueMap (Map of FullPosition to Double) Values at each position. Should be LinkedHashMap for the lines to be sorted.
      * @param crossDateLine (boolean) Whether to use longitude range [0:360) instead of [-180:180).
-     * @param outputPath (Path) Output file path
+     * @param outputPath (Path) Output file path.
      * @param options (OpenOption...)
      * @throws IOException
      */
-    public static void write(Map<FullPosition, Double> perturbationMap, boolean crossDateLine, Path outputPath, OpenOption... options) throws IOException {
+    public static void write(Map<FullPosition, Double> valueMap, boolean crossDateLine, Path outputPath, OpenOption... options) throws IOException {
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath, options))) {
             // Do not sort here, because the input may be already sorted. (LinkedHashMap can be sorted.)
-            perturbationMap.forEach((key, value) -> pw.println(key.toString(crossDateLine) + " " + MathAid.roundForPrecision(value)));
+            valueMap.forEach((key, value) -> pw.println(key.toString(crossDateLine) + " " + MathAid.roundForPrecision(value)));
         }
     }
 
     /**
      * Read file as map of position to value.
-     * @param inputPath (Path) Input file path
+     * @param inputPath (Path) Input file path.
      * @param options (OpenOption...)
-     * @return (Unmodifiable LinkedHashMap of FullPosition to Double) Map of perturbations
+     * @return (Unmodifiable LinkedHashMap of {@link FullPosition}, Double) Correspondence of position and values.
      * @throws IOException
      */
     public static Map<FullPosition, Double> read(Path inputPath, OpenOption... options) throws IOException {
-        // This is created as LinkedHashMap to preserve the order of voxels
-        Map<FullPosition, Double> perturbationMap = new LinkedHashMap<>();
+        return new PerturbationListFile(inputPath, options).getValueMap();
+    }
+
+    /**
+     * Read in a scalar list file.
+     * @param inputPath (Path) Input file path.
+     * @param options (OpenOption...)
+     * @throws IOException
+     *
+     * @author otsuru
+     * @since 2024/4/22
+     */
+    public PerturbationListFile(Path inputPath, OpenOption... options) throws IOException {
+        String fileName = inputPath.getFileName().toString();
+        String[] fileNameParts = fileName.split("\\.");
+        if (fileNameParts.length != 4) throw new IllegalArgumentException("Invalid file name: " + fileName);
+        variable = VariableType.valueOf(fileNameParts[1]);
+        scalarType = ScalarType.valueOf(fileNameParts[2]);
 
         InformationFileReader reader = new InformationFileReader(inputPath, true);
         while(reader.hasNext()) {
             String[] parts = reader.next().split("\\s+");
             FullPosition position = new FullPosition(Double.parseDouble(parts[0]), Double.parseDouble(parts[1]), Double.parseDouble(parts[2]));
             double perturbation = Double.parseDouble(parts[3]);
-            perturbationMap.put(position, perturbation);
+            valueMap.put(position, perturbation);
         }
-
-        return Collections.unmodifiableMap(perturbationMap);
     }
+
+    public VariableType getVariable() {
+        return variable;
+    }
+
+    public ScalarType getScalarType() {
+        return scalarType;
+    }
+
+    /**
+     * Get all values.
+     * @return (Unmodifiable LinkedHashMap of {@link FullPosition}, Double) Correspondence of position and values.
+     *
+     * @author otsuru
+     * @since 2024/4/22
+     */
+    public Map<FullPosition, Double> getValueMap() {
+        return Collections.unmodifiableMap(valueMap);
+    }
+
 }
