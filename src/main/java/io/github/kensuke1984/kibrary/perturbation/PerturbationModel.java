@@ -61,9 +61,9 @@ public class PerturbationModel {
     }
 
     /**
-     * Create a new perturbation model with the same absolute parameter values but with a different initial structure.
-     * @param oneDStructure
-     * @return
+     * Create a new perturbation model with the same absolute parameter values but with a different reference structure.
+     * @param oneDStructure ({@link PolynomialStructure}) New reference structure.
+     * @return ({@link PerturbationModel}) New perturbation model with the given reference structure.
      */
     public PerturbationModel withReferenceStructureAs(PolynomialStructure oneDStructure) {
         List<PerturbationVoxel> newVoxelList = new ArrayList<>();
@@ -86,7 +86,7 @@ public class PerturbationModel {
      * @author otsuru
      * @since 2024/4/22
      */
-    public Map<FullPosition, Double> getMap(VariableType variable, ScalarType scalarType) {
+    public Map<FullPosition, Double> getValueMap(VariableType variable, ScalarType scalarType) {
         // This is created as LinkedHashMap to preserve the order of voxels
         Map<FullPosition, Double> map = new LinkedHashMap<>();
         for (PerturbationVoxel voxel : voxelList) {
@@ -97,23 +97,6 @@ public class PerturbationModel {
 
     public List<PerturbationVoxel> getVoxels() {
         return new ArrayList<>(voxelList);
-    }
-
-    /**
-     * Get absolute perturbed values for a certain variable at all voxels.
-     * @param type ({@link VariableType})
-     * @return (LinkedHashMap of {@link FullPosition}, Double) Correspondence of position and absolute perturbed value
-     *
-     * @author otsuru
-     * @since 2023/7/12
-     */
-    public Map<FullPosition, Double> getAbsoluteForType(VariableType type) {
-        // This is created as LinkedHashMap to preserve the order of voxels
-        Map<FullPosition, Double> map = new LinkedHashMap<>();
-        for (PerturbationVoxel voxel : voxelList) {
-            map.put(voxel.getPosition(), voxel.getAbsolute(type));
-        }
-        return map;
     }
 
 }

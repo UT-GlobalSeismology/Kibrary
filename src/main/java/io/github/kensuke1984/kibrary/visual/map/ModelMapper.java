@@ -249,7 +249,7 @@ public class ModelMapper extends Operation {
 
         for (VariableType variable : variableTypes) {
             // output discrete perturbation file
-            Map<FullPosition, Double> discreteMap = model.getMap(variable, ScalarType.PERCENT);
+            Map<FullPosition, Double> discreteMap = model.getValueMap(variable, ScalarType.PERCENT);
             Path outputDiscretePath = outPath.resolve(ScalarListFile.generateFileName(variable, ScalarType.PERCENT));
             ScalarListFile.write(discreteMap, outputDiscretePath);
             // output interpolated perturbation file, in range [0:360) when crossDateLine==true so that mapping will succeed

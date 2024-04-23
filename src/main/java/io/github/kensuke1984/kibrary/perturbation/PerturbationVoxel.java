@@ -56,17 +56,21 @@ public class PerturbationVoxel {
         perturbedMedium.set(variable, absolute);
     }
 
-    public void setDefaultIfUndefined(VariableType type) {
-        if (!perturbedMedium.isDefined(type)) {
-            double def = referenceMedium.get(type);
-            perturbedMedium.set(type, def);
+    /**
+     * Set a certain variable to its value in the reference medium if it is not defined yet.
+     * @param variable ({@link VariableType}) Variable to set.
+     */
+    public void setDefaultIfUndefined(VariableType variable) {
+        if (!perturbedMedium.isDefined(variable)) {
+            double def = referenceMedium.get(variable);
+            perturbedMedium.set(variable, def);
         }
     }
 
     /**
-     * Create a new perturbation voxel with the same absolute parameter values but with a different initial medium.
-     * @param oneDStructure
-     * @return
+     * Create a new perturbation voxel with the same absolute parameter values but with a different reference medium.
+     * @param oneDStructure ({@link PolynomialStructure}) New reference structure.
+     * @return ({@link PerturbationVoxel}) New perturbation voxel with the given reference structure.
      */
     public PerturbationVoxel withReferenceStructureAs(PolynomialStructure oneDStructure) {
         ElasticMedium newInitialMedium = oneDStructure.mediumAt(position.getR());
@@ -89,10 +93,6 @@ public class PerturbationVoxel {
         case PERCENT: return (perturbedMedium.get(variable) / referenceMedium.get(variable) - 1.0) * 100.0;
         default: throw new IllegalArgumentException("Unsupported scalar type: " + scalarType);
         }
-    }
-
-    public double getAbsolute(VariableType type) {
-        return perturbedMedium.get(type);
     }
 
     public FullPosition getPosition() {

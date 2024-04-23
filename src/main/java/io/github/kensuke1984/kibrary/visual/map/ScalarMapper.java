@@ -92,9 +92,9 @@ public class ScalarMapper extends Operation {
             pw.println("#folderTag ");
             pw.println("##(boolean) Whether to append date string at end of output folder name. (true)");
             pw.println("#appendFolderDate false");
-            pw.println("##Path of perturbation file, must be set.");
+            pw.println("##Path of scalar file, must be set.");
             pw.println("#scalarPath scalar.Vs.PERCENT.lst");
-            pw.println("##Path of perturbation file for mask, when mask is to be applied.");
+            pw.println("##Path of scalar file for mask, when mask is to be applied.");
             pw.println("#maskPath scalar.Vs.PERCENT_RATIO.lst");
             pw.println("##(double[]) The display values of each layer boundary, listed from the inside using spaces. (0 50 100 150 200 250 300 350 400)");
             pw.println("#boundaries ");
@@ -196,15 +196,20 @@ public class ScalarMapper extends Operation {
         Path outputInterpolatedPath = outPath.resolve(ScalarListFile.generateFileName(variable, scalarType, "XY"));
         ScalarListFile.write(interpolatedMap, crossDateLine, outputInterpolatedPath);
 
+        VariableType maskVariable = null;
+        ScalarType maskScalarType = null;
         if (maskPath != null) {
+            ScalarListFile maskInputFile = new ScalarListFile(maskPath);
+            maskVariable = maskInputFile.getVariable();
+            maskScalarType = maskInputFile.getScalarType();
+            Map<FullPosition, Double> discreteMaskMap = maskInputFile.getValueMap();
             // copy discrete mask file to outPath
-            Path outMaskPath = outPath.resolve(ScalarListFile.generateFileName(variable, scalarType, "forMask"));
+            Path outMaskPath = outPath.resolve(ScalarListFile.generateFileName(maskVariable, maskScalarType, "forMask"));
             Files.copy(maskPath, outMaskPath);
             // output interpolated perturbation file, in range [0:360) when crossDateLine==true so that mapping will succeed
-            Map<FullPosition, Double> discreteMaskMap = ScalarListFile.read(maskPath);
             Map<FullPosition, Double> interpolatedMaskMap = Interpolation.inEachMapLayer(discreteMaskMap, gridInterval,
                     marginLatitudeRaw, setMarginLatitudeByKm, marginLongitudeRaw, setMarginLongitudeByKm, mosaic);
-            Path outputInterpolatedMaskPath = outPath.resolve(ScalarListFile.generateFileName(variable, scalarType, "forMaskXY"));
+            Path outputInterpolatedMaskPath = outPath.resolve(ScalarListFile.generateFileName(maskVariable, maskScalarType, "forMaskXY"));
             ScalarListFile.write(interpolatedMaskMap, crossDateLine, outputInterpolatedMaskPath);
         }
 
@@ -212,7 +217,7 @@ public class ScalarMapper extends Operation {
         ScalarMapShellscript script = new ScalarMapShellscript(variable, scalarType, radii, boundaries,
                 mapRegion, gridInterval, scale, nPanelsPerRow);
         if (displayLayers != null) script.setDisplayLayers(displayLayers);
-        if (maskPath != null) script.setMask(maskThreshold);
+        if (maskPath != null) script.setMask(maskVariable, maskScalarType, maskThreshold);
         script.write(outPath);
         String fileNameRoot = script.getPlotFileNameRoot();
         System.err.println("After this finishes, please enter " + outPath

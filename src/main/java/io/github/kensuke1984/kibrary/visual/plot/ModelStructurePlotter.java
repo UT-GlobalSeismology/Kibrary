@@ -22,8 +22,9 @@ import io.github.kensuke1984.kibrary.elastic.VariableType;
 import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotFile;
 import io.github.kensuke1984.kibrary.inversion.solve.InverseMethodEnum;
 import io.github.kensuke1984.kibrary.math.LinearRange;
-import io.github.kensuke1984.kibrary.perturbation.ScalarListFile;
 import io.github.kensuke1984.kibrary.perturbation.PerturbationModel;
+import io.github.kensuke1984.kibrary.perturbation.ScalarListFile;
+import io.github.kensuke1984.kibrary.perturbation.ScalarType;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.FileAid;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
@@ -259,7 +260,7 @@ public class ModelStructurePlotter extends Operation {
                 for (VariableType variable : variableTypes) {
                     String variableName = variable.toString().toLowerCase();
                     // output discrete perturbation file
-                    Map<FullPosition, Double> discreteMap = model.getAbsoluteForType(variable);
+                    Map<FullPosition, Double> discreteMap = model.getValueMap(variable, ScalarType.ABSOLUTE);
                     Path outputDiscretePath = outBasisPath.resolve(variableName + "Absolute.lst");
                     ScalarListFile.write(discreteMap, outputDiscretePath);
                     // update plot range based on these values

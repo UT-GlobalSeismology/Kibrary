@@ -44,7 +44,7 @@ public class ScalarMapShellscript {
     /**
      * Number of nodes to divide an original node when smoothing.
      */
-    public static final int SMOOTHING_FACTOR = 10;
+    public static final int SMOOTHING_FACTOR = 5;
 
     private final VariableType variable;
     private final ScalarType scalarType;
@@ -77,9 +77,11 @@ public class ScalarMapShellscript {
      * Indices of layers to display in the figure. Listed from the inside. Layers are numbered 0, 1, 2, ... from the inside.
      */
     private int[] displayLayers;
+    private final String scalarFileName;
 
-    private boolean mask = false;
+    private boolean maskExists = false;
     private double maskThreshold;
+    private String maskFileName;
 
     ScalarMapShellscript(VariableType variable, ScalarType scalarType, double[] radii, double[] boundaries,
             String mapRegion, double positionInterval, double scale, int nPanelsPerRow) {
@@ -105,11 +107,17 @@ public class ScalarMapShellscript {
         this.plotFileNameRoot = variable.toString().toLowerCase() + scalarType.toNaturalString() + ((tag != null) ? ("_" + tag + "_") : "");
         // set this temporarily to display all layers (may be oveerwritten later)
         this.displayLayers = IntStream.range(0, radii.length).toArray();
+        // set scalar file name
+        String tag1 = (tag != null) ? (tag + "_XY") : "XY";
+        this.scalarFileName = ScalarListFile.generateFileName(variable, scalarType, tag1);
     }
 
-    void setMask(double maskThreshold) {
-        this.mask = true;
+    void setMask(VariableType maskVariable, ScalarType maskScalarType, double maskThreshold) {
+        this.maskExists = true;
         this.maskThreshold = maskThreshold;
+        // set scalar file name
+        String tag2 = (tag != null) ? (tag + "_forMaskXY") : "forMaskXY";
+        this.maskFileName = ScalarListFile.generateFileName(maskVariable, maskScalarType, tag2);
     }
 
     /**
@@ -132,7 +140,7 @@ public class ScalarMapShellscript {
      */
     void write(Path outPath) throws IOException {
         writeCpMaster(outPath.resolve("cp_master.cpt"));
-        if (mask) writeCpMask(outPath.resolve("cp_mask.cpt"), maskThreshold);
+        if (maskExists) writeCpMask(outPath.resolve("cp_mask.cpt"), maskThreshold);
         writeGridMaker(outPath.resolve(plotFileNameRoot + "Grid.sh"));
         writeMakeMap(outPath.resolve(plotFileNameRoot + "Map.sh"));
     }
@@ -187,15 +195,13 @@ public class ScalarMapShellscript {
             pw.println("    dep=${depth%.0}");
 
             // grid model
-            String tag1 = (tag != null) ? (tag + "_XY") : "XY";
-            pw.println("    grep \"$depth\" " + ScalarListFile.generateFileName(variable, scalarType, tag1) + " | \\");
+            pw.println("    grep \"$depth\" " + scalarFileName + " | \\");
             pw.println("    awk '{print $2,$1,$4}' | \\");
             pw.println("    gmt xyz2grd -G$dep\\model.grd -R" + mapRegion + " -I" + positionInterval + " -di0");
 
             // grid mask
-            if (mask) {
-                String tag2 = (tag != null) ? (tag + "_forMaskXY") : "forMaskXY";
-                pw.println("    grep \"$depth\" " + ScalarListFile.generateFileName(variable, scalarType, tag2) + " | \\");
+            if (maskExists) {
+                pw.println("    grep \"$depth\" " + maskFileName + " | \\");
                 pw.println("    awk '{print $2,$1,$4}' | \\");
                 pw.println("    gmt xyz2grd -G$dep\\mask.grd -R" + mapRegion + " -I" + positionInterval + " -di0");
             }
@@ -247,7 +253,7 @@ public class ScalarMapShellscript {
                             + " km\" $B -Ccp.cpt $J $R -K -O -X" + PANEL_WIDTH + " >> $outputps");
                 }
 
-                if (mask) {
+                if (maskExists) {
                     pw.println("gmt grdimage " + radius + "\\mask.grd -Ccp_mask.cpt -G0/0/0 -t80 $J $R -K -O >> $outputps");
                 }
 
@@ -258,7 +264,7 @@ public class ScalarMapShellscript {
             pw.println("#------- Scale");
             // compute the column number of the last panel (counting as 0, 1, 2, 3, ...)
             int nLastColumn = (displayLayers.length - 1) % nPanelsPerRow;
-            pw.println("gmt psscale -Ccp.cpt -Dx2/-4+w12/0.8+h -B1.0+l\"" + createScaleLabel() + "\" -K -O -X-"
+            pw.println("gmt psscale -Ccp.cpt -Dx2/-4+w12/0.8+h -B1.0+l\"" + ScalarType.createScaleLabel(variable, scalarType) + "\" -K -O -X-"
                     + (PANEL_WIDTH * nLastColumn / 2) + " >> $outputps");
             pw.println("");
 
@@ -275,55 +281,24 @@ public class ScalarMapShellscript {
         }
     }
 
-    private String createScaleLabel() {
-        String paramName;
-        switch (variable) {
-        case RHO: paramName = "@~r@~"; break;
-        case LAMBDA2MU: paramName = "(@~l@~+2@~m@~)"; break;
-        case LAMBDA: paramName = "@~l@~"; break;
-        case MU: paramName = "@~m@~"; break;
-        case KAPPA: paramName = "@~k@~"; break;
-        case ETA: paramName = "@~h@~"; break;
-        case XI: paramName = "@~c@~"; break;
-        case Qmu: paramName = "Q@-@~m@~@-"; break;
-        case Qkappa: paramName = "Q@-@~k@~@-"; break;
-        default: paramName = variable.toString();
-        }
-
-        String unit;
-        switch (variable) {
-        case RHO: unit = "g/cm@+3@+"; break;
-        case Vp: case Vs: case Vb: case Vpv: case Vph: case Vsv: case Vsh: unit = "km/s"; break;
-        case R: case ETA: case XI: unit = ""; break;
-        default: unit = "GPa"; break;
-        }
-
-        switch (scalarType) {
-        case ABSOLUTE: return paramName + (!unit.isEmpty() ? (" (" + unit + ")") : "");
-        case DELTA: return "@~d@~" + paramName + (!unit.isEmpty() ? (" (" + unit + ")") : "");
-        case PERCENT: return "@~d@~" + paramName + "/" + paramName + " (%)";
-        case PERCENT_DIFFERENCE: return "@~d@~" + paramName + "/" + paramName + " Difference (%)";
-        case PERCENT_RATIO: return "@~d@~" + paramName + "/" + paramName + " Ratio";
-        case KERNEL_Z: case KERNEL_R: case KERNEL_T: return "Sensitivity";
-        default: throw new IllegalArgumentException("Unsupported scalar type.");
-        }
-    }
-
     /**
      * Decides the interval in which to sample the grid in a map.
-     * This method sets the interval at roughly a tenth of the input position spacing.
+     * This method sets the interval at roughly a {@value #SMOOTHING_FACTOR}-th of the input position spacing.
      * @param positions (Set of {@link HorizontalPosition}) Input position set.
      * @return (double) Suggested value of grid spacing.
      */
     static double decideGridSampling(Set<? extends HorizontalPosition> positions) {
-        double positionInterval = HorizontalPosition.findLatitudeInterval(positions);
-        int power = (int) MathAid.floor(Math.log10(positionInterval));
+        double positionInterval = HorizontalPosition.findLatitudeInterval(positions) / SMOOTHING_FACTOR;
+        // the exponent in scientific notation
+        int power = (int) Math.floor(Math.log10(positionInterval));
+        // the coefficient in scientific notation
         double coef = positionInterval / FastMath.pow(10, power);
-        if (coef < 1) throw new IllegalStateException("Grid interval decision went wrong");
-        else if (coef < 2) return 1.0 * FastMath.pow(10, power) / SMOOTHING_FACTOR;
-        else if (coef < 5) return 2.0 * FastMath.pow(10, power) / SMOOTHING_FACTOR;
-        else if (coef < 10) return 5.0 * FastMath.pow(10, power) / SMOOTHING_FACTOR;
-        else throw new IllegalStateException("Grid interval decision went wrong");
+        // round down the coefficient to either 1, 2, or 5
+        if (coef < 1) throw new IllegalStateException("Grid interval decision went wrong.");
+        else if (coef < 2) return 1.0 * FastMath.pow(10, power);
+        else if (coef < 5) return 2.0 * FastMath.pow(10, power);
+        else if (coef < 10) return 5.0 * FastMath.pow(10, power);
+        else throw new IllegalStateException("Grid interval decision went wrong.");
     }
 
     /**

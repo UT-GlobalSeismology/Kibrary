@@ -16,7 +16,12 @@ import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 
 /**
- * File with perturbation values for each voxel position.
+ * File with scalar values for each voxel position.
+ * Values of 1 scalar type for 1 variable is written in each file.
+ * <p>
+ * File name must follow the format: "scalar[_(tag)].(VARIABLE).(SCALAR_TYPE).lst".
+ * <p>
+ * Each line: "latitude longitude radius value".
  *
  * @author otsuru
  * @since 2022/4/9
@@ -25,13 +30,29 @@ public class ScalarListFile {
 
     private final VariableType variable;
     private final ScalarType scalarType;
-    // This is created as LinkedHashMap to preserve the order of voxels
+    /**
+     * Scalar values at each position.
+     * NOTE: This is created as LinkedHashMap to preserve the order of voxels.
+     */
     private final Map<FullPosition, Double> valueMap = new LinkedHashMap<>();
 
+    /**
+     * Generate a file name for a {@link ScalarListFile}.
+     * @param variable ({@link VariableType}) Variable that the file is for.
+     * @param scalarType ({@link ScalarType}) Scalar type that the file is for.
+     * @return (String) Generated file name.
+     */
     public static String generateFileName(VariableType variable, ScalarType scalarType) {
         return generateFileName(variable, scalarType, null);
     }
 
+    /**
+     * Generate a file name for a {@link ScalarListFile}.
+     * @param variable ({@link VariableType}) Variable that the file is for.
+     * @param scalarType ({@link ScalarType}) Scalar type that the file is for.
+     * @param tag (String) Tag to put in file name. When no tag is needed, set null.
+     * @return (String) Generated file name.
+     */
     public static String generateFileName(VariableType variable, ScalarType scalarType, String tag) {
         return "scalar" + ((tag != null) ? ("_" + tag) : "") + "." + variable.toString() + "." + scalarType.toString() + ".lst";
     }

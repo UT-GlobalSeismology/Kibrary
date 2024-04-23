@@ -15,8 +15,11 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.math3.util.Precision;
 
+import io.github.kensuke1984.kibrary.elastic.VariableType;
 import io.github.kensuke1984.kibrary.math.Interpolation;
 import io.github.kensuke1984.kibrary.math.Trace;
+import io.github.kensuke1984.kibrary.perturbation.ScalarListFile;
+import io.github.kensuke1984.kibrary.perturbation.ScalarType;
 import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
@@ -30,16 +33,14 @@ import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 public class CrossSectionWorker {
 
     /**
-     * How much finer to make the grid
+     * How much finer to make the grid.
      */
-    public static final int GRID_SMOOTHING_FACTOR = 5;
+    public static final int GRID_SMOOTHING_FACTOR = 2;
     /**
-     * Size of vertical grid with respect to horizontal grid
+     * Size of vertical grid with respect to horizontal grid.
      */
-    public static final int VERTICAL_ENLARGE_FACTOR = 2;
+    public static final int VERTICAL_ENLARGE_FACTOR = 4;
 
-    private final HorizontalPosition startPosition;
-    private final HorizontalPosition endPosition;
     private final Map<Double, HorizontalPosition> samplePositionMap = new TreeMap<>();
     private final double distance;
     private final double horizontalGridInterval;
@@ -65,14 +66,20 @@ public class CrossSectionWorker {
 
     private final double scale;
     /**
-     * Whether to display map as mosaic without smoothing
+     * Whether to display map as mosaic without smoothing.
      */
     private final boolean mosaic;
-    private final boolean maskExists;
-    private final double maskThreshold;
-    private final String modelFileNameRoot;
+    private final VariableType variable;
+    private final ScalarType scalarType;
+    private final String tag;
     private final Set<FullPosition> discretePositions;
 
+    private final String plotFileNameRoot;
+    private final String scalarFileName;
+
+    private boolean maskExists = false;
+    private double maskThreshold;
+    private String maskFileName;
 
     /**
      * Set parameters that should be used when creating cross sections.
@@ -93,21 +100,22 @@ public class CrossSectionWorker {
      * @param marginRadius (double) Radius margin at both ends of region [km].
      * @param scale (double) Scale of contours.
      * @param mosaic (boolean) Whether to display map as mosaic without smoothing.
-     * @param maskExists (boolean) Whether mask exists.
-     * @param maskThreshold (double) Threshold for mask.
-     * @param modelFileNameRoot (String) Name root of perturbation file.
+     * @param variable ({@link VariableType}) Variable that the cross section is for.
+     * @param scalarType ({@link ScalarType}) Scalar type that the cross section is for.
+     * @param tag (String) Tag in scalar file names.
      * @param discretePositions (Set of {@link FullPosition}) Positions where input model is defined.
      */
     CrossSectionWorker(double pos0Latitude, double pos0Longitude, double pos1Latitude, double pos1Longitude,
             double beforePos0Deg, double afterPosDeg, boolean useAfterPos1, double zeroPointRadius,
             String zeroPointName, boolean flipVerticalAxis, double marginLatitudeRaw, boolean setMarginLatitudeByKm,
             double marginLongitudeRaw, boolean setMarginLongitudeByKm, double marginRadius, double scale,
-            boolean mosaic, boolean maskExists, double maskThreshold, String modelFileNameRoot, Set<FullPosition> discretePositions) {
+            boolean mosaic, VariableType variable, ScalarType scalarType, String tag, Set<FullPosition> discretePositions) {
 
         //~decide start and end positions of cross section
         HorizontalPosition pos0 = new HorizontalPosition(pos0Latitude, pos0Longitude);
         HorizontalPosition pos1 = new HorizontalPosition(pos1Latitude, pos1Longitude);
-        startPosition = pos0.pointAlongAzimuth(pos0.computeAzimuthDeg(pos1), -beforePos0Deg);
+        HorizontalPosition startPosition = pos0.pointAlongAzimuth(pos0.computeAzimuthDeg(pos1), -beforePos0Deg);
+        HorizontalPosition endPosition;
         if (useAfterPos1) {
             endPosition = pos1.pointAlongAzimuth(pos1.computeAzimuthDeg(pos0), -afterPosDeg);
         } else {
@@ -115,7 +123,7 @@ public class CrossSectionWorker {
         }
 
         //~decide horizontal positions at which to sample values
-        distance = startPosition.computeEpicentralDistanceDeg(endPosition);
+        distance = Math.round(startPosition.computeEpicentralDistanceDeg(endPosition));
         double azimuth = startPosition.computeAzimuthDeg(endPosition);
         horizontalGridInterval = ScalarMapShellscript.decideGridSampling(discretePositions) / GRID_SMOOTHING_FACTOR;
         int nSamplePosition = (int) Math.round(distance / horizontalGridInterval) + 1;
@@ -140,10 +148,30 @@ public class CrossSectionWorker {
         this.flipVerticalAxis = flipVerticalAxis;
         this.scale = scale;
         this.mosaic = mosaic;
-        this.maskExists = maskExists;
-        this.maskThreshold = maskThreshold;
-        this.modelFileNameRoot = modelFileNameRoot;
+        this.variable = variable;
+        this.scalarType = scalarType;
+        this.tag = tag;
         this.discretePositions = discretePositions;
+
+        // set file name root of output files
+        this.plotFileNameRoot = variable.toString().toLowerCase() + scalarType.toNaturalString() + ((tag != null) ? ("_" + tag + "_") : "");
+        // set scalar file name
+        String tag1 = (tag != null) ? (tag + "_XY") : "XY";
+        this.scalarFileName = ScalarListFile.generateFileName(variable, scalarType, tag1);
+    }
+
+    /**
+     * Set mask.
+     * @param maskVariable ({@link VariableType}) Variable of mask.
+     * @param maskScalarType ({@link ScalarType}) Scalar type of mask.
+     * @param maskThreshold (double) Threshold for mask.
+     */
+    void setMask(VariableType maskVariable, ScalarType maskScalarType, double maskThreshold) {
+        this.maskExists = true;
+        this.maskThreshold = maskThreshold;
+        // set scalar file name
+        String tag2 = (tag != null) ? (tag + "_forMaskXY") : "forMaskXY";
+        this.maskFileName = ScalarListFile.generateFileName(maskVariable, maskScalarType, tag2);
     }
 
     /**
@@ -166,14 +194,10 @@ public class CrossSectionWorker {
             }
         }
 
-        // output file names
-        Path interpolatedPath = outPath.resolve(modelFileNameRoot + "XZ.txt");
-        Path maskInterpolatedPath = outPath.resolve(modelFileNameRoot + "_forMaskXZ.txt");
-
         // compute cross section data and output
-        computeCrossSectionData(discreteMap, radii, samplePositionMap, verticalGridInterval, interpolatedPath);
+        computeCrossSectionData(discreteMap, radii, samplePositionMap, verticalGridInterval, outPath.resolve(scalarFileName));
         if (maskExists) {
-            computeCrossSectionData(maskDiscreteMap, radii, samplePositionMap, verticalGridInterval, maskInterpolatedPath);
+            computeCrossSectionData(maskDiscreteMap, radii, samplePositionMap, verticalGridInterval, outPath.resolve(maskFileName));
         }
     }
 
@@ -291,11 +315,11 @@ public class CrossSectionWorker {
      * @param outPath (Path) Folder where output files should be created.
      * @throws IOException
      */
-    void writeScripts(String scaleLabel, Path outPath) throws IOException {
+    void writeScripts(Path outPath) throws IOException {
         Path cpMasterPath = outPath.resolve("cp_master.cpt");
         Path cpMaskPath = outPath.resolve("cp_mask.cpt");
         Path annotationPath = outPath.resolve("rAnnotation.txt");
-        Path gmtPath = outPath.resolve(modelFileNameRoot + "Section.sh");
+        Path gmtPath = outPath.resolve(plotFileNameRoot + "Section.sh");
 
         ScalarMapShellscript.writeCpMaster(cpMasterPath);
         if (maskExists) {
@@ -306,8 +330,7 @@ public class CrossSectionWorker {
         double upperRadius = radii[radii.length - 1] + marginRadius;
         double[] annotationRadii = {lowerRadius, upperRadius};
         writeAnnotationFile(annotationRadii, annotationPath);
-        writeShellscript(distance, lowerRadius, upperRadius, horizontalGridInterval, verticalGridInterval, maskExists,
-                scaleLabel, gmtPath, modelFileNameRoot);
+        writeShellscript(distance, lowerRadius, upperRadius, horizontalGridInterval, verticalGridInterval, gmtPath);
     }
 
     /**
@@ -334,19 +357,18 @@ public class CrossSectionWorker {
     }
 
     private void writeShellscript(double sectionDistance, double lowerRadius, double upperRadius,
-            double horizontalGridInterval, double verticalGridInterval,
-            boolean maskExists, String scaleLabel, Path outputPath, String modelFileNameRoot) throws IOException {
+            double horizontalGridInterval, double verticalGridInterval, Path outputPath) throws IOException {
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath))) {
             pw.println("#!/bin/sh");
             pw.println("");
             pw.println("# create grid");
-            pw.println("cat " + modelFileNameRoot + "XZ.txt | \\");
+            pw.println("cat " + scalarFileName + " | \\");
             pw.println("awk '{print $1,$4,$5}' | \\");
             pw.println("gmt xyz2grd -G0model.grd -R0/" + MathAid.simplestString(sectionDistance)
                     + "/" + MathAid.simplestString(lowerRadius) + "/" + MathAid.simplestString(upperRadius)
                     + " -I" + MathAid.simplestString(horizontalGridInterval) + "/" + MathAid.simplestString(verticalGridInterval) + " -di0");
             if (maskExists) {
-                pw.println("cat " + modelFileNameRoot + "_forMaskXZ.txt | \\");
+                pw.println("cat " + maskFileName + " | \\");
                 pw.println("awk '{print $1,$4,$5}' | \\");
                 pw.println("gmt xyz2grd -G0mask.grd -R0/" + MathAid.simplestString(sectionDistance)
                         + "/" + MathAid.simplestString(lowerRadius) + "/" + MathAid.simplestString(upperRadius)
@@ -370,7 +392,7 @@ public class CrossSectionWorker {
             pw.println("J='-JP60+a+t" + MathAid.simplestString(sectionDistance / 2) + "'");
             pw.println("B='-BWeSn -Bx30f10 -BycrAnnotation.txt'");
             pw.println("");
-            pw.println("outputps=" + modelFileNameRoot + "Section.eps");
+            pw.println("outputps=" + plotFileNameRoot + "Section.eps");
             pw.println("MP=" + scale);
             pw.println("gmt makecpt -Ccp_master.cpt -T-$MP/$MP > cp.cpt");
             pw.println("");
@@ -381,7 +403,8 @@ public class CrossSectionWorker {
             }
             pw.println("");
             pw.println("#------- Scale");
-            pw.println("gmt psscale -Ccp.cpt -Dx2/-4+w12/0.8+h -B$MP+l\"" + scaleLabel + "\" -K -O -Y2 -X5 >> $outputps");
+            pw.println("gmt psscale -Ccp.cpt -Dx2/-4+w12/0.8+h -B$MP+l\"" + ScalarType.createScaleLabel(variable, scalarType)
+                    + "\" -K -O -Y2 -X5 >> $outputps");
             pw.println("");
             pw.println("#------- Finalize");
             pw.println("gmt pstext -N -F+jLM+f30p,Helvetica,black $J $R -O << END >> $outputps");
@@ -394,6 +417,10 @@ public class CrossSectionWorker {
             pw.println("rm -rf cp.cpt gmt.conf gmt.history");
             pw.println("echo \"Done!\"");
         }
+    }
+
+    String getPlotFileNameRoot() {
+        return plotFileNameRoot;
     }
 
 }

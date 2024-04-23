@@ -18,6 +18,7 @@ import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.elastic.VariableType;
 import io.github.kensuke1984.kibrary.perturbation.PerturbationModel;
+import io.github.kensuke1984.kibrary.perturbation.ScalarType;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.voxel.KnownParameter;
 import io.github.kensuke1984.kibrary.voxel.KnownParameterFile;
@@ -185,7 +186,7 @@ public class ModelStructureConverter extends Operation {
        double planetRadius = originalStructure.planetRadius();
 
        for (VariableType variable : variableTypes) {
-           Map<FullPosition, Double> discreteMap = model.getAbsoluteForType(variable);
+           Map<FullPosition, Double> discreteMap = model.getValueMap(variable, ScalarType.ABSOLUTE);
 
            // for each layer
            // i=0: bottommost(below definedRadii[0])

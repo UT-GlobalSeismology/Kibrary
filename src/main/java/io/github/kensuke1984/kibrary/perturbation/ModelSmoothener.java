@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
+import io.github.kensuke1984.kibrary.elastic.VariableType;
 import io.github.kensuke1984.kibrary.math.LinearRange;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
@@ -41,9 +42,9 @@ public class ModelSmoothener extends Operation {
     private boolean appendFolderDate;
 
     /**
-     * Path of perturbation file.
+     * Path of scalar file.
      */
-    private Path perturbationPath;
+    private Path scalarPath;
     private LinearRange radiusRange;
 
     /**
@@ -66,8 +67,8 @@ public class ModelSmoothener extends Operation {
             pw.println("#folderTag ");
             pw.println("##(boolean) Whether to append date string at end of output folder name. (true)");
             pw.println("#appendFolderDate false");
-            pw.println("##Path of perturbation file, must be set.");
-            pw.println("#perturbationPath vsPercent.lst");
+            pw.println("##Path of scalar file, must be set.");
+            pw.println("#scalarPath scalar.Vs.PERCENT.lst");
             pw.println("##Lower limit of radius range [km]; [0:upperRadius). (0)");
             pw.println("#lowerRadius ");
             pw.println("##Upper limit of radius range [km]; (lowerRadius:). (6371)");
@@ -86,7 +87,7 @@ public class ModelSmoothener extends Operation {
         if (property.containsKey("folderTag")) folderTag = property.parseStringSingle("folderTag", null);
         appendFolderDate = property.parseBoolean("appendFolderDate", "true");
 
-        perturbationPath = property.parsePath("perturbationPath", null, true, workPath);
+        scalarPath = property.parsePath("scalarPath", null, true, workPath);
 
         double lowerRadius = property.parseDouble("lowerRadius", "0");
         double upperRadius = property.parseDouble("upperRadius", "6371");
@@ -97,18 +98,21 @@ public class ModelSmoothener extends Operation {
     public void run() throws IOException {
 
         // read input
-        // This will be obtained as unmodifiable LinkedHashMap
-        Map<FullPosition, Double> perturbationMap = ScalarListFile.read(perturbationPath);
+        ScalarListFile inputFile = new ScalarListFile(scalarPath);
+        VariableType variable = inputFile.getVariable();
+        ScalarType scalarType = inputFile.getScalarType();
+        // This will be obtained as unmodifiable LinkedHashMap.
+        Map<FullPosition, Double> scalarMap = inputFile.getValueMap();
 
-        List<HorizontalPosition> horizontalPositions = perturbationMap.keySet().stream()
+        List<HorizontalPosition> horizontalPositions = scalarMap.keySet().stream()
                 .map(pos -> pos.toHorizontalPosition()).distinct().collect(Collectors.toList());
-        double averagedRadius = perturbationMap.keySet().stream().mapToDouble(pos -> pos.getR()).distinct()
+        double averagedRadius = scalarMap.keySet().stream().mapToDouble(pos -> pos.getR()).distinct()
                 .filter(r -> radiusRange.check(r)).average().getAsDouble();
 
-        // This is created as LinkedHashMap to preserve the order of voxels
+        // This is created as LinkedHashMap to preserve the order of voxels.
         Map<FullPosition, Double> smoothedMap = new LinkedHashMap<>();
         for (HorizontalPosition horizontalPosition : horizontalPositions) {
-            double average = perturbationMap.entrySet().stream()
+            double average = scalarMap.entrySet().stream()
                     .filter(entry -> entry.getKey().toHorizontalPosition().equals(horizontalPosition))
                     .filter(entry -> radiusRange.check(entry.getKey().getR()))
                     .mapToDouble(entry -> entry.getValue()).average().getAsDouble();
@@ -118,7 +122,8 @@ public class ModelSmoothener extends Operation {
         Path outPath = DatasetAid.createOutputFolder(workPath, "smoothed", folderTag, appendFolderDate, null);
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
-        Path outputPerturbationFile = outPath.resolve(perturbationPath.getFileName());
-        ScalarListFile.write(smoothedMap, outputPerturbationFile);
+        Path outputPath = outPath.resolve(ScalarListFile.generateFileName(variable, scalarType));
+        ScalarListFile.write(smoothedMap, outputPath);
     }
+
 }
