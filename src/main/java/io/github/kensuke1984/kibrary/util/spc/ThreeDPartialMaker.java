@@ -472,7 +472,7 @@ public class ThreeDPartialMaker {
         Complex[] partial_frequency = (variable == VariableType.Qmu) ? computeQpartial(component, iBody) :
                 computeTensorCulculus(component, iBody, iBody, variable, parallel);
 
-        if (null != sourceTimeFunction)
+        if (sourceTimeFunction != null)
             partial_frequency = sourceTimeFunction.convolve(partial_frequency, parallel);
 
         //test tapper

@@ -395,8 +395,8 @@ public class PartialsBuilder1D extends Operation {
 
         private void convertSPCToPartials(Observer observer, VariableType variableType) throws IOException {
             // collect SPC files
-            SPCFileAccess shSPCFile = (usableSPCMode != SPCFileAid.UsableSPCMode.PSV) ? findSPCFile(observer, variableType, SPCMode.SH) : null;
-            SPCFileAccess psvSPCFile = (usableSPCMode != SPCFileAid.UsableSPCMode.SH) ? findSPCFile(observer, variableType, SPCMode.PSV) : null;
+            SPCFileAccess shSPCFile = (usableSPCMode != SPCFileAid.UsableSPCMode.PSV) ? findAndProcessSPCFile(observer, variableType, SPCMode.SH) : null;
+            SPCFileAccess psvSPCFile = (usableSPCMode != SPCFileAid.UsableSPCMode.SH) ? findAndProcessSPCFile(observer, variableType, SPCMode.PSV) : null;
 
             // collect corresponding timewindows
             Set<TimewindowData> correspondingTimewindows = timewindowSet.stream()
@@ -414,7 +414,7 @@ public class PartialsBuilder1D extends Operation {
             }
         }
 
-        private SPCFileAccess findSPCFile(Observer observer, VariableType variableType, SPCMode mode) throws IOException {
+        private SPCFileAccess findAndProcessSPCFile(Observer observer, VariableType variableType, SPCMode mode) throws IOException {
             Path modelPath = (mode == SPCMode.SH) ? shModelPath : psvModelPath;
             Path spcPath = modelPath.resolve(observer.getPosition().toCode() + "." + event + "." + SPCType.of1D(variableType) + "..." + mode + ".spc");
             if (!SPCFileName.isFormatted(spcPath)) {
@@ -427,6 +427,16 @@ public class PartialsBuilder1D extends Operation {
             }
             process(spcFile);
             return spcFile;
+        }
+
+        private void process(SPCFileAccess spcFile) {
+            for (SACComponent component : components) {
+                spcFile.getSpcBodyList().stream().map(body -> body.getSpcElement(component))
+                        .forEach(spcElement -> {
+                            spcElement.applySourceTimeFunction(sourceTimeFunctions.get(event));
+                            spcElement.convertToTimeDomain(npts, partialSamplingHz, spcFile.omegai());
+                        });
+            }
         }
 
         private void buildPartialWaveform(SPCFileAccess spcFile, TimewindowData timewindow, VariableType variableType) {
@@ -476,16 +486,6 @@ public class PartialsBuilder1D extends Operation {
                     summedUt[it] = filteredSHUt[it] + filteredPSVUt[it];
 
                 cutAndWrite(summedUt, timewindow, currentBodyR, variableType);
-            }
-        }
-
-        private void process(SPCFileAccess spcFile) {
-            for (SACComponent component : components) {
-                spcFile.getSpcBodyList().stream().map(body -> body.getSpcElement(component))
-                        .forEach(spcElement -> {
-                            spcElement.applySourceTimeFunction(sourceTimeFunctions.get(event));
-                            spcElement.convertToTimeDomain(npts, partialSamplingHz, spcFile.omegai());
-                        });
             }
         }
 
