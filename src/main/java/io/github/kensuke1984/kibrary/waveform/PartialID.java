@@ -158,12 +158,6 @@ public class PartialID extends BasicID {
         return voxelPosition;
     }
 
-    //TODO erase
-    @Deprecated
-    public PartialType getPartialType() {
-        return PartialType.of(parameterType, variableType);
-    }
-
     public ParameterType getParameterType() {
         return parameterType;
     }

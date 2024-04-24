@@ -53,7 +53,6 @@ import io.github.kensuke1984.kibrary.voxel.VoxelInformationFile;
  * <p>
  * By reusing the output folder, computation for events and observers that have already been computed for can be skipped.
  * When doing so, all computation settings (besides events and observers) should be kept the same.
- * TODO check that the voxel sets are same
  *
  * @author Kensuke Konishi
  * @since a long time ago
@@ -135,8 +134,7 @@ public class ThreeDPartialDSMSetup extends Operation {
     private double dtheta;
 
     /**
-     * Locations of perturbation points.
-     *
+     * Horizontal positions of center points of voxels.
      */
     private HorizontalPosition[] voxelPositions;
     /**

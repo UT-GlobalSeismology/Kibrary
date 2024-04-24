@@ -38,15 +38,15 @@ public class FusionDesign {
         VariableType type = params.get(0).getVariableType();
         for (UnknownParameter param : params) {
             if (param.getParameterType() != ParameterType.VOXEL) {
-                System.err.println("Cannot fuse parameters that are not 3D.");
+                System.err.println("!! Cannot fuse parameters that are not 3D: " + param);
                 return;
             }
             if (param.getVariableType() != type) {
-                System.err.println("Cannot fuse parameters due to variable type mismatch.");
+                System.err.println("!! Cannot fuse parameters due to variable type mismatch: " + param);
                 return;
             }
             if (fuses(param)) {
-                // skip if a parameter is already contained in originalParameters  TODO: this should be changed when combining 3 or more parameters
+                System.err.println("!! Parameter is already fused: " + param);
                 return;
             }
         }
