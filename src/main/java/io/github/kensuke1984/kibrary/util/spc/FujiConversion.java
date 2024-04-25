@@ -150,11 +150,6 @@ public final class FujiConversion {
             public SPCFileName getSpcFileName() {
                 return spcFileName;
             }
-
-            @Override
-            public void setSpcBody(int i, SPCBody body) {
-//				spcBody.set(i, body); //TODO
-            }
         };
 
         return dsmoutput;

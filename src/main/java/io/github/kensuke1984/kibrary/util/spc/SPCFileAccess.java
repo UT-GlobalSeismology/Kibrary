@@ -28,8 +28,6 @@ import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
  */
 public interface SPCFileAccess {
 
-    void setSpcBody(int i, SPCBody body);
-
     /**
      * @return number of bodies
      */

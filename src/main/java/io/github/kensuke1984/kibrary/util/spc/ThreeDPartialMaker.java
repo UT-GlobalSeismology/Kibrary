@@ -475,9 +475,6 @@ public class ThreeDPartialMaker {
         if (sourceTimeFunction != null)
             partial_frequency = sourceTimeFunction.convolve(partial_frequency, parallel);
 
-        //test tapper
-//        partial_frequency = rightTapper(partial_frequency); // TODO
-
         Complex[] partial_time = SPCFileAid.convertToTimeDomain(partial_frequency, fp.np(), npts, samplingHz, fp.omegai());
         return Arrays.stream(partial_time).mapToDouble(Complex::getReal).toArray();
     }
@@ -544,24 +541,6 @@ public class ThreeDPartialMaker {
         default:
             throw new IllegalArgumentException("Invalid component.");
         }
-    }
-
-    /**
-     * @param complex
-     * @return
-     * @author anselme
-     */
-    private Complex[] rightTapper(Complex[] complex) {
-        Complex[] tappered = complex.clone();
-        int l = complex.length;
-        int n = l / 5;
-
-        for (int i = 0; i < n; i++) {
-//			tappered[i + l - n] = tappered[i + l - n].multiply(Math.cos(Math.PI / (2 * (n - 1)) * i));
-            tappered[i + l - n] = tappered[i + l - n].multiply(1. - (double) i / (n - 1.));
-        }
-
-        return tappered;
     }
 
     private Complex[] computeQpartial(SACComponent component, int iBody) {
@@ -666,11 +645,6 @@ public class ThreeDPartialMaker {
             @Override
             public SPCFileName getSpcFileName() {
                 return spcFileName;
-            }
-
-            @Override
-            public void setSpcBody(int i, SPCBody body) {
-//              spcBody.set(i, body); TODO
             }
         };
     }

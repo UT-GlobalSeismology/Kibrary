@@ -315,11 +315,6 @@ public class SPCFile implements SPCFileAccess {
     }
 
     @Override
-    public void setSpcBody(int i, SPCBody body) {
-        spcBodies.set(i, body.copy());
-    }
-
-    @Override
     public int nbody() {
         return nbody;
     }
