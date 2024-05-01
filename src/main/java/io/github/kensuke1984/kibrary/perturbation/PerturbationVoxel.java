@@ -50,7 +50,7 @@ public class PerturbationVoxel {
         switch (scalarType) {
         case ABSOLUTE: absolute = value; break;
         case DELTA: absolute = referenceMedium.get(variable) + value; break;
-        case PERCENT: absolute = referenceMedium.get(variable) * (1.0 + value / 100.0);
+        case PERCENT: absolute = referenceMedium.get(variable) * (1.0 + value / 100.0); break;
         default: throw new IllegalArgumentException("Unsupported scalar type: " + scalarType);
         }
         perturbedMedium.set(variable, absolute);
