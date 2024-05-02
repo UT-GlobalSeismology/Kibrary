@@ -45,9 +45,8 @@ final class Latitude implements Comparable<Latitude> {
                         Thread.currentThread().getStackTrace()[1].getMethodName());
 
         double geocentric = 0.5 * Math.PI - theta;
-        return Math.toDegrees(Earth.toGeographicLatitude(geocentric));
+        return Math.toDegrees(Earth.geocentricToGeographic(geocentric));
     }
-
 
     /**
      * Construct from geographic latitude. The input must be within [-90:90].
@@ -58,7 +57,7 @@ final class Latitude implements Comparable<Latitude> {
                 "The input latitude: " + geographicLatitude + " is invalid (must be in [-90:90]).");
 
         this.geographicLatitude = Precision.round(geographicLatitude, DECIMALS);
-        geocentricLatitudeRad = Earth.toGeocentricLatitude(Math.toRadians(this.geographicLatitude));
+        geocentricLatitudeRad = Earth.geographicToGeocentric(Math.toRadians(this.geographicLatitude));
         theta = 0.5 * Math.PI - geocentricLatitudeRad;
     }
 
