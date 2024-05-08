@@ -64,6 +64,7 @@ public final class AMatrixBuilder {
             // find which unknown parameter this partialID corresponds to
             int column = findColumnForID(id);
             if (column < 0) {
+//                System.err.println("Cannot find cloumn of the matrix A for a partial; " + id.toString()); //TODO delete
                 return;
             }
 
@@ -71,12 +72,16 @@ public final class AMatrixBuilder {
             int k = dVector.whichTimewindow(id);
             if (k < 0) {
                 //TODO delete
+//                double ed =id.getGlobalCMTID().getEventData().getCmtPosition().computeEpicentralDistanceDeg(id.getObserver().getPosition());
+//                if (ed >= 70 && ed <= 100)
+//                System.err.println("Cannot find the index of timewindow (correspond to the row of the matrix A) for a partial; " + id.toString()); //TODO delete
+                //
                 if (id.getVoxelPosition().equals(new FullPosition(-12.5, -67.5, 3630.0))) {
                     for (int i = 0; i < dVector.getNTimeWindow(); i++) {
                         BasicID synID = dVector.getSynID(i);
                         if (synID.getGlobalCMTID().equals(id.getGlobalCMTID()) && synID.getObserver().equals(id.getObserver())
                                 && synID.getSacComponent().equals(id.getSacComponent())) {
-                            System.err.println("basic: " + synID.getStartTime() + " " + synID.getNpts() + " / partial: " + id.getStartTime() + " " + id.getNpts());
+                            System.err.println("entry " + id.getGlobalCMTID() + " " + id.getObserver().toString() + " " + id.getSacComponent() + "; basic: " + synID.getStartTime() + " " + synID.getNpts() + " / partial: " + id.getStartTime() + " " + id.getNpts());
                         }
                     }
                 }

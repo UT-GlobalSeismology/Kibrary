@@ -159,6 +159,25 @@ public class LetMeInvert extends Operation {
         List<UnknownParameter> unknowns = UnknownParameterFile.read(unknownParameterPath);
         WeightingHandler weightingHandler = new WeightingHandler(weightingPropertiesPath);
 
+//        //TODO delete
+//        Set<DataEntry> entrySet = basicIDs.stream()
+//                .map(id -> new DataEntry(id.getGlobalCMTID(), id.getObserver(), id.getSacComponent()))
+//                .collect(Collectors.toSet());
+//        for (DataEntry entry : entrySet) {
+//            boolean existPair = false;
+//            for (PartialID partialID : partialIDs) {
+//                if (partialID.getGlobalCMTID().equals(entry.getEvent()) && partialID.getObserver().equals(entry.getObserver())
+//                        && partialID.getSacComponent().equals(entry.getComponent()) ) {
+//                    existPair = true;
+//                    break;
+//                }
+//
+//            }
+//            if(!existPair)
+//                System.err.println("The entry " + entry.toString() + " don't have pair");
+//        }
+//        //TODO delete
+
         // assemble matrices
         MatrixAssembly assembler = new MatrixAssembly(basicIDs, partialIDs, unknowns, weightingHandler, fillEmptyPartial);
         RealMatrix ata = assembler.getAta();
