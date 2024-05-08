@@ -156,7 +156,7 @@ public class CrossSectionWorker {
         // set file name root of output files
         this.plotFileNameRoot = variable.toString().toLowerCase() + scalarType.toNaturalString() + ((tag != null) ? ("_" + tag + "_") : "");
         // set scalar file name
-        String tag1 = (tag != null) ? (tag + "_XY") : "XY";
+        String tag1 = (tag != null) ? (tag + "_XZ") : "XZ";
         this.scalarFileName = ScalarListFile.generateFileName(variable, scalarType, tag1);
     }
 
@@ -170,7 +170,7 @@ public class CrossSectionWorker {
         this.maskExists = true;
         this.maskThreshold = maskThreshold;
         // set scalar file name
-        String tag2 = (tag != null) ? (tag + "_forMaskXY") : "forMaskXY";
+        String tag2 = (tag != null) ? (tag + "_forMaskXZ") : "forMaskXZ";
         this.maskFileName = ScalarListFile.generateFileName(maskVariable, maskScalarType, tag2);
     }
 
@@ -204,10 +204,11 @@ public class CrossSectionWorker {
     private void computeCrossSectionData(Map<FullPosition, Double> discreteMap, double[] radii, Map<Double, HorizontalPosition> samplePositionMap,
             double verticalGridInterval, Path outputPath) throws IOException {
         //~for each radius and latitude, resample values at sampleLongitudes
-        double[] sampleLongitudes = samplePositionMap.values().stream().mapToDouble(HorizontalPosition::getLongitude)
+        boolean crossDateLine = HorizontalPosition.crossesDateLine(samplePositionMap.values());
+        double[] sampleLongitudes = samplePositionMap.values().stream().mapToDouble(pos -> pos.getLongitude(crossDateLine))
                 .distinct().sorted().toArray();
         Map<FullPosition, Double> resampledMap = Interpolation.inEachWestEastLine(discreteMap, sampleLongitudes,
-                marginLongitudeDeg, mosaic);
+                marginLongitudeDeg, crossDateLine, mosaic);
         Set<FullPosition> resampledPositions = resampledMap.keySet();
 
         //~compute sampled trace at each sample point

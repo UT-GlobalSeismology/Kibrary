@@ -192,7 +192,7 @@ public class ScalarMapper extends Operation {
         Files.copy(scalarPath, outputDiscretePath);
         // output interpolated perturbation file
         Map<FullPosition, Double> interpolatedMap = Interpolation.inEachMapLayer(discreteMap, gridInterval,
-                marginLatitudeRaw, setMarginLatitudeByKm, marginLongitudeRaw, setMarginLongitudeByKm, mosaic);
+                marginLatitudeRaw, setMarginLatitudeByKm, marginLongitudeRaw, setMarginLongitudeByKm, crossDateLine, mosaic);
         Path outputInterpolatedPath = outPath.resolve(ScalarListFile.generateFileName(variable, scalarType, "XY"));
         ScalarListFile.write(interpolatedMap, crossDateLine, outputInterpolatedPath);
 
@@ -208,7 +208,7 @@ public class ScalarMapper extends Operation {
             Files.copy(maskPath, outMaskPath);
             // output interpolated perturbation file, in range [0:360) when crossDateLine==true so that mapping will succeed
             Map<FullPosition, Double> interpolatedMaskMap = Interpolation.inEachMapLayer(discreteMaskMap, gridInterval,
-                    marginLatitudeRaw, setMarginLatitudeByKm, marginLongitudeRaw, setMarginLongitudeByKm, mosaic);
+                    marginLatitudeRaw, setMarginLatitudeByKm, marginLongitudeRaw, setMarginLongitudeByKm, crossDateLine, mosaic);
             Path outputInterpolatedMaskPath = outPath.resolve(ScalarListFile.generateFileName(maskVariable, maskScalarType, "forMaskXY"));
             ScalarListFile.write(interpolatedMaskMap, crossDateLine, outputInterpolatedMaskPath);
         }

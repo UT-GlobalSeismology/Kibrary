@@ -254,7 +254,7 @@ public class ModelMapper extends Operation {
             ScalarListFile.write(discreteMap, outputDiscretePath);
             // output interpolated perturbation file, in range [0:360) when crossDateLine==true so that mapping will succeed
             Map<FullPosition, Double> interpolatedMap = Interpolation.inEachMapLayer(discreteMap, gridInterval,
-                    marginLatitudeRaw, setMarginLatitudeByKm, marginLongitudeRaw, setMarginLongitudeByKm, mosaic);
+                    marginLatitudeRaw, setMarginLatitudeByKm, marginLongitudeRaw, setMarginLongitudeByKm, crossDateLine, mosaic);
             Path outputInterpolatedPath = outPath.resolve(ScalarListFile.generateFileName(variable, ScalarType.PERCENT, "XY"));
             ScalarListFile.write(interpolatedMap, crossDateLine, outputInterpolatedPath);
 

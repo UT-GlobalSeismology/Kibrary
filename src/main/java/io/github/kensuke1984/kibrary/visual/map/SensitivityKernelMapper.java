@@ -268,7 +268,7 @@ public class SensitivityKernelMapper extends Operation {
                             ScalarListFile.write(discreteMap, outputDiscretePath);
                             // output interpolated perturbation file, in range [0:360) when crossDateLine==true so that mapping will succeed
                             Map<FullPosition, Double> interpolatedMap = Interpolation.inEachMapLayer(discreteMap, gridInterval,
-                                    marginLatitude, setLatitudeByKm, marginLongitude, setLongitudeByKm, mosaic);
+                                    marginLatitude, setLatitudeByKm, marginLongitude, setLongitudeByKm, crossDateLine, mosaic);
                             Path outputInterpolatedPath = observerPath.resolve(ScalarListFile.generateFileName(variableType, scalarType, tag + "_XY"));
                             ScalarListFile.write(interpolatedMap, crossDateLine, outputInterpolatedPath);
 

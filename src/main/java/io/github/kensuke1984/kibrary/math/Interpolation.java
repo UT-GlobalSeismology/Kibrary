@@ -16,7 +16,6 @@ import org.apache.commons.math3.util.Precision;
 
 import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
-import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 
 /**
  * Methods concerning interpolation of values on a line or surface.
@@ -53,6 +52,7 @@ public class Interpolation {
      * @param longitudeMargin (double) The margin to append at the western and eastern ends of the region [deg]
      *         (including edges of voxel gaps).
      *          Also used to recognize voxel gaps in the longitude direction.
+     * @param crossDateLine (boolean) Whether to use longitude range [0:360). Otherwise, [-180:180).
      * @param mosaic (boolean) Whether to create a mosaic-style map. When false, a smooth map will be created.
      * @return (LinkedHashMap of {@link FullPosition} to Double) Interpolated map data.
      *
@@ -60,12 +60,11 @@ public class Interpolation {
      * @since 2023/3/24
      */
     public static Map<FullPosition, Double> inEachWestEastLine(Map<FullPosition, Double> originalMap, double[] sampleLongitudes,
-            double longitudeMarginDeg, boolean mosaic) {
+            double longitudeMarginDeg, boolean crossDateLine, boolean mosaic) {
         // This is created as LinkedHashMap to preserve the order of grid points
         Map<FullPosition, Double> interpolatedMap = new LinkedHashMap<>();
 
         Set<FullPosition> allPositions = originalMap.keySet();
-        boolean crossDateLine = HorizontalPosition.crossesDateLine(allPositions);
         double[] radii = allPositions.stream().mapToDouble(pos -> pos.getR()).distinct().sorted().toArray();
         double[] latitudes = allPositions.stream().mapToDouble(pos -> pos.getLatitude()).distinct().sorted().toArray();
 
@@ -119,6 +118,7 @@ public class Interpolation {
      * @param longitudeMargin (double) The margin to append at the western and eastern ends of the region (including edges of voxel gaps).
      *          Also used to recognize voxel gaps in the longitude direction.
      * @param longitudeInKm (boolean) Whether the above value is given in [km] or [deg].
+     * @param crossDateLine (boolean) Whether to use longitude range [0:360). Otherwise, [-180:180).
      * @param mosaic (boolean) Whether to create a mosaic-style map. When false, a smooth map will be created.
      * @return (LinkedHashMap of {@link FullPosition} to Double) Interpolated map data.
      *
@@ -126,12 +126,11 @@ public class Interpolation {
      * @since 2023/3/4
      */
     public static Map<FullPosition, Double> inEachMapLayer(Map<FullPosition, Double> originalMap, double gridInterval,
-            double latitudeMargin, boolean latitudeInKm, double longitudeMargin, boolean longitudeInKm, boolean mosaic) {
+            double latitudeMargin, boolean latitudeInKm, double longitudeMargin, boolean longitudeInKm, boolean crossDateLine, boolean mosaic) {
         // This is created as LinkedHashMap to preserve the order of grid points
         Map<FullPosition, Double> interpolatedMap = new LinkedHashMap<>();
 
         Set<FullPosition> allPositions = originalMap.keySet();
-        boolean crossDateLine = HorizontalPosition.crossesDateLine(allPositions);
         double[] radii = allPositions.stream().mapToDouble(pos -> pos.getR()).distinct().sorted().toArray();
 
         for (double radius : radii) {
