@@ -20,6 +20,7 @@ import io.github.kensuke1984.kibrary.elastic.VariableType;
 import io.github.kensuke1984.kibrary.perturbation.PerturbationModel;
 import io.github.kensuke1984.kibrary.perturbation.ScalarType;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
+import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.voxel.KnownParameter;
 import io.github.kensuke1984.kibrary.voxel.KnownParameterFile;
 
@@ -234,7 +235,7 @@ public class ModelStructureConverter extends Operation {
                // intercept
                double b = (x1 * y0 - x0 * y1) / (x1 - x0);
                // function form
-               double[] coeffs = {b, a};
+               double[] coeffs = {MathAid.roundForPrecision(b), MathAid.roundForPrecision(a)};
                PolynomialFunction lineFunction = new PolynomialFunction(coeffs);
 
                // overwrite structure information for all zones within this depth range
