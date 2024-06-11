@@ -520,7 +520,6 @@ public class BasicBinnedStackCreator extends Operation {
         }
 
         private void binStackPlotSetup() {
-
             gnuplot = new GnuplotFile(eventPath.resolve(fileNameRoot + ".plt"));
 
             gnuplot.setOutput("pdf", fileNameRoot + ".pdf", 21, 29.7, true);

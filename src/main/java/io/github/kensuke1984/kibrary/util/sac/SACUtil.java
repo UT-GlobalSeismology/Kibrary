@@ -438,7 +438,7 @@ public final class SACUtil {
      * Output file name is "sacFileName.txt".
      * @param eventDirs (Set of {@link EventFolder}) Event folders.
      */
-    public static void outputSacFileTxt(Set<EventFolder> eventDirs) {
+    public static void outputSacFileTxts(Set<EventFolder> eventDirs) {
         for (EventFolder eventDir : eventDirs) {
             try {
                 Set<SACFileName> set = eventDir.sacFileSet();
@@ -447,6 +447,7 @@ public final class SACUtil {
                     // set output
                     String fileName = sacName.toPath().getFileName().toString();
                     Path outputPath = eventDir.toPath().resolve(fileName + ".txt");
+                    if (Files.exists(outputPath)) continue;
 
                     // set input file path
                     SACFileAccess sacData = sacName.read();

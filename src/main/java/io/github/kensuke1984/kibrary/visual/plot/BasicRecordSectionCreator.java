@@ -305,16 +305,14 @@ public class BasicRecordSectionCreator extends Operation {
        }
 
        // read reference basic waveform folders and write waveforms to be used into txt files
-       List<BasicID> refBasicIDs1 = null;
        if (refBasicPath1 != null) {
-           refBasicIDs1 = BasicIDFile.read(refBasicPath1, true).stream()
+           List<BasicID> refBasicIDs1 = BasicIDFile.read(refBasicPath1, true).stream()
                    .filter(id -> components.contains(id.getSacComponent()) && events.contains(id.getGlobalCMTID()))
                    .collect(Collectors.toList());
            BasicIDFile.outputWaveformTxts(refBasicIDs1, refBasicPath1);
        }
-       List<BasicID> refBasicIDs2 = null;
        if (refBasicPath2 != null) {
-           refBasicIDs2 = BasicIDFile.read(refBasicPath2, true).stream()
+           List<BasicID> refBasicIDs2 = BasicIDFile.read(refBasicPath2, true).stream()
                    .filter(id -> components.contains(id.getSacComponent()) && events.contains(id.getGlobalCMTID()))
                    .collect(Collectors.toList());
            BasicIDFile.outputWaveformTxts(refBasicIDs2, refBasicPath2);

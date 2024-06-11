@@ -60,9 +60,13 @@ public class SyntheticRecordSection extends Operation {
      */
     private Path workPath;
     /**
-     * A tag to include in output file names. When this is empty, no tag is used.
+     * A tag to include in output folder name. When this is empty, no tag is used.
      */
-    private String fileTag;
+    private String folderTag;
+    /**
+     * Whether to append date string at end of output folder name.
+     */
+    private boolean appendFolderDate;
     /**
      * Components to use.
      */
@@ -122,12 +126,8 @@ public class SyntheticRecordSection extends Operation {
     private String mainSynName;
     private int refSynStyle1;
     private String refSynName1;
-    private int residualStyle1;
-    private String residualName1;
     private int refSynStyle2;
     private String refSynName2;
-    private int residualStyle2;
-    private String residualName2;
 
     /**
      * Instance of tool to use to compute travel times.
@@ -151,8 +151,10 @@ public class SyntheticRecordSection extends Operation {
             pw.println("manhattan " + className);
             pw.println("##Path of work folder. (.)");
             pw.println("#workPath ");
-            pw.println("##(String) A tag to include in output file names. If no tag is needed, leave this unset.");
-            pw.println("#fileTag ");
+            pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this unset.");
+            pw.println("#folderTag ");
+            pw.println("##(boolean) Whether to append date string at end of output folder name. (true)");
+            pw.println("#appendFolderDate false");
             pw.println("##SacComponents to be used, listed using spaces. (Z R T)");
             pw.println("#components ");
             pw.println("##Path of a root folder containing synthetic dataset (.)");
@@ -193,8 +195,6 @@ public class SyntheticRecordSection extends Operation {
             pw.println("#lowerAzimuth ");
             pw.println("##(double) Upper limit of range of azimuth to be used [deg], exclusive; [-180:360]. (360)");
             pw.println("#upperAzimuth ");
-
-
             pw.println("##Plot style for main synthetic waveform, from {0:no plot, 1:red, 2:green, 3:blue} (1)");
             pw.println("#mainSynStyle 2");
             pw.println("##Name for main synthetic waveform (synthetic)");
@@ -203,18 +203,10 @@ public class SyntheticRecordSection extends Operation {
             pw.println("#refSynStyle1 1");
             pw.println("##Name for reference synthetic waveform 1 (reference1)");
             pw.println("#refSynName1 ");
-            pw.println("##Plot style for residual waveform between main and reference1, from {0:no plot, 1:sky blue} (0)");
-            pw.println("#residualStyle1 1");
-            pw.println("##Name for residual1 waveform (residual1)");
-            pw.println("#residualName1 ");
             pw.println("##Plot style for reference synthetic waveform 2, from {0:no plot, 1:red, 2:green, 3:blue} (0)");
             pw.println("#refSynStyle2 ");
             pw.println("##Name for reference synthetic waveform 2 (reference2)");
             pw.println("#refSynName2 ");
-            pw.println("##Plot style for residual waveform between main and reference2, from {0:no plot, 1:sky blue} (0)");
-            pw.println("#residualStyle2 1");
-            pw.println("##Name for residual2 waveform (residual2)");
-            pw.println("#residualName2 ");
         }
         System.err.println(outPath + " is created.");
     }
@@ -226,7 +218,8 @@ public class SyntheticRecordSection extends Operation {
     @Override
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
-        if (property.containsKey("fileTag")) fileTag = property.parseStringSingle("fileTag", null);
+        if (property.containsKey("folderTag")) folderTag = property.parseStringSingle("folderTag", null);
+        appendFolderDate = property.parseBoolean("appendFolderDate", "true");
         components = Arrays.stream(property.parseStringArray("components", "Z R T"))
                 .map(SACComponent::valueOf).collect(Collectors.toSet());
 
@@ -269,15 +262,11 @@ public class SyntheticRecordSection extends Operation {
         mainSynName = property.parseString("mainSynName", "synthetic");
         refSynStyle1 = property.parseInt("refSynStyle1", "0");
         refSynName1 = property.parseString("refSynName1", "reference1");
-        residualStyle1 = property.parseInt("residualStyle1", "0");
-        residualName1 = property.parseString("residualName1", "residual1");
         refSynStyle2 = property.parseInt("refSynStyle2", "0");
         refSynName2 = property.parseString("refSynName2", "reference2");
-        residualStyle2 = property.parseInt("residualStyle2", "0");
-        residualName2 = property.parseString("residualName2", "residual2");
-        if ((refSynStyle1 != 0 || residualStyle1 != 0) && refSynPath1 == null)
+        if (refSynStyle1 != 0 && refSynPath1 == null)
             throw new IllegalArgumentException("refSynPath1 must be set when refSynStyle1 != 0");
-        if ((refSynStyle2 != 0 || residualStyle2 != 0) && refSynPath2 == null)
+        if (refSynStyle2 != 0 && refSynPath2 == null)
             throw new IllegalArgumentException("refSynPath2 must be set when refSynStyle2 != 0");
     }
 
@@ -288,39 +277,37 @@ public class SyntheticRecordSection extends Operation {
        // read main synthetic dataset and write waveforms to be used into txt files
        Set<EventFolder> mainEventDirs = DatasetAid.eventFolderSet(mainSynPath);
        if (!tendEvents.isEmpty())
-           mainEventDirs = mainEventDirs.stream().filter(dirs -> tendEvents.contains(dirs.getGlobalCMTID())).collect(Collectors.toSet());
-       SACUtil.outputSacFileTxt(mainEventDirs);
+           mainEventDirs = mainEventDirs.stream().filter(dir -> tendEvents.contains(dir.getGlobalCMTID())).collect(Collectors.toSet());
+       SACUtil.outputSacFileTxts(mainEventDirs);
 
-       Set<GlobalCMTID> events = new HashSet<>();
-       mainEventDirs.forEach(dirs -> events.add(dirs.getGlobalCMTID()));
+       Set<GlobalCMTID> events = mainEventDirs.stream().map(dir -> dir.getGlobalCMTID()).collect(Collectors.toSet());
 
        // read reference synthetic dataset and write waveforms to be used into txt files
-       Set<EventFolder> refEventDirs1 = null;
        if (refSynPath1 != null) {
-           refEventDirs1 = DatasetAid.eventFolderSet(refSynPath1);
-           if (!tendEvents.isEmpty())
-               refEventDirs1 = refEventDirs1.stream().filter(dirs -> tendEvents.contains(dirs.getGlobalCMTID())).collect(Collectors.toSet());
-           // check the event directories are same as mainSynPath
-           Set<GlobalCMTID> refEvents1 = new HashSet<>();
-           refEventDirs1.forEach(dirs -> refEvents1.add(dirs.getGlobalCMTID()));
-           if (!refEvents1.equals(events))
-               throw new IllegalArgumentException("The number of event directories in mainSynPath and in refSynPath1 is different");
+           Set<EventFolder> refEventDirs1 = DatasetAid.eventFolderSet(refSynPath1);
+           // check that all needed events are included
+           Set<GlobalCMTID> refEvents1 = refEventDirs1.stream().map(dir -> dir.getGlobalCMTID()).collect(Collectors.toSet());
+           for (GlobalCMTID event : events) {
+               if (!refEvents1.contains(event))
+                   throw new IllegalArgumentException("Event " + event + " is not included in refSynPath1.");
+           }
            // output text file
-           SACUtil.outputSacFileTxt(refEventDirs1);
+           SACUtil.outputSacFileTxts(refEventDirs1);
        }
-       Set<EventFolder> refEventDirs2 = null;
        if (refSynPath2 != null) {
-           refEventDirs2 = DatasetAid.eventFolderSet(refSynPath2);
-           if (!tendEvents.isEmpty())
-               refEventDirs2 = refEventDirs2.stream().filter(dirs -> tendEvents.contains(dirs.getGlobalCMTID())).collect(Collectors.toSet());
-           // check the event directories are same as mainSynPath
-           Set<GlobalCMTID> refEvents2 = new HashSet<>();
-           refEventDirs2.forEach(dirs -> refEvents2.add(dirs.getGlobalCMTID()));
-           if (!refEvents2.equals(events))
-               throw new IllegalArgumentException("The number of event directories in mainSynPath and in refSynPath2 is different");
+           Set<EventFolder> refEventDirs2 = DatasetAid.eventFolderSet(refSynPath1);
+           // check that all needed events are included
+           Set<GlobalCMTID> refEvents2 = refEventDirs2.stream().map(dir -> dir.getGlobalCMTID()).collect(Collectors.toSet());
+           for (GlobalCMTID event : events) {
+               if (!refEvents2.contains(event))
+                   throw new IllegalArgumentException("Event " + event + " is not included in refSynPath2.");
+           }
            // output text file
-           SACUtil.outputSacFileTxt(refEventDirs2);
+           SACUtil.outputSacFileTxts(refEventDirs2);
        }
+
+       Path outPath = DatasetAid.createOutputFolder(workPath, "recordSection", folderTag, appendFolderDate, null);
+       property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
        try {
            // set up taup_time tool
@@ -337,13 +324,16 @@ public class SyntheticRecordSection extends Operation {
                }
 
                // create plots under workPath
-               Path eventPath = workPath.resolve(event.toString());
+               Path eventPath = outPath.resolve(event.toString());
                Files.createDirectories(eventPath);
-               for (SACComponent component : components) {
-                   Set<SACFileName> sacNames = new EventFolder(mainSynPath.resolve(event.toString())).sacFileSet();
-                   sacNames = sacNames.stream().filter(name -> name.isSYN() && name.getComponent().equals(component)).collect(Collectors.toSet());
 
-                   Plotter plotter = new Plotter(eventPath, sacNames, component);
+               for (SACComponent component : components) {
+                   Set<SACFileName> sacNames = new EventFolder(mainSynPath.resolve(event.toString())).sacFileSet()
+                           .stream().filter(name -> name.isSYN() && name.getComponent().equals(component)).collect(Collectors.toSet());
+
+                   String fileNameRoot = "recordSection_" + component.toString();
+
+                   Plotter plotter = new Plotter(eventPath, sacNames, component, fileNameRoot);
                    plotter.plot();
                }
            }
@@ -358,6 +348,7 @@ public class SyntheticRecordSection extends Operation {
        private final Path eventPath;
        private final Set<SACFileName> sacNames;
        private final SACComponent component;
+       private final String fileNameRoot;
 
        private GnuplotFile gnuplot;
        private double synMeanMax = 0;
@@ -369,10 +360,11 @@ public class SyntheticRecordSection extends Operation {
         * @param sacNames (SACFileName) sac files to be plotted
         * @param component
         */
-       private Plotter(Path eventPath, Set<SACFileName> sacNames, SACComponent component) {
+       private Plotter(Path eventPath, Set<SACFileName> sacNames, SACComponent component, String fileNameRoot) {
            this.eventPath = eventPath;
            this.sacNames = sacNames;
            this.component = component;
+           this.fileNameRoot = fileNameRoot;
        }
 
        private void plot() throws IOException, TauModelException {
@@ -447,7 +439,7 @@ public class SyntheticRecordSection extends Operation {
            // add travel time curves
            if (displayPhases != null) {
                BasicPlotAid.plotTravelTimeCurve(timeTool, displayPhases, alignPhases, reductionSlowness, startDistance, endDistance,
-                       fileTag, dateString, eventPath, component, gnuplot);
+                       null, dateString, eventPath, component, gnuplot);
            }
 
            // plot
@@ -456,11 +448,9 @@ public class SyntheticRecordSection extends Operation {
        }
 
        private void profilePlotSetup() {
-           // Here, generateOutputFilePath() is used in an irregular way, adding the component along with the file extension.
-           Path plotPath = DatasetAid.generateOutputFilePath(eventPath, "recordSection", fileTag, true, dateString, "_" + component.toString() + ".plt");
+           gnuplot = new GnuplotFile(eventPath.resolve(fileNameRoot + ".plt"));
 
-           gnuplot = new GnuplotFile(plotPath);
-           gnuplot.setOutput("pdf", plotPath.getFileName().toString().replace(".plt", ".pdf"), 21, 29.7, true);
+           gnuplot.setOutput("pdf", fileNameRoot + ".pdf", 21, 29.7, true);
            gnuplot.setMarginH(15, 25);
            gnuplot.setMarginV(15, 15);
            gnuplot.setFont("Arial", 20, 15, 15, 15, 10);
@@ -494,17 +484,14 @@ public class SyntheticRecordSection extends Operation {
 
            // Set "using" part. For x values, reduce time by distance or phase travel time. For y values, add either distance or azimuth.
            String synUsingString;
-           String residualUsingString;
            if (!byAzimuth) {
                gnuplot.addLabel(sacData.getObserver().toPaddedString() + " " + MathAid.padToString(azimuth, 3, 2, false),
                        "graph", 1.01, "first", distance);
                synUsingString = String.format("($1-%.3f):($2/%.3e+%.2f) ", reduceTime, synAmp, distance);
-               residualUsingString = String.format("($1-%.3f):(($2-$4)/%.3e+%.2f) ", reduceTime, synAmp, distance);
            } else {
                gnuplot.addLabel(sacData.getObserver().toPaddedString() + " " + MathAid.padToString(distance, 3, 2, false),
                        "graph", 1.01, "first", azimuth);
                synUsingString = String.format("($1-%.3f):($2/%.3e+%.2f) ", reduceTime, synAmp, azimuth);
-               residualUsingString = String.format("($1-%.3f):(($2-$4)/%.3e+%.2f) ", reduceTime, synAmp, azimuth);
            }
 
            // plot waveforms
