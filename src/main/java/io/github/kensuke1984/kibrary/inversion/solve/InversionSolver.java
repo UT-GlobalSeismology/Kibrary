@@ -78,21 +78,21 @@ public class InversionSolver extends Operation {
         Path outPath = Property.generatePath(thisClass);
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
             pw.println("manhattan " + thisClass.getSimpleName());
-            pw.println("##Path of a work folder (.)");
+            pw.println("##Path of work folder. (.)");
             pw.println("#workPath ");
-            pw.println("##Path of ata file (ata.lst)");
+            pw.println("##Path of ata file. (ata.lst)");
             pw.println("#ataPath ");
-            pw.println("##Path of atd file (atd.lst)");
+            pw.println("##Path of atd file. (atd.lst)");
             pw.println("#atdPath ");
-            pw.println("##Path of dInfo file (dInfo.inf)");
+            pw.println("##Path of dInfo file. (dInfo.inf)");
             pw.println("#dInfoPath ");
-            pw.println("##Path of an unknown parameter list file (unknowns.lst)");
+            pw.println("##Path of an unknown parameter list file. (unknowns.lst)");
             pw.println("#unknownParameterPath ");
-            pw.println("##Names of inverse methods, listed using spaces, from {CG,SVD,LSM,NNLS,BCGS,FCG,FCGD,NCG,CCG} (CG)");
+            pw.println("##Names of inverse methods, listed using spaces, from {CG,SVD,LSM,NNLS,BCGS,FCG,FCGD,NCG,CCG}. (CG)");
             pw.println("#inverseMethods ");
-            pw.println("##The empirical redundancy parameter alpha to compute AIC for, listed using spaces (1 100 1000)");
+            pw.println("##(double[]) The empirical redundancy parameter alpha to compute AIC for, listed using spaces. (1 100 1000)");
             pw.println("#alpha ");
-            pw.println("##(int) Maximum number of basis vectors to evaluate variance and AIC (100)");
+            pw.println("##(int) Maximum number of basis vectors to evaluate variance and AIC. (100)");
             pw.println("#evaluateNum ");
         }
         System.err.println(outPath + " is created.");

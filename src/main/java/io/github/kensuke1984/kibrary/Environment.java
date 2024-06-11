@@ -113,9 +113,11 @@ public class Environment {
         return PROPERTY.getProperty("institute");
     }
 
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
     /**
-     * Shows environment information
-     *
+     * Shows environment information.
      * @param args will be ignored
      */
     public static void main(String[] args) {

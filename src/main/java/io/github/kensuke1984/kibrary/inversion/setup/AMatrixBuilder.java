@@ -1,24 +1,13 @@
 package io.github.kensuke1984.kibrary.inversion.setup;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.RealVector;
 
-import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.math.ParallelizedMatrix;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
-import io.github.kensuke1984.kibrary.util.data.Observer;
-import io.github.kensuke1984.kibrary.util.earth.FullPosition;
-import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
-import io.github.kensuke1984.kibrary.util.spc.PartialType;
-import io.github.kensuke1984.kibrary.voxel.Physical1DParameter;
-import io.github.kensuke1984.kibrary.voxel.Physical3DParameter;
-import io.github.kensuke1984.kibrary.voxel.TimeReceiverSideParameter;
-import io.github.kensuke1984.kibrary.voxel.TimeSourceSideParameter;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
 import io.github.kensuke1984.kibrary.waveform.PartialID;
 
@@ -57,22 +46,21 @@ public final class AMatrixBuilder {
      * @param fillEmptyPartial (boolean)
      * @return (Matrix) A
      */
-    public ParallelizedMatrix buildWithWeight(Weighting weighting, boolean fillEmptyPartial) {
+    public ParallelizedMatrix buildWithWeight(RealVector[] weighting, boolean fillEmptyPartial) {
 
         ParallelizedMatrix a = new ParallelizedMatrix(dVector.getNpts(), parameterList.size());
         a.scalarMultiply(0);
 
         long t = System.nanoTime();
         AtomicInteger count = new AtomicInteger();
-        int nUnknowns = (int) parameterList.stream().filter(unknown -> !unknown.getPartialType().isTimePartial()).count();
+        int nUnknowns = parameterList.size();
 
         partialIDs.stream().parallel().forEach(id -> {
             if (count.get() == dVector.getNTimeWindow() * nUnknowns)
                 return;
 
             // find which unknown parameter this partialID corresponds to
-            int column = findColumn(id.getPartialType(), id.getVoxelPosition(),
-                    id.getObserver(), id.getGlobalCMTID(), id.getPhases());
+            int column = findColumnForID(id);
             if (column < 0) {
                 return;
             }
@@ -99,8 +87,8 @@ public final class AMatrixBuilder {
 
             // set weighting
             // This includes the volumes of voxels.
-            RealVector weightingVector = weighting.get(k);
-            weightingVector = weightingVector.mapMultiply(parameterList.get(column).getWeighting());
+            RealVector weightingVector = weighting[k];
+            weightingVector = weightingVector.mapMultiply(parameterList.get(column).getSize());
 
             // set A
             for (int j = 0; j < dVector.nptsOfWindow(k); j++) {
@@ -136,67 +124,13 @@ public final class AMatrixBuilder {
     }
 
     /**
-     * Find which column a parameter should be in.
-     * @param type     to look for
-     * @param position to look for
-     * @return i, m<sub>i</sub> = type, parameterが何番目にあるか なければ-1
+     * Find the column that the parameter for a {@link PartialID} is in.
+     * @param id ({@link PartialID}) The {@link PartialID} to find column for.
+     * @return (int) Column number. When none is found, -1.
      */
-    private int findColumn(PartialType type, FullPosition position, Observer observer, GlobalCMTID event, Phase[] phases) {
+    private int findColumnForID(PartialID id) {
         for (int i = 0; i < parameterList.size(); i++) {
-            if (parameterList.get(i).getPartialType() != type)
-                continue;
-
-            switch (type) {
-            case TIME_SOURCE:
-                if (event.equals( ((TimeSourceSideParameter) parameterList.get(i)).getGlobalCMTID() ))
-                    return i;
-                break;
-            case TIME_RECEIVER:
-                //TODO
-                List<Integer> bouncingOrders = new ArrayList<Integer>();
-                bouncingOrders.add(1);
-                Collections.sort(bouncingOrders);
-                int lowestBouncingOrder = bouncingOrders.get(0);
-                if (observer.equals( ((TimeReceiverSideParameter) parameterList.get(i)).getStation() ) &&
-                        ((TimeReceiverSideParameter) parameterList.get(i)).getBouncingOrder() == lowestBouncingOrder)
-                    return i;
-                break;
-            case PARA:
-            case PARC:
-            case PARF:
-            case PARL:
-            case PARN:
-            case PARQ:
-                if (position.getR() == ((Physical1DParameter) parameterList.get(i)).getPerturbationR())
-                    return i;
-                break;
-            case PAR1:
-            case PAR2:
-            case PARVS:
-            case PARVP:
-            case PARG:
-            case PARM:
-            case PAR00:
-                if (position.getR() == ((Physical1DParameter) parameterList.get(i)).getPerturbationR())
-                    return i;
-                break;
-            case A:
-            case C:
-            case F:
-            case L:
-            case N:
-            case Q:
-            case MU:
-            case LAMBDA:
-            case KAPPA:
-            case LAMBDA2MU:
-            case Vs:
-                if (position.equals(((Physical3DParameter) parameterList.get(i)).getPointLocation()))
-                    return i;
-                break;
-            default:
-                break;
-            }
+            if (id.isForParameter(parameterList.get(i))) return i;
         }
         return -1;
     }

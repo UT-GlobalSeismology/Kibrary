@@ -19,12 +19,6 @@ public class KnownParameter {
     private final UnknownParameter parameter;
     private final double value;
 
-    public KnownParameter(UnknownParameter parameter, double value) {
-        super();
-        this.parameter = parameter;
-        this.value = value;
-    }
-
     public static List<UnknownParameter> extractParameterList(List<KnownParameter> knowns) {
         List<UnknownParameter> parameterList = new ArrayList<>();
         for (KnownParameter known : knowns) {
@@ -39,6 +33,11 @@ public class KnownParameter {
             values[i] = knowns.get(i).getValue();
         }
         return values;
+    }
+
+    public KnownParameter(UnknownParameter parameter, double value) {
+        this.parameter = parameter;
+        this.value = value;
     }
 
     public UnknownParameter getParameter() {

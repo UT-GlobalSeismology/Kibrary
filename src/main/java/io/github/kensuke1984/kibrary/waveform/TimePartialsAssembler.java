@@ -19,6 +19,7 @@ import java.util.stream.Collectors;
 
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
+import io.github.kensuke1984.kibrary.elastic.VariableType;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
@@ -29,12 +30,12 @@ import io.github.kensuke1984.kibrary.util.data.DataEntryListFile;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.Earth;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
-import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTCatalog;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.sac.SACFileAccess;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
+import io.github.kensuke1984.kibrary.voxel.ParameterType;
 
 /**
  * @author otsuru
@@ -181,7 +182,6 @@ public class TimePartialsAssembler extends Operation {
         final int N_THREADS = Runtime.getRuntime().availableProcessors();
 //      final int N_THREADS = 1;
         writeLog("Running " + N_THREADS + " threads");
-        writeLog("CMTcatalogue: " + GlobalCMTCatalog.getCatalogPath().toString());
         collectTimewindowInformation();
 
         // sacdataを何ポイントおきに取り出すか
@@ -370,10 +370,10 @@ public class TimePartialsAssembler extends Operation {
 //                System.err.println("Warning: check that the source time function used for the time partial is the same as the one used here.");
 
             PartialID PIDReceiverSide = new PartialID(station, id, t.getComponent(), finalSamplingHz, t.getStartTime(), cutU.length,
-                    1 / maxFreq, 1 / minFreq, t.getPhases(), true, stationLocation, PartialType.TIME_RECEIVER,
+                    1 / maxFreq, 1 / minFreq, t.getPhases(), true, ParameterType.RECEIVER, VariableType.TIME, stationLocation,
                     cutU);
             PartialID PIDSourceSide = new PartialID(station, id, t.getComponent(), finalSamplingHz, t.getStartTime(), cutU.length,
-                    1 / maxFreq, 1 / minFreq, t.getPhases(), true, id.getEventData().getCmtPosition(), PartialType.TIME_SOURCE,
+                    1 / maxFreq, 1 / minFreq, t.getPhases(), true, ParameterType.RECEIVER, VariableType.TIME, id.getEventData().getCmtPosition(),
                     cutU);
 
             if (partialTypes.contains(PartialType.TIME_RECEIVER))

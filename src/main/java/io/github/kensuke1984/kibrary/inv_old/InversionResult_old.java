@@ -140,7 +140,7 @@ public class InversionResult_old {
             phases[i] = Phase.create(phaseParts[i], false);
         return new BasicID(WaveformType.OBS, Double.parseDouble(parts[10]), Double.parseDouble(parts[8]),
                 Integer.parseInt(parts[9]), station, new GlobalCMTID(parts[5]), SACComponent.valueOf(parts[6]),
-                Double.parseDouble(parts[11]), Double.parseDouble(parts[12]), phases, Long.parseLong(parts[14]), true);
+                Double.parseDouble(parts[11]), Double.parseDouble(parts[12]), phases, true);
     }
 
     private static void writeBorn(Path outBornPath, Trace born) throws IOException {
@@ -176,7 +176,7 @@ public class InversionResult_old {
         if (!type.is3D())
             throw new RuntimeException(type + " is not 3d parameter"); // TODO
         Map<FullPosition, Double> ansMap = answer.keySet().stream().filter(key -> key.getPartialType() == type).collect(
-                Collectors.toMap(key -> ((Physical3DParameter) key).getPointLocation(), key -> answer.get(key)));
+                Collectors.toMap(key -> ((Physical3DParameter) key).getPosition(), key -> answer.get(key)));
 
         if (type.equals(PartialType.TIME_RECEIVER) || type.equals(PartialType.TIME_SOURCE) )
             throw new RuntimeException("TIME PARTIAL MADADAMEEEEEEEE");
@@ -185,7 +185,7 @@ public class InversionResult_old {
 
         FullPosition[] nearLocations = location
                 .findNearestPosition(answer.keySet().stream().filter(key -> key.getPartialType() == type)
-                        .map(key -> ((Physical3DParameter) key).getPointLocation()).toArray(FullPosition[]::new));
+                        .map(key -> ((Physical3DParameter) key).getPosition()).toArray(FullPosition[]::new));
         double[] r = new double[nPoints];
         double rTotal = 0;
         for (int iPoint = 0; iPoint < nPoints; iPoint++) {

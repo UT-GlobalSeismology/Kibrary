@@ -18,10 +18,9 @@ import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotColorName;
 import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotFile;
 import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotLineAppearance;
-import io.github.kensuke1984.kibrary.inversion.addons.WeightingType;
+import io.github.kensuke1984.kibrary.inversion.WeightingHandler;
 import io.github.kensuke1984.kibrary.inversion.setup.AMatrixBuilder;
 import io.github.kensuke1984.kibrary.inversion.setup.DVectorBuilder;
-import io.github.kensuke1984.kibrary.inversion.setup.Weighting;
 import io.github.kensuke1984.kibrary.math.ParallelizedMatrix;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
@@ -82,9 +81,11 @@ public class OrthogonalityTest extends Operation {
      * This is used to align the two sets of partial waveforms in the same order and to compute the weightings.
      */
     private Path basicPath;
-    private WeightingType weightingType;
+    private Path weightingPropertiesPath;
     private GlobalCMTID specificEvent;
     private String specificObserverName;
+
+    private WeightingHandler weightingHandler;
 
     /**
      * @param args  none to create a property file <br>
@@ -120,8 +121,8 @@ public class OrthogonalityTest extends Operation {
             pw.println("##########Information of event-observer pairs");
             pw.println("##Path of a basic waveform folder, must be set");
             pw.println("#basicPath actual");
-            pw.println("##Weighting type, from {LOWERUPPERMANTLE,RECIPROCAL,TAKEUCHIKOBAYASHI,IDENTITY,FINAL} (RECIPROCAL)");
-            pw.println("#weightingType ");
+            pw.println("##Path of a weighting properties file, must be set.");
+            pw.println("#weightingPropertiesPath ");
             pw.println("##GCMT ID of a specific event, must be set");
             pw.println("#specificEvent ");
             pw.println("##A specific observer, in the form STA_NET, must be set");
@@ -147,7 +148,7 @@ public class OrthogonalityTest extends Operation {
         testUnknownsPath = property.parsePath("testUnknownsPath", null, true, workPath);
 
         basicPath = property.parsePath("basicPath", null, true, workPath);
-        weightingType = WeightingType.valueOf(property.parseString("weightingType", "RECIPROCAL"));
+        weightingPropertiesPath = property.parsePath("weightingPropertiesPath", null, true, workPath);
         specificEvent = new GlobalCMTID(property.parseString("specificEvent", null));
         specificObserverName = property.parseString("specificObserverName", null);
     }
@@ -169,6 +170,8 @@ public class OrthogonalityTest extends Operation {
 
        List<PartialID> mainPartialIDs = PartialIDFile.read(mainPartialPath, true);
        List<PartialID> testPartialIDs = PartialIDFile.read(testPartialPath, true);
+
+       weightingHandler = new WeightingHandler(weightingPropertiesPath);
 
        double[][] correlations;
        Path outputPath;
@@ -213,14 +216,15 @@ public class OrthogonalityTest extends Operation {
    }
 
    private double[][] computeCorrelations(List<PartialID> mainPartialIDs, List<PartialID> testPartialIDs,
-           List<UnknownParameter> mainUnknowns, List<UnknownParameter> testUnknowns, List<BasicID> basicIDs) {
+           List<UnknownParameter> mainUnknowns, List<UnknownParameter> testUnknowns, List<BasicID> basicIDs) throws IOException {
 
        // set DVector
        System.err.println("Setting data for d vector");
        DVectorBuilder dVectorBuilder = new DVectorBuilder(basicIDs);
+
        // set weighting
-       System.err.println("Setting weighting of type " + weightingType);
-       Weighting weighting = new Weighting(dVectorBuilder, weightingType, null);
+       System.err.println("Setting weighting");
+       RealVector[] weighting = weightingHandler.weighWaveforms(dVectorBuilder);
 
        // set and assemble main A matrix
        System.err.println("Setting data for main A matrix");

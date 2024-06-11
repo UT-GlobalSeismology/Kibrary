@@ -33,7 +33,7 @@ public final class FujiConversion {
     }
 
     public SPCFileAccess convert(SPCFileAccess spectrum) {
-        if (spectrum.getSpcFileType() != SPCType.PAR2) throw new RuntimeException();
+        if (spectrum.getSpcFileType() != SPCType.MU1D) throw new RuntimeException();
 
         int nbody = spectrum.nbody();
         int np = spectrum.np();
@@ -43,9 +43,8 @@ public final class FujiConversion {
 
         // data part
         double omegai = spectrum.omegai();
-        HorizontalPosition observerPosition = spectrum.getObserverPosition();
-        String observerID = spectrum.getStationCode();
-        String observerNetwork = spectrum.getNetworkCode();
+        HorizontalPosition observerPosition = spectrum.getReceiverPosition();
+        String observerID = spectrum.getReceiverID();
         FullPosition sourceLocation = spectrum.getSourcePosition();
         String sourceID = spectrum.getSourceID();
         double[] bodyR = spectrum.getBodyR();
@@ -115,7 +114,7 @@ public final class FujiConversion {
 
             @Override
             public SPCType getSpcFileType() {
-                return SPCType.PARQ;
+                return SPCType.Q1D;
             }
 
             @Override
@@ -134,23 +133,13 @@ public final class FujiConversion {
             }
 
             @Override
-            public HorizontalPosition getObserverPosition() {
+            public HorizontalPosition getReceiverPosition() {
                 return observerPosition;
             }
 
             @Override
-            public String getObserverID() {
-                return observerID + "_" + observerNetwork;
-            }
-
-            @Override
-            public String getStationCode() {
+            public String getReceiverID() {
                 return observerID;
-            }
-
-            @Override
-            public String getNetworkCode() {
-                return observerNetwork;
             }
 
             @Override

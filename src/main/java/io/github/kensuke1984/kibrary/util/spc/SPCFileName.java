@@ -9,21 +9,25 @@ import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 
 /**
- * A name of a spectrum file made by DSM<br>
+ * A name of a spectrum file made by DSM.
  * <p>
  * The names take the form:
  * <ul>
- * <li> Synthetic: "ObserverID.GlobalCMTID_(PSV, SV).spc" </li>
- * <li> Partial derivatives: "station.GlobalCMTID.type(par2, PF, PB .etc).x.y.(PSV, SH).spc" </li>
+ * <li> Synthetic: "ObserverID.GlobalCMTID.(PSV,SV).spc" </li>
+ * <li> Partial derivatives: "ReceiverID.SourceID.type(MU1D,PF,UB,etc.).x.y.(PSV,SH).spc" </li>
  * </ul>
  * where ObserverID is "station_network".
- * 'PSV', 'SH' must be upper case. 'station' and 'network' must be 8 or less letters.
+ * In synthetic files, 'station' and 'network' must be 8 or less letters.
+ * 'PSV', 'SH' must be upper case.
  *
  * @author Kensuke Konishi
  * @version 0.2.0
  * @author anselme add network
  */
 public abstract class SPCFileName extends File {
+
+    static final int SYN_FILE_PARTS = 4;
+    static final int PARTIAL_FILE_PARTS = 7;
 
     //-------------------- generate a new name --------------------//
 
@@ -35,8 +39,8 @@ public abstract class SPCFileName extends File {
      * @param mode
      * @return
      */
-    public static String generate(Observer observerID, GlobalCMTID eventID, String mode) {
-        return observerID.toString() + "." + eventID.toString() + "_" + mode + ".spc";
+    public static String generate(Observer observerID, GlobalCMTID eventID, SPCMode mode) {
+        return observerID.toString() + "." + eventID.toString() + "." + mode + ".spc";
     }
 
     //-------------------- create instance and read name --------------------//
@@ -44,29 +48,22 @@ public abstract class SPCFileName extends File {
     static boolean isFormatted(String name) {
         if (!name.endsWith(".spc")) return false;
         if (!name.endsWith("PSV.spc") && !name.endsWith("SH.spc")) {
-            System.err.println("SPC file name must end with [PSV, SH].spc (psv, sh not allowed anymore).");
+            System.err.println("SPC file name must end with '[PSV, SH].spc'.");
             return false;
         }
         String[] parts = name.split("\\.");
-        if (parts.length != 3 && parts.length != 7) {
-            System.err.println("SPC file name must be ObserverID.GlobalCMTID_(PSV, SV).spc or " +
-                    "ObserverID.GlobalCMTID.type(par2, PF, PB .etc).x.y.(PSV, SH).spc");
+        if (parts.length != SYN_FILE_PARTS && parts.length != PARTIAL_FILE_PARTS) {
+            System.err.println("SPC file name must be 'ObserverID.GlobalCMTID.(PSV, SV).spc' or " +
+                    "'ReceiverID.SourceID.type(MU1D,PF,UB,etc.).x.y.(PSV,SH).spc'");
             return false;
         }
 
-        String observerID = name.split("\\.")[0].split("_")[0];
-        if (parts.length == 3) {
-            String observerNetwork = name.split("\\.")[0].split("_")[1];
+        if (parts.length == SYN_FILE_PARTS) {
             // synthetics files have both station name and network name
-            if (8 < observerID.length()) System.err.println(observerID + "Name of station cannot be over 8 characters");
-            if (8 < observerNetwork.length()) System.err.println(observerNetwork + "Name of network cannot be over 8 characters");
-        }
-        else {
-            // bp and fp files have only a station name
-            if (8 < observerID.length()) {
-                System.err.println("Name of station cannot be over 8 characters.");
-                return false;
-            }
+            String station = name.split("\\.")[0].split("_")[0];
+            String network = name.split("\\.")[0].split("_")[1];
+            if (8 < station.length()) System.err.println(station + "Name of station cannot be over 8 characters");
+            if (8 < network.length()) System.err.println(network + "Name of network cannot be over 8 characters");
         }
 
         return true;
@@ -85,7 +82,7 @@ public abstract class SPCFileName extends File {
      * @return if the fileName is synthetic (not partial)
      */
     static boolean isSynthetic(String fileName) {
-        return fileName.split("\\.").length == 3;
+        return fileName.split("\\.").length == SYN_FILE_PARTS;
     }
 
     SPCFileName(String pathname) {
@@ -116,7 +113,7 @@ public abstract class SPCFileName extends File {
     public abstract boolean isSynthetic();
 
     /**
-     * @return type (PAR0, .., PARQ, synthetic) of the file.
+     * @return type (MU1D,PF,UB,SYNTHETIC,etc.) of the file.
      */
     public abstract SPCType getFileType();
 
@@ -131,20 +128,9 @@ public abstract class SPCFileName extends File {
     public abstract String getSourceID();
 
     /**
-     * @return ID of observer (station_network)
+     * @return ID of receiver (for observers, STATION_NETWORK)
      */
-    public abstract String getObserverID();
-
-    /**
-     * @return STATION code of the observer
-     */
-    public abstract String getStationCode(); // TODO: delete
-
-    /**
-     * @return NETWORK code of the observer
-     * @author anselme
-     */
-    public abstract String getNetworkCode(); // TODO: delete
+    public abstract String getReceiverID();
 
     /**
      * @return the PSV/SH pair file name

@@ -16,7 +16,6 @@ import org.apache.commons.math3.linear.RealVector;
 
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
-import io.github.kensuke1984.kibrary.inversion.addons.WeightingType;
 import io.github.kensuke1984.kibrary.inversion.setup.AtAFile;
 import io.github.kensuke1984.kibrary.inversion.setup.AtdFile;
 import io.github.kensuke1984.kibrary.inversion.setup.MatrixAssembly;
@@ -71,7 +70,7 @@ public class LetMeInvert extends Operation {
      */
     private Path unknownParameterPath;
 
-    private WeightingType weightingType;
+    private Path weightingPropertiesPath;
     /**
      * Solvers for equation
      */
@@ -104,25 +103,25 @@ public class LetMeInvert extends Operation {
         Path outPath = Property.generatePath(thisClass);
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
             pw.println("manhattan " + thisClass.getSimpleName());
-            pw.println("##Path of a work folder (.)");
+            pw.println("##Path of work folder. (.)");
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this unset.");
             pw.println("#folderTag ");
-            pw.println("##Path of a basic waveform folder, must be set");
+            pw.println("##Path of a basic waveform folder, must be set.");
             pw.println("#basicPath actual");
-            pw.println("##Path of a partial waveform folder, must be set");
+            pw.println("##Path of a partial waveform folder, must be set.");
             pw.println("#partialPath partial");
-            pw.println("##Path of an unknown parameter list file, must be set");
+            pw.println("##Path of an unknown parameter list file, must be set.");
             pw.println("#unknownParameterPath unknowns.lst");
-            pw.println("##Weighting type, from {LOWERUPPERMANTLE,RECIPROCAL,TAKEUCHIKOBAYASHI,IDENTITY,FINAL} (RECIPROCAL)");
-            pw.println("#weightingType ");
-            pw.println("##Names of inverse methods, listed using spaces, from {CG,SVD,LSM,NNLS,BCGS,FCG,FCGD,NCG,CCG} (CG)");
+            pw.println("##Path of a weighting properties file, must be set.");
+            pw.println("#weightingPropertiesPath weighting.properties");
+            pw.println("##Names of inverse methods, listed using spaces, from {CG,SVD,LSM,NNLS,BCGS,FCG,FCGD,NCG,CCG}. (CG)");
             pw.println("#inverseMethods ");
-            pw.println("##The empirical redundancy parameter alpha to compute AIC for, listed using spaces (1 100 1000)");
+            pw.println("##(double[]) The empirical redundancy parameter alpha to compute AIC for, listed using spaces. (1 100 1000)");
             pw.println("#alpha ");
-            pw.println("##(int) Maximum number of basis vectors to evaluate variance and AIC (100)");
+            pw.println("##(int) Maximum number of basis vectors to evaluate variance and AIC. (100)");
             pw.println("#evaluateNum ");
-            pw.println("##(boolean) Fill 0 to empty partial waveforms (false)");
+            pw.println("##(boolean) Fill 0 to empty partial waveforms. (false)");
             pw.println("#fillEmptyPartial ");
         }
         System.err.println(outPath + " is created.");
@@ -141,7 +140,7 @@ public class LetMeInvert extends Operation {
         partialPath = property.parsePath("partialPath", null, true, workPath);
         unknownParameterPath = property.parsePath("unknownParameterPath", null, true, workPath);
 
-        weightingType = WeightingType.valueOf(property.parseString("weightingType", "RECIPROCAL"));
+        weightingPropertiesPath = property.parsePath("weightingPropertiesPath", null, true, workPath);
 
         inverseMethods = Arrays.stream(property.parseStringArray("inverseMethods", "CG")).map(InverseMethodEnum::of)
                 .collect(Collectors.toSet());
@@ -155,12 +154,13 @@ public class LetMeInvert extends Operation {
     public void run() throws IOException {
 
         // read input
+        WeightingHandler weightingHandler = new WeightingHandler(weightingPropertiesPath);
+        List<UnknownParameter> unknowns = UnknownParameterFile.read(unknownParameterPath);
         List<BasicID> basicIDs = BasicIDFile.read(basicPath, true);
         List<PartialID> partialIDs = PartialIDFile.read(partialPath, true);
-        List<UnknownParameter> unknowns = UnknownParameterFile.read(unknownParameterPath);
 
         // assemble matrices
-        MatrixAssembly assembler = new MatrixAssembly(basicIDs, partialIDs, unknowns, weightingType, fillEmptyPartial);
+        MatrixAssembly assembler = new MatrixAssembly(basicIDs, partialIDs, unknowns, weightingHandler, fillEmptyPartial);
         RealMatrix ata = assembler.getAta();
         RealVector atd = assembler.getAtd();
         int dLength = assembler.getD().getDimension();

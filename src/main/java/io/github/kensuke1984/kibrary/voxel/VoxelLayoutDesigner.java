@@ -33,6 +33,8 @@ import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
  * When using distance [km], it is converted to degrees at the (roughly) median radius of the target region.
  * <p>
  * Radii of voxel boundaries must be decided manually. Voxel radii will be set at the center of each radius range.
+ * <p>
+ * Use {@link VoxelFileMaker} to decide the position range of voxels manually.
  *
  * @author otsuru
  * @since 2022/2/11
@@ -70,6 +72,14 @@ public class VoxelLayoutDesigner extends Operation {
     private boolean crossDateLine;
 
     private double[] borderRadii;
+    private double lowerRadius;
+    private double upperRadius;
+    private double dRadius;
+
+    /**
+     * (roughly) median radius of target region
+     */
+    private double centerRadius;
 
     /**
      * @param args  none to create a property file <br>
@@ -86,38 +96,47 @@ public class VoxelLayoutDesigner extends Operation {
         Path outPath = Property.generatePath(thisClass);
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
             pw.println("manhattan " + thisClass.getSimpleName());
-            pw.println("##Path of a working directory. (.)");
+            pw.println("##Path of work folder. (.)");
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output file names. If no tag is needed, leave this unset.");
             pw.println("#fileTag ");
-            pw.println("##Path of a data entry list file, must be set");
+            pw.println("##########Information to design horzontal positions of voxels.");
+            pw.println("##Path of a data entry list file, must be set.");
             pw.println("#dataEntryPath dataEntry.lst");
-            pw.println("##Phases to compute pierce points for, listed using spaces (ScS)");
+            pw.println("##Phases to compute pierce points for, listed using spaces. (ScS)");
             pw.println("#piercePhases ");
-            pw.println("##(double) Lower radius to compute pierce points for [km] (3480)");
+            pw.println("##(double) Lower radius to compute pierce points for [km]. (3480)");
             pw.println("#lowerPierceRadius ");
-            pw.println("##(double) Upper radius to compute pierce points for [km] (3880)");
+            pw.println("##(double) Upper radius to compute pierce points for [km]. (3880)");
             pw.println("#upperPierceRadius ");
-            pw.println("##(String) Name of structure to use for calculating pierce points (prem)");
+            pw.println("##(String) Name of structure to use for calculating pierce points. (prem)");
             pw.println("#structureName ");
-            pw.println("##(double) Latitude spacing [km]. If this is unset, the following dLatitudeDeg will be used.");
+            pw.println("##(double) Latitude spacing [km]; (0:). If unset, the following dLatitudeDeg will be used.");
             pw.println("##  The (roughly) median radius of target region will be used to convert this to degrees.");
             pw.println("#dLatitudeKm ");
-            pw.println("##(double) Latitude spacing [deg] (5)");
+            pw.println("##(double) Latitude spacing [deg]; (0:). (5)");
             pw.println("#dLatitudeDeg ");
-            pw.println("##(double) Offset of boundary latitude [deg], must be positive (2.5)");
+            pw.println("##(double) Offset of boundary latitude [deg]; [0:). (2.5)");
             pw.println("#latitudeOffset ");
-            pw.println("##(double) Longitude spacing [km]. If this is unset, the following dLongitudeDeg will be used.");
+            pw.println("##(double) Longitude spacing [km]; (0:). If this is unset, the following dLongitudeDeg will be used.");
             pw.println("##  The (roughly) median radius of target region will be used to convert this to degrees at each latitude.");
             pw.println("#dLongitudeKm ");
-            pw.println("##(double) Longitude spacing [deg] (5)");
+            pw.println("##(double) Longitude spacing [deg]; (0:). (5)");
             pw.println("#dLongitudeDeg ");
-            pw.println("##(double) Offset of boundary longitude, when dLongitudeDeg is used [deg] [0:dLongitudeDeg) (2.5)");
+            pw.println("##(double) Offset of boundary longitude, when dLongitudeDeg is used [deg]; [0:dLongitudeDeg). (2.5)");
             pw.println("#longitudeOffset ");
-            pw.println("##(boolean) Use longitude range [0:360) instead of [-180:180) (false)");
+            pw.println("##(boolean) Use longitude range [0:360) instead of [-180:180)? (false)");
             pw.println("#crossDateLine ");
-            pw.println("##(double) Radii of layer borders, listed using spaces [km] (3480 3530 3580 3630 3680 3730 3780 3830 3880)");
-            pw.println("#borderRadii ");
+            pw.println("##########Parameters for the BORDER radii of voxels to create.");
+            pw.println("##(double[]) Radii of layer borders, listed using spaces [km]; [0:).");
+            pw.println("##  If unset, the subsequent parameters are used.");
+            pw.println("#borderRadii 3480 3530 3580 3630 3680 3730 3780 3830 3880");
+            pw.println("##(int) Lower limit of radius [km]; [0:upperRadius). (3480)");
+            pw.println("#lowerRadius ");
+            pw.println("##(int) Upper limit of radius [km]; (lowerRadius:). (3880)");
+            pw.println("#upperRadius ");
+            pw.println("##(double) Radius spacing [km]; (0:). (50)");
+            pw.println("#dRadius ");
         }
         System.err.println(outPath + " is created.");
     }
@@ -140,41 +159,52 @@ public class VoxelLayoutDesigner extends Operation {
         if (property.containsKey("dLatitudeKm")) {
             dLatitudeKm = property.parseDouble("dLatitudeKm", null);
             if (dLatitudeKm <= 0)
-                throw new IllegalArgumentException("dLatitudeKm must be positive");
+                throw new IllegalArgumentException("dLatitudeKm must be positive.");
             setLatitudeByKm = true;
         } else {
             dLatitudeDeg = property.parseDouble("dLatitudeDeg", "5");
             if (dLatitudeDeg <= 0)
-                throw new IllegalArgumentException("dLatitudeDeg must be positive");
+                throw new IllegalArgumentException("dLatitudeDeg must be positive.");
             setLatitudeByKm = false;
         }
         latitudeOffset = property.parseDouble("latitudeOffset", "2.5");
         if (latitudeOffset < 0)
-            throw new IllegalArgumentException("latitudeOffset must be positive");
+            throw new IllegalArgumentException("latitudeOffset must be non-negative.");
 
         if (property.containsKey("dLongitudeKm")) {
             dLongitudeKm = property.parseDouble("dLongitudeKm", null);
             if (dLongitudeKm <= 0)
-                throw new IllegalArgumentException("dLongitudeKm must be positive");
+                throw new IllegalArgumentException("dLongitudeKm must be positive.");
             setLongitudeByKm = true;
         } else {
             dLongitudeDeg = property.parseDouble("dLongitudeDeg", "5");
             if (dLongitudeDeg <= 0)
-                throw new IllegalArgumentException("dLongitudeDeg must be positive");
+                throw new IllegalArgumentException("dLongitudeDeg must be positive.");
             longitudeOffset = property.parseDouble("longitudeOffset", "2.5");
             if (longitudeOffset < 0 || dLongitudeDeg <= longitudeOffset)
-                throw new IllegalArgumentException("longitudeOffset must be in [0:dLongitudeDeg)");
+                throw new IllegalArgumentException("longitudeOffset must be in [0:dLongitudeDeg).");
             setLongitudeByKm = false;
         }
         crossDateLine = property.parseBoolean("crossDateLine", "false");
 
-        borderRadii = Arrays.stream(property.parseDoubleArray("borderRadii", "3480 3530 3580 3630 3680 3730 3780 3830 3880"))
-                .sorted().toArray();
-        if (borderRadii.length < 2) throw new IllegalArgumentException("There must be at least 2 values for borderRadii");
+        if (property.containsKey("borderRadii")) {
+            borderRadii = Arrays.stream(property.parseDoubleArray("borderRadii", null))
+                    .sorted().toArray();
+            if (borderRadii.length < 2) throw new IllegalArgumentException("There must be at least 2 values for borderRadii.");
+        } else {
+            lowerRadius = property.parseDouble("lowerRadius", "3480");
+            upperRadius = property.parseDouble("upperRadius", "3880");
+            if (lowerRadius < 0 || lowerRadius > upperRadius)
+                throw new IllegalArgumentException("Radius range " + lowerRadius + " , " + upperRadius + " is invalid.");
+            dRadius = property.parseDouble("dRadius", "50");
+            if (dRadius <= 0)
+                throw new IllegalArgumentException("dRadius must be non-negative.");
+        }
     }
 
     @Override
     public void run() throws IOException {
+        centerRadius = (borderRadii != null) ? borderRadii[borderRadii.length / 2] : (lowerRadius + upperRadius) / 2;
         Set<DataEntry> entrySet = DataEntryListFile.readAsSet(dataEntryPath);
 
         // compute pierce points
@@ -197,23 +227,34 @@ public class VoxelLayoutDesigner extends Operation {
         List<HorizontalPixel> horizontalPixels = designHorizontalPixels(insideSegments);
 
         // set voxel layer information
-        double[] layerThicknesses = new double[borderRadii.length - 1];
-        double[] voxelRadii = new double[borderRadii.length - 1];
-        for (int i = 0; i < borderRadii.length - 1; i++) {
-            layerThicknesses[i] = borderRadii[i + 1] - borderRadii[i];
-            voxelRadii[i] = (borderRadii[i] + borderRadii[i + 1]) / 2;
+        double[] layerThicknesses;
+        double[] layerRadii;
+        if (borderRadii != null) {
+            layerThicknesses = new double[borderRadii.length - 1];
+            layerRadii = new double[borderRadii.length - 1];
+            for (int i = 0; i < borderRadii.length - 1; i++) {
+                layerThicknesses[i] = borderRadii[i + 1] - borderRadii[i];
+                layerRadii[i] = (borderRadii[i] + borderRadii[i + 1]) / 2;
+            }
+        } else {
+            int nRadius = (int) Math.floor((upperRadius - lowerRadius) / dRadius);
+            layerThicknesses = new double[nRadius];
+            layerRadii = new double[nRadius];
+            for (int i = 0; i < nRadius; i++) {
+                layerThicknesses[i] = dRadius;
+                layerRadii[i] = lowerRadius + (i + 0.5) * dRadius;
+            }
         }
 
         // output
         Path outputPath = workPath.resolve(DatasetAid.generateOutputFileName("voxel", fileTag, GadgetAid.getTemporaryString(), ".inf"));
-        VoxelInformationFile.write(layerThicknesses, voxelRadii, horizontalPixels, outputPath);
+        VoxelInformationFile.write(layerThicknesses, layerRadii, horizontalPixels, outputPath);
     }
 
     private List<HorizontalPixel> designHorizontalPixels(List<Raypath> insideSegments) {
 
         // when using dLatitudeKm, set dLatitude in degrees using the (roughly) median radius of target region
-        double dLatitude = setLatitudeByKm ?
-                Math.toDegrees(dLatitudeKm / borderRadii[borderRadii.length / 2]) : dLatitudeDeg;
+        double dLatitude = setLatitudeByKm ? Math.toDegrees(dLatitudeKm / centerRadius) : dLatitudeDeg;
 
         //~decide longitude ranges for each (co)latitude
         // decide number of colatitude intervals
@@ -270,7 +311,7 @@ public class VoxelLayoutDesigner extends Operation {
             if (setLongitudeByKm) {
                 // voxel points are aligned on latitude lines so that their spacing (at the median radius) is dLongitudeKm
                 // the min and max borders are set close to the min and max longitudes of sample points
-                double smallCircleRadius = borderRadii[borderRadii.length / 2] * Math.cos(Math.toRadians(latitude));
+                double smallCircleRadius = centerRadius * Math.cos(Math.toRadians(latitude));
                 double dLongitudeForRow = Math.toDegrees(dLongitudeKm / smallCircleRadius);
                 int nLongitude = (int) Math.round((maxLongitudes[i] - minLongitudes[i]) / dLongitudeForRow);
                 double centerLongitude = (minLongitudes[i] + maxLongitudes[i]) / 2;
@@ -295,7 +336,7 @@ public class VoxelLayoutDesigner extends Operation {
                 // the min and max borders of longitude are set so that all sample points are included
                 double minLongitude = Math.floor((minLongitudes[i] - longitudeOffset) / dLongitudeDeg) * dLongitudeDeg + longitudeOffset;
                 double maxLongitude = Math.ceil((maxLongitudes[i] - longitudeOffset) / dLongitudeDeg) * dLongitudeDeg + longitudeOffset;
-                 int nLongitude = (int) ((maxLongitude - minLongitude) / dLongitudeDeg);
+                int nLongitude = (int) ((maxLongitude - minLongitude) / dLongitudeDeg);
                 for (int j = 0; j < nLongitude; j++) {
                     // center longitude of each horizontal pixel
                     double longitude = minLongitude + (j + 0.5) * dLongitudeDeg;

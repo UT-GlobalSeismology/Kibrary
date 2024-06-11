@@ -31,8 +31,7 @@ public class PerturbationComparison {
 
     /**
      * Compare two perturbation models.
-     * @param args [option]
-     *      [voxelPath  partialTypes...]
+     * @param args Options.
      * @throws IOException
      */
     public static void main(String[] args) throws IOException {

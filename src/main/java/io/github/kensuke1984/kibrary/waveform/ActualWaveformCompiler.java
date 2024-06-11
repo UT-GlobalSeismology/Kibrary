@@ -12,7 +12,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -35,13 +34,13 @@ import io.github.kensuke1984.kibrary.math.FourierTransform;
 import io.github.kensuke1984.kibrary.math.HilbertTransform;
 import io.github.kensuke1984.kibrary.math.Interpolation;
 import io.github.kensuke1984.kibrary.math.Trace;
+import io.github.kensuke1984.kibrary.timewindow.Timewindow;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
+import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.ThreadAid;
-import io.github.kensuke1984.kibrary.util.data.DataEntry;
-import io.github.kensuke1984.kibrary.util.data.DataEntryListFile;
 import io.github.kensuke1984.kibrary.util.data.EventListFile;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.data.ObserverListFile;
@@ -215,7 +214,7 @@ public class ActualWaveformCompiler extends Operation {
             pw.println("##(double) Value of sampling Hz in output files, must be a factor of sacSamplingHz (1)");
             pw.println("#finalSamplingHz ");
             pw.println("##Path of a timewindow file, must be defined");
-            pw.println("#timewindowPath timewindow.dat");
+            pw.println("#timewindowPath selectedTimewindow.dat");
             pw.println("##Path of a timewindow file for a reference phase used to correct spectral amplitude, can be ignored");
             pw.println("#timewindowRefPath ");
             pw.println("##Path of a root folder containing observed dataset (.)");
@@ -223,14 +222,14 @@ public class ActualWaveformCompiler extends Operation {
             pw.println("##Path of a root folder containing synthetic dataset (.)");
             pw.println("#synPath ");
             pw.println("##(boolean) Whether the synthetics have already been convolved (true)");
-            pw.println("#convolved ");
+            pw.println("#convolved false");
             pw.println("##Path of a data entry list file, if you want to select raypaths");
             pw.println("#dataEntryPath selectedEntry.lst");
             pw.println("##Path of a static correction file");
             pw.println("## If the following correctTime is true or amplitudeCorrectionType > 0, this path must be defined.");
             pw.println("#staticCorrectionPath staticCorrection.dat");
             pw.println("##(boolean) Whether time should be corrected (false)");
-            pw.println("#correctTime ");
+            pw.println("#correctTime true");
             pw.println("##(int) Type of amplitude correction to apply, from {0: none, 1: each trace, 2: event average} (0)");
             pw.println("#amplitudeCorrectionType ");
             pw.println("##Path of a mantle correction file");
@@ -301,20 +300,8 @@ public class ActualWaveformCompiler extends Operation {
 
    @Override
    public void run() throws IOException {
-       if (dataEntryPath != null) {
-           // read entry set to be used for selection
-           Set<DataEntry> entrySet = DataEntryListFile.readAsSet(dataEntryPath);
-
-           // read timewindows and select based on component and entries
-           sourceTimewindowSet = TimewindowDataFile.read(timewindowPath).stream()
-                   .filter(window -> components.contains(window.getComponent()) && entrySet.contains(window.toDataEntry()))
-                   .collect(Collectors.toSet());
-       } else {
-           // read timewindows and select based on component
-           sourceTimewindowSet = TimewindowDataFile.read(timewindowPath).stream()
-                   .filter(window -> components.contains(window.getComponent()))
-                   .collect(Collectors.toSet());
-       }
+       // read timewindow file and select based on component and entries
+       sourceTimewindowSet = TimewindowDataFile.readAndSelect(timewindowPath, dataEntryPath, components);
 
        // read static correction data
        if (correctTime || amplitudeCorrectionType > 0) {
@@ -387,12 +374,15 @@ public class ActualWaveformCompiler extends Operation {
 
     private StaticCorrectionData getStaticCorrection(TimewindowData window) {
         List<StaticCorrectionData> corrs = staticCorrectionSet.stream().filter(s -> s.isForTimewindow(window)).collect(Collectors.toList());
-        if (corrs.size() > 1)
+        if (corrs.size() > 1) {
             throw new RuntimeException("Found more than 1 static correction for window " + window);
-        if (corrs.size() == 0)
-            throw new RuntimeException("Found no static correction for window " + window);
-        return corrs.get(0);
+        } else if (corrs.size() == 0) {
+            return null;
+        } else {
+            return corrs.get(0);
+        }
     }
+
     /**
      * @param window
      * @author anselme
@@ -400,20 +390,20 @@ public class ActualWaveformCompiler extends Operation {
      */
     private StaticCorrectionData getMantleCorrection(TimewindowData window) {
         List<StaticCorrectionData> corrs = mantleCorrectionSet.stream().filter(s -> s.isForTimewindow(window)).collect(Collectors.toList());
-        if (corrs.size() > 1)
+        if (corrs.size() > 1) {
             throw new RuntimeException("Found more than 1 mantle correction for window " + window);
-        if (corrs.size() == 0)
-            throw new RuntimeException("Found no mantle correction for window " + window);
-        return corrs.get(0);
+        } else if (corrs.size() == 0) {
+            return null;
+        } else {
+            return corrs.get(0);
+        }
     }
 
-    private double[] cutDataSac(SACFileAccess sac, double startTime, int npts) {
+    private double[] cutDataSac(SACFileAccess sac, Timewindow window) {
         Trace trace = sac.createTrace();
-        int step = (int) (sacSamplingHz / finalSamplingHz);
-        int startPoint = trace.findNearestXIndex(startTime);
-        double[] waveData = trace.getY();
-        return IntStream.range(0, npts).parallel().mapToDouble(i -> waveData[i * step + startPoint]).toArray();
+        return trace.resampleInWindow(window, sacSamplingHz, finalSamplingHz).getY();
     }
+
     /**
      * @param sac
      * @param startTime
@@ -596,55 +586,58 @@ public class ActualWaveformCompiler extends Operation {
             // check delta
             double delta = 1 / sacSamplingHz;
             if (delta != obsSac.getValue(SACHeaderEnum.DELTA) || delta != synSac.getValue(SACHeaderEnum.DELTA)) {
-                System.err.println("!! Deltas are invalid. Obs " + obsSac.getValue(SACHeaderEnum.DELTA)
+                System.err.println();
+                System.err.println("!! Deltas are invalid, skipping: " + timewindow);
+                System.err.println("   Obs " + obsSac.getValue(SACHeaderEnum.DELTA)
                         + " , Syn " + synSac.getValue(SACHeaderEnum.DELTA) + " ; must be " + delta);
-                System.err.println("   " + timewindow);
+                return;
+            }
+
+            // check SAC file end time
+            if (timewindow.getEndTime() > obsSac.getValue(SACHeaderEnum.E)
+                    || timewindow.getEndTime() > synSac.getValue(SACHeaderEnum.E)) {
+                System.err.println();
+                System.err.println("!! End time of timewindow too late, skipping: " + timewindow);
                 return;
             }
 
             // check and read bandpass
             if (obsSac.getValue(SACHeaderEnum.USER0) != synSac.getValue(SACHeaderEnum.USER0)
                     || obsSac.getValue(SACHeaderEnum.USER1) != synSac.getValue(SACHeaderEnum.USER1)) {
-                System.err.println("!! Band pass filter difference");
-                System.err.println("   " + timewindow);
+                System.err.println();
+                System.err.println("!! Band pass filter difference, skipping: " + timewindow);
                 return;
             }
             double minPeriod = obsSac.getValue(SACHeaderEnum.USER0) == -12345 ? 0 : obsSac.getValue(SACHeaderEnum.USER0);
             double maxPeriod = obsSac.getValue(SACHeaderEnum.USER1) == -12345 ? 0 : obsSac.getValue(SACHeaderEnum.USER1);
 
-            if (timewindow.getEndTime() > synSac.getValue(SACHeaderEnum.E) - 10) { // TODO should 10 be maxStaticShift ?
-                System.err.println("!! End time of timewindow too late");
-                System.err.println("   " + timewindow);
-                return;
-            }
+            //TODO delete following line by using Trace.resampleInWindow()
+            int npts = (int) MathAid.floor((timewindow.getEndTime() - timewindow.getStartTime()) * finalSamplingHz) + 1;
 
-            int npts = (int) ((timewindow.getEndTime() - timewindow.getStartTime()) * finalSamplingHz);
             double startTime = timewindow.getStartTime();
             double shift = 0;
             double ratio = 1;
             if (correctTime || amplitudeCorrectionType > 0) {
-                try {
-                    StaticCorrectionData sc = getStaticCorrection(timewindow);
-                    if (correctTime) shift = sc.getTimeshift();
-                    switch (amplitudeCorrectionType) {
-                    case 1: ratio = sc.getAmplitudeRatio(); break;
-                    case 2: ratio = amplitudeCorrEventMap.get(timewindow.getGlobalCMTID()); break;
-                    }
-                } catch (NoSuchElementException e) {
-                    System.err.println("!! There is no static correction information for");
-                    System.err.println("   " + timewindow);
+                StaticCorrectionData sc = getStaticCorrection(timewindow);
+                if (sc == null) {
+                    System.err.println();
+                    System.err.println("!! No static correction data, skipping: " + timewindow);
                     return;
+                }
+                if (correctTime) shift = sc.getTimeshift();
+                switch (amplitudeCorrectionType) {
+                case 1: ratio = sc.getAmplitudeRatio(); break;
+                case 2: ratio = amplitudeCorrEventMap.get(timewindow.getGlobalCMTID()); break;
                 }
             }
             if (correctMantle) {
-                try {
-                    StaticCorrectionData sc = getMantleCorrection(timewindow);
-                    shift += sc.getTimeshift();
-                } catch (NoSuchElementException e) {
-                    System.err.println("!! There is no mantle correction information for");
-                    System.err.println("   " + timewindow);
+                StaticCorrectionData sc = getMantleCorrection(timewindow);
+                if (sc == null) {
+                    System.err.println();
+                    System.err.println("!! No mantle correction data, skipping: " + timewindow);
                     return;
                 }
+                shift += sc.getTimeshift();
             }
 
             TimewindowData windowRef = null;
@@ -655,8 +648,8 @@ public class ActualWaveformCompiler extends Operation {
                         && tw.getObserver().equals(timewindow.getObserver())
                         && tw.getComponent().equals(timewindow.getComponent())).collect(Collectors.toList());
                 if (tmpwindows.size() != 1) {
-                    System.err.println("!! Reference timewindow does not exist:");
-                    System.err.println("   " + timewindow);
+                    System.err.println();
+                    System.err.println("!! Reference timewindow does not exist, skipping: " + timewindow);
                     return;
                 }
                 else {
@@ -670,14 +663,14 @@ public class ActualWaveformCompiler extends Operation {
             if (addNoise)
                 obsData = cutDataSacAddNoise(obsSac, startTime - shift, npts);
             else
-                obsData = cutDataSac(obsSac, startTime - shift, npts);
-            double[] synData = cutDataSac(synSac, startTime, npts);
+                obsData = cutDataSac(obsSac, timewindow.shift(-shift));
+            double[] synData = cutDataSac(synSac, timewindow);
 
             // check
             RealVector obsVec = new ArrayRealVector(obsData);
             if (Double.isNaN(obsVec.getLInfNorm()) || obsVec.getLInfNorm() == 0) {
-                System.err.println("!! Obs is 0 or NaN:");
-                System.err.println("   " + timewindow);
+                System.err.println();
+                System.err.println("!! Obs is 0 or NaN, skipping: " + timewindow);
                 return;
             }
 

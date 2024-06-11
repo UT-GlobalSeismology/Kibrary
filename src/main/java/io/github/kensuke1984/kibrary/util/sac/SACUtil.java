@@ -82,10 +82,10 @@ public final class SACUtil {
             sacProcess.inputCMD("rotate r");
             sacProcess.inputCMD("w " + rPath + " " + tPath);
             sacProcess.inputCMD("r " + rPath);
-            sacProcess.inputCMD("chnhdr kcmpnm \"radial\"");
+            sacProcess.inputCMD("chnhdr kcmpnm \"R\"");
             sacProcess.inputCMD("write over");
             sacProcess.inputCMD("r " + tPath);
-            sacProcess.inputCMD("chnhdr kcmpnm \"trnsvers\"");
+            sacProcess.inputCMD("chnhdr kcmpnm \"T\"");
             sacProcess.inputCMD("write over");
         }
         return true;

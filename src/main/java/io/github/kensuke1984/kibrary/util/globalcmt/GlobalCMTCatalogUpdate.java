@@ -30,14 +30,15 @@ import io.github.kensuke1984.kibrary.util.FileAid;
  * Available versions of catalogs can be checked at
  * <a href="https://www.ldeo.columbia.edu/~gcmt/projects/CMT/catalog/">https://www.ldeo.columbia.edu/~gcmt/projects/CMT/catalog/</a>.
  *
- * @author Keisuke Otsuru
+ * @author otsuru
  * @since 2021/8/25
  */
 public final class GlobalCMTCatalogUpdate {
     private GlobalCMTCatalogUpdate() {}
 
     /**
-     * @param args [option]
+     * Update the catalog of global CMT solutions.
+     * @param args Options.
      * @throws IOException if any
      */
     public static void main(String[] args) throws IOException {

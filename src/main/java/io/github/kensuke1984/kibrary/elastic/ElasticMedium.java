@@ -6,6 +6,7 @@ import java.util.Map;
 /**
  * Class that holds a set of elastic parameters for of a block of homogenious isotropic or transversely isotropic (TI) medium.
  * Unknown parameters that can be computed from given parameters are automatically computed.
+ *
  * <p>
  * Relationships between parameters are as follows:
  * <ul>
@@ -21,6 +22,19 @@ import java.util.Map;
  * <li> &kappa; = &lambda; + 2/3 &mu; (bulk modulus) </li>
  * <li> Vb = sqrt(&kappa; / &rho;) </li>
  * </ul>
+ *
+ * <p>
+ * To prevent inconsistencies, each instance can only accept 1 of 4 groups of variables:
+ * {isotropic moduli, isotropic velocities, TI moduli, TI velocities}.<br>
+ * Variables in each group are as follows:
+ * <ul>
+ * <li> isotropic moduli: LAMBDA, MU, LAMBDA2MU, KAPPA </li>
+ * <li> isotropic velocities: Vp, Vs, Vb </li>
+ * <li> TI moduli: A, C, F, L, N, XI </li>
+ * <li> TI velocities: Vpv, Vph, Vsv, Vsh, ETA </li>
+ * </ul>
+ * RHO, Qkappa, and Qmu can be accepted for any group.<br>
+ *
  * <p>
  * CAUTION, this class is <b>NOT IMMUTABLE</b>.
  *
@@ -108,24 +122,52 @@ public class ElasticMedium implements Cloneable {
         } else if (VariableType.isIsotropicModulus(type)) {
             findIsotropicModuli();
             convertToIsotropicVelocities();
+
+            isotropicToTI();
+            findTIModuli();
+            convertToTIVelocities();
         } else if (VariableType.isIsotropicVelocity(type)) {
             convertToIsotropicModuli();
             findIsotropicModuli();
             convertToIsotropicVelocities();
+
+            isotropicToTI();
+            findTIModuli();
+            convertToTIVelocities();
         } else if (VariableType.isTIModulus(type)) {
             findTIModuli();
             convertToTIVelocities();
+
             tiToIsotropic();
             findIsotropicModuli();
             convertToIsotropicVelocities();
         } else if (VariableType.isTIVelocity(type)) {
             convertToTIModuli();
             findTIModuli();
+            convertToTIVelocities();
+
             tiToIsotropic();
             findIsotropicModuli();
             convertToIsotropicVelocities();
         }
         // else : nothing has to be calculated
+    }
+
+    private void isotropicToTI() {
+        if (isDefined(VariableType.LAMBDA2MU)) {
+            double lambda_2mu = variableMap.get(VariableType.LAMBDA2MU);
+            variableMap.put(VariableType.A, lambda_2mu);
+            variableMap.put(VariableType.C, lambda_2mu);
+        }
+        if (isDefined(VariableType.LAMBDA)) {
+            double lambda = variableMap.get(VariableType.LAMBDA);
+            variableMap.put(VariableType.F, lambda);
+        }
+        if (isDefined(VariableType.MU)) {
+            double mu = variableMap.get(VariableType.MU);
+            variableMap.put(VariableType.L, mu);
+            variableMap.put(VariableType.N, mu);
+        }
     }
 
     private void tiToIsotropic() {

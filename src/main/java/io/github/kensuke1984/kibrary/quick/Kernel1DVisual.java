@@ -25,7 +25,7 @@ public class Kernel1DVisual {
 		
 		PartialID[] partials = PartialIDFile.read(partialIDPath, partialPath);
 		
-		List<PartialID> par0list = Stream.of(partials).filter(p -> p.getPartialType().equals(PartialType.PAR0)).collect(Collectors.toList());
+		List<PartialID> par0list = Stream.of(partials).filter(p -> p.getPartialType().equals(PartialType.RHO1D)).collect(Collectors.toList());
 		
 		Path dir0 = Paths.get("KernelTemporalVisual");
 		Path dir00 = Paths.get("Partials");

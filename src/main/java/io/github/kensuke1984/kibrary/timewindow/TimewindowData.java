@@ -5,6 +5,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import io.github.kensuke1984.anisotime.Phase;
+import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.data.DataEntry;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
@@ -116,7 +117,8 @@ public class TimewindowData extends Timewindow {
     @Override
     public String toString() {
         return observer.toPaddedInfoString() + " " + eventID.toPaddedString() + " " + component + " "
-                + startTime + " " + endTime + " " + phasesAsString(phases);
+                + MathAid.padToString(startTime, TYPICAL_MAX_INTEGER_DIGITS, PRECISION, false) + " "
+                + MathAid.padToString(endTime, TYPICAL_MAX_INTEGER_DIGITS, PRECISION, false) + " " + phasesAsString(phases);
     }
 
     /**

@@ -16,18 +16,16 @@ import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 
 /**
- * Spectrum file by DSM.
+ * Spectrum file written by DSM. Binary format.
  *
- * @version 0.1.2
+ * @since version 0.1.2
  * @author Kensuke Konishi
  * @author anselme add content for BP/FP catalog
  */
 public class SPCFile implements SPCFileAccess {
 
-    private String stationCode;
-    private String networkCode;
     private String sourceID;
-    private String observerID;
+    private String receiverID;
     private SPCFileName spcFileName;
     private double tlen;
     private int np;
@@ -35,11 +33,11 @@ public class SPCFile implements SPCFileAccess {
     /**
      * 震源の位置
      */
-    private FullPosition sourceLocation;
+    private FullPosition sourcePosition;
     /**
      * 観測点の位置 深さの情報は含まない
      */
-    private HorizontalPosition observerPosition;
+    private HorizontalPosition receiverPosition;
     private double omegai;
     private List<SPCBody> spcBody;
     private int nbody;
@@ -48,7 +46,7 @@ public class SPCFile implements SPCFileAccess {
     private SPCType spcFileType;
 
     public SPCFile(SPCFileName spcFileName) {
-        this.spcFileName = spcFileName; // TODO
+        this.spcFileName = spcFileName;
     }
 
     /**
@@ -82,102 +80,31 @@ public class SPCFile implements SPCFileAccess {
      * @author anselme add content for BP/FP catalog
      * @author rei add content for UB/UF catalog
      */
-    public static final SPCFile getInstance(SPCFileName spcFileName, double phi, HorizontalPosition observerPosition
-            , FullPosition sourceLocation, String observerName) throws IOException {
+    public static final SPCFile getInstance(SPCFileName spcFileName, double phi, HorizontalPosition receiverPosition
+            , FullPosition sourcePosition) throws IOException {
+        SPCFile specFile = new SPCFile(spcFileName);
+        specFile.sourceID = spcFileName.getSourceID();
+        specFile.receiverID = spcFileName.getReceiverID();
+
         try (DataInputStream dis = new DataInputStream(new BufferedInputStream(new FileInputStream(spcFileName)))) {
-            SPCFile specFile = new SPCFile(spcFileName);
-            specFile.sourceID = spcFileName.getSourceID();
-            //TODO
-            specFile.stationCode = spcFileName.getStationCode();
-            specFile.observerID = spcFileName.getObserverID();
             // read header PF
             // tlen
             double tlen = dis.readDouble();
+            specFile.tlen = tlen;
             // np
             int np = dis.readInt();
+            specFile.np = np;
             // nbody
             int nbody = dis.readInt();
-            // ncomponents
-            int ncomp = dis.readInt();
-            //System.err.println(np + " " + nbody + " " + ncomp);
-
-            switch (ncomp) {
-            case 0: // isotropic 1D partial par2 (lambda)
-                specFile.spcFileType = spcFileName.getFileType();
-                specFile.nComponent = 3;
-                break;
-            case 3: // normal synthetic
-                specFile.nComponent = 3;
-                specFile.spcFileType = SPCType.SYNTHETIC;
-                break;
-            case 4:// forward propagation dislocation field. 4 is an identifier. The actual number of component is 3 (3 non-zero component).
-                specFile.nComponent = 3;
-                specFile.spcFileType = SPCType.UF;
-                break;
-            case 5:// back propagation dialocation filed. 5 is an identifier. The actual number of component is 9 (9 non-zero component).
-                specFile.nComponent = 9;
-                specFile.spcFileType = SPCType.UB;
-                break;
-            case 7: // back propagation PSV catalog. 7 is an identifier. The actual number of component is 27 (27 non-zero component).
-//				System.out.println("PBPSVCAT");
-                specFile.nComponent = 27;
-                specFile.spcFileType = SPCType.PBPSVCAT;
-                break;
-            case 8: // back propagation SH catalog. 8 is an identifier. The actual number of component is 27 (18 non-zero component).
-                specFile.nComponent = 27;
-                specFile.spcFileType = SPCType.PBSHCAT;
-                break;
-            case 9: // forward propagation (strain field)
-                specFile.nComponent = 9;
-                specFile.spcFileType = SPCType.PF;
-                break;
-            case 10: // forward propagation SH catalog. 10 is an identifier. The actual number of component is 9.
-                specFile.nComponent = 9;
-                specFile.spcFileType = SPCType.PFSHCAT;
-                break;
-            case 11: // Optimized forward propagation SH catalog. 11 is an identifier. The actual number of component is 9.
-                specFile.nComponent = 9;
-                specFile.spcFileType = SPCType.PFSHO;
-                break;
-            case 12: // forward propagation SH catalog. 10 is an identifier. The actual number of component is 9.
-                specFile.nComponent = 9;
-                specFile.spcFileType = SPCType.PFPSVCAT;
-                break;
-            case 27: // back propagation (strain field)
-                specFile.nComponent = 27;
-                specFile.spcFileType = SPCType.PB;
-                break;
-            default:
-                throw new RuntimeException("component can be only 3(synthetic), 4(uf), 5(ub), 7(bppsvcat), 8(bpshcat), 9(fp), 10(fpshcat), or 27(bp) right now");
-            }
-
-            if (observerName == null) {
-                specFile.stationCode = spcFileName.getStationCode();
-                specFile.observerID = spcFileName.getObserverID();
-            }
-            else {
-                specFile.stationCode = observerName;
-                specFile.observerID = observerName;
-            }
-
-
-            if (specFile.spcFileType.equals(SPCType.PB) || specFile.spcFileType.equals(SPCType.PF)
-                    || specFile.spcFileType.equals(SPCType.PBSHCAT)
-                    || specFile.spcFileType.equals(SPCType.PBPSVCAT)
-                    || specFile.spcFileType.equals(SPCType.PFSHCAT)
-                    || specFile.spcFileType.equals(SPCType.PFPSVCAT)
-                    || specFile.spcFileType.equals(SPCType.PFSHO)
-                    || specFile.spcFileType.equals(SPCType.UB)
-                    || specFile.spcFileType.equals(SPCType.UF))
-
-                specFile.networkCode = null;
-            else
-                specFile.networkCode = spcFileName.getNetworkCode();
-
-            //System.out.println(nbody);
             specFile.nbody = nbody;
-            specFile.np = np;
-            specFile.tlen = tlen;
+            // ncomponents
+            int typeNumber = dis.readInt();
+            if (typeNumber == 0) {  // isotropic 1D partial
+                specFile.spcFileType = spcFileName.getFileType();
+            } else {  // synthetic, FP, or BP
+                specFile.spcFileType = SPCType.ofNumber(typeNumber);
+            }
+            specFile.nComponent = specFile.spcFileType.getNComponent();
 
             specFile.spcBody = new ArrayList<>(nbody);
             for (int i = 0; i < nbody; i++)
@@ -186,58 +113,58 @@ public class SPCFile implements SPCFileAccess {
             // data part
             specFile.omegai = dis.readDouble();
 
-            if (observerPosition == null)
-                specFile.observerPosition = new HorizontalPosition(dis.readDouble(), dis.readDouble());
+            if (receiverPosition == null)
+                specFile.receiverPosition = new HorizontalPosition(dis.readDouble(), dis.readDouble());
             else {
                 dis.readDouble();
                 dis.readDouble();
-                specFile.observerPosition = observerPosition;
+                specFile.receiverPosition = receiverPosition;
             }
 
             //
             switch (specFile.spcFileType) {
-            case PAR0:
-            case PAR1:
-            case PAR2:
-            case PARA:
-            case PARC:
-            case PARF:
-            case PARL:
-            case PARN:
+            case RHO1D:
+            case LAMBDA1D:
+            case MU1D:
+            case A1D:
+            case C1D:
+            case F1D:
+            case L1D:
+            case N1D:
             case SYNTHETIC:
-                specFile.sourceLocation = new FullPosition(dis.readDouble(), dis.readDouble(), dis.readDouble());
+                specFile.sourcePosition = new FullPosition(dis.readDouble(), dis.readDouble(), dis.readDouble());
                 break;
             case PBSHCAT:
             case PBPSVCAT:
-                if (sourceLocation == null)
-                    specFile.sourceLocation = new FullPosition(dis.readDouble(), dis.readDouble(), 0);
+                if (sourcePosition == null)
+                    specFile.sourcePosition = new FullPosition(dis.readDouble(), dis.readDouble(), 0);
                 else {
                     dis.readDouble();
                     dis.readDouble();
-                    if (sourceLocation.getR() != Earth.EARTH_RADIUS)
-                        throw new RuntimeException("Error: BP source depth should be 0. " + sourceLocation.getR() + " " + Earth.EARTH_RADIUS);
-                    specFile.sourceLocation = sourceLocation;
+                    if (sourcePosition.getR() != Earth.EARTH_RADIUS)
+                        throw new RuntimeException("Error: BP source depth should be 0. " + sourcePosition.getR() + " " + Earth.EARTH_RADIUS);
+                    specFile.sourcePosition = sourcePosition;
                 }
                 break;
             case UF:
             case PF:
-            case PFSHO:
-                specFile.sourceLocation = new FullPosition(dis.readDouble(), dis.readDouble(), dis.readDouble());
-                break;
+//            case PFSHO:
+//                specFile.sourceLocation = new FullPosition(dis.readDouble(), dis.readDouble(), dis.readDouble());
+//                break;
             case PFSHCAT:
             case PFPSVCAT:
-                if (sourceLocation == null)
-                    specFile.sourceLocation = new FullPosition(dis.readDouble(), dis.readDouble(), dis.readDouble());
+                if (sourcePosition == null)
+                    specFile.sourcePosition = new FullPosition(dis.readDouble(), dis.readDouble(), dis.readDouble());
                 else {
                     dis.readDouble();
                     dis.readDouble();
                     dis.readDouble();
-                    specFile.sourceLocation = sourceLocation;
+                    specFile.sourcePosition = sourcePosition;
                 }
                 break;
             case UB:
             case PB:
-                specFile.sourceLocation = new FullPosition(dis.readDouble(), dis.readDouble(), 0); // TODO
+                specFile.sourcePosition = new FullPosition(dis.readDouble(), dis.readDouble(), 0); // TODO
                 break;
             default:
                 throw new RuntimeException("Unexpected");
@@ -254,7 +181,7 @@ public class SPCFile implements SPCFileAccess {
             double sin2phi = FastMath.sin(2 * phi);
 
             // read body
-            for (int i = 0; i < np + 1; i++)
+            for (int i = 0; i < np + 1; i++) {
                 for (SPCBody body : specFile.spcBody) {
                     Complex[] u = new Complex[specFile.nComponent];
                     int ip = dis.readInt();
@@ -282,15 +209,6 @@ public class SPCFile implements SPCFileAccess {
                                 u[k] = new Complex(tmpReal, tmpImag);
                             }
                         }
-                      //TODO
-                      //  if (observerName.equals("XY100"))
-                      //  if (ip == 512) {
-                      //      System.err.println(spcFileName.toString());
-                      //      System.err.println(specFile.observerID + " " + phi);
-                      //      for (int k = 0; k < specFile.nComponent; k++) {
-                      //          System.err.println(u[k].getReal() + " " + u[k].getImaginary());
-                      //      }
-                      //  }
                     }
                     else if (specFile.spcFileType.equals(SPCType.PBPSVCAT)) {
                         for (int k = 0; k < specFile.nComponent; k++) {
@@ -362,23 +280,22 @@ public class SPCFile implements SPCFileAccess {
                             u[k] = new Complex(tmpReal, tmpImag);
                         }
                     }
-                    else if (specFile.spcFileType.equals(SPCType.PFSHO)) {
-                        for (int k = 0; k < specFile.nComponent; k++) {
-                            if (SPCTensorComponent.isFPSHzero(k+1))
-                                u[k] = Complex.ZERO;
-                            else
-                                u[k] = new Complex(dis.readDouble(), dis.readDouble());
-                        }
-                    }
                     else {
                         for (int k = 0; k < specFile.nComponent; k++) {
                             u[k] = new Complex(dis.readDouble(), dis.readDouble());
                         }
                     }
-                    body.add(ip, u);
+
+                    try {
+                        body.add(ip, u);
+                    } catch (Exception e) {
+                        System.err.println(spcFileName);
+                        throw e;
+                    }
                 }
-            return specFile;
+            }
         }
+        return specFile;
     }
 
     /**
@@ -389,7 +306,7 @@ public class SPCFile implements SPCFileAccess {
      * @author anselme
      */
     public static final SPCFile getInstance(SPCFileName spcFileName, double phi) throws IOException {
-        return getInstance(spcFileName, phi, null, null, null);
+        return getInstance(spcFileName, phi, null, null);
     }
 
     /**
@@ -399,32 +316,7 @@ public class SPCFile implements SPCFileAccess {
      * @author anselme
      */
     public static final SPCFile getInstance(SPCFileName spcFileName) throws IOException {
-        return getInstance(spcFileName, 0., null, null, null);
-    }
-
-    /**
-     * (PB, PF, UB, UF) Return perturbation point code
-     * <p>
-     * (else) Return obsever code
-     */
-    @Override
-    public String getObserverID() {
-        return observerID;
-    }
-
-    /**
-     * (PB, PF, UB, UF) Return perturbation point code
-     * <p>
-     * (else) Return station code
-     */
-    @Override
-    public String getStationCode() {
-        return stationCode;
-    }
-
-    @Override
-    public String getNetworkCode() {
-        return networkCode;
+        return getInstance(spcFileName, 0., null, null);
     }
 
     /**
@@ -437,14 +329,24 @@ public class SPCFile implements SPCFileAccess {
         return sourceID;
     }
 
+    /**
+     * (PB, PF, UB, UF) Return perturbation point code
+     * <p>
+     * (else) Return obsever code
+     */
     @Override
-    public FullPosition getSourcePosition() {
-        return sourceLocation;
+    public String getReceiverID() {
+        return receiverID;
     }
 
     @Override
-    public HorizontalPosition getObserverPosition() {
-        return observerPosition;
+    public FullPosition getSourcePosition() {
+        return sourcePosition;
+    }
+
+    @Override
+    public HorizontalPosition getReceiverPosition() {
+        return receiverPosition;
     }
 
     public SPCFileName getSpcFileName() {

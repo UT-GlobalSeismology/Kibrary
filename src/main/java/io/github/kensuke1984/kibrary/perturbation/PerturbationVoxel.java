@@ -18,23 +18,39 @@ import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
 public class PerturbationVoxel {
 
     private final FullPosition position;
-    private final double volume;
+    private final double size;
     private final ElasticMedium referenceMedium;
     private final ElasticMedium perturbedMedium;
 
-    public PerturbationVoxel(FullPosition position, double volume, PolynomialStructure oneDStructure) {
+    public PerturbationVoxel(FullPosition position, double size, PolynomialStructure oneDStructure) {
         this.position = position;
-        this.volume = volume;
+        this.size = size;
         this.referenceMedium = oneDStructure.mediumAt(position.getR());
         this.perturbedMedium = new ElasticMedium();
     }
 
 
-    private PerturbationVoxel(FullPosition position, double volume, ElasticMedium referenceMedium, ElasticMedium perturbedMedium) {
+    private PerturbationVoxel(FullPosition position, double size, ElasticMedium referenceMedium, ElasticMedium perturbedMedium) {
         this.position = position;
-        this.volume = volume;
+        this.size = size;
         this.referenceMedium = referenceMedium.clone();
         this.perturbedMedium = perturbedMedium.clone();
+    }
+
+    public void setPerturbation(VariableType type, double value, String valueFormat) {
+        switch (valueFormat) {
+        case "difference":
+            setDelta(type, value);
+            break;
+        case "percent":
+            setPercent(type, value);
+            break;
+        case "absolute":
+            setAbsolute(type, value);
+            break;
+        default:
+            throw new IllegalArgumentException("valueFormat must be selected from difference, percent, & absolute");
+        }
     }
 
     public void setDelta(VariableType type, double perturbation) {
@@ -44,6 +60,10 @@ public class PerturbationVoxel {
 
     public void setPercent(VariableType type, double percent) {
         double absolute = referenceMedium.get(type) * (1. + percent / 100);
+        perturbedMedium.set(type, absolute);
+    }
+
+    public void setAbsolute(VariableType type, double absolute) {
         perturbedMedium.set(type, absolute);
     }
 
@@ -61,7 +81,7 @@ public class PerturbationVoxel {
      */
     public PerturbationVoxel withReferenceStructureAs(PolynomialStructure oneDStructure) {
         ElasticMedium newInitialMedium = oneDStructure.mediumAt(position.getR());
-        return new PerturbationVoxel(position, volume, newInitialMedium, perturbedMedium);
+        return new PerturbationVoxel(position, size, newInitialMedium, perturbedMedium);
     }
 
     public double getDelta(VariableType type) {
@@ -80,7 +100,7 @@ public class PerturbationVoxel {
         return position;
     }
 
-    public double getVolume() {
-        return volume;
+    public double getSize() {
+        return size;
     }
 }

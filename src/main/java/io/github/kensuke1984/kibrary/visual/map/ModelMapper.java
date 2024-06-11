@@ -25,7 +25,6 @@ import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
-import io.github.kensuke1984.kibrary.util.earth.PolynomialStructureFile;
 import io.github.kensuke1984.kibrary.voxel.KnownParameter;
 import io.github.kensuke1984.kibrary.voxel.KnownParameterFile;
 
@@ -106,7 +105,7 @@ public class ModelMapper extends Operation {
         Path outPath = Property.generatePath(thisClass);
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
             pw.println("manhattan " + thisClass.getSimpleName());
-            pw.println("##Path of a work folder (.)");
+            pw.println("##Path of work folder. (.)");
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this blank.");
             pw.println("#folderTag ");
@@ -114,38 +113,38 @@ public class ModelMapper extends Operation {
             pw.println("#modelPath model.lst");
             pw.println("##Path of an initial structure file used in inversion. If this is unset, the following initialStructureName will be referenced.");
             pw.println("#initialStructurePath ");
-            pw.println("##Name of an initial structure model used in inversion (PREM)");
+            pw.println("##Name of an initial structure model used in inversion. (PREM)");
             pw.println("#initialStructureName ");
             pw.println("##Path of a structure file to map perturbations against. If this is unset, the following referenceStructureName will be referenced.");
             pw.println("#referenceStructurePath ");
-            pw.println("##Name of a structure model to map perturbations against (PREM)");
+            pw.println("##Name of a structure model to map perturbations against. (PREM)");
             pw.println("#referenceStructureName ");
-            pw.println("##Path of a fusion information file, if adaptive grid inversion is conducted");
+            pw.println("##Path of a fusion information file, if adaptive grid inversion is conducted.");
             pw.println("#fusionPath fusion.inf");
-            pw.println("##Variable types to map, listed using spaces (Vs)");
+            pw.println("##Variable types to map, listed using spaces. (Vs)");
             pw.println("#variableTypes ");
-            pw.println("##(double[]) The display values of each layer boundary, listed from the inside using spaces (0 50 100 150 200 250 300 350 400)");
+            pw.println("##(double[]) The display values of each layer boundary, listed from the inside using spaces. (0 50 100 150 200 250 300 350 400)");
             pw.println("#boundaries ");
-            pw.println("##(int[]) Indices of layers to display, listed from the inside using spaces, when specific layers are to be displayed");
+            pw.println("##(int[]) Indices of layers to display, listed from the inside using spaces, when specific layers are to be displayed.");
             pw.println("##  Layers are numbered 0, 1, 2, ... from the inside.");
             pw.println("#displayLayers ");
-            pw.println("##(int) Number of panels to display in each row (4)");
+            pw.println("##(int) Number of panels to display in each row. (4)");
             pw.println("#nPanelsPerRow ");
-            pw.println("##To specify the map region, set it in the form lonMin/lonMax/latMin/latMax, range lon:[-180,360] lat:[-90,90]");
+            pw.println("##To specify the map region, set it in the form lonMin/lonMax/latMin/latMax, range lon:[-180,360] lat:[-90,90].");
             pw.println("#mapRegion -180/180/-90/90");
             pw.println("##########The following should be set to half of dLatitude and dLongitude used to design voxels (or smaller).");
             pw.println("##(double) Latitude margin at both ends [km]. If this is unset, the following marginLatitudeDeg will be used.");
             pw.println("#marginLatitudeKm ");
-            pw.println("##(double) Latitude margin at both ends [deg] (2.5)");
+            pw.println("##(double) Latitude margin at both ends [deg]. (2.5)");
             pw.println("#marginLatitudeDeg ");
             pw.println("##(double) Longitude margin at both ends [km]. If this is unset, the following marginLongitudeDeg will be used.");
             pw.println("#marginLongitudeKm ");
-            pw.println("##(double) Longitude margin at both ends [deg] (2.5)");
+            pw.println("##(double) Longitude margin at both ends [deg]. (2.5)");
             pw.println("#marginLongitudeDeg ");
             pw.println("##########Parameters for perturbation values");
-            pw.println("##(double) Range of percent scale (3)");
+            pw.println("##(double) Range of percent scale. (3)");
             pw.println("#scale ");
-            pw.println("##(boolean) Whether to display map as mosaic without smoothing (false)");
+            pw.println("##(boolean) Whether to display map as mosaic without smoothing. (false)");
             pw.println("#mosaic ");
         }
         System.err.println(outPath + " is created.");
@@ -208,20 +207,10 @@ public class ModelMapper extends Operation {
 
         // read initial structure
         System.err.print("Initial structure: ");
-        PolynomialStructure initialStructure = null;
-        if (initialStructurePath != null) {
-            initialStructure = PolynomialStructureFile.read(initialStructurePath);
-        } else {
-            initialStructure = PolynomialStructure.of(initialStructureName);
-        }
+        PolynomialStructure initialStructure = PolynomialStructure.setupFromFileOrName(initialStructurePath, initialStructureName);
         // read reference structure
         System.err.print("Reference structure: ");
-        PolynomialStructure referenceStructure = null;
-        if (referenceStructurePath != null) {
-            referenceStructure = PolynomialStructureFile.read(referenceStructurePath);
-        } else {
-            referenceStructure = PolynomialStructure.of(referenceStructureName);
-        }
+        PolynomialStructure referenceStructure = PolynomialStructure.setupFromFileOrName(referenceStructurePath, referenceStructureName);
 
         // read knowns
         List<KnownParameter> knowns = KnownParameterFile.read(modelPath);

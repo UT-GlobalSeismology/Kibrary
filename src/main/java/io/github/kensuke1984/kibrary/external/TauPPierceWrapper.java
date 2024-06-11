@@ -1,6 +1,7 @@
 package io.github.kensuke1984.kibrary.external;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -33,8 +34,11 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
  */
 public final class TauPPierceWrapper {
 
-    private TauP_Pierce timeTool;
-    private Map<DataEntry, List<Raypath>> entryMap = new HashMap<>();
+    private String structureName;
+    private String[] phaseNames;
+    private double[] pierceRadii;
+
+    private Map<DataEntry, List<Raypath>> entryMap = Collections.synchronizedMap(new HashMap<>());
 
     public TauPPierceWrapper(String structureName, String phaseName) throws TauModelException {
         this(structureName, phaseName, null);
@@ -45,26 +49,16 @@ public final class TauPPierceWrapper {
     }
 
     public TauPPierceWrapper(String structureName, String phaseName, double[] pierceRadii) throws TauModelException {
-        timeTool = new TauP_Pierce(structureName);
-
+        this.structureName = structureName;
         String[] phaseNames = {phaseName};
-        timeTool.setPhaseNames(phaseNames);
-
-        if (pierceRadii != null) {
-            String[] pierceDepthStrings = DoubleStream.of(pierceRadii).mapToObj(r -> String.valueOf(Earth.EARTH_RADIUS - r)).toArray(String[]::new);
-            timeTool.setAddDepths(String.join(",", pierceDepthStrings));
-        }
+        this.phaseNames = phaseNames;
+        this.pierceRadii = pierceRadii;
     }
 
     public TauPPierceWrapper(String structureName, String[] phaseNames, double[] pierceRadii) throws TauModelException {
-        timeTool = new TauP_Pierce(structureName);
-
-        timeTool.setPhaseNames(phaseNames);
-
-        if (pierceRadii != null) {
-            String[] pierceDepthStrings = DoubleStream.of(pierceRadii).mapToObj(r -> String.valueOf(Earth.EARTH_RADIUS - r)).toArray(String[]::new);
-            timeTool.setAddDepths(String.join(",", pierceDepthStrings));
-        }
+        this.structureName = structureName;
+        this.phaseNames = phaseNames;
+        this.pierceRadii = pierceRadii;
     }
 
     /**
@@ -78,13 +72,23 @@ public final class TauPPierceWrapper {
         // compute for each event
         // computation for each event is gathered together because changing the source depth is time consuming
         Set<GlobalCMTID> events = entrySet.stream().map(entry -> entry.getEvent()).collect(Collectors.toSet());
-        for (GlobalCMTID event : events) {
+        events.parallelStream().forEach(event -> computeForEvent(entrySet, event));
+    }
 
-            // set event depth
+    private void computeForEvent(Set<DataEntry> entrySet, GlobalCMTID event) {
+        try {
             FullPosition eventPosition = event.getEventData().getCmtPosition();
+
+            // set up TauP instance
+            TauP_Pierce timeTool = new TauP_Pierce(structureName);
+            timeTool.setPhaseNames(phaseNames);
+            if (pierceRadii != null) {
+                String[] pierceDepthStrings = DoubleStream.of(pierceRadii).mapToObj(r -> String.valueOf(Earth.EARTH_RADIUS - r)).toArray(String[]::new);
+                timeTool.setAddDepths(String.join(",", pierceDepthStrings));
+            }
             timeTool.setSourceDepth(eventPosition.getDepth());
 
-            // collect entries for this event, and run computation for each
+            // collect entries for this event, and run computation for each entry
             Set<DataEntry> eventEntries = entrySet.stream().filter(entry -> entry.getEvent().equals(event)).collect(Collectors.toSet());
             for (DataEntry entry : eventEntries) {
                 HorizontalPosition observerPosition = entry.getObserver().getPosition();
@@ -102,8 +106,9 @@ public final class TauPPierceWrapper {
                 entryMap.put(entry, raypaths);
             }
 
+        } catch (TauModelException e) {
+            throw new RuntimeException(e);
         }
-
     }
 
     private static Raypath convertToRaypath(FullPosition eventPosition, HorizontalPosition observerPosition, Arrival arrival) {

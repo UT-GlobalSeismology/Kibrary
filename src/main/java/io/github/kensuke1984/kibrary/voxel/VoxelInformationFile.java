@@ -7,6 +7,7 @@ import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -23,13 +24,15 @@ import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
  * <p>
  * The file should be as below: <br>
  * h1 h2 h3..... hn (Layer thicknesses, from the ones closer to the center of planet)<br>
- * r1 r2 r3..... rn (Radii cannot have duplicate values, must be sorted)<br>
+ * r1 r2 r3..... rn (Radii, cannot have duplicate values, must be sorted)<br>
  * lat1 lon1 dLat1 dLon1<br>
  * lat2 lon2 dLat2 dLon2<br>
  * .<br>
  * .<br>
  * .<br>
  * latm lonm dLatm dLonm
+ * <p>
+ * This class is <b>IMMUTABLE</b>.
  *
  * @author otsuru
  * @since 2022/2/11
@@ -39,35 +42,33 @@ public class VoxelInformationFile {
     /**
      * thickness of each layer
      */
-    private double[] layerThicknesses;
+    private final double[] layerThicknesses;
     /**
      * Radii of voxel center points, sorted, no duplication
      */
-    private double[] voxelRadii;
+    private final double[] layerRadii;
     /**
      * Horizontal distribution of voxels
      */
-    private List<HorizontalPixel> horizontalPixels = new ArrayList<>();
+    private final List<HorizontalPixel> horizontalPixels = new ArrayList<>();
 
 
     /**
      * Writes a voxel information file given arrays of radii and positions.
-     * @param layerThicknesses (double[]) Must be in the same order as voxelRadii.
-     * @param voxelRadii (double[])  The radii should be sorted, and there should be no duplication.
-     * @param spacingLatitude (double) [deg]
-     * @param spacingLongitude (double) [deg]
-     * @param voxelPositions (HorizontalPosition[])
-     * @param outputPath     of write file
-     * @param options     for write
+     * @param layerThicknesses (double[]) Must be in the same order as layerRadii.
+     * @param layerRadii (double[])  The radii. They should be sorted, and there should be no duplication.
+     * @param horizontalPixels (List of {@link HorizontalPixel}) Pixels.
+     * @param outputPath (Path) Output file.
+     * @param options (OpenOption...) Options for write.
      * @throws IOException if an I/O error occurs
      */
-    public static void write(double[] layerThicknesses, double[] voxelRadii, List<HorizontalPixel> horizontalPixels,
+    public static void write(double[] layerThicknesses, double[] layerRadii, List<HorizontalPixel> horizontalPixels,
             Path outputPath, OpenOption... options) throws IOException {
-        if (layerThicknesses.length != voxelRadii.length)
-            throw new IllegalArgumentException("The number of layers and radii does not match.");
+        if (layerThicknesses.length != layerRadii.length)
+            throw new IllegalArgumentException("The number of thicknesses and radii does not match.");
 
         System.err.println("Outputting "
-                + MathAid.switchSingularPlural(voxelRadii.length * horizontalPixels.size(), "voxel", "voxels")
+                + MathAid.switchSingularPlural(layerRadii.length * horizontalPixels.size(), "voxel", "voxels")
                 + " in " + outputPath);
 
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath, options))) {
@@ -77,8 +78,8 @@ public class VoxelInformationFile {
             }
             pw.println("");
 
-            pw.println("# radii of center points of voxels [km]");
-            for (double radius : voxelRadii) {
+            pw.println("# radii of center points of each layer [km]");
+            for (double radius : layerRadii) {
                 pw.print(radius + " ");
             }
             pw.println("");
@@ -99,9 +100,9 @@ public class VoxelInformationFile {
         InformationFileReader reader = new InformationFileReader(filePath, true);
 
         layerThicknesses = Arrays.stream(reader.next().split("\\s+")).mapToDouble(Double::parseDouble).toArray();
-        voxelRadii = Arrays.stream(reader.next().split("\\s+")).mapToDouble(Double::parseDouble).toArray();
-        if (layerThicknesses.length != voxelRadii.length)
-            throw new IllegalArgumentException("The number of layers and radii does not match.");
+        layerRadii = Arrays.stream(reader.next().split("\\s+")).mapToDouble(Double::parseDouble).toArray();
+        if (layerThicknesses.length != layerRadii.length)
+            throw new IllegalArgumentException("The number of thicknesses and radii does not match.");
 
         String line;
         while ((line = reader.next()) != null) {
@@ -111,7 +112,7 @@ public class VoxelInformationFile {
             horizontalPixels.add(pixel);
         }
 
-        DatasetAid.checkNum(voxelRadii.length * horizontalPixels.size(), "voxel", "voxels");
+        DatasetAid.checkNum(layerRadii.length * horizontalPixels.size(), "voxel", "voxels");
     }
 
     /**
@@ -119,7 +120,7 @@ public class VoxelInformationFile {
      * @return (double[])
      */
     public double[] getThicknesses() {
-        return layerThicknesses;
+        return layerThicknesses.clone();
     }
 
     /**
@@ -127,7 +128,7 @@ public class VoxelInformationFile {
      * @return (double[])
      */
     public double[] getRadii() {
-        return voxelRadii;
+        return layerRadii.clone();
     }
 
     /**
@@ -143,7 +144,7 @@ public class VoxelInformationFile {
      * @return
      */
     public List<HorizontalPixel> getHorizontalPixels() {
-        return horizontalPixels;
+        return Collections.unmodifiableList(horizontalPixels);
     }
 
     /**
@@ -153,7 +154,7 @@ public class VoxelInformationFile {
     public Set<FullPosition> fullPositionSet() {
         Set<FullPosition> voxelSet = new HashSet<>();
         for (HorizontalPosition position : getHorizontalPositions()) {
-            for (double radius : voxelRadii) {
+            for (double radius : layerRadii) {
                 voxelSet.add(position.toFullPosition(radius));
             }
         }

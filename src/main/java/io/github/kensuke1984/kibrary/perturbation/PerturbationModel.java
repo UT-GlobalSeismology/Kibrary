@@ -32,6 +32,10 @@ public class PerturbationModel {
     }
 
     public PerturbationModel(List<UnknownParameter> unknowns, double[] values, PolynomialStructure initialStructure) {
+        this(unknowns, values, initialStructure, "difference");
+    }
+
+    public PerturbationModel(List<UnknownParameter> unknowns, double[] values, PolynomialStructure initialStructure, String valueFormat) {
         if (unknowns.size() != values.length) throw new IllegalArgumentException("Number of unknowns and values does not match");
 
         for (int i = 0; i < unknowns.size(); i++) {
@@ -40,15 +44,15 @@ public class PerturbationModel {
             // if a voxel of same position is already added, set value to that voxel
             for (PerturbationVoxel voxel : voxelList) {
                 if (voxel.getPosition().equals(unknowns.get(i).getPosition())) {
-                    voxel.setDelta(VariableType.of(unknowns.get(i).getPartialType()), values[i]);
+                    voxel.setPerturbation(unknowns.get(i).getVariableType(), values[i], valueFormat);
                     flag = true;
                 }
             }
 
             // otherwise, create new voxel
             if (flag == false) {
-                PerturbationVoxel voxel = new PerturbationVoxel(unknowns.get(i).getPosition(), unknowns.get(i).getWeighting(), initialStructure);
-                voxel.setDelta(VariableType.of(unknowns.get(i).getPartialType()), values[i]);
+                PerturbationVoxel voxel = new PerturbationVoxel(unknowns.get(i).getPosition(), unknowns.get(i).getSize(), initialStructure);
+                voxel.setPerturbation(unknowns.get(i).getVariableType(), values[i], valueFormat);
                 voxelList.add(voxel);
             }
         }
@@ -60,6 +64,10 @@ public class PerturbationModel {
     }
 
     public PerturbationModel(List<KnownParameter> knowns, PolynomialStructure initialStructure) {
+        this(knowns, initialStructure, "difference");
+    }
+
+    public PerturbationModel(List<KnownParameter> knowns, PolynomialStructure initialStructure, String valueFormat) {
         for (int i = 0; i < knowns.size(); i++) {
             boolean flag = false;
 
@@ -69,15 +77,15 @@ public class PerturbationModel {
             // if a voxel of same position is already added, set value to that voxel
             for (PerturbationVoxel voxel : voxelList) {
                 if (voxel.getPosition().equals(parameter.getPosition())) {
-                    voxel.setDelta(VariableType.of(parameter.getPartialType()), value);
+                    voxel.setPerturbation(parameter.getVariableType(), value, valueFormat);
                     flag = true;
                 }
             }
 
             // otherwise, create new voxel
             if (flag == false) {
-                PerturbationVoxel voxel = new PerturbationVoxel(parameter.getPosition(), parameter.getWeighting(), initialStructure);
-                voxel.setDelta(VariableType.of(parameter.getPartialType()), value);
+                PerturbationVoxel voxel = new PerturbationVoxel(parameter.getPosition(), parameter.getSize(), initialStructure);
+                voxel.setPerturbation(parameter.getVariableType(), value, valueFormat);
                 voxelList.add(voxel);
             }
         }
@@ -110,6 +118,25 @@ public class PerturbationModel {
     }
 
     /**
+     * Get the perturbation voxel of which position and size are equal to given unknown parameter
+     * @param ({@link UnknownParameter}) parameter
+     * @return ({@link PerturbationVoxel}) voxel
+     *
+     * @author rei
+     * @sice 2024/6/11
+     */
+    public PerturbationVoxel getVoxel(UnknownParameter parameter) {
+        PerturbationVoxel voxel = null;
+        for (PerturbationVoxel voxelTmp : voxelList) {
+            if (voxelTmp.getPosition().equals(parameter.getPosition()) && voxelTmp.getSize() == parameter.getSize())
+                voxel = voxelTmp;
+        }
+        if (voxel.equals(null))
+            throw new RuntimeException("Cannot find PerturbationVoxel corresponding to UnknownParameter; " + parameter);
+        return voxel;
+    }
+
+    /**
      * Get perturbation values (in [%]) for a certain variable at all voxels.
      * @param type ({@link VariableType})
      * @return (LinkedHashMap of {@link FullPosition}, Double) Correspondence of position and perturbation value (in [%])
@@ -126,4 +153,20 @@ public class PerturbationModel {
         return map;
     }
 
+    /**
+     * Get absolute perturbed values for a certain variable at all voxels.
+     * @param type ({@link VariableType})
+     * @return (LinkedHashMap of {@link FullPosition}, Double) Correspondence of position and absolute perturbed value
+     *
+     * @author otsuru
+     * @since 2023/7/12
+     */
+    public Map<FullPosition, Double> getAbsoluteForType(VariableType type) {
+        // This is created as LinkedHashMap to preserve the order of voxels
+        Map<FullPosition, Double> map = new LinkedHashMap<>();
+        for (PerturbationVoxel voxel : voxelList) {
+            map.put(voxel.getPosition(), voxel.getAbsolute(type));
+        }
+        return map;
+    }
 }

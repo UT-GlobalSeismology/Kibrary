@@ -4,9 +4,13 @@ package io.github.kensuke1984.kibrary.util.sac;
 import java.util.HashSet;
 import java.util.Set;
 
+import io.github.kensuke1984.kibrary.waveform.WaveformDataWriter;
+
 /**
  * Components of SAC<br>
  * Z(1), R(2), T(3)
+ *
+ * CAUTION: values must be in -128~127 (range of byte)!! (The value is written into files as byte; see {@link WaveformDataWriter}.)
  *
  * @author Kensuke Konishi
  * @version 0.0.4
@@ -36,14 +40,6 @@ public enum SACComponent {
             default:
                 throw new IllegalArgumentException("Invalid component! Components are Z(1) R(2) T(3)");
         }
-    }
-
-    /**
-     * @param sacHeaderData must contain KCMPNM (vertical, radial or trnsvers)
-     * @return SACComponent of the input sacHeaderData
-     */
-    public static SACComponent of(SACHeaderAccess sacHeaderData) {
-        return sacHeaderData.getComponent();
     }
 
     /**

@@ -13,9 +13,8 @@ import org.apache.commons.cli.ParseException;
 import org.apache.commons.math3.linear.RealVector;
 
 import io.github.kensuke1984.kibrary.Summon;
-import io.github.kensuke1984.kibrary.inversion.addons.WeightingType;
+import io.github.kensuke1984.kibrary.inversion.WeightingHandler;
 import io.github.kensuke1984.kibrary.inversion.setup.DVectorBuilder;
-import io.github.kensuke1984.kibrary.inversion.setup.Weighting;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.MathAid;
@@ -24,6 +23,7 @@ public class VarianceComputer {
 
     /**
      * Computes normalized variance of residual waveforms in a basic waveform folder.
+     * @param args Options.
      * @throws IOException if an I/O error occurs
      */
     public static void main(String[] args) throws IOException {
@@ -44,8 +44,8 @@ public class VarianceComputer {
         //input
         options.addOption(Option.builder("b").longOpt("basic").hasArg().argName("basicFolder").required()
                 .desc("Use basic waveform folder as input").build());
-        options.addOption(Option.builder("w").longOpt("weighting").hasArg().argName("weightingType").required()
-                .desc("Weighting type, from {LOWERUPPERMANTLE,RECIPROCAL,TAKEUCHIKOBAYASHI,IDENTITY,FINAL}").build());
+        options.addOption(Option.builder("w").longOpt("weighting").hasArg().argName("weightingFile").required()
+                .desc("Path of a weighting properties file").build());
         options.addOption(Option.builder("p").longOpt("improvement").hasArg().argName("improvementWindowFile")
                 .desc("Input improvement window file, if it is to be used").build());
         return options;
@@ -59,7 +59,7 @@ public class VarianceComputer {
     public static void run(CommandLine cmdLine) throws IOException {
 
         List<BasicID> basicIDs = BasicIDFile.read(Paths.get(cmdLine.getOptionValue("b")), true);
-        WeightingType weightingType = WeightingType.valueOf(cmdLine.getOptionValue("w"));
+        WeightingHandler weightingHandler = new WeightingHandler(Paths.get(cmdLine.getOptionValue("w")));
 
         // cut out improvement windows if the file is given
         if (cmdLine.hasOption("p")) {
@@ -73,8 +73,8 @@ public class VarianceComputer {
         DVectorBuilder dVectorBuilder = new DVectorBuilder(basicIDs);
 
         // set weighting
-        System.err.println("Setting weighting of type " + weightingType);
-        Weighting weighting = new Weighting(dVectorBuilder, weightingType, null);
+        System.err.println("Setting weighting");
+        RealVector[] weighting = weightingHandler.weighWaveforms(dVectorBuilder);
 
         // assemble d
         System.err.println("Assembling d vector");

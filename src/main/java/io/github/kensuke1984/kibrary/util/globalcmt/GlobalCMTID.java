@@ -28,39 +28,46 @@ public final class GlobalCMTID implements Comparable<GlobalCMTID> {
     /**
      * recent Harvard ID yyyymmddhhmm[A-Za-z] 2004-
      */
-    public static final Pattern RECENT_GLOBALCMTID_PATTERN =
-            Pattern.compile("20[0-9]{2}(0[1-9]|1[0-2])(0[1-9]|[12][0-9]|3[01])([01][0-9]|2[0-3])[0-5][0-9][A-Za-z]");
+    public static final Pattern RECENT_GLOBALCMTID_PATTERN = Pattern.compile("[0-9]{12}[A-Za-z]");
     /**
      * previous Harvard ID mmddyy[A-Za-z] 1976-2004
      */
-    public static final Pattern PREVIOUS_GLOBALCMTID_PATTERN =
-            Pattern.compile("(0[1-9]|1[0-2])(0[1-9]|[12][0-9]|3[01])[0789][0-9][A-Za-z]");
+    public static final Pattern PREVIOUS_GLOBALCMTID_PATTERN = Pattern.compile("[0-9]{6}[A-Za-z]");
 
+    /**
+     * maximum length to allow for an event ID
+     */
+    public static final int MAX_LENGTH = 15;
     /**
      * maximum length of ID
      */
     private static final int LENGTH = 13;
 
+    /**
+     * String of ID.
+     */
     private final String idString;
     /**
-     * if {@link #getEventData()} is once invoked, this holds it.
+     * If {@link #getEventData()} is once invoked, this holds it.
      */
     private volatile NDK ndk;
 
     /**
-     * Create an instance for an input
-     * If no ID exists for the input, throw {@link RuntimeException}
+     * Create an instance for an input.
+     * If input does not match the GlobalCMTID pattern, throw {@link IllegalArgumentException}.
+     * Existence in catalog is not checked here.
      *
-     * @param idString (String) global cmt id
+     * @param idString (String) Global CMT ID.
      */
     public GlobalCMTID(String idString) {
         if (isGlobalCMTID(idString)) this.idString = idString;
-        else throw new IllegalArgumentException(idString + " does not exist.");
+        else throw new IllegalArgumentException(idString + " does not match GlobalCMTID pattern.");
     }
 
     /**
-     * @param sacHeaderData ({@link SACHeaderAccess}) A SAC header. Must contain a valid ID in KEVNM
-     * @return GlobalCMTID of the input sacHeaderData
+     * Construct ID from {@link SACHeaderAccess}.
+     * @param sacHeaderData ({@link SACHeaderAccess}) A SAC header. Must contain a valid ID in KEVNM.
+     * @return ({@link GlobalCMTID}) Created instance.
      */
     public static GlobalCMTID of(SACHeaderAccess sacHeaderData) {
         return new GlobalCMTID(sacHeaderData.getSACString(SACHeaderEnum.KEVNM));
@@ -68,12 +75,23 @@ public final class GlobalCMTID implements Comparable<GlobalCMTID> {
 
     /**
      * Checks whether a String matches the GlobalCMT ID pattern.
-     * @param string (String) String to check
-     * @return (boolean) Whether the String matches the GlobalCMT ID pattern
+     * @param string (String) String to check.
+     * @return (boolean) Whether the String matches the GlobalCMT ID pattern.
      */
     public static boolean isGlobalCMTID(String string) {
         return RECENT_GLOBALCMTID_PATTERN.matcher(string).matches() ||
                 PREVIOUS_GLOBALCMTID_PATTERN.matcher(string).matches();
+    }
+
+    /**
+     * Checks whether this ID exists in the GlobalCMT catalog.
+     * @return (boolean) Whether this ID exists in catalog.
+     *
+     * @author otsuru
+     * @since 2023/12/6
+     */
+    public boolean exists() {
+        return GlobalCMTCatalog.contains(this);
     }
 
     @Override
@@ -129,10 +147,13 @@ public final class GlobalCMTID implements Comparable<GlobalCMTID> {
         return ndk;
     }
 
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
     /**
      * Displays information of input event IDs.
      * Results are written in the standard output.
-     * @param args [option]
+     * @param args Options.
      * @throws IOException if any
      */
     public static void main(String[] args) throws IOException {

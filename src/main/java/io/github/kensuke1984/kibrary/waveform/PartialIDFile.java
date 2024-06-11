@@ -62,7 +62,7 @@ public final class PartialIDFile {
 
     /**
      * Write partialIDs into ID file and data file.
-     * @param partialIDs (List of PartialID)
+     * @param partialIDs (List of {@link PartialID}) PartialIDs to write.
      * @param outPath (Path) The directory where partial ID and data files shall be created. The directory must exist.
      * @throws IOException
      *
@@ -138,6 +138,7 @@ public final class PartialIDFile {
      * @param dataPath (Path) Data file
      * @return ({@link PartialID}[]) PartialIDs containing waveform data
      * @throws IOException if an I/O error occurs
+     * @deprecated (make this method private)
      */
     public static PartialID[] read(Path idPath, Path dataPath) throws IOException {
         // Read IDs
@@ -173,6 +174,7 @@ public final class PartialIDFile {
      * @param idPath (Path) ID file
      * @return ({@link PartialID}[]) PartialIDs without waveform data
      * @throws IOException if an I/O error occurs
+     * @deprecated (make this method private)
      */
     public static PartialID[] read(Path idPath) throws IOException {
         try (DataInputStream dis = new DataInputStream(new BufferedInputStream(Files.newInputStream(idPath)))) {
@@ -188,35 +190,32 @@ public final class PartialIDFile {
             Phase[] phases = new Phase[dis.readShort()];
             FullPosition[] voxelPositions = new FullPosition[dis.readShort()];
             // calculate number of bytes in header
-            int headerBytes = 2 * 5 + (8 + 8 + 8 * 2) * observers.length + 15 * events.length + 8 * 2 * periodRanges.length
-                    + 16 * phases.length + 8 * 3 * voxelPositions.length;
+            int headerBytes = Short.BYTES * 5 + (Observer.MAX_LENGTH + Double.BYTES * 2) * observers.length
+                    + GlobalCMTID.MAX_LENGTH * events.length + 16 * phases.length
+                    + Double.BYTES * 2 * periodRanges.length + Double.BYTES * 3 * voxelPositions.length;
             long idParts = fileSize - headerBytes;
             if (idParts % oneIDByte != 0)
-                throw new RuntimeException(idPath + " is invalid.");
-            // station(8),network(8),position(8*2)
-            byte[] observerBytes = new byte[32];
+                throw new IllegalStateException(idPath + " is invalid.");
+
+            byte[] observerBytes = new byte[Observer.MAX_LENGTH + Double.BYTES * 2];
             for (int i = 0; i < observers.length; i++) {
                 dis.read(observerBytes);
                 observers[i] = Observer.createObserver(observerBytes);
             }
-            // eventID(15)
-            byte[] eventBytes = new byte[15];
+            byte[] eventBytes = new byte[GlobalCMTID.MAX_LENGTH];
             for (int i = 0; i < events.length; i++) {
                 dis.read(eventBytes);
                 events[i] = new GlobalCMTID(new String(eventBytes).trim());
             }
-            // period(8*2)
             for (int i = 0; i < periodRanges.length; i++) {
                 periodRanges[i][0] = dis.readDouble();
                 periodRanges[i][1] = dis.readDouble();
             }
-            // phase(16)
             byte[] phaseBytes = new byte[16];
             for (int i = 0; i < phases.length; i++) {
                 dis.read(phaseBytes);
                 phases[i] = Phase.create(new String(phaseBytes).trim());
             }
-            // position(8*3)
             for (int i = 0; i < voxelPositions.length; i++) {
                 voxelPositions[i] = new FullPosition(dis.readDouble(), dis.readDouble(), dis.readDouble());
             }
@@ -283,14 +282,15 @@ public final class PartialIDFile {
         PartialType partialType = PartialType.getType(bb.get());
         FullPosition voxelPosition = voxelPositions[bb.getShort()];
         return new PartialID(observer, event, component, samplingHz, startTime, npts, period[0], period[1],
-                usablephases, isConvolved, voxelPosition, partialType);
+                usablephases, isConvolved, partialType.toParameterType(), partialType.toVariableType(), voxelPosition);
     }
 
-    ////////////////////////////////////////////////////////////////////////////////////
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     /**
      * Exports binary files in ascii format.
-     * @param args [option]
+     * @param args Options.
      * @throws IOException if an I/O error occurs
      */
     public static void main(String[] args) throws IOException{

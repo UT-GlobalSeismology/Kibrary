@@ -100,13 +100,15 @@ public class DataEntryListFile {
         return Collections.unmodifiableSet(entrySet);
     }
 
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
     /**
      * Reads dataset information from an input source
      * and creates a data entry list file under the working folder.
      * The input source may be SAC files in event directories under a dataset folder,
      * a timewindow file, or a basic waveform folder.
-     *
-     * @param args
+     * @param args Options.
      * @throws IOException if an I/O error occurs
      */
     public static void main(String[] args) throws IOException {

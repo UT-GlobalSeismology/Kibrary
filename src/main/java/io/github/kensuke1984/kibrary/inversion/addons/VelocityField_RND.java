@@ -131,7 +131,7 @@ public class VelocityField_RND {
 				trs = new TriangleRadialSpline(nNewParameter, originalUnknowns);
 			}
 			Set<PartialType> partialTypes = unknowns.stream().map(UnknownParameter::getPartialType).collect(Collectors.toSet());
-			if (partialTypes.contains(PartialType.PAR2) || partialTypes.contains(PartialType.PARQ)) {
+			if (partialTypes.contains(PartialType.MU1D) || partialTypes.contains(PartialType.Q1D)) {
 				for (InverseMethodEnum inverse : ir.getInverseMethods()) {
 					Path outpath = inversionResultPath.resolve(inverse.simpleName() + "/" + "velocityInitialModel" + ".txt");
 					try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outpath, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING))) {
@@ -156,7 +156,7 @@ public class VelocityField_RND {
 						if (trs == null) {
 							velocities = toVelocity(answerMap, unknowns, structure, 1.);
 							zeroVelocities = toVelocity(zeroMap, unknowns, structure, 1.);
-							if (partialTypes.contains(PartialType.PARQ)) {
+							if (partialTypes.contains(PartialType.Q1D)) {
 								Qs = toQ(answerMap, unknowns, structure, amplifyPerturbation);
 								zeroQs = toQ(zeroMap, unknowns, structure, amplifyPerturbation);
 							}
@@ -164,7 +164,7 @@ public class VelocityField_RND {
 						else {
 							velocities = toVelocity(answerMap, trs, structure);
 							zeroVelocities = toVelocity(zeroMap, trs, structure);
-							if (partialTypes.contains(PartialType.PARQ)) {
+							if (partialTypes.contains(PartialType.Q1D)) {
 								Qs = toQ(answerMap, trs, structure, amplifyPerturbation);
 								zeroQs = toQ(zeroMap, trs, structure, 1.);
 							}
@@ -173,7 +173,7 @@ public class VelocityField_RND {
 							PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outpath, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING));
 							PrintWriter pwQ = null;
 							PrintWriter pwIteration = new PrintWriter(Files.newBufferedWriter(outpathIteration, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING));
-							if (partialTypes.contains(PartialType.PARQ)) {
+							if (partialTypes.contains(PartialType.Q1D)) {
 								pwQ = new PrintWriter(Files.newBufferedWriter(outpathQ, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING));
 								pwQ.println("#perturbationR final_Q intial_Q");
 							}
@@ -185,7 +185,7 @@ public class VelocityField_RND {
 									pwIteration.println((6371. - velocities[j][1] - 10.) + " " + structure.getVphAt(velocities[j][1] + 10.) 
 											+ " " + velocities[j][0] + " " + structure.getRhoAt(velocities[j][1] + 10.));
 								}
-								if (partialTypes.contains(PartialType.PARQ)) {
+								if (partialTypes.contains(PartialType.Q1D)) {
 									for (int j = 0; j < Qs.length; j++) {
 											pwQ.println(Qs[j][1] +  " " + Qs[j][0] + " " + zeroQs[j][0]);
 											pwQ.println(Qs[j][2] +  " " + Qs[j][0] + " " + zeroQs[j][0]);
@@ -195,14 +195,14 @@ public class VelocityField_RND {
 							else {
 								for (int j = 0; j < velocities.length; j++)
 									pw.println(velocities[j][0] + " " + velocities[j][1] + " " + zeroVelocities[j][1]);
-								if (partialTypes.contains(PartialType.PARQ)) {
+								if (partialTypes.contains(PartialType.Q1D)) {
 									for (int j = 0; j < Qs.length; j++)
 										pwQ.println(Qs[j][0] + " " + Qs[j][1] + " " + zeroQs[j][1]);
 								}
 							}
 							
 							pw.close();
-							if (partialTypes.contains(PartialType.PARQ))
+							if (partialTypes.contains(PartialType.Q1D))
 								pwQ.close();
 							pwIteration.close();
 						} catch (IOException e) {
@@ -227,10 +227,10 @@ public class VelocityField_RND {
 			}
 			else if (i > 0) {
 				rmin = (m.getPosition().getR() - parameterOrder.get(i-1).getPosition().getR()) / 2. + parameterOrder.get(i-1).getPosition().getR();
-				rmax = m.getPosition().getR() + m.getWeighting() - (m.getPosition().getR() - parameterOrder.get(i-1).getPosition().getR()) / 2.;
+				rmax = m.getPosition().getR() + m.getSize() - (m.getPosition().getR() - parameterOrder.get(i-1).getPosition().getR()) / 2.;
 			}
 			else {
-				rmin = m.getPosition().getR() - m.getWeighting() + (parameterOrder.get(i+1).getPosition().getR() - m.getPosition().getR()) / 2.;
+				rmin = m.getPosition().getR() - m.getSize() + (parameterOrder.get(i+1).getPosition().getR() - m.getPosition().getR()) / 2.;
 				rmax = (parameterOrder.get(i+1).getPosition().getR() - m.getPosition().getR()) / 2. + m.getPosition().getR();
 			}
 			velocities[i] = toVelocity(answerMap.get(m), m.getPosition().getR(), rmin, rmax, structure);
@@ -241,7 +241,7 @@ public class VelocityField_RND {
 	private static double[][] toVelocity(Map<UnknownParameter, Double> answerMap, List<UnknownParameter> parameterOrder, PolynomialStructure_old structure
 			, double amplifyPerturbation) {
 		List<UnknownParameter> parameterForStructure = parameterOrder.stream()
-				.filter(unknown -> unknown.getPartialType().equals(PartialType.PAR2))
+				.filter(unknown -> unknown.getPartialType().equals(PartialType.MU1D))
 				.collect(Collectors.toList());
 		int n = parameterForStructure.size();
 		double[][] velocities = new double[n][];
@@ -262,8 +262,8 @@ public class VelocityField_RND {
 //				rmin = (Double) m.getLocation() - m.getWeighting() + ((Double) parameterOrder.get(i+1).getLocation() - (Double) m.getLocation()) / 2.;
 //				rmax = ((Double) parameterOrder.get(i+1).getLocation() - (Double) m.getLocation()) / 2. + (Double) m.getLocation();
 //			}
-			rmin = m.getPosition().getR() - m.getWeighting() / 2.;
-			rmax = m.getPosition().getR() + m.getWeighting() / 2.;
+			rmin = m.getPosition().getR() - m.getSize() / 2.;
+			rmax = m.getPosition().getR() + m.getSize() / 2.;
 			velocities[i][0] = toVelocity(answerMap.get(m), m.getPosition().getR(), rmin, rmax, structure, amplifyPerturbation);
 			velocities[i][1] = rmin;
 			velocities[i][2] = rmax;
@@ -274,7 +274,7 @@ public class VelocityField_RND {
 	private static double[][] toQ(Map<UnknownParameter, Double> answerMap, List<UnknownParameter> parameterOrder, PolynomialStructure_old structure
 			, double amplifyPerturbation) {
 		List<UnknownParameter> parameterForStructure = parameterOrder.stream()
-				.filter(unknown -> unknown.getPartialType().equals(PartialType.PARQ))
+				.filter(unknown -> unknown.getPartialType().equals(PartialType.Q1D))
 				.collect(Collectors.toList());
 		int n = parameterForStructure.size();
 		double[][] velocities = new double[n][];
@@ -283,8 +283,8 @@ public class VelocityField_RND {
 			UnknownParameter m = parameterForStructure.get(i);
 			double rmin = 0;
 			double rmax = 0;
-			rmin = m.getPosition().getR() - m.getWeighting() / 2.;
-			rmax = m.getPosition().getR() + m.getWeighting() / 2.;
+			rmin = m.getPosition().getR() - m.getSize() / 2.;
+			rmax = m.getPosition().getR() + m.getSize() / 2.;
 			velocities[i][0] = toQ(answerMap.get(m), m.getPosition().getR(), rmin, rmax, structure, amplifyPerturbation);
 			velocities[i][1] = rmin;
 			velocities[i][2] = rmax;
@@ -299,7 +299,7 @@ public class VelocityField_RND {
 			velocities[i] = new double[2];
 			double r = 3480 + (6371 - 3480) / (n - 1) * i;
 			velocities[i][0] = r;
-			double dMu = getTriangleSplineValue(r, PartialType.PAR2, trs, answerMap);
+			double dMu = getTriangleSplineValue(r, PartialType.MU1D, trs, answerMap);
 			velocities[i][1] = Math.sqrt((structure.computeMu(r) + dMu) / structure.getRhoAt(r));
 		}
 		
@@ -329,7 +329,7 @@ public class VelocityField_RND {
 			Qs[i][0] = r;
 //			double dQ = getTriangleSplineValue(r, PartialType.PARQ, trs, answerMap);
 //			Qs[i][1] = structure.getQmuAt(r) + dQ * amplifyPerturbation;
-			double dq = getTriangleSplineValue(r, PartialType.PARQ, trs, answerMap) * amplifyPerturbation;
+			double dq = getTriangleSplineValue(r, PartialType.Q1D, trs, answerMap) * amplifyPerturbation;
 			double dQ = -1 * structure.getQmuAt(r) * structure.getQmuAt(r) * dq;
 			Qs[i][1] = structure.getQmuAt(r) + dQ;
 		}
@@ -405,7 +405,7 @@ public class VelocityField_RND {
 				.filter(unknown -> !unknown.getPartialType().isTimePartial()
 						&& unknown.getPartialType().equals(type)).collect(Collectors.toList())) {
 			double rp = p.getPosition().getR();
-			double w = p.getWeighting();
+			double w = p.getSize();
 			double value = answerMap.get(p);
 			if (rp - w/2. < r && rp + w/2. >= r) {
 				if (!trs.isBoundaryParameter(p)) {

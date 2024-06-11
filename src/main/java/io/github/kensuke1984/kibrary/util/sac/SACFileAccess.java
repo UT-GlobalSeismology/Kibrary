@@ -23,7 +23,7 @@ import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 
 /**
- * Data in a SAC file. Binary format.
+ * SAC file (SAC: Seismic analysis code). Binary format.
  *
  * @author Kensuke Konishi
  * @version 0.0.1.2
@@ -257,10 +257,11 @@ public interface SACFileAccess extends SACHeaderAccess {
     SACFileAccess setSACData(double[] waveData);
 
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
     /**
      * SAC files in binary format will be read and output in ascii format.
-     *
-     * @param args [information file name]
+     * @param args Options.
      * @throws IOException if an I/O error occurs
      */
     public static void main(String[] args) throws IOException {
@@ -280,10 +281,10 @@ public interface SACFileAccess extends SACHeaderAccess {
         Options options = Summon.defaultOptions();
         // input
         options.addOption(Option.builder("s").longOpt("sac").hasArg().argName("sacFile")
-                .desc("Path of input SAC file").build());
+                .desc("Path of input SAC file.").build());
         // output
         options.addOption(Option.builder("o").longOpt("output").hasArg().argName("outputFile")
-                .desc("Path of output file").build());
+                .desc("Path of output file.").build());
         return options;
     }
 
