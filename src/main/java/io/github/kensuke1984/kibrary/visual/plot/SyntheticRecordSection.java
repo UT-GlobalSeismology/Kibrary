@@ -28,7 +28,6 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.sac.SACFileAccess;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
-import io.github.kensuke1984.kibrary.util.sac.SACUtil;
 
 /**
  * Creates a record section for each event included in dataset folders.
@@ -278,7 +277,7 @@ public class SyntheticRecordSection extends Operation {
        Set<EventFolder> mainEventDirs = DatasetAid.eventFolderSet(mainSynPath);
        if (!tendEvents.isEmpty())
            mainEventDirs = mainEventDirs.stream().filter(dir -> tendEvents.contains(dir.getGlobalCMTID())).collect(Collectors.toSet());
-       SACUtil.outputSacFileTxts(mainEventDirs);
+//       SACUtil.outputSacFileTxts(mainEventDirs);
 
        Set<GlobalCMTID> events = mainEventDirs.stream().map(dir -> dir.getGlobalCMTID()).collect(Collectors.toSet());
 
@@ -292,7 +291,7 @@ public class SyntheticRecordSection extends Operation {
                    throw new IllegalArgumentException("Event " + event + " is not included in refSynPath1.");
            }
            // output text file
-           SACUtil.outputSacFileTxts(refEventDirs1);
+//           SACUtil.outputSacFileTxts(refEventDirs1);
        }
        if (refSynPath2 != null) {
            Set<EventFolder> refEventDirs2 = DatasetAid.eventFolderSet(refSynPath1);
@@ -303,7 +302,7 @@ public class SyntheticRecordSection extends Operation {
                    throw new IllegalArgumentException("Event " + event + " is not included in refSynPath2.");
            }
            // output text file
-           SACUtil.outputSacFileTxts(refEventDirs2);
+//           SACUtil.outputSacFileTxts(refEventDirs2);
        }
 
        Path outPath = DatasetAid.createOutputFolder(workPath, "recordSection", folderTag, appendFolderDate, null);
@@ -345,6 +344,7 @@ public class SyntheticRecordSection extends Operation {
 
 
    private class Plotter {
+       private final String eventName;
        private final Path eventPath;
        private final Set<SACFileName> sacNames;
        private final SACComponent component;
@@ -361,6 +361,7 @@ public class SyntheticRecordSection extends Operation {
         * @param component
         */
        private Plotter(Path eventPath, Set<SACFileName> sacNames, SACComponent component, String fileNameRoot) {
+           this.eventName = eventPath.getFileName().toString();
            this.eventPath = eventPath;
            this.sacNames = sacNames;
            this.component = component;
@@ -386,6 +387,7 @@ public class SyntheticRecordSection extends Operation {
 
            // for each SAC file
            for (SACFileName sacName : sacNames) {
+               String sacNameString = sacName.toPath().getFileName().toString();
 
                SACFileAccess sacData = sacName.read();
                double distance = sacData.getValue(SACHeaderEnum.GCARC);
@@ -414,18 +416,21 @@ public class SyntheticRecordSection extends Operation {
                double delta = sacData.getValue(SACHeaderEnum.DELTA);
                int npts = sacData.getInt(SACHeaderEnum.NPTS);
                double b = (int) (sacData.getValue(SACHeaderEnum.B) / delta) * delta;
-               double startTime = b - reduceTime;
-               double endTime = b + npts * delta - reduceTime;
-               if (Double.isNaN(lowerTime) && (startTime < minTime)) minTime = startTime;
-               if (Double.isNaN(upperTime) && (endTime > maxTime)) maxTime = endTime;
+               double traceStartTime = b - reduceTime;
+               double traceEndTime = b + npts * delta - reduceTime;
+               if (Double.isNaN(lowerTime) && (traceStartTime < minTime)) minTime = traceStartTime;
+               if (Double.isNaN(upperTime) && (traceEndTime > maxTime)) maxTime = traceEndTime;
                if (distance < minDistance) minDistance = distance;
                if (distance > maxDistance) maxDistance = distance;
 
+               // output wavefrom data
+               outputTxt(sacNameString, sacData, minTime + reduceTime, maxTime + reduceTime);
+
                // in flipAzimuth mode, change azimuth range from [0:360) to [-180:180)
                if (flipAzimuth == true && 180 <= azimuth) {
-                   profilePlotContent(sacName, distance, azimuth - 360, reduceTime);
+                   profilePlotContent(sacNameString, sacData, distance, azimuth - 360, reduceTime);
                } else {
-                   profilePlotContent(sacName, distance, azimuth, reduceTime);
+                   profilePlotContent(sacNameString, sacData, distance, azimuth, reduceTime);
                }
            }
 
@@ -456,7 +461,7 @@ public class SyntheticRecordSection extends Operation {
            gnuplot.setFont("Arial", 20, 15, 15, 15, 10);
            gnuplot.setCommonKey(true, false, "top right");
 
-           gnuplot.setCommonTitle(eventPath.getFileName().toString());
+           gnuplot.setCommonTitle(eventName);
            if (alignPhases != null) {
                gnuplot.setCommonXlabel("Time aligned on " + String.join(",", alignPhases) + "-phase arrival (s)");
            } else {
@@ -471,11 +476,8 @@ public class SyntheticRecordSection extends Operation {
            }
        }
 
-       private void profilePlotContent(SACFileName sacName, double distance, double azimuth, double reduceTime)
+       private void profilePlotContent(String sacNameString, SACFileAccess sacData, double distance, double azimuth, double reduceTime)
                throws IOException, TauModelException {
-           String txtFileName = sacName.toPath().getFileName().toString() + ".txt";
-           SACFileAccess sacData = sacName.read();
-
            // decide the coefficient to amplify each waveform
            double synAmp;
            if (ampStyle.equals(BasicPlotAid.AmpStyle.synMean)) synAmp = synMeanMax / ampScale;
@@ -496,22 +498,37 @@ public class SyntheticRecordSection extends Operation {
 
            // plot waveforms
            // Absolute paths are used here because relative paths are hard to construct when workPath != mainBasicPath.
-           String eventName = eventPath.getFileName().toString();
-           Path mainFilePath = mainSynPath.toAbsolutePath().resolve(eventName).resolve(txtFileName);
            if (mainSynStyle != 0)
-               gnuplot.addLine(mainFilePath.toString(), synUsingString, BasicPlotAid.switchSyntheticAppearance(mainSynStyle),
+               gnuplot.addLine(sacNameString + ".main.txt", synUsingString, BasicPlotAid.switchSyntheticAppearance(mainSynStyle),
                        (firstPlot ? mainSynName : ""));
            if (refSynStyle1 != 0) {
-               Path refFilePath1 = refSynPath1.toAbsolutePath().resolve(eventName).resolve(txtFileName);
-               gnuplot.addLine(refFilePath1.toString(), synUsingString, BasicPlotAid.switchSyntheticAppearance(refSynStyle1),
+               gnuplot.addLine(sacNameString + ".ref1.txt", synUsingString, BasicPlotAid.switchSyntheticAppearance(refSynStyle1),
                        (firstPlot ? refSynName1 : ""));
            }
            if (refSynStyle2 != 0) {
-               Path refFilePath2 = refSynPath2.toAbsolutePath().resolve(eventName).resolve(txtFileName);
-               gnuplot.addLine(refFilePath2.toString(), synUsingString, BasicPlotAid.switchSyntheticAppearance(refSynStyle2),
+               gnuplot.addLine(sacNameString + ".ref2.txt", synUsingString, BasicPlotAid.switchSyntheticAppearance(refSynStyle2),
                        (firstPlot ? refSynName2 : ""));
            }
            firstPlot = false;
+       }
+
+       private void outputTxt(String sacNameString, SACFileAccess mainSACData, double minTime, double maxTime) throws IOException {
+           // output main trace
+           Path outputPath = eventPath.resolve(sacNameString + ".main.txt");
+           Trace sacTrace = mainSACData.createTrace().cutWindow(minTime, maxTime);
+           sacTrace.write(outputPath);
+
+           // output ref trace 1
+           outputPath = eventPath.resolve(sacNameString + ".ref1.txt");
+           SACFileName refSACName1 = new SACFileName(refSynPath1.resolve(eventName).resolve(sacNameString));
+           sacTrace = refSACName1.read().createTrace().cutWindow(minTime, maxTime);
+           sacTrace.write(outputPath);
+
+           // output ref trace 2
+           outputPath = eventPath.resolve(sacNameString + ".ref2.txt");
+           SACFileName refSACName2 = new SACFileName(refSynPath2.resolve(eventName).resolve(sacNameString));
+           sacTrace = refSACName2.read().createTrace().cutWindow(minTime, maxTime);
+           sacTrace.write(outputPath);
        }
 
        private void calculateSynMeanMax(Set<SACFileName> names) throws IOException, TauModelException {
