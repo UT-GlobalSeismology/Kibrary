@@ -51,7 +51,7 @@ public class SyntheticRecordSection extends Operation {
     /**
      * How much space to provide at the rim of the graph in the time axis.
      */
-    private static final int TIME_RIM = 10;
+    private static final int TIME_RIM = 0;
 
     private final Property property;
     /**
@@ -120,6 +120,7 @@ public class SyntheticRecordSection extends Operation {
     private double upperTime;
     private LinearRange distanceRange;
     private CircularRange azimuthRange;
+    private boolean subtractMain;
 
     private int mainSynStyle;
     private String mainSynName;
@@ -156,11 +157,11 @@ public class SyntheticRecordSection extends Operation {
             pw.println("#appendFolderDate false");
             pw.println("##SacComponents to be used, listed using spaces. (Z R T)");
             pw.println("#components ");
-            pw.println("##Path of a root folder containing synthetic dataset (.)");
+            pw.println("##Path of a root folder containing synthetic dataset. (.)");
             pw.println("#mainSynPath ");
-            pw.println("##Path of a reference root folder 1 containing synthetic dataset, when plotting their waveforms");
+            pw.println("##Path of a reference root folder 1 containing synthetic dataset, when plotting their waveforms.");
             pw.println("#refSynPath1 ");
-            pw.println("##Path of a reference root folder 2 containing synthetic dataset, when plotting their waveforms");
+            pw.println("##Path of a reference root folder 2 containing synthetic dataset, when plotting their waveforms.");
             pw.println("#refSynPath2 ");
             pw.println("##GlobalCMTIDs of events to work for, listed using spaces. To use all events, leave this unset.");
             pw.println("#tendEvents ");
@@ -194,17 +195,19 @@ public class SyntheticRecordSection extends Operation {
             pw.println("#lowerAzimuth ");
             pw.println("##(double) Upper limit of range of azimuth to be used [deg], exclusive; [-180:360]. (360)");
             pw.println("#upperAzimuth ");
-            pw.println("##Plot style for main synthetic waveform, from {0:no plot, 1:red, 2:green, 3:blue} (1)");
-            pw.println("#mainSynStyle 2");
-            pw.println("##Name for main synthetic waveform (synthetic)");
-            pw.println("#mainSynName recovered");
-            pw.println("##Plot style for reference synthetic waveform 1, from {0:no plot, 1:red, 2:green, 3:blue} (0)");
-            pw.println("#refSynStyle1 1");
-            pw.println("##Name for reference synthetic waveform 1 (reference1)");
+            pw.println("##(boolean) Whether to subtract main waveforms from the reference waveforms. (false)");
+            pw.println("#subtractMain ");
+            pw.println("##Plot style for main synthetic waveform, from {0:no plot, 1:red, 2:green, 3:blue}. (1)");
+            pw.println("#mainSynStyle ");
+            pw.println("##Name for main synthetic waveform. (synthetic)");
+            pw.println("#mainSynName ");
+            pw.println("##Plot style for reference synthetic waveform 1, from {0:no plot, 1:red, 2:green, 3:blue}. (0)");
+            pw.println("#refSynStyle1 ");
+            pw.println("##Name for reference synthetic waveform 1. (reference1)");
             pw.println("#refSynName1 ");
-            pw.println("##Plot style for reference synthetic waveform 2, from {0:no plot, 1:red, 2:green, 3:blue} (0)");
+            pw.println("##Plot style for reference synthetic waveform 2, from {0:no plot, 1:red, 2:green, 3:blue}. (0)");
             pw.println("#refSynStyle2 ");
-            pw.println("##Name for reference synthetic waveform 2 (reference2)");
+            pw.println("##Name for reference synthetic waveform 2. (reference2)");
             pw.println("#refSynName2 ");
         }
         System.err.println(outPath + " is created.");
@@ -256,6 +259,8 @@ public class SyntheticRecordSection extends Operation {
         double lowerAzimuth = property.parseDouble("lowerAzimuth", "0");
         double upperAzimuth = property.parseDouble("upperAzimuth", "360");
         azimuthRange = new CircularRange("Azimuth", lowerAzimuth, upperAzimuth, -180.0, 360.0);
+
+        subtractMain = property.parseBoolean("subtractMain", "false");
 
         mainSynStyle = property.parseInt("mainSynStyle", "1");
         mainSynName = property.parseString("mainSynName", "synthetic");
@@ -515,19 +520,22 @@ public class SyntheticRecordSection extends Operation {
        private void outputTxt(String sacNameString, SACFileAccess mainSACData, double minTime, double maxTime) throws IOException {
            // output main trace
            Path outputPath = eventPath.resolve(sacNameString + ".main.txt");
-           Trace sacTrace = mainSACData.createTrace().cutWindow(minTime, maxTime);
+           Trace mainSacTrace = mainSACData.createTrace().cutWindow(minTime, maxTime);
+           Trace sacTrace = (subtractMain ? mainSacTrace.subtract(mainSacTrace) : mainSacTrace);
            sacTrace.write(outputPath);
 
            // output ref trace 1
            outputPath = eventPath.resolve(sacNameString + ".ref1.txt");
            SACFileName refSACName1 = new SACFileName(refSynPath1.resolve(eventName).resolve(sacNameString));
            sacTrace = refSACName1.read().createTrace().cutWindow(minTime, maxTime);
+           if (subtractMain) sacTrace = sacTrace.subtract(mainSacTrace);
            sacTrace.write(outputPath);
 
            // output ref trace 2
            outputPath = eventPath.resolve(sacNameString + ".ref2.txt");
            SACFileName refSACName2 = new SACFileName(refSynPath2.resolve(eventName).resolve(sacNameString));
            sacTrace = refSACName2.read().createTrace().cutWindow(minTime, maxTime);
+           if (subtractMain) sacTrace = sacTrace.subtract(mainSacTrace);
            sacTrace.write(outputPath);
        }
 

@@ -482,19 +482,31 @@ public final class Trace {
     }
 
     /**
-     * x in this and trace must be same. i.e. all the x elements must be same
-     *
-     * @param trace to be added
-     * @return new Trace after the addition
+     * Compute addition of another trace to this trace.
+     * This trace is not changed.
+     * @param trace ({@link Trace}) Trace to be added. All the x elements must be same as this trace.
+     * @return ({@link Trace}) New trace after addition.
      */
     public Trace add(Trace trace) {
         if (!Arrays.equals(xArray, trace.xArray)) throw new IllegalArgumentException("Trace to be added has different X axis.");
         return new Trace(xArray, yVector.add(trace.yVector).toArray());
     }
+    /**
+     * Compute subtracttion of another trace from this trace.
+     * This trace is not changed.
+     * @param trace ({@link Trace}) Trace to be subtracted. All the x elements must be same as this trace.
+     * @return ({@link Trace}) New trace after subtraction.
+     */
+    public Trace subtract(Trace trace) {
+        if (!Arrays.equals(xArray, trace.xArray)) throw new IllegalArgumentException("Trace to be added has different X axis.");
+        return new Trace(xArray, yVector.subtract(trace.yVector).toArray());
+    }
 
     /**
-     * @param d to be multiplied
-     * @return Trace which y is multiplied d
+     * Compute multiplication of this trace by a facter.
+     * This trace is not changed.
+     * @param d (double) Factor to multiply.
+     * @return ({@link Trace}) New trace after multiplication.
      */
     public Trace multiply(double d) {
         return new Trace(xArray, yVector.mapMultiply(d).toArray());
