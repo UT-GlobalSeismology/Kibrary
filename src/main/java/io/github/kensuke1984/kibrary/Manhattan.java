@@ -21,6 +21,7 @@ import io.github.kensuke1984.kibrary.inversion.solve.InversionSolver;
 import io.github.kensuke1984.kibrary.perturbation.BlockModelMaker;
 import io.github.kensuke1984.kibrary.perturbation.CheckerboardMaker;
 import io.github.kensuke1984.kibrary.perturbation.ModelSmoothener;
+import io.github.kensuke1984.kibrary.perturbation.ScalingPerturbation;
 import io.github.kensuke1984.kibrary.selection.DataSelection;
 import io.github.kensuke1984.kibrary.selection.RaypathSelection;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowMaker;
@@ -47,6 +48,7 @@ import io.github.kensuke1984.kibrary.visual.plot.DataFeatureHistogram;
 import io.github.kensuke1984.kibrary.visual.plot.ModelStructurePlotter;
 import io.github.kensuke1984.kibrary.visual.plot.PartialWaveformPlotter;
 import io.github.kensuke1984.kibrary.visual.plot.PolynomialStructurePlotter;
+import io.github.kensuke1984.kibrary.voxel.ConvertModelFileFormat;
 import io.github.kensuke1984.kibrary.voxel.VoxelFileMaker;
 import io.github.kensuke1984.kibrary.voxel.VoxelLayoutDesigner;
 import io.github.kensuke1984.kibrary.waveform.ActualWaveformCompiler;
@@ -104,6 +106,8 @@ enum Manhattan {
     VoxelFileMaker(51,VoxelFileMaker.class),
     CoarseGridDesigner(52, CoarseGridDesigner.class),
     AdaptiveGridDesigner(53, AdaptiveGridDesigner.class),
+    ConvertModelFileFormat(54, ConvertModelFileFormat.class),
+    ScalingPerturbation(55, ScalingPerturbation.class),
     // Partial 60
     ThreeDPartialDSMSetup(60, ThreeDPartialDSMSetup.class),
     PartialWaveformAssembler3D(61, PartialWaveformAssembler3D.class),
