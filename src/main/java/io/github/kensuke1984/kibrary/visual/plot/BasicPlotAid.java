@@ -91,6 +91,9 @@ class BasicPlotAid {
             for (String phase : alignPhases) timeTool.appendPhaseName(phase);
         }
 
+        // The following is needed to apply source depth if calcTime() has not been done yet.
+        timeTool.depthCorrect(timeTool.getSourceDepth(), timeTool.getReceiverDepth());
+
         // compute travel times
         List<SeismicPhase> phaseList = timeTool.getSeismicPhases();
         // extract information for phases to be used for alignment
