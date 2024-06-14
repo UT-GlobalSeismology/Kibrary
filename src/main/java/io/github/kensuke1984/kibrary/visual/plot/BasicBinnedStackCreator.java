@@ -267,7 +267,6 @@ public class BasicBinnedStackCreator extends Operation {
         double lowerDistance = property.parseDouble("lowerDistance", "0");
         double upperDistance = property.parseDouble("upperDistance", "180");
         distanceRange = new LinearRange("Distance", lowerDistance, upperDistance, 0.0, 180.0);
-
         double lowerAzimuth = property.parseDouble("lowerAzimuth", "0");
         double upperAzimuth = property.parseDouble("upperAzimuth", "360");
         azimuthRange = new CircularRange("Azimuth", lowerAzimuth, upperAzimuth, -180.0, 360.0);
@@ -284,82 +283,82 @@ public class BasicBinnedStackCreator extends Operation {
             throw new IllegalArgumentException("refBasicPath2 must be set when refSynStyle2 != 0");
     }
 
-   @Override
-   public void run() throws IOException {
+    @Override
+    public void run() throws IOException {
 
-       // read main basic waveform folders
-       List<BasicID> mainBasicIDs = BasicIDFile.read(mainBasicPath, true).stream()
-               .filter(id -> components.contains(id.getSacComponent())).collect(Collectors.toList());
-       if (!tendEvents.isEmpty()) {
-           mainBasicIDs = mainBasicIDs.stream().filter(id -> tendEvents.contains(id.getGlobalCMTID())).collect(Collectors.toList());
-       }
+        // read main basic waveform folders
+        List<BasicID> mainBasicIDs = BasicIDFile.read(mainBasicPath, true).stream()
+                .filter(id -> components.contains(id.getSacComponent())).collect(Collectors.toList());
+        if (!tendEvents.isEmpty()) {
+            mainBasicIDs = mainBasicIDs.stream().filter(id -> tendEvents.contains(id.getGlobalCMTID())).collect(Collectors.toList());
+        }
 
-       // collect events included in mainBasicIDs
-       Set<GlobalCMTID> events = mainBasicIDs.stream().map(id -> id.getGlobalCMTID()).distinct().collect(Collectors.toSet());
-       if (!DatasetAid.checkNum(events.size(), "event", "events")) {
-           return;
-       }
+        // collect events included in mainBasicIDs
+        Set<GlobalCMTID> events = mainBasicIDs.stream().map(id -> id.getGlobalCMTID()).distinct().collect(Collectors.toSet());
+        if (!DatasetAid.checkNum(events.size(), "event", "events")) {
+            return;
+        }
 
-       // check sampling rate
-       double[] samplingHzs = mainBasicIDs.stream().mapToDouble(id -> id.getSamplingHz()).distinct().toArray();
-       if (samplingHzs.length != 1) {
-           Arrays.stream(samplingHzs).forEach(hz -> System.err.print(hz + " "));
-           throw new IllegalStateException("Data with different sampling rates exist");
-       }
-       samplingStep = 1 / samplingHzs[0];
+        // check sampling rate
+        double[] samplingHzs = mainBasicIDs.stream().mapToDouble(id -> id.getSamplingHz()).distinct().toArray();
+        if (samplingHzs.length != 1) {
+            Arrays.stream(samplingHzs).forEach(hz -> System.err.print(hz + " "));
+            throw new IllegalStateException("Data with different sampling rates exist");
+        }
+        samplingStep = 1 / samplingHzs[0];
 
-       // read reference basic waveform folders and collect only synthetic basicIDs
-       if (refBasicPath1 != null) {
-           refSynBasicIDs1 = BasicIDFile.read(refBasicPath1, true).stream()
-                   .filter(id -> id.getWaveformType().equals(WaveformType.SYN)
-                           && components.contains(id.getSacComponent()) && events.contains(id.getGlobalCMTID()))
-                   .collect(Collectors.toList());
-       }
-       if (refBasicPath2 != null) {
-           refSynBasicIDs2 = BasicIDFile.read(refBasicPath2, true).stream()
-                   .filter(id -> id.getWaveformType().equals(WaveformType.SYN)
-                           && components.contains(id.getSacComponent()) && events.contains(id.getGlobalCMTID()))
-                   .collect(Collectors.toList());
-       }
+        // read reference basic waveform folders and collect only synthetic basicIDs
+        if (refBasicPath1 != null) {
+            refSynBasicIDs1 = BasicIDFile.read(refBasicPath1, true).stream()
+                    .filter(id -> id.getWaveformType().equals(WaveformType.SYN)
+                            && components.contains(id.getSacComponent()) && events.contains(id.getGlobalCMTID()))
+                    .collect(Collectors.toList());
+        }
+        if (refBasicPath2 != null) {
+            refSynBasicIDs2 = BasicIDFile.read(refBasicPath2, true).stream()
+                    .filter(id -> id.getWaveformType().equals(WaveformType.SYN)
+                            && components.contains(id.getSacComponent()) && events.contains(id.getGlobalCMTID()))
+                    .collect(Collectors.toList());
+        }
 
-       Path outPath = DatasetAid.createOutputFolder(workPath, "binStack", folderTag, appendFolderDate, null);
-       property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
+        Path outPath = DatasetAid.createOutputFolder(workPath, "binStack", folderTag, appendFolderDate, null);
+        property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
-       try {
-           // set up taup_time tool
-           if (alignPhases != null || displayPhases != null) {
-               timeTool = new TauP_Time(structureName);
-           }
+        try {
+            // set up taup_time tool
+            if (alignPhases != null || displayPhases != null) {
+                timeTool = new TauP_Time(structureName);
+            }
 
-           for (GlobalCMTID event : events) {
+            for (GlobalCMTID event : events) {
 
-               // set event to taup_time tool
-               // The same instance is reused for all observers because computation takes time when changing source depth (see TauP manual).
-               if (alignPhases != null || displayPhases != null) {
-                   timeTool.setSourceDepth(event.getEventData().getCmtPosition().getDepth());
-               }
+                // set event to taup_time tool
+                // The same instance is reused for all observers because computation takes time when changing source depth (see TauP manual).
+                if (alignPhases != null || displayPhases != null) {
+                    timeTool.setSourceDepth(event.getEventData().getCmtPosition().getDepth());
+                }
 
-               // create plots under outPath
-               Path eventPath = outPath.resolve(event.toString());
-               Files.createDirectories(eventPath);
+                // create plots under outPath
+                Path eventPath = outPath.resolve(event.toString());
+                Files.createDirectories(eventPath);
 
-               for (SACComponent component : components) {
-                   List<BasicID> useIds = mainBasicIDs.stream()
-                           .filter(id -> id.getSacComponent().equals(component) && id.getGlobalCMTID().equals(event))
-                           .sorted(Comparator.comparing(BasicID::getObserver))
-                           .collect(Collectors.toList());
+                for (SACComponent component : components) {
+                    List<BasicID> useIds = mainBasicIDs.stream()
+                            .filter(id -> id.getSacComponent().equals(component) && id.getGlobalCMTID().equals(event))
+                            .sorted(Comparator.comparing(BasicID::getObserver))
+                            .collect(Collectors.toList());
 
-                   String fileNameRoot = "binStack_" + component.toString();
+                    String fileNameRoot = "binStack_" + component.toString();
 
-                   Plotter plotter = new Plotter(eventPath, useIds, component, fileNameRoot);
-                   plotter.plot();
-               }
-           }
+                    Plotter plotter = new Plotter(eventPath, useIds, component, fileNameRoot);
+                    plotter.plot();
+                }
+            }
 
-       } catch (TauModelException e) {
-           e.printStackTrace();
-       }
-   }
+        } catch (TauModelException e) {
+            e.printStackTrace();
+        }
+    }
 
     private class Plotter {
         private final Path eventPath;

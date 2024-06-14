@@ -104,6 +104,9 @@ public class DataSelection extends Operation {
      * Sampling frequency of input SAC files [Hz].
      */
     private double sacSamplingHz;
+    /**
+     * Path of static correction file.
+     */
     private Path staticCorrectionPath;
 
     /**
@@ -238,14 +241,14 @@ public class DataSelection extends Operation {
         sourceTimewindowSet = TimewindowDataFile.read(timewindowPath)
                 .stream().filter(window -> components.contains(window.getComponent())).collect(Collectors.toSet());
         // collect all events that exist in the time window set
-        Set<GlobalCMTID> eventSet = sourceTimewindowSet.stream().map(TimewindowData::getGlobalCMTID)
-                .collect(Collectors.toSet());
+        Set<GlobalCMTID> eventSet = sourceTimewindowSet.stream().map(TimewindowData::getGlobalCMTID).collect(Collectors.toSet());
 
         // read static corrections
-        staticCorrectionSet = (staticCorrectionPath == null ? Collections.emptySet()
-                : StaticCorrectionDataFile.read(staticCorrectionPath));
+        staticCorrectionSet = (staticCorrectionPath == null ? Collections.emptySet() :
+                StaticCorrectionDataFile.read(staticCorrectionPath));
 
         ExecutorService es = ThreadAid.createFixedThreadPool();
+        System.err.println("Working for " + eventSet.size() + " events.");
         // for each event, execute run() of class Worker, which is defined at the bottom of this java file
         eventSet.stream().map(Worker::new).forEach(es::execute);
         es.shutdown();

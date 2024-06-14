@@ -350,8 +350,8 @@ public final class DatasetAid {
                 }
 
                 // get synthetic data
-                SACExtension synExt = convolved ? SACExtension.valueOfConvolutedSynthetic(component)
-                        : SACExtension.valueOfSynthetic(component);
+                SACExtension synExt = convolved ? SACExtension.valueOfConvolutedSynthetic(component) :
+                        SACExtension.valueOfSynthetic(component);
                 SACFileName synName = new SACFileName(synEventPath.resolve(SACFileName.generate(observer, eventID, synExt)));
                 if (!synName.exists()) {
                     System.err.println();

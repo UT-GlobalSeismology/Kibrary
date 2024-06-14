@@ -110,6 +110,7 @@ public class DatasetMerge extends Operation {
         }
 
         Path outPath = DatasetAid.createOutputFolder(workPath, nameRoot, folderTag, appendFolderDate, null);
+        property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         // each datset folder
         for (Path inPath : inPaths) {

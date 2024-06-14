@@ -274,304 +274,303 @@ public class SyntheticRecordSection extends Operation {
             throw new IllegalArgumentException("refSynPath2 must be set when refSynStyle2 != 0");
     }
 
-   @Override
-   public void run() throws IOException {
-       dateString = GadgetAid.getTemporaryString();
+    @Override
+    public void run() throws IOException {
+        dateString = GadgetAid.getTemporaryString();
 
-       // read main synthetic dataset and write waveforms to be used into txt files
-       Set<EventFolder> mainEventDirs = DatasetAid.eventFolderSet(mainSynPath);
-       if (!tendEvents.isEmpty())
-           mainEventDirs = mainEventDirs.stream().filter(dir -> tendEvents.contains(dir.getGlobalCMTID())).collect(Collectors.toSet());
-//       SACUtil.outputSacFileTxts(mainEventDirs);
+        // read main synthetic dataset and write waveforms to be used into txt files
+        Set<EventFolder> mainEventDirs = DatasetAid.eventFolderSet(mainSynPath);
+        if (!tendEvents.isEmpty())
+            mainEventDirs = mainEventDirs.stream().filter(dir -> tendEvents.contains(dir.getGlobalCMTID())).collect(Collectors.toSet());
+//        SACUtil.outputSacFileTxts(mainEventDirs);
 
-       Set<GlobalCMTID> events = mainEventDirs.stream().map(dir -> dir.getGlobalCMTID()).collect(Collectors.toSet());
+        Set<GlobalCMTID> events = mainEventDirs.stream().map(dir -> dir.getGlobalCMTID()).collect(Collectors.toSet());
 
-       // read reference synthetic dataset and write waveforms to be used into txt files
-       if (refSynPath1 != null) {
-           Set<EventFolder> refEventDirs1 = DatasetAid.eventFolderSet(refSynPath1);
-           // check that all needed events are included
-           Set<GlobalCMTID> refEvents1 = refEventDirs1.stream().map(dir -> dir.getGlobalCMTID()).collect(Collectors.toSet());
-           for (GlobalCMTID event : events) {
-               if (!refEvents1.contains(event))
-                   throw new IllegalArgumentException("Event " + event + " is not included in refSynPath1.");
-           }
-           // output text file
-//           SACUtil.outputSacFileTxts(refEventDirs1);
-       }
-       if (refSynPath2 != null) {
-           Set<EventFolder> refEventDirs2 = DatasetAid.eventFolderSet(refSynPath1);
-           // check that all needed events are included
-           Set<GlobalCMTID> refEvents2 = refEventDirs2.stream().map(dir -> dir.getGlobalCMTID()).collect(Collectors.toSet());
-           for (GlobalCMTID event : events) {
-               if (!refEvents2.contains(event))
-                   throw new IllegalArgumentException("Event " + event + " is not included in refSynPath2.");
-           }
-           // output text file
-//           SACUtil.outputSacFileTxts(refEventDirs2);
-       }
+        // read reference synthetic dataset and write waveforms to be used into txt files
+        if (refSynPath1 != null) {
+            Set<EventFolder> refEventDirs1 = DatasetAid.eventFolderSet(refSynPath1);
+            // check that all needed events are included
+            Set<GlobalCMTID> refEvents1 = refEventDirs1.stream().map(dir -> dir.getGlobalCMTID()).collect(Collectors.toSet());
+            for (GlobalCMTID event : events) {
+                if (!refEvents1.contains(event))
+                    throw new IllegalArgumentException("Event " + event + " is not included in refSynPath1.");
+            }
+            // output text file
+//            SACUtil.outputSacFileTxts(refEventDirs1);
+        }
+        if (refSynPath2 != null) {
+            Set<EventFolder> refEventDirs2 = DatasetAid.eventFolderSet(refSynPath1);
+            // check that all needed events are included
+            Set<GlobalCMTID> refEvents2 = refEventDirs2.stream().map(dir -> dir.getGlobalCMTID()).collect(Collectors.toSet());
+            for (GlobalCMTID event : events) {
+                if (!refEvents2.contains(event))
+                    throw new IllegalArgumentException("Event " + event + " is not included in refSynPath2.");
+            }
+            // output text file
+//            SACUtil.outputSacFileTxts(refEventDirs2);
+        }
 
-       Path outPath = DatasetAid.createOutputFolder(workPath, "recordSection", folderTag, appendFolderDate, null);
-       property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
+        Path outPath = DatasetAid.createOutputFolder(workPath, "recordSection", folderTag, appendFolderDate, null);
+        property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
-       try {
-           // set up taup_time tool
-           if (alignPhases != null || displayPhases != null) {
-               timeTool = new TauP_Time(structureName);
-           }
+        try {
+            // set up taup_time tool
+            if (alignPhases != null || displayPhases != null) {
+                timeTool = new TauP_Time(structureName);
+            }
 
-           for (GlobalCMTID event : events) {
+            for (GlobalCMTID event : events) {
 
-               // set event to taup_time tool
-               // The same instance is reused for all observers because computation takes time when changing source depth (see TauP manual).
-               if (alignPhases != null || displayPhases != null) {
-                   timeTool.setSourceDepth(event.getEventData().getCmtPosition().getDepth());
-               }
+                // set event to taup_time tool
+                // The same instance is reused for all observers because computation takes time when changing source depth (see TauP manual).
+                if (alignPhases != null || displayPhases != null) {
+                    timeTool.setSourceDepth(event.getEventData().getCmtPosition().getDepth());
+                }
 
-               // create plots under workPath
-               Path eventPath = outPath.resolve(event.toString());
-               Files.createDirectories(eventPath);
+                // create plots under workPath
+                Path eventPath = outPath.resolve(event.toString());
+                Files.createDirectories(eventPath);
 
-               for (SACComponent component : components) {
-                   Set<SACFileName> sacNames = new EventFolder(mainSynPath.resolve(event.toString())).sacFileSet()
-                           .stream().filter(name -> name.isSYN() && name.getComponent().equals(component)).collect(Collectors.toSet());
+                for (SACComponent component : components) {
+                    Set<SACFileName> sacNames = new EventFolder(mainSynPath.resolve(event.toString())).sacFileSet()
+                            .stream().filter(name -> name.isSYN() && name.getComponent().equals(component)).collect(Collectors.toSet());
 
-                   String fileNameRoot = "recordSection_" + component.toString();
+                    String fileNameRoot = "recordSection_" + component.toString();
 
-                   Plotter plotter = new Plotter(eventPath, sacNames, component, fileNameRoot);
-                   plotter.plot();
-               }
-           }
+                    Plotter plotter = new Plotter(eventPath, sacNames, component, fileNameRoot);
+                    plotter.plot();
+                }
+            }
 
-       } catch (TauModelException e) {
-           e.printStackTrace();
-       }
-   }
+        } catch (TauModelException e) {
+            e.printStackTrace();
+        }
+    }
 
+    private class Plotter {
+        private final String eventName;
+        private final Path eventPath;
+        private final Set<SACFileName> sacNames;
+        private final SACComponent component;
+        private final String fileNameRoot;
 
-   private class Plotter {
-       private final String eventName;
-       private final Path eventPath;
-       private final Set<SACFileName> sacNames;
-       private final SACComponent component;
-       private final String fileNameRoot;
+        private GnuplotFile gnuplot;
+        private double synMeanMax = 0;
+        private boolean firstPlot = true;
 
-       private GnuplotFile gnuplot;
-       private double synMeanMax = 0;
-       private boolean firstPlot = true;
-
-       /**
+        /**
         *
         * @param eventPath
         * @param sacNames (SACFileName) sac files to be plotted
         * @param component
         */
-       private Plotter(Path eventPath, Set<SACFileName> sacNames, SACComponent component, String fileNameRoot) {
-           this.eventName = eventPath.getFileName().toString();
-           this.eventPath = eventPath;
-           this.sacNames = sacNames;
-           this.component = component;
-           this.fileNameRoot = fileNameRoot;
-       }
+        private Plotter(Path eventPath, Set<SACFileName> sacNames, SACComponent component, String fileNameRoot) {
+            this.eventName = eventPath.getFileName().toString();
+            this.eventPath = eventPath;
+            this.sacNames = sacNames;
+            this.component = component;
+            this.fileNameRoot = fileNameRoot;
+        }
 
-       private void plot() throws IOException, TauModelException {
-           if (sacNames.size() == 0) {
-               return;
-           }
+        private void plot() throws IOException, TauModelException {
+            if (sacNames.size() == 0) {
+                return;
+            }
 
-           // set up plotter
-           profilePlotSetup();
+            // set up plotter
+            profilePlotSetup();
 
-           // calculate the average of the maximum amplitudes of waveforms
-           if (ampStyle.equals(BasicPlotAid.AmpStyle.synMean)) calculateSynMeanMax(sacNames);
+            // calculate the average of the maximum amplitudes of waveforms
+            if (ampStyle.equals(BasicPlotAid.AmpStyle.synMean)) calculateSynMeanMax(sacNames);
 
-           // variables to find the minimum and maximum distance for this event
-           double minTime = Double.isNaN(lowerTime) ?  Double.MAX_VALUE : lowerTime;
-           double maxTime = Double.isNaN(upperTime) ? -Double.MAX_VALUE : upperTime;
-           double minDistance = Double.MAX_VALUE;
-           double maxDistance = -Double.MAX_VALUE;
+            // variables to find the minimum and maximum distance for this event
+            double minTime = Double.isNaN(lowerTime) ? Double.MAX_VALUE : lowerTime;
+            double maxTime = Double.isNaN(upperTime) ? -Double.MAX_VALUE : upperTime;
+            double minDistance = Double.MAX_VALUE;
+            double maxDistance = -Double.MAX_VALUE;
 
-           // for each SAC file
-           for (SACFileName sacName : sacNames) {
-               String sacNameString = sacName.toPath().getFileName().toString();
+            // for each SAC file
+            for (SACFileName sacName : sacNames) {
+                String sacNameString = sacName.toPath().getFileName().toString();
 
-               SACFileAccess sacData = sacName.read();
-               double distance = sacData.getValue(SACHeaderEnum.GCARC);
-               double azimuth = sacData.getValue(SACHeaderEnum.AZ);
+                SACFileAccess sacData = sacName.read();
+                double distance = sacData.getValue(SACHeaderEnum.GCARC);
+                double azimuth = sacData.getValue(SACHeaderEnum.AZ);
 
-               // skip waveform if distance or azimuth is out of bounds
-               if (distanceRange.check(distance) == false || azimuthRange.check(azimuth) == false) {
-                   continue;
-               }
+                // skip waveform if distance or azimuth is out of bounds
+                if (distanceRange.check(distance) == false || azimuthRange.check(azimuth) == false) {
+                    continue;
+                }
 
-               // compute reduce time by distance or phase travel time
-               double reduceTime = 0;
-               if (alignPhases != null) {
-                   timeTool.setPhaseNames(alignPhases);
-                   timeTool.calculate(distance);
-                   if (timeTool.getNumArrivals() < 1) {
-                       System.err.println("Could not get arrival time of " + String.join(",", alignPhases) + " for " + sacName.toString() + " , skipping.");
-                       return;
-                   }
-                   reduceTime = timeTool.getArrival(0).getTime();
-               } else {
-                   reduceTime = reductionSlowness * distance;
-               }
+                // compute reduce time by distance or phase travel time
+                double reduceTime = 0;
+                if (alignPhases != null) {
+                    timeTool.setPhaseNames(alignPhases);
+                    timeTool.calculate(distance);
+                    if (timeTool.getNumArrivals() < 1) {
+                        System.err.println("Could not get arrival time of " + String.join(",", alignPhases) + " for " + sacName.toString() + " , skipping.");
+                        return;
+                    }
+                    reduceTime = timeTool.getArrival(0).getTime();
+                } else {
+                    reduceTime = reductionSlowness * distance;
+                }
 
-               // update ranges
-               double delta = sacData.getValue(SACHeaderEnum.DELTA);
-               int npts = sacData.getInt(SACHeaderEnum.NPTS);
-               double b = (int) (sacData.getValue(SACHeaderEnum.B) / delta) * delta;
-               double traceStartTime = b - reduceTime;
-               double traceEndTime = b + npts * delta - reduceTime;
-               if (Double.isNaN(lowerTime) && (traceStartTime < minTime)) minTime = traceStartTime;
-               if (Double.isNaN(upperTime) && (traceEndTime > maxTime)) maxTime = traceEndTime;
-               if (distance < minDistance) minDistance = distance;
-               if (distance > maxDistance) maxDistance = distance;
+                // update ranges
+                double delta = sacData.getValue(SACHeaderEnum.DELTA);
+                int npts = sacData.getInt(SACHeaderEnum.NPTS);
+                double b = (int) (sacData.getValue(SACHeaderEnum.B) / delta) * delta;
+                double traceStartTime = b - reduceTime;
+                double traceEndTime = b + npts * delta - reduceTime;
+                if (Double.isNaN(lowerTime) && (traceStartTime < minTime)) minTime = traceStartTime;
+                if (Double.isNaN(upperTime) && (traceEndTime > maxTime)) maxTime = traceEndTime;
+                if (distance < minDistance) minDistance = distance;
+                if (distance > maxDistance) maxDistance = distance;
 
-               // output wavefrom data
-               outputTxt(sacNameString, sacData, minTime + reduceTime, maxTime + reduceTime);
+                // output wavefrom data
+                outputTxt(sacNameString, sacData, minTime + reduceTime, maxTime + reduceTime);
 
-               // in flipAzimuth mode, change azimuth range from [0:360) to [-180:180)
-               if (flipAzimuth == true && 180 <= azimuth) {
-                   profilePlotContent(sacNameString, sacData, distance, azimuth - 360, reduceTime);
-               } else {
-                   profilePlotContent(sacNameString, sacData, distance, azimuth, reduceTime);
-               }
-           }
+                // in flipAzimuth mode, change azimuth range from [0:360) to [-180:180)
+                if (flipAzimuth == true && 180 <= azimuth) {
+                    profilePlotContent(sacNameString, sacData, distance, azimuth - 360, reduceTime);
+                } else {
+                    profilePlotContent(sacNameString, sacData, distance, azimuth, reduceTime);
+                }
+            }
 
-           // set ranges
-           if (minDistance > maxDistance || minTime > maxTime) return;
-           int startDistance = (int) Math.floor(minDistance / GRAPH_SIZE_INTERVAL) * GRAPH_SIZE_INTERVAL - Y_AXIS_RIM;
-           int endDistance = (int) Math.ceil(maxDistance / GRAPH_SIZE_INTERVAL) * GRAPH_SIZE_INTERVAL + Y_AXIS_RIM;
-           gnuplot.setCommonYrange(startDistance, endDistance);
-           gnuplot.setCommonXrange(minTime - TIME_RIM, maxTime + TIME_RIM);
+            // set ranges
+            if (minDistance > maxDistance || minTime > maxTime) return;
+            int startDistance = (int) Math.floor(minDistance / GRAPH_SIZE_INTERVAL) * GRAPH_SIZE_INTERVAL - Y_AXIS_RIM;
+            int endDistance = (int) Math.ceil(maxDistance / GRAPH_SIZE_INTERVAL) * GRAPH_SIZE_INTERVAL + Y_AXIS_RIM;
+            gnuplot.setCommonYrange(startDistance, endDistance);
+            gnuplot.setCommonXrange(minTime - TIME_RIM, maxTime + TIME_RIM);
 
-           // add travel time curves
-           if (displayPhases != null) {
-               BasicPlotAid.plotTravelTimeCurve(timeTool, displayPhases, alignPhases, reductionSlowness, startDistance, endDistance,
-                       null, dateString, eventPath, component, gnuplot);
-           }
+            // add travel time curves
+            if (displayPhases != null) {
+                BasicPlotAid.plotTravelTimeCurve(timeTool, displayPhases, alignPhases, reductionSlowness, startDistance, endDistance,
+                        null, dateString, eventPath, component, gnuplot);
+            }
 
-           // plot
-           gnuplot.write();
-           if (!gnuplot.execute()) System.err.println("gnuplot failed!!");
-       }
+            // plot
+            gnuplot.write();
+            if (!gnuplot.execute()) System.err.println("gnuplot failed!!");
+        }
 
-       private void profilePlotSetup() {
-           gnuplot = new GnuplotFile(eventPath.resolve(fileNameRoot + ".plt"));
+        private void profilePlotSetup() {
+            gnuplot = new GnuplotFile(eventPath.resolve(fileNameRoot + ".plt"));
 
-           gnuplot.setOutput("pdf", fileNameRoot + ".pdf", 21, 29.7, true);
-           gnuplot.setMarginH(15, 25);
-           gnuplot.setMarginV(15, 15);
-           gnuplot.setFont("Arial", 20, 15, 15, 15, 10);
-           gnuplot.setCommonKey(true, false, "top right");
+            gnuplot.setOutput("pdf", fileNameRoot + ".pdf", 21, 29.7, true);
+            gnuplot.setMarginH(15, 25);
+            gnuplot.setMarginV(15, 15);
+            gnuplot.setFont("Arial", 20, 15, 15, 15, 10);
+            gnuplot.setCommonKey(true, false, "top right");
 
-           gnuplot.setCommonTitle(eventName);
-           if (alignPhases != null) {
-               gnuplot.setCommonXlabel("Time aligned on " + String.join(",", alignPhases) + "-phase arrival (s)");
-           } else {
-               gnuplot.setCommonXlabel("Reduced time (T - " + reductionSlowness + " Δ) (s)");
-           }
-           if (!byAzimuth) {
-               gnuplot.setCommonYlabel("Distance (deg)");
-               gnuplot.addLabel("station network azimuth", "graph", 1.0, 1.0);
-           } else {
-               gnuplot.setCommonYlabel("Azimuth (deg)");
-               gnuplot.addLabel("station network distance", "graph", 1.0, 1.0);
-           }
-       }
+            gnuplot.setCommonTitle(eventName);
+            if (alignPhases != null) {
+                gnuplot.setCommonXlabel("Time aligned on " + String.join(",", alignPhases) + "-phase arrival (s)");
+            } else {
+                gnuplot.setCommonXlabel("Reduced time (T - " + reductionSlowness + " Δ) (s)");
+            }
+            if (!byAzimuth) {
+                gnuplot.setCommonYlabel("Distance (deg)");
+                gnuplot.addLabel("station network azimuth", "graph", 1.0, 1.0);
+            } else {
+                gnuplot.setCommonYlabel("Azimuth (deg)");
+                gnuplot.addLabel("station network distance", "graph", 1.0, 1.0);
+            }
+        }
 
-       private void profilePlotContent(String sacNameString, SACFileAccess sacData, double distance, double azimuth, double reduceTime)
-               throws IOException, TauModelException {
-           // decide the coefficient to amplify each waveform
-           double synAmp;
-           if (ampStyle.equals(BasicPlotAid.AmpStyle.synMean)) synAmp = synMeanMax / ampScale;
-           else if (ampStyle.equals(BasicPlotAid.AmpStyle.synEach)) synAmp = calculateSynMax(sacData, reduceTime);
-           else throw new IllegalArgumentException("ampStyle must be set synEach or synMean.");
+        private void profilePlotContent(String sacNameString, SACFileAccess sacData, double distance, double azimuth, double reduceTime)
+                throws IOException, TauModelException {
+            // decide the coefficient to amplify each waveform
+            double synAmp;
+            if (ampStyle.equals(BasicPlotAid.AmpStyle.synMean)) synAmp = synMeanMax / ampScale;
+            else if (ampStyle.equals(BasicPlotAid.AmpStyle.synEach)) synAmp = calculateSynMax(sacData, reduceTime);
+            else throw new IllegalArgumentException("ampStyle must be set synEach or synMean.");
 
-           // Set "using" part. For x values, reduce time by distance or phase travel time. For y values, add either distance or azimuth.
-           String synUsingString;
-           if (!byAzimuth) {
-               gnuplot.addLabel(sacData.getObserver().toPaddedString() + " " + MathAid.padToString(azimuth, 3, 2, false),
-                       "graph", 1.01, "first", distance);
-               synUsingString = String.format("($1-%.3f):($2/%.3e+%.2f) ", reduceTime, synAmp, distance);
-           } else {
-               gnuplot.addLabel(sacData.getObserver().toPaddedString() + " " + MathAid.padToString(distance, 3, 2, false),
-                       "graph", 1.01, "first", azimuth);
-               synUsingString = String.format("($1-%.3f):($2/%.3e+%.2f) ", reduceTime, synAmp, azimuth);
-           }
+            // Set "using" part. For x values, reduce time by distance or phase travel time. For y values, add either distance or azimuth.
+            String synUsingString;
+            if (!byAzimuth) {
+                gnuplot.addLabel(sacData.getObserver().toPaddedString() + " " + MathAid.padToString(azimuth, 3, 2, false),
+                        "graph", 1.01, "first", distance);
+                synUsingString = String.format("($1-%.3f):($2/%.3e+%.2f) ", reduceTime, synAmp, distance);
+            } else {
+                gnuplot.addLabel(sacData.getObserver().toPaddedString() + " " + MathAid.padToString(distance, 3, 2, false),
+                        "graph", 1.01, "first", azimuth);
+                synUsingString = String.format("($1-%.3f):($2/%.3e+%.2f) ", reduceTime, synAmp, azimuth);
+            }
 
-           // plot waveforms
-           // Absolute paths are used here because relative paths are hard to construct when workPath != mainBasicPath.
-           if (mainSynStyle != 0)
-               gnuplot.addLine(sacNameString + ".main.txt", synUsingString, BasicPlotAid.switchSyntheticAppearance(mainSynStyle),
-                       (firstPlot ? mainSynName : ""));
-           if (refSynStyle1 != 0) {
-               gnuplot.addLine(sacNameString + ".ref1.txt", synUsingString, BasicPlotAid.switchSyntheticAppearance(refSynStyle1),
-                       (firstPlot ? refSynName1 : ""));
-           }
-           if (refSynStyle2 != 0) {
-               gnuplot.addLine(sacNameString + ".ref2.txt", synUsingString, BasicPlotAid.switchSyntheticAppearance(refSynStyle2),
-                       (firstPlot ? refSynName2 : ""));
-           }
-           firstPlot = false;
-       }
+            // plot waveforms
+            // Absolute paths are used here because relative paths are hard to construct when workPath != mainBasicPath.
+            if (mainSynStyle != 0)
+                gnuplot.addLine(sacNameString + ".main.txt", synUsingString, BasicPlotAid.switchSyntheticAppearance(mainSynStyle),
+                        (firstPlot ? mainSynName : ""));
+            if (refSynStyle1 != 0) {
+                gnuplot.addLine(sacNameString + ".ref1.txt", synUsingString, BasicPlotAid.switchSyntheticAppearance(refSynStyle1),
+                        (firstPlot ? refSynName1 : ""));
+            }
+            if (refSynStyle2 != 0) {
+                gnuplot.addLine(sacNameString + ".ref2.txt", synUsingString, BasicPlotAid.switchSyntheticAppearance(refSynStyle2),
+                        (firstPlot ? refSynName2 : ""));
+            }
+            firstPlot = false;
+        }
 
-       private void outputTxt(String sacNameString, SACFileAccess mainSACData, double minTime, double maxTime) throws IOException {
-           // output main trace
-           Path outputPath = eventPath.resolve(sacNameString + ".main.txt");
-           Trace mainSacTrace = mainSACData.createTrace().cutWindow(minTime, maxTime);
-           Trace sacTrace = (subtractMain ? mainSacTrace.subtract(mainSacTrace) : mainSacTrace);
-           sacTrace.write(outputPath);
+        private void outputTxt(String sacNameString, SACFileAccess mainSACData, double minTime, double maxTime) throws IOException {
+            // output main trace
+            Path outputPath = eventPath.resolve(sacNameString + ".main.txt");
+            Trace mainSacTrace = mainSACData.createTrace().cutWindow(minTime, maxTime);
+            Trace sacTrace = (subtractMain ? mainSacTrace.subtract(mainSacTrace) : mainSacTrace);
+            sacTrace.write(outputPath);
 
-           // output ref trace 1
-           outputPath = eventPath.resolve(sacNameString + ".ref1.txt");
-           SACFileName refSACName1 = new SACFileName(refSynPath1.resolve(eventName).resolve(sacNameString));
-           sacTrace = refSACName1.read().createTrace().cutWindow(minTime, maxTime);
-           if (subtractMain) sacTrace = sacTrace.subtract(mainSacTrace);
-           sacTrace.write(outputPath);
+            // output ref trace 1
+            outputPath = eventPath.resolve(sacNameString + ".ref1.txt");
+            SACFileName refSACName1 = new SACFileName(refSynPath1.resolve(eventName).resolve(sacNameString));
+            sacTrace = refSACName1.read().createTrace().cutWindow(minTime, maxTime);
+            if (subtractMain) sacTrace = sacTrace.subtract(mainSacTrace);
+            sacTrace.write(outputPath);
 
-           // output ref trace 2
-           outputPath = eventPath.resolve(sacNameString + ".ref2.txt");
-           SACFileName refSACName2 = new SACFileName(refSynPath2.resolve(eventName).resolve(sacNameString));
-           sacTrace = refSACName2.read().createTrace().cutWindow(minTime, maxTime);
-           if (subtractMain) sacTrace = sacTrace.subtract(mainSacTrace);
-           sacTrace.write(outputPath);
-       }
+            // output ref trace 2
+            outputPath = eventPath.resolve(sacNameString + ".ref2.txt");
+            SACFileName refSACName2 = new SACFileName(refSynPath2.resolve(eventName).resolve(sacNameString));
+            sacTrace = refSACName2.read().createTrace().cutWindow(minTime, maxTime);
+            if (subtractMain) sacTrace = sacTrace.subtract(mainSacTrace);
+            sacTrace.write(outputPath);
+        }
 
-       private void calculateSynMeanMax(Set<SACFileName> names) throws IOException, TauModelException {
-           for (SACFileName name : names) {
-               SACFileAccess data = name.read();
-               double distance = data.getValue(SACHeaderEnum.GCARC);
-               double rdTime = 0;
-               if (alignPhases != null) {
-                   timeTool.setPhaseNames(alignPhases);
-                   timeTool.calculate(distance);
-                   if (timeTool.getNumArrivals() < 1) {
-                       System.err.println("Could not get arrival time of " + String.join(",", alignPhases) + " for " + name.toString() + " , skipping.");
-                       return;
-                   }
-                   rdTime = timeTool.getArrival(0).getTime();
-               } else {
-                   rdTime = reductionSlowness * distance;
-               }
-               Trace trace = data.createTrace();
-               double startTime = (Double.isNaN(lowerTime)) ? trace.getMinX() : lowerTime + rdTime;
-               double endTime = (Double.isNaN(upperTime)) ? trace.getMaxX() : upperTime + rdTime;
-               trace = trace.cutWindow(startTime, endTime);
-               synMeanMax = synMeanMax + trace.getYVector().getLInfNorm();
-           }
-           synMeanMax = synMeanMax / names.size();
-       }
+        private void calculateSynMeanMax(Set<SACFileName> names) throws IOException, TauModelException {
+            for (SACFileName name : names) {
+                SACFileAccess data = name.read();
+                double distance = data.getValue(SACHeaderEnum.GCARC);
+                double rdTime = 0;
+                if (alignPhases != null) {
+                    timeTool.setPhaseNames(alignPhases);
+                    timeTool.calculate(distance);
+                    if (timeTool.getNumArrivals() < 1) {
+                        System.err.println("Could not get arrival time of " + String.join(",", alignPhases) + " for " + name.toString() + " , skipping.");
+                        return;
+                    }
+                    rdTime = timeTool.getArrival(0).getTime();
+                } else {
+                    rdTime = reductionSlowness * distance;
+                }
+                Trace trace = data.createTrace();
+                double startTime = (Double.isNaN(lowerTime)) ? trace.getMinX() : lowerTime + rdTime;
+                double endTime = (Double.isNaN(upperTime)) ? trace.getMaxX() : upperTime + rdTime;
+                trace = trace.cutWindow(startTime, endTime);
+                synMeanMax = synMeanMax + trace.getYVector().getLInfNorm();
+            }
+            synMeanMax = synMeanMax / names.size();
+        }
 
-       private double calculateSynMax(SACFileAccess data, double rdTime) {
-           Trace trace = data.createTrace();
-           double startTime = (Double.isNaN(lowerTime)) ? trace.getMinX() : lowerTime + rdTime;
-           double endTime = (Double.isNaN(upperTime)) ? trace.getMaxX() : upperTime + rdTime;
-           trace = trace.cutWindow(startTime, endTime);
-           double max = trace.getYVector().getLInfNorm();
-           return max / ampScale;
-       }
-   }
+        private double calculateSynMax(SACFileAccess data, double rdTime) {
+            Trace trace = data.createTrace();
+            double startTime = (Double.isNaN(lowerTime)) ? trace.getMinX() : lowerTime + rdTime;
+            double endTime = (Double.isNaN(upperTime)) ? trace.getMaxX() : upperTime + rdTime;
+            trace = trace.cutWindow(startTime, endTime);
+            double max = trace.getYVector().getLInfNorm();
+            return max / ampScale;
+        }
+    }
 
 }
