@@ -17,11 +17,11 @@ import io.github.kensuke1984.kibrary.waveform.WaveformDataWriter;
 public enum PartialType {
 
     RHO1D(0), LAMBDA1D(1), MU1D(2), KAPPA1D(3), G1D(4),
-    A1D(11), C1D(12), F1D(13), L1D(14), N1D(15),
+    A1D(11), C1D(12), F1D(13), L1D(14), N1D(15),XI1D(16),
     VP1D(21), VS1D(22), R1D(23), Q1D(24),
 
     RHO3D(30), LAMBDA3D(31), MU3D(32), KAPPA3D(33), G3D(34),
-    A3D(41), C3D(42), F3D(43), L3D(44), N3D(45),
+    A3D(41), C3D(42), F3D(43), L3D(44), N3D(45),XI3D(46),
     VP3D(51), VS3D(52), R3D(53), Q3D(54),
 
     TIME_SOURCE(80), TIME_RECEIVER(90);
@@ -102,6 +102,7 @@ public enum PartialType {
             case F: return PartialType.F1D;
             case L: return PartialType.L1D;
             case N: return PartialType.N1D;
+            case XI: return PartialType.XI1D;
             default: throw new IllegalArgumentException("No corresponding PartialType");
             }
         } else if (parameterType.equals(ParameterType.VOXEL)) {
@@ -116,6 +117,7 @@ public enum PartialType {
             case F: return PartialType.F3D;
             case L: return PartialType.L3D;
             case N: return PartialType.N3D;
+            case XI: return PartialType.XI3D;
             default: throw new IllegalArgumentException("No corresponding PartialType");
             }
         } else if (parameterType.equals(ParameterType.SOURCE)) {
@@ -141,6 +143,7 @@ public enum PartialType {
         case F1D: case F3D: return VariableType.F;
         case L1D: case L3D: return VariableType.L;
         case N1D: case N3D: return VariableType.N;
+        case XI1D: case XI3D: return VariableType.XI;
         case LAMBDA1D: case LAMBDA3D: return VariableType.LAMBDA;
         case MU1D: case MU3D: return VariableType.MU;
         case G3D: return VariableType.G;
