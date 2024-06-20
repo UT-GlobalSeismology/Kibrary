@@ -376,17 +376,6 @@ public class ActualWaveformCompiler extends Operation {
         System.err.println(" " + numberOfPairs.get() + " pairs of observed and synthetic waveforms are output.");
     }
 
-    private StaticCorrectionData getStaticCorrection(TimewindowData window) {
-        List<StaticCorrectionData> corrs = staticCorrectionSet.stream().filter(s -> s.isForTimewindow(window)).collect(Collectors.toList());
-        if (corrs.size() > 1) {
-            throw new RuntimeException("Found more than 1 static correction for window " + window);
-        } else if (corrs.size() == 0) {
-            return null;
-        } else {
-            return corrs.get(0);
-        }
-    }
-
     /**
      * @param window
      * @author anselme
@@ -579,23 +568,13 @@ public class ActualWaveformCompiler extends Operation {
     private class Worker extends DatasetAid.FilteredDatasetWorker {
 
         private Worker(GlobalCMTID eventID) {
-            super(eventID, obsPath, synPath, convolved, sourceTimewindowSet);
+            super(eventID, obsPath, synPath, convolved, sacSamplingHz, sourceTimewindowSet);
         }
 
         @Override
         public void actualWork(TimewindowData timewindow, SACFileAccess obsSac, SACFileAccess synSac) {
             Observer observer = timewindow.getObserver();
             SACComponent component = timewindow.getComponent();
-
-            // check delta
-            double delta = MathAid.roundForPrecision(1.0 / sacSamplingHz);
-            if (delta != obsSac.getValue(SACHeaderEnum.DELTA) || delta != synSac.getValue(SACHeaderEnum.DELTA)) {
-                System.err.println();
-                System.err.println("!! Deltas are invalid, skipping: " + timewindow);
-                System.err.println("   Obs " + obsSac.getValue(SACHeaderEnum.DELTA)
-                        + " , Syn " + synSac.getValue(SACHeaderEnum.DELTA) + " ; must be " + delta);
-                return;
-            }
 
             // check SAC file end time
             if (timewindow.getEndTime() > obsSac.getValue(SACHeaderEnum.E)
@@ -622,7 +601,7 @@ public class ActualWaveformCompiler extends Operation {
             double shift = 0;
             double ratio = 1;
             if (correctTime || amplitudeCorrectionType > 0) {
-                StaticCorrectionData sc = getStaticCorrection(timewindow);
+                StaticCorrectionData sc = StaticCorrectionData.findForTimeWindow(staticCorrectionSet, timewindow);
                 if (sc == null) {
                     System.err.println();
                     System.err.println("!! No static correction data, skipping: " + timewindow);

@@ -16,6 +16,7 @@ import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.correction.StaticCorrectionData;
 import io.github.kensuke1984.kibrary.correction.StaticCorrectionDataFile;
+import io.github.kensuke1984.kibrary.math.Trace;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
@@ -180,11 +181,26 @@ public class SourceWaveletMaker extends Operation {
     private class Worker extends DatasetAid.FilteredDatasetWorker {
 
         private Worker(GlobalCMTID eventID) {
-            super(eventID, obsPath, synPath, convolved, sourceTimewindowSet);
+            super(eventID, obsPath, synPath, convolved, sacSamplingHz, sourceTimewindowSet);
         }
 
         @Override
         public void actualWork(TimewindowData timewindow, SACFileAccess obsSac, SACFileAccess synSac) {
+
+            // apply static correction
+            double shift = 0.;
+            if (!staticCorrectionSet.isEmpty()) {
+                StaticCorrectionData correction = StaticCorrectionData.findForTimeWindow(staticCorrectionSet, timewindow);
+                if (correction == null) {
+                    System.err.println();
+                    System.err.println("!! No static correction data, skipping: " + timewindow);
+                    return;
+                }
+                shift = correction.getTimeshift();
+            }
+
+            // peak-to-peak amplitude of observed time window
+            Trace obsTrace = obsSac.createTrace().cutWindow(timewindow.shift(-shift), sacSamplingHz);
 
         }
     }

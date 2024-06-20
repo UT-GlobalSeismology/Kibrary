@@ -10,7 +10,6 @@ import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
@@ -278,17 +277,6 @@ public class DataSelection extends Operation {
         return trace.cutWindow(timewindow, sacSamplingHz).getYVector();
     }
 
-    private StaticCorrectionData getStaticCorrection(TimewindowData window) {
-        List<StaticCorrectionData> corrs = staticCorrectionSet.stream().filter(s -> s.isForTimewindow(window)).collect(Collectors.toList());
-        if (corrs.size() > 1) {
-            throw new RuntimeException("Found more than 1 static correction for window " + window);
-        } else if (corrs.size() == 0) {
-            return null;
-        } else {
-            return corrs.get(0);
-        }
-    }
-
     private boolean check(DataFeature feature) throws IOException {
         double posSideRatio = feature.getNegSideRatio();
         double negSideRatio = feature.getPosSideRatio();
@@ -348,23 +336,13 @@ public class DataSelection extends Operation {
     private class Worker extends DatasetAid.FilteredDatasetWorker {
 
         private Worker(GlobalCMTID eventID) {
-            super(eventID, obsPath, synPath, convolved, sourceTimewindowSet);
+            super(eventID, obsPath, synPath, convolved, sacSamplingHz, sourceTimewindowSet);
         }
 
         @Override
         public void actualWork(TimewindowData timewindow, SACFileAccess obsSac, SACFileAccess synSac) {
             try {
                 SACComponent component = timewindow.getComponent();
-
-                // check delta
-                double delta = MathAid.roundForPrecision(1.0 / sacSamplingHz);
-                if (delta != obsSac.getValue(SACHeaderEnum.DELTA) || delta != synSac.getValue(SACHeaderEnum.DELTA)) {
-                    System.err.println();
-                    System.err.println("!! Deltas are invalid, skipping: " + timewindow);
-                    System.err.println("   Obs " + obsSac.getValue(SACHeaderEnum.DELTA)
-                            + " , Syn " + synSac.getValue(SACHeaderEnum.DELTA) + " ; must be " + delta);
-                    return;
-                }
 
                 // check SAC file end time
                 if (timewindow.getEndTime() > obsSac.getValue(SACHeaderEnum.E)
@@ -397,16 +375,15 @@ public class DataSelection extends Operation {
                         if (startTime < surfacewaveWindow.getEndTime() && endTime > surfacewaveWindow.getEndTime())
                             startTime = surfacewaveWindow.getEndTime();
 
-                        timewindow = new TimewindowData(startTime
-                                , endTime, timewindow.getObserver(), timewindow.getGlobalCMTID()
-                                , timewindow.getComponent(), timewindow.getPhases());
+                        timewindow = new TimewindowData(startTime, endTime, timewindow.getObserver(),
+                                timewindow.getGlobalCMTID(), timewindow.getComponent(), timewindow.getPhases());
                     }
                 }
 
                 // apply static correction
                 double shift = 0.;
                 if (!staticCorrectionSet.isEmpty()) {
-                    StaticCorrectionData correction = getStaticCorrection(timewindow);
+                    StaticCorrectionData correction = StaticCorrectionData.findForTimeWindow(staticCorrectionSet, timewindow);
                     if (correction == null) {
                         System.err.println();
                         System.err.println("!! No static correction data, skipping: " + timewindow);
@@ -419,13 +396,10 @@ public class DataSelection extends Operation {
                         return;
                     }
                 }
-                TimewindowData shiftedWindow = new TimewindowData(timewindow.getStartTime() - shift
-                        , timewindow.getEndTime() - shift, timewindow.getObserver()
-                        , timewindow.getGlobalCMTID(), timewindow.getComponent(), timewindow.getPhases());
 
                 // cut out waveforms
                 RealVector synU = cutSAC(synSac, timewindow);
-                RealVector obsU = cutSAC(obsSac, shiftedWindow);
+                RealVector obsU = cutSAC(obsSac, timewindow.shift(-shift));
 
                 // signal-to-noise ratio
                 double noise = noisePerSecond(obsSac, component);

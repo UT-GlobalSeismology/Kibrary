@@ -24,7 +24,6 @@ import io.github.kensuke1984.kibrary.timewindow.Timewindow;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
-import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.ThreadAid;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
@@ -433,23 +432,13 @@ public class FujiStaticCorrection extends Operation {
     private class Worker extends DatasetAid.FilteredDatasetWorker {
 
         private Worker(GlobalCMTID eventID) {
-            super(eventID, obsPath, synPath, convolved, sourceTimewindowSet);
+            super(eventID, obsPath, synPath, convolved, sacSamplingHz, sourceTimewindowSet);
         }
 
         @Override
         public void actualWork(TimewindowData timewindow, SACFileAccess obsSac, SACFileAccess synSac) {
             Observer observer = timewindow.getObserver();
             SACComponent component = timewindow.getComponent();
-
-            // check delta
-            double delta = MathAid.roundForPrecision(1.0 / sacSamplingHz);
-            if (delta != obsSac.getValue(SACHeaderEnum.DELTA) || delta != synSac.getValue(SACHeaderEnum.DELTA)) {
-                System.err.println();
-                System.err.println("!! Deltas are invalid, skipping: " + timewindow);
-                System.err.println("   Obs " + obsSac.getValue(SACHeaderEnum.DELTA)
-                        + " , Syn " + synSac.getValue(SACHeaderEnum.DELTA) + " ; must be " + delta);
-                return;
-            }
 
             // check SAC file end time
             if (timewindow.getEndTime() > obsSac.getValue(SACHeaderEnum.E) - searchRange

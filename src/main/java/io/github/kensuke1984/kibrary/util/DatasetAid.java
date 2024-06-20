@@ -22,6 +22,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.sac.SACExtension;
 import io.github.kensuke1984.kibrary.util.sac.SACFileAccess;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
+import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
 
 /**
  * Utilities for handling datasets and their corresponding folders and files.
@@ -294,13 +295,16 @@ public final class DatasetAid {
         private Path obsEventPath;
         private Path synEventPath;
         private boolean convolved;
+        private double sacSamplingHz;
         private Set<TimewindowData> sourceTimewindowSet;
 
-        public FilteredDatasetWorker(GlobalCMTID eventID, Path obsPath, Path synPath, boolean convolved, Set<TimewindowData> sourceTimewindowSet) {
+        public FilteredDatasetWorker(GlobalCMTID eventID, Path obsPath, Path synPath, boolean convolved,
+                double sacSamplingHz, Set<TimewindowData> sourceTimewindowSet) {
             this.eventID = eventID;
             obsEventPath = obsPath.resolve(eventID.toString());
             synEventPath = synPath.resolve(eventID.toString());
             this.convolved = convolved;
+            this.sacSamplingHz = sacSamplingHz;
             this.sourceTimewindowSet = sourceTimewindowSet;
         }
 
@@ -365,6 +369,16 @@ public final class DatasetAid {
                     System.err.println();
                     System.err.println("!! Could not read " + synName + " , skipping.");
                     e.printStackTrace();
+                    continue;
+                }
+
+                // check delta
+                double delta = MathAid.roundForPrecision(1.0 / sacSamplingHz);
+                if (delta != obsSac.getValue(SACHeaderEnum.DELTA) || delta != synSac.getValue(SACHeaderEnum.DELTA)) {
+                    System.err.println();
+                    System.err.println("!! Deltas are invalid, skipping: " + timewindow);
+                    System.err.println("   Obs " + obsSac.getValue(SACHeaderEnum.DELTA)
+                            + " , Syn " + synSac.getValue(SACHeaderEnum.DELTA) + " ; must be " + delta);
                     continue;
                 }
 
