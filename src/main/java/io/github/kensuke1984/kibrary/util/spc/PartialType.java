@@ -103,6 +103,8 @@ public enum PartialType {
             case L: return PartialType.L1D;
             case N: return PartialType.N1D;
             case XI: return PartialType.XI1D;
+            case Vs: return PartialType.VS1D;
+            case Vp: return PartialType.VP1D;
             default: throw new IllegalArgumentException("No corresponding PartialType");
             }
         } else if (parameterType.equals(ParameterType.VOXEL)) {
@@ -118,6 +120,8 @@ public enum PartialType {
             case L: return PartialType.L3D;
             case N: return PartialType.N3D;
             case XI: return PartialType.XI3D;
+            case Vs: return PartialType.VS3D;
+            case Vp: return PartialType.VP3D;
             default: throw new IllegalArgumentException("No corresponding PartialType");
             }
         } else if (parameterType.equals(ParameterType.SOURCE)) {
@@ -146,8 +150,10 @@ public enum PartialType {
         case XI1D: case XI3D: return VariableType.XI;
         case LAMBDA1D: case LAMBDA3D: return VariableType.LAMBDA;
         case MU1D: case MU3D: return VariableType.MU;
-        case G3D: return VariableType.G;
-        case KAPPA3D: return VariableType.KAPPA;
+        case G1D: case G3D: return VariableType.G;
+        case KAPPA1D: case KAPPA3D: return VariableType.KAPPA;
+        case VS1D: case VS3D: return VariableType.Vs;
+        case VP1D: case VP3D: return VariableType.Vp;
         default:
             throw new IllegalArgumentException("Illegal partial type");
         }

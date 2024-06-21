@@ -16,6 +16,7 @@ import java.util.stream.IntStream;
 
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
+import io.github.kensuke1984.kibrary.elastic.ElasticMedium;
 import io.github.kensuke1984.kibrary.elastic.VariableType;
 import io.github.kensuke1984.kibrary.math.Trace;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
@@ -217,7 +218,7 @@ public class VariableTypeConvert extends Operation {
         else if (outputVariableTypes.contains(VariableType.Vp) && outputVariableTypes.contains(VariableType.Vs))
             // convert from LAMBDA & MU or from KAPPA & G to Vp & Vs
             return convertToIsotropicVelocities(inputPartialMap, indexMap);
-        else if (outputVariableTypes.contains(VariableType.MU) && outputVariableTypes.contains(VariableType.XI))
+        else if ((outputVariableTypes.contains(VariableType.MU) || outputVariableTypes.contains(VariableType.Vs)) && outputVariableTypes.contains(VariableType.XI) && outputVariableTypes.size() == 2)
             // convert from N & L to MU & XI
             return convertToAnisotropicParameters(inputPartialMap, indexMap);
         else if ((outputVariableTypes.contains(VariableType.MU) || outputVariableTypes.contains(VariableType.G) || outputVariableTypes.contains(VariableType.Vs)) && outputVariableTypes.size() == 1)
@@ -349,9 +350,10 @@ public class VariableTypeConvert extends Operation {
                 Trace traceMu = partialMu.toTrace();
                 Trace traceLambda = partialLambda.toTrace();
                 double radius = partialMu.voxelPosition.getR();
-                double rho = structure.getAtRadius(VariableType.RHO, radius);
-                double vs = structure.getAtRadius(VariableType.Vs, radius);
-                double vp = structure.getAtRadius(VariableType.Vp, radius);
+                ElasticMedium medium = structure.mediumAt(radius);
+                double rho = medium.get(VariableType.RHO);
+                double vs = medium.get(VariableType.Vs);
+                double vp = medium.get(VariableType.Vp);
                 Trace traceVs = traceLambda.multiply(-4. * rho * vs).add(traceMu.multiply(2. * rho * vs));
                 Trace traceVp = traceLambda.multiply(2. * rho * vp);
                 PartialID partialVs = new PartialID(partialMu.getObserver(), partialMu.getGlobalCMTID(), partialMu.getSacComponent(),
@@ -378,9 +380,10 @@ public class VariableTypeConvert extends Operation {
                 Trace traceG = partialG.toTrace();
                 Trace traceKappa = partialKappa.toTrace();
                 double radius = partialG.voxelPosition.getR();
-                double rho = structure.getAtRadius(VariableType.RHO, radius);
-                double vs = structure.getAtRadius(VariableType.Vs, radius);
-                double vp = structure.getAtRadius(VariableType.Vp, radius);
+                ElasticMedium medium = structure.mediumAt(radius);
+                double rho = medium.get(VariableType.RHO);
+                double vs = medium.get(VariableType.Vs);
+                double vp = medium.get(VariableType.Vp);
                 Trace traceVs = traceKappa.multiply(-8. / 3. * rho * vs).add(traceG.multiply(2. * rho * vs));
                 Trace traceVp = traceKappa.multiply(2. * rho * vp);
                 PartialID partialVs = new PartialID(partialG.getObserver(), partialG.getGlobalCMTID(), partialG.getSacComponent(),
@@ -414,7 +417,11 @@ public class VariableTypeConvert extends Operation {
     */
     private List<PartialID> convertToAnisotropicParameters(Map<VariableType, List<PartialID>> inputPartialMap, Map<VariableType, int[]> indexMap) {
         List<PartialID> outPartials = new ArrayList<>();
+        boolean muToVs = false;
         if (inputVariableTypes.contains(VariableType.N) && inputVariableTypes.contains(VariableType.L)) {
+            if (outputVariableTypes.contains(VariableType.Vs))
+                 muToVs = true;
+            VariableType typeMuOrVs = muToVs ? VariableType.Vs : VariableType.MU;
             List<PartialID> partialsN = inputPartialMap.get(VariableType.N);
             List<PartialID> partialsL = inputPartialMap.get(VariableType.L);
             int[] indexN = indexMap.get(VariableType.N);
@@ -426,23 +433,26 @@ public class VariableTypeConvert extends Operation {
                 Trace traceL = partialL.toTrace();
                 Trace traceN = partialN.toTrace();
                 double radius = partialL.voxelPosition.getR();
-                double rho = structure.getAtRadius(VariableType.RHO, radius);
-                double vsh = structure.getAtRadius(VariableType.Vsh, radius);
-                double vsv = structure.getAtRadius(VariableType.Vsv, radius);
-                double n = rho * vsh * vsh;
-                double l = rho * vsv * vsv;
+                ElasticMedium medium = structure.mediumAt(radius);
+                double n = medium.get(VariableType.N);
+                double l = medium.get(VariableType.L);
                 double n2l = n + 2. * l;
-                Trace traceMu = traceN.multiply(n).add(traceL.multiply(l)).multiply(3. / n2l);
+                Trace traceMuOrVs = traceN.multiply(n).add(traceL.multiply(l)).multiply(3. / n2l);
                 Trace traceXi = traceN.multiply(2.).add(traceL.multiply(-1.)).multiply(l * l / n2l);
-                PartialID partialMu = new PartialID(partialL.getObserver(), partialL.getGlobalCMTID(), partialL.getSacComponent(),
+                if (muToVs) {
+                    double vs = medium.get(VariableType.Vs);
+                    double rho = medium.get(VariableType.RHO);
+                    traceMuOrVs = traceMuOrVs.multiply(2.*rho*vs);
+                }
+                PartialID partialMuOrVs = new PartialID(partialL.getObserver(), partialL.getGlobalCMTID(), partialL.getSacComponent(),
                         partialL.getSamplingHz(), partialL.getStartTime(), partialL.getNpts(), partialL.getMinPeriod(), partialL.getMaxPeriod(),
-                        partialL.getPhases(), partialL.isConvolved(), partialL.getParameterType(), VariableType.MU, partialL.getVoxelPosition(),
-                        traceMu.getY());
+                        partialL.getPhases(), partialL.isConvolved(), partialL.getParameterType(), typeMuOrVs, partialL.getVoxelPosition(),
+                        traceMuOrVs.getY());
                 PartialID partialXi = new PartialID(partialL.getObserver(), partialL.getGlobalCMTID(), partialL.getSacComponent(),
                         partialL.getSamplingHz(), partialL.getStartTime(), partialL.getNpts(), partialL.getMinPeriod(), partialL.getMaxPeriod(),
                         partialL.getPhases(), partialL.isConvolved(), partialL.getParameterType(), VariableType.XI, partialL.getVoxelPosition(),
                         traceXi.getY());
-                outPartials.add(partialMu);
+                outPartials.add(partialMuOrVs);
                 outPartials.add(partialXi);
             }
         }
@@ -488,8 +498,9 @@ public class VariableTypeConvert extends Operation {
             for (PartialID partial : partials) {
                 Trace trace = partial.toTrace();
                 double radius = partial.voxelPosition.getR();
-                double rho = structure.getAtRadius(VariableType.RHO, radius);
-                double vs = structure.getAtRadius(VariableType.Vs, radius);
+                ElasticMedium medium = structure.mediumAt(radius);
+                double rho = medium.get(VariableType.RHO);
+                double vs = medium.get(VariableType.Vs);
                 Trace traceVs = trace.multiply(2. * rho * vs);
                 PartialID partialVs = new PartialID(partial.getObserver(), partial.getGlobalCMTID(), partial.getSacComponent(),
                         partial.getSamplingHz(), partial.getStartTime(), partial.getNpts(), partial.getMinPeriod(), partial.getMaxPeriod(),
