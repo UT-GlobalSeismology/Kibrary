@@ -543,8 +543,8 @@ public class RaypathMapper extends Operation {
                 pw.println("#------- Legend");
                 // For Lambert azimuthal projection, set it on the right outside of the map.
                 // For equidistant cylindrical projection, set it inside the map, based on 'legendJustification'.
-                pw.println("gmt pslegend -D" + (lambert ? "n0.95/0.05" : "j" + legendJustification) + "+w" + legendWidth
-                        + " -F+g#FFFFFF+p1p,black -J -R -O -K << END >> $outputps");
+                pw.println("gmt pslegend -D" + (lambert ? "n1/0.05" : "j" + legendJustification) + "+w" + legendWidth
+                        + (lambert ? "" : " -F+gwhite+p1p,black") + " -J -R -O -K << END >> $outputps");
                 // header of legend
                 pw.println("H - - " + headerFor(colorMode));
                 // contents
