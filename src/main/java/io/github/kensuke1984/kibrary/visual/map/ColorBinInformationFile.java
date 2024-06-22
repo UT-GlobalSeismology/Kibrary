@@ -136,14 +136,14 @@ public class ColorBinInformationFile {
         int values[];
         String colors[];
         if (cmdLine.hasOption("d")) {
-            int values0[] = {70, 80, 90, 100};
+            int values0[] = {70, 75, 80, 85, 90, 95, 100};
             values = values0;
-            String colors0[] = {"green", "blue", "purple"};
+            String colors0[] = {"red", "orange", "green", "cyan", "blue", "purple"};
             colors = colors0;
         } else if (cmdLine.hasOption("a")) {
             int values0[] = {0, 45, 90, 135, 180, 225, 270, 315, 360};
             values = values0;
-            String colors0[] = {"darkorange", "green", "blue", "purple", "darkorange", "green", "blue", "purple"};
+            String colors0[] = {"cyan", "gold", "blue", "red", "cyan", "gold", "blue", "red"};
             colors = colors0;
         } else {
             throw new IllegalArgumentException();

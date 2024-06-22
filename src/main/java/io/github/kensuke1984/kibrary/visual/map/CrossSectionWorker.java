@@ -46,9 +46,11 @@ public class CrossSectionWorker {
     private final double horizontalGridInterval;
     private final double verticalGridInterval;
     private final double[] radii;
+    private final double meanRadius;
 
     private final double marginLatitudeDeg;
-    private final double marginLongitudeDeg;
+    private final double marginLongitudeRaw;
+    private final boolean setMarginLongitudeByKm;
     private final double marginRadius;
 
     /**
@@ -77,9 +79,11 @@ public class CrossSectionWorker {
     private final String plotFileNameRoot;
     private final String scalarFileName;
 
+
     private boolean maskExists = false;
     private double maskThreshold;
     private String maskFileName;
+
 
     /**
      * Set parameters that should be used when creating cross sections.
@@ -137,9 +141,10 @@ public class CrossSectionWorker {
         radii = discretePositions.stream().mapToDouble(FullPosition::getR).distinct().sorted().toArray();
 
         // decide margins
-        double meanRadius = Arrays.stream(radii).average().getAsDouble();
+        meanRadius = Arrays.stream(radii).average().getAsDouble();
         this.marginLatitudeDeg = setMarginLatitudeByKm ? Math.toDegrees(marginLatitudeRaw / meanRadius) : marginLatitudeRaw;
-        this.marginLongitudeDeg = setMarginLongitudeByKm ? Math.toDegrees(marginLongitudeRaw / meanRadius) : marginLongitudeRaw;
+        this.marginLongitudeRaw = marginLongitudeRaw;
+        this.setMarginLongitudeByKm =setMarginLongitudeByKm;
         this.marginRadius = marginRadius;
 
         // other settings
@@ -208,7 +213,7 @@ public class CrossSectionWorker {
         double[] sampleLongitudes = samplePositionMap.values().stream().mapToDouble(pos -> pos.getLongitude(crossDateLine))
                 .distinct().sorted().toArray();
         Map<FullPosition, Double> resampledMap = Interpolation.inEachWestEastLine(discreteMap, sampleLongitudes,
-                marginLongitudeDeg, crossDateLine, mosaic);
+                marginLongitudeRaw, setMarginLongitudeByKm, meanRadius, crossDateLine, mosaic);
         Set<FullPosition> resampledPositions = resampledMap.keySet();
 
         //~compute sampled trace at each sample point
@@ -221,17 +226,11 @@ public class CrossSectionWorker {
             Set<FullPosition> positionsInMeridian = resampledPositions.stream()
                     .filter(pos -> Precision.equals(pos.getLongitude(), sampleLongitude, HorizontalPosition.LONGITUDE_EPSILON))
                     .collect(Collectors.toSet());
-            if (positionsInMeridian.size() == 0) {
-//                System.err.println("No positions for longitude " + sampleLongitude);
-                return;
-            }
+            if (positionsInMeridian.size() == 0) return;
             double[] latitudesInMeridian = positionsInMeridian.stream().mapToDouble(pos -> pos.getLatitude()).distinct().sorted().toArray();
             double[] latitudesExtracted = extractContinuousLatitudeSequence(latitudesInMeridian, sampleLatitude, marginLatitudeDeg);
             // skip this sample point if sampleLatitude is not included in a latitude sequence (thus cannot be interpolated)
-            if (latitudesExtracted == null) {
-//                System.err.println("No data for longitude " + sampleLongitude);
-                return;
-            }
+            if (latitudesExtracted == null) return;
 
             //~create vertical trace at this sample point
             double[] values = new double[radii.length];
