@@ -49,7 +49,7 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
     }
 
     /**
-     * Judges whether a set of positions crosses the date line and not the prime meridian.
+     * Judges whether a set of positions crosses or is close to the date line and not the prime meridian.
      * If the positions cross both the prime meridian and the date line, returns false.
      * @param positions (Collection of {@link HorizontalPosition}) Input positions
      * @return (boolean) Whether the positions cross only the date line
@@ -59,8 +59,15 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
      */
     public static boolean crossesDateLine(Collection<? extends HorizontalPosition> positions) {
         double[] longitudes = positions.stream().mapToDouble(HorizontalPosition::getLongitude).distinct().sorted().toArray();
-        if (longitudes.length <= 1) return false;
+        if (longitudes.length == 0) return false;
 
+        // When only one lontitude, return true if it is closer to the date line; otherwise, false.
+        if (longitudes.length == 1) {
+            if (longitudes[0] < -90 || 90 <= longitudes[0]) return true;
+            else return false;
+        }
+
+        // find the longest gap in the longitude sequence
         double largestGap = longitudes[0] + 360 - longitudes[longitudes.length - 1];
         double gapStartLongitude = longitudes[longitudes.length - 1];
         double gapEndLongitude = longitudes[0];
@@ -75,8 +82,12 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
         // Return true when start of gap is in western hemisphere and end of gap is in eastern hemisphere,
         //   thus the gap crosses the prime meridian but not the date line.
         //   This is when the set of positions crosses the date line and not the prime meridian.
-        if (gapStartLongitude <= 0 && 0 <= gapEndLongitude) return true;
-        // Otherwise, false. (Either the positions are clustered on one hemisphere, or crosses the prime meridian.)
+        if (gapStartLongitude < 0 && 0 <= gapEndLongitude) return true;
+        // Return true when the set of positions are within [-180:0) and closer to -180.
+        else if (gapEndLongitude < gapStartLongitude && gapStartLongitude < 0 && (gapEndLongitude + 180 < -gapStartLongitude)) return true;
+        // Return true when the set of positions are within [0:180) and closer to 180.
+        else if (0 <= gapEndLongitude && gapEndLongitude < gapStartLongitude && (180 - gapStartLongitude < gapEndLongitude)) return true;
+        // Otherwise, false. (Either the positions are clustered on one hemisphere and closer to the prime meridian, or crosses the prime meridian.)
         else return false;
     }
 
