@@ -107,24 +107,24 @@ public class Property extends Properties {
     /**
      * Get a pre-specified value, or sets a default value, and returns it in String.
      * @param key (String) Name of key. Must not be empty.
-     * @param defaltValue (String) Default value to set to the key. Require a value to be specified by setting this null.
+     * @param defaultValue (String) Default value to set to the key. Require a value to be specified by setting this null.
      *          This must not be "".
      * @return (String) Value to the correcponding key, with subsequent spaces trimmed.
      */
-    public String parseString(String key, String defaltValue) {
-        return checkAndPutDefault(key, defaltValue);
+    public String parseString(String key, String defaultValue) {
+        return checkAndPutDefault(key, defaultValue);
     }
 
     /**
      * Get a pre-specified value, or sets a default value, and returns it in String.
      * The value is checked so that it includes no spaces. To be used especially for keys that will become file names.
      * @param key (String) Name of key. Must not be empty.
-     * @param defaltValue (String) Default value to set to the key. Require a value to be specified by setting this null.
+     * @param defaultValue (String) Default value to set to the key. Require a value to be specified by setting this null.
      *          This must not be "".
      * @return (String) Value to the correcponding key, with subsequent spaces trimmed.
      */
-    public String parseStringSingle(String key, String defaltValue) {
-        String string = checkAndPutDefault(key, defaltValue);
+    public String parseStringSingle(String key, String defaultValue) {
+        String string = checkAndPutDefault(key, defaultValue);
         if (string.split("\\s+").length != 1) throw new IllegalArgumentException(key + " must not include spaces.");
         return string;
     }
@@ -132,34 +132,34 @@ public class Property extends Properties {
     /**
      * Get a pre-specified value, or sets a default value, and returns it in String[].
      * @param key (String) Name of key. Must not be empty.
-     * @param defaltValue (String) Default value to set to the key. Require a value to be specified by setting this null.
+     * @param defaultValue (String) Default value to set to the key. Require a value to be specified by setting this null.
      *          This must not be "".
      * @return (String[]) Array of value to the correcponding key, with subsequent spaces trimmed, split at spaces.
      */
-    public String[] parseStringArray(String key, String defaltValue) {
-        return checkAndPutDefault(key, defaltValue).split("\\s+");
+    public String[] parseStringArray(String key, String defaultValue) {
+        return checkAndPutDefault(key, defaultValue).split("\\s+");
     }
 
     /**
      * Get a pre-specified value, or sets a default value, and returns it as boolean.
      * @param key (String) Name of key. Must not be empty.
-     * @param defaltValue (String) Default value to set to the key. Require a value to be specified by setting this null.
+     * @param defaultValue (String) Default value to set to the key. Require a value to be specified by setting this null.
      *          This must not be "".
      * @return (boolean) Value to the correcponding key.
      */
-    public boolean parseBoolean(String key, String defaltValue) {
-        return Boolean.parseBoolean(checkAndPutDefault(key, defaltValue));
+    public boolean parseBoolean(String key, String defaultValue) {
+        return Boolean.parseBoolean(checkAndPutDefault(key, defaultValue));
     }
 
     /**
      * Get a pre-specified value, or sets a default value, and returns it in boolean[].
      * @param key (String) Name of key. Must not be empty.
-     * @param defaltValue (String) Default value to set to the key. Require a value to be specified by setting this null.
+     * @param defaultValue (String) Default value to set to the key. Require a value to be specified by setting this null.
      *          This must not be "".
      * @return (boolean[]) Array of value to the correcponding key, split at spaces.
      */
-    public boolean[] parseBooleanArray(String key, String defaltValue) {
-        String[] strings = checkAndPutDefault(key, defaltValue).split("\\s+");
+    public boolean[] parseBooleanArray(String key, String defaultValue) {
+        String[] strings = checkAndPutDefault(key, defaultValue).split("\\s+");
         boolean[] booleans = new boolean[strings.length];
         for (int i = 0; i < strings.length; i++) {
             booleans[i] = Boolean.parseBoolean(strings[i]);
@@ -170,59 +170,59 @@ public class Property extends Properties {
     /**
      * Get a pre-specified value, or sets a default value, and returns it as int.
      * @param key (String) Name of key. Must not be empty.
-     * @param defaltValue (String) Default value to set to the key. Require a value to be specified by setting this null.
+     * @param defaultValue (String) Default value to set to the key. Require a value to be specified by setting this null.
      *          This must not be "".
      * @return (int) Value to the correcponding key.
      */
-    public int parseInt(String key, String defaltValue) {
-        return Integer.parseInt(checkAndPutDefault(key, defaltValue));
+    public int parseInt(String key, String defaultValue) {
+        return Integer.parseInt(checkAndPutDefault(key, defaultValue));
     }
 
     /**
      * Get a pre-specified value, or sets a default value, and returns it in int[].
      * @param key (String) Name of key. Must not be empty.
-     * @param defaltValue (String) Default value to set to the key. Require a value to be specified by setting this null.
+     * @param defaultValue (String) Default value to set to the key. Require a value to be specified by setting this null.
      *          This must not be "".
      * @return (int[]) Array of value to the correcponding key, split at spaces.
      */
-    public int[] parseIntArray(String key, String defaltValue) {
-        return Arrays.stream(checkAndPutDefault(key, defaltValue).split("\\s+")).mapToInt(Integer::parseInt).toArray();
+    public int[] parseIntArray(String key, String defaultValue) {
+        return Arrays.stream(checkAndPutDefault(key, defaultValue).split("\\s+")).mapToInt(Integer::parseInt).toArray();
     }
 
     /**
      * Get a pre-specified value, or sets a default value, and returns it as double.
      * @param key (String) Name of key. Must not be empty.
-     * @param defaltValue (String) Default value to set to the key. Require a value to be specified by setting this null.
+     * @param defaultValue (String) Default value to set to the key. Require a value to be specified by setting this null.
      *          This must not be "".
      * @return (double) Value to the correcponding key.
      */
-    public double parseDouble(String key, String defaltValue) {
-        return Double.parseDouble(checkAndPutDefault(key, defaltValue));
+    public double parseDouble(String key, String defaultValue) {
+        return Double.parseDouble(checkAndPutDefault(key, defaultValue));
     }
 
     /**
      * Get a pre-specified value, or sets a default value, and returns it in double[].
      * @param key (String) Name of key. Must not be empty.
-     * @param defaltValue (String) Default value to set to the key. Require a value to be specified by setting this null.
+     * @param defaultValue (String) Default value to set to the key. Require a value to be specified by setting this null.
      *          This must not be "".
      * @return (double[]) Array of value to the correcponding key, split at spaces.
      */
-    public double[] parseDoubleArray(String key, String defaltValue) {
-        return Arrays.stream(checkAndPutDefault(key, defaltValue).split("\\s+")).mapToDouble(Double::parseDouble).toArray();
+    public double[] parseDoubleArray(String key, String defaultValue) {
+        return Arrays.stream(checkAndPutDefault(key, defaultValue).split("\\s+")).mapToDouble(Double::parseDouble).toArray();
     }
 
     /**
      * Get a pre-specified value, or sets a default value, and returns it as Path.
      * @param key (String) Name of key. Must not be empty.
-     * @param defaltValue (String) Default value to set to the key. Require a value to be specified by setting this null.
+     * @param defaultValue (String) Default value to set to the key. Require a value to be specified by setting this null.
      *          This must not be ""; use "." for current path.
      * @param requireExisting (boolean) When true, checks whether the path exists.
      * @param workPath (Path) The value of the key will be resolved under this workPath.
      * @return (Path) Path of the value to the correcponding key, resolved under workPath.
      * @throws NoSuchFileException if the specified path does not exist
      */
-    public Path parsePath(String key, String defaltValue, boolean requireExisting, Path workPath) throws NoSuchFileException {
-        String pathString = checkAndPutDefault(key, defaltValue);
+    public Path parsePath(String key, String defaultValue, boolean requireExisting, Path workPath) throws NoSuchFileException {
+        String pathString = checkAndPutDefault(key, defaultValue);
 
         Path path;
         if (pathString.startsWith("/")) path = Paths.get(pathString);
