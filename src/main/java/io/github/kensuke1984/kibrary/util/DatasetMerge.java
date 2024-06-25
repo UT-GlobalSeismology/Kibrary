@@ -2,6 +2,7 @@ package io.github.kensuke1984.kibrary.util;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -131,31 +132,37 @@ public class DatasetMerge extends Operation {
             Set<DataEntry> entrySet = (entryPaths.get(i) != null) ? DataEntryListFile.readAsSet(entryPaths.get(i)) : null;
 
             // each event folder in dataset
-            for (EventFolder eventDir : eventDirs) {
-                Set<SACFileName> sacNames = eventDir.sacFileSet();
-                // skip event folder if it is empty
-                if (sacNames.size() == 0) continue;
+            eventDirs.parallelStream().forEach(eventDir -> {
+                try {
+                    Set<SACFileName> sacNames = eventDir.sacFileSet();
+                    // skip event folder if it is empty
+                    if (sacNames.size() == 0) return;
 
-                Path outEventPath = outPath.resolve(eventDir.getName());
-                Files.createDirectories(outEventPath);
+                    Path outEventPath = outPath.resolve(eventDir.getName());
+                    Files.createDirectories(outEventPath);
 
-                // each sac file
-                for (SACFileName sacName : sacNames) {
+                    // each sac file
+                    for (SACFileName sacName : sacNames) {
 
-                    // select based on data entry file if it is specified
-                    if (entrySet != null) {
-                        if (!entrySet.contains(sacName.readHeader().toDataEntry())) continue;
+                        // select based on data entry file if it is specified
+                        if (entrySet != null) {
+                            if (!entrySet.contains(sacName.readHeader().toDataEntry())) continue;
+                        }
+
+                        // create soft link
+                        Path outSacPath = outEventPath.resolve(sacName.getName());
+                        if (Files.exists(outSacPath)) {
+                            System.err.println("!! Duplication of " + sacName.getName() + " , skipping.");
+                        } else {
+                            Files.createSymbolicLink(outSacPath, Paths.get("..", "..").resolve(sacName.toPath()));
+                        }
                     }
 
-                    // create soft link
-                    Path outSacPath = outEventPath.resolve(sacName.getName());
-                    if (Files.exists(outSacPath)) {
-                        System.err.println("!! Duplication of " + sacName.getName() + " , skipping.");
-                    } else {
-                        Files.createSymbolicLink(outSacPath, Paths.get("..", "..").resolve(sacName.toPath()));
-                    }
+                } catch (IOException e) {
+                    throw new UncheckedIOException(e);
                 }
-            }
+
+            });
         }
     }
 }

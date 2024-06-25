@@ -216,8 +216,8 @@ public class DataEntryListFile {
 
     private static Set<DataEntry> collectFromDataset(Path datasetPath, Set<SACComponent> components) throws IOException {
         Set<SACFileName> sacNameSet = DatasetAid.sacFileNameSet(datasetPath);
-        return sacNameSet.stream().filter(sacname -> components.contains(sacname.getComponent()))
-                .map(sacname -> sacname.readHeaderWithNullOnFailure()).filter(Objects::nonNull)
+        return sacNameSet.parallelStream().filter(sacName -> components.contains(sacName.getComponent()))
+                .map(sacName -> sacName.readHeaderWithNullOnFailure()).filter(Objects::nonNull)
                 .map(header -> header.toDataEntry())
                 .collect(Collectors.toSet());
     }
