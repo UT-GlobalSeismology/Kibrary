@@ -1,6 +1,5 @@
 package io.github.kensuke1984.kibrary.util;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.linear.RealVector;
 import org.apache.commons.math3.util.FastMath;
 import org.apache.commons.math3.util.Precision;
@@ -69,10 +68,11 @@ public final class MathAid {
     }
 
     /**
-     * When simply changing double to String, a ".0" is always left in integer values.
-     * This method exports integer values without ".0".
-     * @param value (double) Value to turn into String
-     * @return (String) Simple String form of the value
+     * Transforms a value (double) to a String.
+     * This method exports integer values without ".0" (which is always left in integer values when simply changing double to String).
+     *
+     * @param value (int) The value to turn into a String.
+     * @return (String) Simple String form of the value.
      *
      * @author otsuru
      * @since 2023/1/15
@@ -86,79 +86,114 @@ public final class MathAid {
     }
 
     /**
-     * Transforms a value to a String.
-     * The right side is padded with "0"s.
+     * Transforms a value (double) to a String.
+     * This method exports integer values without ".0" (which is always left in integer values when simply changing double to String).
+     * The decimal point can be changed to a specified letter.
      *
-     * @param value (double) The value to turn into a String
-     * @param n (int) The number of decimal places
-     * @return (String) The String form of the value
+     * @param value (int) The value to turn into a String.
+     * @param decimalLetter (String) The letter to use instead of the decimal point.
+     * @return (String) Simple String form of the value.
      */
-    public static String roundToString(double value, int n) {
-        double factor = Math.pow(10, n);
-        double fixedValue = Math.round(value * factor) / factor;
-        int integerPart = (int) Math.floor(fixedValue);
-        int decimalPlaces = (int) Math.round((fixedValue - integerPart) * factor);
-        if (n == 0)
-            return String.valueOf(integerPart);
-        return integerPart + "." + StringUtils.leftPad(Integer.toString(decimalPlaces), n, "0");
+    public static String simplestString(double value, String decimalLetter) {
+        return simplestString(value).replace(".", decimalLetter);
     }
 
-    /**
-     * Changes an input double value to a string. The letter "d" is used instead of a decimal ".".
-     * The value is rounded to have n decimal places.
-     *
-     * @param value (double) The value to be changed into String
-     * @param n (int) The number of decimal places (Note that if decimal is 0, this value will be ignored)
-     * @return (String) The String form of the value with "d" expressing "."
-     */
-    public static String roundToStringWithD(double value, int n) {
-        int intValue = (int) value;
-        double decimal = value - intValue;
-        decimal *= Math.pow(10, n);
-        int decimalInt = (int) Math.round(decimal);
-        return decimalInt == 0 ? String.valueOf(intValue) : intValue + "d" + decimalInt;
-    }
-
-    /**
-     * Transforms a value (double) to a padded String.
-     * The left side is padded with the specified letter and the right with "0"s.
-     *
-     * @param value (double) The value to turn into a String
-     * @param nInteger (int) The number of digits for the integer part, including the minus sign but excluding the decimal point.
-     * @param nDecimal (int) The number of digits for the decimal part, excluding the decimal point.
-     * @param headLetter (String) The letter to pad at the head (i.e. " ", "0", ...)
-     * @return (String) The padded String form of the value
-     *
-     * @author otsuru
-     * @since 2021/11/26
-     */
-    public static String padToString(double value, int nInteger, int nDecimal, String headLetter) {
-        String format;
-        if (headLetter == " ")
-            format = "%" + (nInteger + 1 + nDecimal) + "." + nDecimal + "f";
-        else
-            format = "%" + headLetter + (nInteger + 1 + nDecimal) + "." + nDecimal + "f";
-        return String.format(format, value);
-    }
     /**
      * Transforms a value (int) to a padded String.
-     * The left side is padded with the specified letter.
+     * The left side is padded with either " " or "0".
+     * If the integer part has more digits than desired, the whole integer is returned.
      *
-     * @param value (int) The value to turn into a String
-     * @param nInteger (int) The number of digits for the integer part, including the minus sign.
-     * @param headLetter (String) The letter to pad at the head (i.e. " ", "0", ...)
-     * @return (String) The padded String form of the value
+     * @param value (int) The value to turn into a String.
+     * @param nInteger (int) The number of digits for the integer part, including the minus sign. Must be positive.
+     * @param leftZeroPad (boolean) Whether to pad the left side with "0". Otherwise, " ".
+     * @return (String) The padded String form of the value.
      *
      * @author otsuru
      * @since 2022/2/4
      */
-    public static String padToString(int value, int nInteger, String headLetter) {
-        String format;
-        if (headLetter == " ")
-            format = "%" + nInteger + "d";
-        else
-            format = "%" + headLetter + nInteger + "d";
+    public static String padToString(int value, int nInteger, boolean leftZeroPad) {
+        if (nInteger <= 0) throw new IllegalArgumentException("nInteger must be positive.");
+
+        String format = (leftZeroPad ? "%0" : "%") + nInteger + "d";
         return String.format(format, value);
+    }
+
+    /**
+     * Transforms a value (double) to a padded String.
+     * The left side is padded with either " " or "0", and the right with "0".
+     * Even if the integer part has more digits than desired, the whole integer is used.
+     * When the decimal part has more digits than desired, it will be rounded.
+     *
+     * @param value (double) The value to turn into a String.
+     * @param nInteger (int) The number of digits for the integer part, including the minus sign but excluding the decimal point. Must be positive.
+     * @param nDecimal (int) The number of digits for the decimal part, excluding the decimal point. Must be non-negative.
+     * @param leftZeroPad (boolean) Whether to pad the left side with "0". Otherwise, " ".
+     * @return (String) The padded String form of the value.
+     *
+     * @author otsuru
+     * @since 2021/11/26
+     */
+    public static String padToString(double value, int nInteger, int nDecimal, boolean leftZeroPad) {
+        if (nInteger <= 0) throw new IllegalArgumentException("nInteger must be positive.");
+        if (nDecimal < 0) throw new IllegalArgumentException("nDecimal must be non-negative.");
+
+        // total number of digits: (integer digits) + (1 for decimal) + (decimal digits)
+        int digits = nInteger + (nDecimal == 0 ? 0 : 1 + nDecimal);
+
+        String format = (leftZeroPad ? "%0" : "%") + digits + "." + nDecimal + "f";
+        return String.format(format, value);
+    }
+
+    /**
+     * Transforms a value (double) to a padded String.
+     * The left side is padded with either " " or "0", and the right with "0".
+     * Even if the integer part has more digits than desired, the whole integer is used.
+     * When the decimal part has more digits than desired, it will be rounded.
+     * The decimal point can be changed to a specified letter.
+     *
+     * @param value (double) The value to turn into a String.
+     * @param nInteger (int) The number of digits for the integer part, including the minus sign but excluding the decimal point. Must be positive.
+     * @param nDecimal (int) The number of digits for the decimal part, excluding the decimal point. Must be non-negative.
+     * @param leftZeroPad (boolean) Whether to pad the left side with "0". Otherwise, " ".
+     * @param decimalLetter (String) The letter to use instead of the decimal point.
+     * @return (String) The padded String form of the value.
+     *
+     * @author otsuru
+     * @since 2023/6/1
+     */
+    public static String padToString(double value, int nInteger, int nDecimal, boolean leftZeroPad, String decimalLetter) {
+        return padToString(value, nInteger, nDecimal, leftZeroPad).replace(".", decimalLetter);
+    }
+
+    /**
+     * Transforms a value (double) to a String.
+     * The right side is padded with "0"s.
+     * When the decimal part has more digits than desired, it will be rounded.
+     *
+     * @param value (double) The value to turn into a String.
+     * @param nDecimal (int) The number of digits for the decimal part, excluding the decimal point. Must be non-negative.
+     * @return (String) The String form of the value.
+     */
+    public static String roundToString(double value, int nDecimal) {
+        return padToString(value, 1, nDecimal, false);
+    }
+
+    /**
+     * Transforms a value (double) to a String.
+     * The right side is padded with "0"s.
+     * When the decimal part has more digits than desired, it will be rounded.
+     * The decimal point can be changed to a specified letter.
+     *
+     * @param value (double) The value to turn into a String.
+     * @param nDecimal (int) The number of digits for the decimal part, excluding the decimal point. Must be non-negative.
+     * @param decimalLetter (String) The letter to use instead of the decimal point.
+     * @return (String) The String form of the value.
+     *
+     * @author otsuru
+     * @since 2023/6/1
+     */
+    public static String roundToString(double value, int nDecimal, String decimalLetter) {
+        return padToString(value, 1, nDecimal, false, decimalLetter);
     }
 
     /**
@@ -200,22 +235,6 @@ public final class MathAid {
     }
 
     /**
-     * Check if two values are equal, within a certain error range.
-     * @param v1
-     * @param v2
-     * @param eps
-     * @return
-     * @author anselme
-     * @deprecated use Precision.equals
-     */
-    public static boolean equalWithinEpsilon(double v1, double v2, double eps) {
-        if (Math.abs(v1 - v2) > eps)
-            return false;
-        else
-            return true;
-    }
-
-    /**
      * Same as Math.floor(), but consider precision, fixing 0.9999... to 1.
      * @param value (double) Input value.
      * @return (double) Rounded result.
@@ -225,6 +244,18 @@ public final class MathAid {
      */
     public static double floor(double value) {
         return Math.floor(Precision.round(value, PRECISION_DIGIT));
+    }
+
+    /**
+     * Same as Math.ceil(), but consider precision, fixing 1.00...01 to 1.
+     * @param value (double) Input value.
+     * @return (double) Rounded result.
+     *
+     * @author otsuru
+     * @since 2023/12/14
+     */
+    public static double ceil(double value) {
+        return Math.ceil(Precision.round(value, PRECISION_DIGIT));
     }
 
     /**

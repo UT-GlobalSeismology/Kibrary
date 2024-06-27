@@ -22,6 +22,7 @@ public class MomentTensor {
      */
     private static final int DSM_EXP = 25;
 
+    private final double m0Coefficient;
     private final double mrrCoefficient;
     private final double mttCoefficient;
     private final double mppCoefficient;
@@ -29,31 +30,7 @@ public class MomentTensor {
     private final double mrpCoefficient;
     private final double mtpCoefficient;
     private final int mtExponent;
-    private final double mw;
 
-    /**
-     * The order is same as Global CMT project.
-     *
-     * @param mrrCoefficient (double) Mrr
-     * @param mttCoefficient (double) Mtt
-     * @param mppCoefficient (double) Mpp
-     * @param mrtCoefficient (double) Mrt
-     * @param mrpCoefficient (double) Mrp
-     * @param mtpCoefficient (double) Mtp
-     * @param mtExponent (int) exponential number for the preceding values
-     * @param mw    Mw
-     */
-    public MomentTensor(double mrrCoefficient, double mttCoefficient, double mppCoefficient,
-            double mrtCoefficient, double mrpCoefficient, double mtpCoefficient, int mtExponent, double mw) {
-        this.mrrCoefficient = mrrCoefficient;
-        this.mttCoefficient = mttCoefficient;
-        this.mppCoefficient = mppCoefficient;
-        this.mrtCoefficient = mrtCoefficient;
-        this.mrpCoefficient = mrpCoefficient;
-        this.mtpCoefficient = mtpCoefficient;
-        this.mtExponent = mtExponent;
-        this.mw = mw;
-    }
 
     /**
      * Convert value in dyne*cm to N*m.
@@ -84,6 +61,46 @@ public class MomentTensor {
      */
     public static final double toM0(double mw) {
         return FastMath.pow(10, 1.5 * mw + 9.1);
+    }
+
+    /**
+     * The order is same as Global CMT project.
+     *
+     * @param m0Coefficient (double) Coefficent for M0 (scalar moment).
+     * @param mrrCoefficient (double) Coefficent for Mrr.
+     * @param mttCoefficient (double) Coefficent for Mtt..
+     * @param mppCoefficient (double) Coefficent for Mpp.
+     * @param mrtCoefficient (double) Coefficent for Mrt.
+     * @param mrpCoefficient (double) Coefficent for Mrp.
+     * @param mtpCoefficient (double) Coefficent for Mtp.
+     * @param mtExponent (int) Exponential number for the preceding values.
+     */
+    public MomentTensor(double m0Coefficient, double mrrCoefficient, double mttCoefficient, double mppCoefficient,
+            double mrtCoefficient, double mrpCoefficient, double mtpCoefficient, int mtExponent) {
+        this.m0Coefficient = m0Coefficient;
+        this.mrrCoefficient = mrrCoefficient;
+        this.mttCoefficient = mttCoefficient;
+        this.mppCoefficient = mppCoefficient;
+        this.mrtCoefficient = mrtCoefficient;
+        this.mrpCoefficient = mrpCoefficient;
+        this.mtpCoefficient = mtpCoefficient;
+        this.mtExponent = mtExponent;
+    }
+
+    /**
+     * @return (double) Moment magnitude [no unit]
+     */
+    public double getMw() {
+        double m0 = MomentTensor.convertToNm(m0Coefficient * Math.pow(10, mtExponent));
+        return MomentTensor.toMw(m0);
+    }
+
+    /**
+     * Coefficient for M0 (scalar moment) value. This must be multiplied by the exponent part (10^exponent) to get the value in dyne*cm.
+     * @return (double) M0 coefficient
+     */
+    public double getM0Coefficient() {
+        return m0Coefficient;
     }
 
     /**
@@ -144,18 +161,12 @@ public class MomentTensor {
     }
 
     /**
-     * @return (double) Moment magnitude [no unit]
+     * Convert moment tensor to style used in DSM input files.
+     * The order is Mrr, Mrt, Mrp, Mtt, Mtp, Mpp.
+     * Coefficients for an exponential to the power of {@value #DSM_EXP} is used.
+     * @return (double[]) Coefficents of moment tensor in the order used in DSM.
      */
-    public double getMw() {
-        return mw;
-    }
-
-    /**
-     * DSM情報ファイルに書く形式のモーメントテンソルを返す
-     *
-     * @return moment tensor in the order used in DSM
-     */
-    public double[] getDSMmt() {
+    public double[] toDSMStyle() {
         double[] dsmMT = new double[6];
         double factor = FastMath.pow(10, mtExponent - DSM_EXP);
         dsmMT[0] = Precision.round(mrrCoefficient * factor, 5);

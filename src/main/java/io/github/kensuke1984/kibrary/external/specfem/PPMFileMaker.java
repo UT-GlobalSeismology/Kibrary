@@ -6,7 +6,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import io.github.kensuke1984.kibrary.util.MathAid;
+import org.apache.commons.math3.util.Precision;
+
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure_old;
 
 public class PPMFileMaker {
@@ -53,13 +54,13 @@ public class PPMFileMaker {
     private void run() throws IOException {
 
         double divLongitude = 360 / dLongitude;
-        if (!MathAid.equalWithinEpsilon(divLongitude, Math.round(divLongitude), 0.01)) {
+        if (!Precision.equals(divLongitude, Math.round(divLongitude), 0.01)) {
             throw new IllegalArgumentException("dLongitude must divide 360");
         }
         int numLongitude = (int) Math.round(divLongitude);
 
         double divLatitude = 180 / dLatitude;
-        if (!MathAid.equalWithinEpsilon(divLatitude, Math.round(divLatitude), 0.01)) {
+        if (!Precision.equals(divLatitude, Math.round(divLatitude), 0.01)) {
             throw new IllegalArgumentException("dLatitude must divide 180");
         }
         int numLatitude = (int) Math.round(divLatitude);

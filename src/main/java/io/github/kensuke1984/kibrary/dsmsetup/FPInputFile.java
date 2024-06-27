@@ -70,7 +70,7 @@ public class FPInputFile extends DSMInputHeader {
             // source
             pw.println(event.getCmtPosition().getR() + " " + event.getCmtPosition().getLatitude() + " " +
                     event.getCmtPosition().getLongitude());
-            double[] mt = event.getCmt().getDSMmt();
+            double[] mt = event.getCmt().toDSMStyle();
             pw.println(Arrays.stream(mt).mapToObj(Double::toString).collect(Collectors.joining(" ")) +
                     " Moment Tensor (1.e25 dyne cm)");
 
@@ -114,7 +114,7 @@ public class FPInputFile extends DSMInputHeader {
 
             // source
             pw.println(event.getCmtPosition().getR() + " 0. 0.");
-            double[] mt = event.getCmt().getDSMmt();
+            double[] mt = event.getCmt().toDSMStyle();
             pw.println(Arrays.stream(mt).mapToObj(Double::toString).collect(Collectors.joining(" "))
                     + " Moment Tensor (1.e25 dyne cm)");
 
@@ -163,7 +163,7 @@ public class FPInputFile extends DSMInputHeader {
             // source
             pw.println(event.getCmtPosition().getR() + " " + event.getCmtPosition().getLatitude() + " " +
                     event.getCmtPosition().getLongitude());
-            double[] mt = event.getCmt().getDSMmt();
+            double[] mt = event.getCmt().toDSMStyle();
             pw.println(Arrays.stream(mt).mapToObj(Double::toString).collect(Collectors.joining(" ")) +
                     " Moment Tensor (1.e25 dyne cm)");
 
@@ -207,7 +207,7 @@ public class FPInputFile extends DSMInputHeader {
             // source
             pw.println(event.getCmtPosition().getR() + " " + event.getCmtPosition().getLatitude() + " "
                     + event.getCmtPosition().getLongitude());
-            double[] mt = event.getCmt().getDSMmt();
+            double[] mt = event.getCmt().toDSMStyle();
             pw.println(Arrays.stream(mt).mapToObj(Double::toString).collect(Collectors.joining(" "))
                     + " Moment Tensor (1.e25 dyne cm)");
 

@@ -129,7 +129,7 @@ final class Longitude implements Comparable<Longitude> {
      */
     @Override
     public String toString() {
-        return MathAid.padToString(longitude, 4, PRECISION, " ");
+        return MathAid.padToString(longitude, 4, PRECISION, false);
     }
 
     /**
@@ -151,7 +151,7 @@ final class Longitude implements Comparable<Longitude> {
      */
     public String toString(boolean crossDateLine) {
         double correctedLongitude = getLongitude(crossDateLine);
-        return MathAid.padToString(correctedLongitude, 4, PRECISION, " ");
+        return MathAid.padToString(correctedLongitude, 4, PRECISION, false);
     }
 
     /**
@@ -180,7 +180,7 @@ final class Longitude implements Comparable<Longitude> {
 
         int number = (int) Math.round(absolute * Math.pow(10, PRECISION));
 
-        return letter + MathAid.padToString(number, 2 + PRECISION, "0");
+        return letter + MathAid.padToString(number, 2 + PRECISION, true);
     }
 
 }

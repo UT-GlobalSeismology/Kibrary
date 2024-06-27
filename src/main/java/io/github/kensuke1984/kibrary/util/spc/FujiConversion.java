@@ -44,8 +44,7 @@ public final class FujiConversion {
         // data part
         double omegai = spectrum.omegai();
         HorizontalPosition observerPosition = spectrum.getReceiverPosition();
-        String observerID = spectrum.getStationCode();
-        String observerNetwork = spectrum.getNetworkCode();
+        String observerID = spectrum.getReceiverID();
         FullPosition sourceLocation = spectrum.getSourcePosition();
         String sourceID = spectrum.getSourceID();
         double[] bodyR = spectrum.getBodyR();
@@ -140,17 +139,7 @@ public final class FujiConversion {
 
             @Override
             public String getReceiverID() {
-                return observerID + "_" + observerNetwork;
-            }
-
-            @Override
-            public String getStationCode() {
                 return observerID;
-            }
-
-            @Override
-            public String getNetworkCode() {
-                return observerNetwork;
             }
 
             @Override

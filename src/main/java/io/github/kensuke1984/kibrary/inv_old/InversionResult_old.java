@@ -140,7 +140,7 @@ public class InversionResult_old {
             phases[i] = Phase.create(phaseParts[i], false);
         return new BasicID(WaveformType.OBS, Double.parseDouble(parts[10]), Double.parseDouble(parts[8]),
                 Integer.parseInt(parts[9]), station, new GlobalCMTID(parts[5]), SACComponent.valueOf(parts[6]),
-                Double.parseDouble(parts[11]), Double.parseDouble(parts[12]), phases, Long.parseLong(parts[14]), true);
+                Double.parseDouble(parts[11]), Double.parseDouble(parts[12]), phases, true);
     }
 
     private static void writeBorn(Path outBornPath, Trace born) throws IOException {

@@ -280,15 +280,15 @@ public class ThreeDPartialDSMSetup extends Operation {
 
             // joint CMT inversion
             if (jointCMT) {
-                int mtEXP = 25;
-                double mw = 1.;
+                int mtExp = 25;
+                double m0Coef = 1.;
                 MomentTensor[] mts = new MomentTensor[6];
-                mts[0] = new MomentTensor(1., 0., 0., 0., 0., 0., mtEXP, mw);
-                mts[1] = new MomentTensor(0., 1., 0., 0., 0., 0., mtEXP, mw);
-                mts[2] = new MomentTensor(0., 0., 1., 0., 0., 0., mtEXP, mw);
-                mts[3] = new MomentTensor(0., 0., 0., 1., 0., 0., mtEXP, mw);
-                mts[4] = new MomentTensor(0., 0., 0., 0., 1., 0., mtEXP, mw);
-                mts[5] = new MomentTensor(0., 0., 0., 0., 0., 1., mtEXP, mw);
+                mts[0] = new MomentTensor(m0Coef, 1., 0., 0., 0., 0., 0., mtExp);
+                mts[1] = new MomentTensor(m0Coef, 0., 1., 0., 0., 0., 0., mtExp);
+                mts[2] = new MomentTensor(m0Coef, 0., 0., 1., 0., 0., 0., mtExp);
+                mts[3] = new MomentTensor(m0Coef, 0., 0., 0., 1., 0., 0., mtExp);
+                mts[4] = new MomentTensor(m0Coef, 0., 0., 0., 0., 1., 0., mtExp);
+                mts[5] = new MomentTensor(m0Coef, 0., 0., 0., 0., 0., 1., mtExp);
 
                 for (int i = 0; i < 6; i++) {
                     // If computation for this event & mt already exists in the FP pool, skip
@@ -299,8 +299,8 @@ public class ThreeDPartialDSMSetup extends Operation {
                         continue;
                     }
 
-                    eventData.setCMT(mts[i]);
-                    FPInputFile fp = new FPInputFile(eventData, header, structure, tlen, np, voxelRadii, voxelPositions);
+                    GlobalCMTAccess virtualEventData = eventData.withCMT(mts[i]);
+                    FPInputFile fp = new FPInputFile(virtualEventData, header, structure, tlen, np, voxelRadii, voxelPositions);
                     Files.createDirectories(mtPoolPath.resolve(header));
                     fp.writeSHFP(mtPoolPath.resolve(header + "_SH.inf"));
                     fp.writePSVFP(mtPoolPath.resolve(header + "_PSV.inf"));
