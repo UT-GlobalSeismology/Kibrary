@@ -520,12 +520,12 @@ public class SacRecordSectionCreator extends Operation {
             String synUsingString;
             String residualUsingString;
             if (!byAzimuth) {
-                gnuplot.addLabel(sacData.getObserver().toPaddedString() + " " + MathAid.padToString(azimuth, 3, 2, " "),
+                gnuplot.addLabel(sacData.getObserver().toPaddedString() + " " + MathAid.padToString(azimuth, 3, 2, false),
                         "graph", 1.01, "first", distance);
                 synUsingString = String.format("($1-%.3f):($2/%.3e+%.2f) ", reduceTime, synAmp, distance);
                 residualUsingString = String.format("($1-%.3f):(($2-$4)/%.3e+%.2f) ", reduceTime, synAmp, distance);
             } else {
-                gnuplot.addLabel(sacData.getObserver().toPaddedString() + " " + MathAid.padToString(distance, 3, 2, " "),
+                gnuplot.addLabel(sacData.getObserver().toPaddedString() + " " + MathAid.padToString(distance, 3, 2, false),
                         "graph", 1.01, "first", azimuth);
                 synUsingString = String.format("($1-%.3f):($2/%.3e+%.2f) ", reduceTime, synAmp, azimuth);
                 residualUsingString = String.format("($1-%.3f):(($2-$4)/%.3e+%.2f) ", reduceTime, synAmp, azimuth);
