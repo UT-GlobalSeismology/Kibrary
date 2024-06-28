@@ -133,8 +133,8 @@ public class DataEntryListFile {
         OptionGroup inputOption = new OptionGroup();
         inputOption.addOption(Option.builder("d").longOpt("dataset").hasArg().argName("datasetFolder")
                 .desc("Use dataset folder containing event folders as input.").build());
-        inputOption.addOption(Option.builder("t").longOpt("timewindow").hasArg().argName("timewindowFile")
-                .desc("Use timewindow file as input.").build());
+        inputOption.addOption(Option.builder("t").longOpt("timeWindow").hasArg().argName("timeWindowFile")
+                .desc("Use time window file as input.").build());
         inputOption.addOption(Option.builder("b").longOpt("basic").hasArg().argName("basicFolder")
                 .desc("Use basic waveform folder as input.").build());
         inputOption.addOption(Option.builder("e").longOpt("entry").hasArg().argName("dataEntryFile")
@@ -172,9 +172,9 @@ public class DataEntryListFile {
         if (cmdLine.hasOption("d")) {
             entrySet = collectFromDataset(Paths.get(cmdLine.getOptionValue("d")), components);
         } else if (cmdLine.hasOption("t")) {
-            Set<TimewindowData> timewindows = TimewindowDataFile.read(Paths.get(cmdLine.getOptionValue("t")));
-            entrySet = timewindows.stream().filter(timewindow -> components.contains(timewindow.getComponent()))
-                    .map(timewindow -> new DataEntry(timewindow.getGlobalCMTID(), timewindow.getObserver(), timewindow.getComponent()))
+            Set<TimewindowData> timeWindows = TimewindowDataFile.read(Paths.get(cmdLine.getOptionValue("t")));
+            entrySet = timeWindows.stream().filter(timewindow -> components.contains(timewindow.getComponent()))
+                    .map(timeWindow -> new DataEntry(timeWindow.getGlobalCMTID(), timeWindow.getObserver(), timeWindow.getComponent()))
                     .collect(Collectors.toSet());
         } else if (cmdLine.hasOption("b")) {
             List<BasicID> basicIDs = BasicIDFile.read(Paths.get(cmdLine.getOptionValue("b")), false);

@@ -296,25 +296,25 @@ public final class DatasetAid {
         private Path synEventPath;
         private boolean convolved;
         private double sacSamplingHz;
-        private Set<TimewindowData> sourceTimewindowSet;
+        private Set<TimewindowData> sourceTimeWindowSet;
 
         public FilteredDatasetWorker(GlobalCMTID eventID, Path obsPath, Path synPath, boolean convolved,
-                double sacSamplingHz, Set<TimewindowData> sourceTimewindowSet) {
+                double sacSamplingHz, Set<TimewindowData> sourceTimeWindowSet) {
             this.eventID = eventID;
             obsEventPath = obsPath.resolve(eventID.toString());
             synEventPath = synPath.resolve(eventID.toString());
             this.convolved = convolved;
             this.sacSamplingHz = sacSamplingHz;
-            this.sourceTimewindowSet = sourceTimewindowSet;
+            this.sourceTimeWindowSet = sourceTimeWindowSet;
         }
 
         /**
          * A class to implement the actual work that needs to be done to each timewindow.
-         * @param timewindow
+         * @param timeWindow
          * @param obsSac
          * @param synSac
          */
-        public abstract void actualWork(TimewindowData timewindow, SACFileAccess obsSac, SACFileAccess synSac);
+        public abstract void actualWork(TimewindowData timeWindow, SACFileAccess obsSac, SACFileAccess synSac);
 
         @Override
         public void run() {
@@ -328,12 +328,12 @@ public final class DatasetAid {
             }
 
             // pick out time windows of this event
-            Set<TimewindowData> timewindows = sourceTimewindowSet.stream()
+            Set<TimewindowData> timeWindows = sourceTimeWindowSet.stream()
                     .filter(info -> info.getGlobalCMTID().equals(eventID)).collect(Collectors.toSet());
 
-            for (TimewindowData timewindow : timewindows) {
-                Observer observer = timewindow.getObserver();
-                SACComponent component = timewindow.getComponent();
+            for (TimewindowData timeWindow : timeWindows) {
+                Observer observer = timeWindow.getObserver();
+                SACComponent component = timeWindow.getComponent();
 
                 // get observed data
                 SACExtension obsExt = SACExtension.valueOfObserved(component);
@@ -376,13 +376,13 @@ public final class DatasetAid {
                 double delta = MathAid.roundForPrecision(1.0 / sacSamplingHz);
                 if (delta != obsSac.getValue(SACHeaderEnum.DELTA) || delta != synSac.getValue(SACHeaderEnum.DELTA)) {
                     System.err.println();
-                    System.err.println("!! Deltas are invalid, skipping: " + timewindow);
+                    System.err.println("!! Deltas are invalid, skipping: " + timeWindow);
                     System.err.println("   Obs " + obsSac.getValue(SACHeaderEnum.DELTA)
                             + " , Syn " + synSac.getValue(SACHeaderEnum.DELTA) + " ; must be " + delta);
                     continue;
                 }
 
-                actualWork(timewindow, obsSac, synSac);
+                actualWork(timeWindow, obsSac, synSac);
             }
 
             System.err.print(".");

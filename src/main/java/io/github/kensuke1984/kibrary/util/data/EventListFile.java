@@ -141,8 +141,8 @@ public class EventListFile {
                 .desc("Use dataset folder containing event folders as input.").build());
         inputOption.addOption(Option.builder("e").longOpt("entry").hasArg().argName("dataEntryFile")
                 .desc("Use data entry file as input.").build());
-        inputOption.addOption(Option.builder("t").longOpt("timewindow").hasArg().argName("timewindowFile")
-                .desc("Use timewindow file as input.").build());
+        inputOption.addOption(Option.builder("t").longOpt("timeWindow").hasArg().argName("timeWindowFile")
+                .desc("Use time window file as input.").build());
         inputOption.addOption(Option.builder("b").longOpt("basic").hasArg().argName("basicFolder")
                 .desc("Use basic waveform folder as input.").build());
         options.addOptionGroup(inputOption);
@@ -177,8 +177,8 @@ public class EventListFile {
             Set<DataEntry> entries = DataEntryListFile.readAsSet(Paths.get(cmdLine.getOptionValue("e")));
             eventSet = entries.stream().map(DataEntry::getEvent).collect(Collectors.toSet());
         } else if (cmdLine.hasOption("t")) {
-            Set<TimewindowData> timewindows =  TimewindowDataFile.read(Paths.get(cmdLine.getOptionValue("t")));
-            eventSet = timewindows.stream().map(TimewindowData::getGlobalCMTID).collect(Collectors.toSet());
+            Set<TimewindowData> timeWindows =  TimewindowDataFile.read(Paths.get(cmdLine.getOptionValue("t")));
+            eventSet = timeWindows.stream().map(TimewindowData::getGlobalCMTID).collect(Collectors.toSet());
         } else if (cmdLine.hasOption("b")) {
             List<BasicID> basicIDs =  BasicIDFile.read(Paths.get(cmdLine.getOptionValue("b")), false);
             eventSet = basicIDs.stream().map(BasicID::getGlobalCMTID).collect(Collectors.toSet());

@@ -43,7 +43,7 @@ public class DataFeatureListFile {
 
     public static void write(Set<DataFeature> featureSet, Path outputPath, OpenOption... options) throws IOException {
         System.err.println("Outputting data feature values for "
-                + MathAid.switchSingularPlural(featureSet.size(), "timewindow", "timewindows")
+                + MathAid.switchSingularPlural(featureSet.size(), "time window", "time windows")
                 + " in " + outputPath);
 
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath, options))) {
@@ -73,7 +73,7 @@ public class DataFeatureListFile {
         }
 
         System.err.println("Data feature values for "
-                + MathAid.switchSingularPlural(featureSet.size(), "timewindow is", "timewindows are") + " read.");
+                + MathAid.switchSingularPlural(featureSet.size(), "time window is", "time windows are") + " read.");
         return featureSet;
     }
 
