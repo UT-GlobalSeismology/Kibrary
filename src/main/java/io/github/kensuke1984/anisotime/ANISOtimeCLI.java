@@ -1,24 +1,36 @@
 package io.github.kensuke1984.anisotime;
 
-import io.github.kensuke1984.kibrary.util.GadgetAid;
-import io.github.kensuke1984.kibrary.util.MathAid;
-import io.github.kensuke1984.kibrary.util.earth.Earth;
-import net.sf.epsgraphics.ColorMode;
-import net.sf.epsgraphics.EpsGraphics;
-import org.apache.commons.cli.*;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.math3.util.Precision;
-
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.nio.file.*;
+import java.nio.file.FileAlreadyExistsException;
+import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.DefaultParser;
+import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.MissingArgumentException;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.math3.util.Precision;
+
+import io.github.kensuke1984.kibrary.util.GadgetAid;
+import io.github.kensuke1984.kibrary.util.MathAid;
+import io.github.kensuke1984.kibrary.util.earth.Earth;
+import net.sf.epsgraphics.ColorMode;
+import net.sf.epsgraphics.EpsGraphics;
 
 /**
  * This class is only for CLI use of ANISOtime.
@@ -37,7 +49,7 @@ final class ANISOtimeCLI {
      * Help Formatter
      */
     private final static HelpFormatter helpFormatter = new HelpFormatter();
-    
+
     /**
      * TauP output format
      */
@@ -253,7 +265,8 @@ final class ANISOtimeCLI {
             Map<Raypath, Double> deltaPathMap = new HashMap<>();
             for (Phase phase : targetPhases) {
                 if (phase.isDiffracted()) {
-                    Raypath diff = catalog.searchPath(phase, eventR, 0, relativeAngleMode)[0];
+                    //TODO targetDelta of following "diff" Raypath should change to "0", but now it causes NaN in computeDelta method
+                    Raypath diff = catalog.searchPath(phase, eventR, 1, relativeAngleMode)[0];
                     double sAngle = Math.toDegrees(diff.computeDelta(phase, eventR));
                     for (double d : targets) {
                         double deltaOnBoundary = d - sAngle;
@@ -321,10 +334,10 @@ final class ANISOtimeCLI {
             }
             Path outDir = Paths.get(cmd.getOptionValue("o", ""));
             Files.createDirectories(outDir);
-            
+
             // TauP compatible output
             if (cmd.hasOption("taup"))
-            	printTaupHeader();
+                printTaupHeader();
 
             // When the ray parameter is given
             if (cmd.hasOption("p")) {
@@ -338,9 +351,9 @@ final class ANISOtimeCLI {
                     }
                     double rayParameterDegree = Math.toRadians(rayParameter);
                     if (cmd.hasOption("taup"))
-                    	printLineTauP(targetPhase, System.out, decimalPlaces, raypath, rayParameterDegree, delta, delta, time);
+                        printLineTauP(targetPhase, System.out, decimalPlaces, raypath, rayParameterDegree, delta, delta, time);
                     else
-                    	printLine(targetPhase, System.out, decimalPlaces, rayParameterDegree, delta, time);
+                        printLine(targetPhase, System.out, decimalPlaces, rayParameterDegree, delta, time);
                     if (cmd.hasOption("eps")) createEPS(raypath.createPanel(targetPhase, eventR),
                             outDir.resolve(targetPhase + "." + tmpStr + ".eps"), targetPhase, rayParameterDegree, delta,
                             time, eventR);
@@ -391,7 +404,8 @@ final class ANISOtimeCLI {
             if (!cmd.hasOption("s")) {
                 System.err.println(
                         "Improper usage or some other problems. If you have no idea about this, you try the same order with '-s' option to send me the situation.");
-                System.err.println(e.getMessage());
+                //System.err.println(e.getMessage());
+                e.printStackTrace();
             }
         } finally {
             if (cmd.hasOption("s")) {
@@ -417,7 +431,7 @@ final class ANISOtimeCLI {
                         .mapToObj(i -> MathAid.roundToString(values[i], decimalPlace))
                         .collect(Collectors.joining(" ")));
     }
-    
+
     /**
      * @param phase
      * @param out
@@ -429,24 +443,24 @@ final class ANISOtimeCLI {
      * @param time
      */
     private void printLineTauP(Phase phase, PrintStream out, int decimalPlace, Raypath raypath,
-    		double p, double distance, double targetDistance, double time) {
-    	double depth = Earth.EARTH_RADIUS - eventR;
-    	
-    	PhasePart ppSource = ((GeneralPart) (phase.getPassParts()[1])).getPhase();
-    	PhasePart ppReceiver = ((GeneralPart) (phase.getPassParts()[phase.getPassParts().length - 1])).getPhase();
-    	double takeoff = Math.toDegrees(raypath.computeIncidentAngle(ppSource, Math.toDegrees(p), eventR));
-    	double incident = Math.toDegrees(raypath.computeIncidentAngle(ppReceiver, Math.toDegrees(p), Earth.EARTH_RADIUS));
-    	
-    	out.printf(TAUP_FORMAT + "\n",
-    			MathAid.roundToString(distance, decimalPlace),
-    			MathAid.roundToString(depth, decimalPlace),
-    			phase.getDISPLAY_NAME(),
-    			MathAid.roundToString(time, decimalPlace),
-    			MathAid.roundToString(p, decimalPlace),
-    			MathAid.roundToString(takeoff, decimalPlace),
-    			MathAid.roundToString(incident, decimalPlace),
-    			MathAid.roundToString(targetDistance, decimalPlace),
-    			phase.getPHASENAME());
+            double p, double distance, double targetDistance, double time) {
+        double depth = Earth.EARTH_RADIUS - eventR;
+
+        PhasePart ppSource = ((GeneralPart) (phase.getPassParts()[1])).getPhase();
+        PhasePart ppReceiver = ((GeneralPart) (phase.getPassParts()[phase.getPassParts().length - 1])).getPhase();
+        double takeoff = Math.toDegrees(raypath.computeIncidentAngle(ppSource, Math.toDegrees(p), eventR));
+        double incident = Math.toDegrees(raypath.computeIncidentAngle(ppReceiver, Math.toDegrees(p), Earth.EARTH_RADIUS));
+
+        out.printf(TAUP_FORMAT + "\n",
+                MathAid.roundToString(distance, decimalPlace),
+                MathAid.roundToString(depth, decimalPlace),
+                phase.getDISPLAY_NAME(),
+                MathAid.roundToString(time, decimalPlace),
+                MathAid.roundToString(p, decimalPlace),
+                MathAid.roundToString(takeoff, decimalPlace),
+                MathAid.roundToString(incident, decimalPlace),
+                MathAid.roundToString(targetDistance, decimalPlace),
+                phase.getPHASENAME());
     }
 
     /**
@@ -479,9 +493,9 @@ final class ANISOtimeCLI {
         }
         double p0Degree = Math.toRadians(p0);
         if (cmd.hasOption("taup"))
-        	printLineTauP(targetPhase, out, decimalPlaces, raypath, p0Degree, delta0, targetDelta, time0);
+            printLineTauP(targetPhase, out, decimalPlaces, raypath, p0Degree, delta0, targetDelta, time0);
         else
-        	printLine(targetPhase, out, decimalPlaces, p0Degree, delta0, time0);
+            printLine(targetPhase, out, decimalPlaces, p0Degree, delta0, time0);
         return new double[]{delta0, time0};
     }
 
@@ -558,33 +572,33 @@ final class ANISOtimeCLI {
             throw new IllegalArgumentException("When you read a catalog, you cannot specify a velocity model.");
 
     }
-    
+
     /**
      * Print Taup output header
      */
     private void printTaupHeader() {
-    	System.out.println();
-    	System.out.println("Model: " + cmd.getOptionValue("mod"));
-    	System.out.printf(TAUP_FORMAT + "\n",
-    			"Distance",
-    			"Depth",
-    			"Phase",
-    			"Travel",
-    			"Ray Param",
-    			"Takeoff",
-    			"Incident",
-    			"Purist",
-    			"Purist");
-    	System.out.printf(TAUP_FORMAT + "\n",
-    			"(deg)",
-    			"(km)",
-    			"Name",
-    			"Time (s)",
-    			"p (s/deg)",
-    			"(deg)",
-    			"(deg)",
-    			"Distance",
-    			"Name");
-    	System.out.println(StringUtils.leftPad("", 88, "-"));
+        System.out.println();
+        System.out.println("Model: " + cmd.getOptionValue("mod"));
+        System.out.printf(TAUP_FORMAT + "\n",
+                "Distance",
+                "Depth",
+                "Phase",
+                "Travel",
+                "Ray Param",
+                "Takeoff",
+                "Incident",
+                "Purist",
+                "Purist");
+        System.out.printf(TAUP_FORMAT + "\n",
+                "(deg)",
+                "(km)",
+                "Name",
+                "Time (s)",
+                "p (s/deg)",
+                "(deg)",
+                "(deg)",
+                "Distance",
+                "Name");
+        System.out.println(StringUtils.leftPad("", 88, "-"));
     }
 }

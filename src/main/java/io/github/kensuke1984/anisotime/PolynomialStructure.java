@@ -1,19 +1,19 @@
 package io.github.kensuke1984.anisotime;
 
-import io.github.kensuke1984.kibrary.dsmsetup.TransverselyIsotropicParameter;
-import io.github.kensuke1984.kibrary.math.LinearEquation;
-import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
-import org.apache.commons.math3.complex.Complex;
-
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.function.DoubleUnaryOperator;
 import java.util.function.Function;
-import java.util.function.IntFunction;
 import java.util.function.ToDoubleFunction;
 import java.util.stream.IntStream;
+
+import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
+import org.apache.commons.math3.complex.Complex;
+
+import io.github.kensuke1984.kibrary.elastic.VariableType;
+import io.github.kensuke1984.kibrary.math.LinearEquation;
 
 /**
  * Polynomial structure.
@@ -28,97 +28,98 @@ public class PolynomialStructure implements VelocityStructure {
      * Transversely isotropic (TI) PREM by Dziewonski &amp; Anderson 1981
      */
     public static final PolynomialStructure PREM =
-            new PolynomialStructure(io.github.kensuke1984.kibrary.util.earth.PolynomialStructure_old.PREM);
+            new PolynomialStructure(io.github.kensuke1984.kibrary.util.earth.PolynomialStructure.of("PREM"));
     /**
      * isotropic PREM by Dziewonski &amp; Anderson 1981
      */
     public static final PolynomialStructure ISO_PREM =
-            new PolynomialStructure(io.github.kensuke1984.kibrary.util.earth.PolynomialStructure_old.ISO_PREM);
+            new PolynomialStructure(io.github.kensuke1984.kibrary.util.earth.PolynomialStructure.of("IPREM"));
     /**
      * AK135 by Kennett <i>et al</i>. (1995)
      */
     public static final PolynomialStructure AK135 =
-            new PolynomialStructure(io.github.kensuke1984.kibrary.util.earth.PolynomialStructure_old.AK135);
+            new PolynomialStructure(io.github.kensuke1984.kibrary.util.earth.PolynomialStructure.of("AK135"));
     /**
      * Homogeneous structure used for test purposes
      */
     public static final PolynomialStructure HOMOGEN =
-            new PolynomialStructure(io.github.kensuke1984.kibrary.util.earth.PolynomialStructure_old.HOMOGEN);
+            new PolynomialStructure(io.github.kensuke1984.kibrary.util.earth.PolynomialStructure.of("HOMOGEN"));
     /**
      * 2019/12/7
      */
     private static final long serialVersionUID = -7292410325252292009L;
 
-    private final io.github.kensuke1984.kibrary.util.earth.PolynomialStructure_old STRUCTURE;
+    private final io.github.kensuke1984.kibrary.util.earth.PolynomialStructure STRUCTURE;
     /*
      * -radius x this is only for computations for bouncing points.
      */
     private final PolynomialFunction RADIUS_SUBTRACTION;
 
-    public PolynomialStructure(io.github.kensuke1984.kibrary.util.earth.PolynomialStructure_old structure) {
+    public PolynomialStructure(io.github.kensuke1984.kibrary.util.earth.PolynomialStructure structure) {
         STRUCTURE = checkBoundaries(structure);
         if (!STRUCTURE.isDefault() && !checkStructure())
-        	throw new RuntimeException(
-        			"The structure must have strictly positive velocity and density,"
-        			+ "except for vsh=vsv=0 in the outer-core.");
+            throw new RuntimeException(
+                    "The structure must have strictly positive velocity and density,"
+                    + "except for vsh=vsv=0 in the outer-core.");
         RADIUS_SUBTRACTION = new PolynomialFunction(new double[]{0, -earthRadius()});
     }
 
-    private io.github.kensuke1984.kibrary.util.earth.PolynomialStructure_old checkBoundaries(
-            io.github.kensuke1984.kibrary.util.earth.PolynomialStructure_old structure) {
-        double[] dBoundaries = IntStream.range(1, structure.getNzone()).mapToDouble(structure::getRMinOf)
+    private io.github.kensuke1984.kibrary.util.earth.PolynomialStructure checkBoundaries(
+            io.github.kensuke1984.kibrary.util.earth.PolynomialStructure structure) {
+        double[] dBoundaries = IntStream.range(1, structure.getNZone()).mapToDouble(i -> structure.getRmin()[i])
                 .filter(r -> isDBoundary(r, structure)).toArray();
-        io.github.kensuke1984.kibrary.util.earth.PolynomialStructure_old newStructure = structure;
-        double earthRadius = structure.getRMaxOf(structure.getNzone() - 1);
+        io.github.kensuke1984.kibrary.util.earth.PolynomialStructure newStructure = structure;
+        double earthRadius = structure.getRmax()[structure.getNZone() - 1];
         for (double boundary : dBoundaries) {
-            newStructure = newStructure.addBoundaries(boundary - D_BOUNDARY_ZONE, boundary + D_BOUNDARY_ZONE);
-            newStructure = newStructure.mergeLayer(newStructure.zoneOf(boundary));
-            int izone = newStructure.zoneOf(boundary);
-            //rho
-            newStructure = newStructure.setRho(izone,
-                    computeReplacement(boundary, earthRadius, newStructure.getRhoOf(izone),
-                            newStructure.getRhoOf(izone + 1)));
-            //Vpv
-            newStructure = newStructure.setVpv(izone,
-                    computeReplacement(boundary, earthRadius, newStructure.getVpvOf(izone),
-                            newStructure.getVpvOf(izone + 1)));
-            //Vph
-            newStructure = newStructure.setVph(izone,
-                    computeReplacement(boundary, earthRadius, newStructure.getVphOf(izone),
-                            newStructure.getVphOf(izone + 1)));
-            //Vsv
-            newStructure = newStructure.setVsv(izone,
-                    computeReplacement(boundary, earthRadius, newStructure.getVsvOf(izone),
-                            newStructure.getVsvOf(izone + 1)));
-            //Vsh
-            newStructure = newStructure.setVsh(izone,
-                    computeReplacement(boundary, earthRadius, newStructure.getVshOf(izone),
-                            newStructure.getVshOf(izone + 1)));
+            newStructure = newStructure.replaceDBoundary(boundary, D_BOUNDARY_ZONE);
+//            newStructure = newStructure.withBoundaries(boundary - D_BOUNDARY_ZONE, boundary + D_BOUNDARY_ZONE);
+//            newStructure = newStructure.mergeLayer(newStructure.zoneOf(boundary));
+//            int izone = newStructure.zoneOf(boundary);
+//            //rho
+//            newStructure = newStructure.setFunction(VariableType.RHO, izone,
+//                    computeReplacement(boundary, earthRadius, newStructure.getRho()[izone],
+//                            newStructure.getRho()[izone + 1]));
+//            //Vpv
+//            newStructure = newStructure.setFunction(VariableType.Vpv, izone,
+//                    computeReplacement(boundary, earthRadius, newStructure.getVpv()[izone],
+//                            newStructure.getVpv()[izone + 1]));
+//            //Vph
+//            newStructure = newStructure.setFunction(VariableType.Vph, izone,
+//                    computeReplacement(boundary, earthRadius, newStructure.getVph()[izone],
+//                            newStructure.getVph()[izone + 1]));
+//            //Vsv
+//            newStructure = newStructure.setFunction(VariableType.Vsv, izone,
+//                    computeReplacement(boundary, earthRadius, newStructure.getVsv()[izone],
+//                            newStructure.getVsv()[izone + 1]));
+//            //Vsh
+//            newStructure = newStructure.setFunction(VariableType.Vsh, izone,
+//                    computeReplacement(boundary, earthRadius, newStructure.getVsh()[izone],
+//                            newStructure.getVsh()[izone + 1]));
         }
         return newStructure;
     }
-    
+
     /**
      * Check if vpv, vph, vsv, vsh, and rho are strictly positive over all depths,
      * excepts for the outer core for vsh and vsv, where it checks if vsh=vsv=0
      * @return true if check passed, else false
      */
     private boolean checkStructure() {
-    	if (IntStream.range(0, (int) earthRadius()).filter(r -> r >= coreMantleBoundary() && r < innerCoreBoundary())
-    			.mapToDouble(STRUCTURE::getVshAt).anyMatch(v -> v <= 0 )) return false;
-    	else if (IntStream.range(0, (int) earthRadius()).filter(r -> r < coreMantleBoundary() && r > innerCoreBoundary())
-    				.mapToDouble(STRUCTURE::getVshAt).anyMatch(v -> v != 0 )) return false;
-    	else if (IntStream.range(0, (int) earthRadius()).filter(r -> r >= coreMantleBoundary() && r < innerCoreBoundary())
-        			.mapToDouble(STRUCTURE::getVsvAt).anyMatch(v -> v <= 0 )) return false;
-    	else if (IntStream.range(0, (int) earthRadius()).filter(r -> r < coreMantleBoundary() && r > innerCoreBoundary())
-    			.mapToDouble(STRUCTURE::getVsvAt).anyMatch(v -> v != 0 )) return false;
-    	else if (IntStream.range(0, (int) earthRadius())
-        			.mapToDouble(STRUCTURE::getVphAt).anyMatch(v -> v <= 0 )) return false;
-    	else if (IntStream.range(0, (int) earthRadius())
-    				.mapToDouble(STRUCTURE::getVpvAt).anyMatch(v -> v <= 0 )) return false;
-    	else if (IntStream.range(0, (int) earthRadius())
-    				.mapToDouble(STRUCTURE::getRhoAt).anyMatch(v -> v <= 0 )) return false;
-    	return true;
+        if (IntStream.range(0, (int) earthRadius()).filter(r -> r >= coreMantleBoundary() && r < innerCoreBoundary())
+                .mapToDouble(r -> STRUCTURE.getAtRadius(VariableType.Vsh, r)).anyMatch(v -> v <= 0 )) return false;
+        else if (IntStream.range(0, (int) earthRadius()).filter(r -> r < coreMantleBoundary() && r > innerCoreBoundary())
+                    .mapToDouble(r -> STRUCTURE.getAtRadius(VariableType.Vsh, r)).anyMatch(v -> v != 0 )) return false;
+        else if (IntStream.range(0, (int) earthRadius()).filter(r -> r >= coreMantleBoundary() && r < innerCoreBoundary())
+                    .mapToDouble(r -> STRUCTURE.getAtRadius(VariableType.Vsv, r)).anyMatch(v -> v <= 0 )) return false;
+        else if (IntStream.range(0, (int) earthRadius()).filter(r -> r < coreMantleBoundary() && r > innerCoreBoundary())
+                .mapToDouble(r -> STRUCTURE.getAtRadius(VariableType.Vsv, r)).anyMatch(v -> v != 0 )) return false;
+        else if (IntStream.range(0, (int) earthRadius())
+                    .mapToDouble(r -> STRUCTURE.getAtRadius(VariableType.Vph, r)).anyMatch(v -> v <= 0 )) return false;
+        else if (IntStream.range(0, (int) earthRadius())
+                    .mapToDouble(r -> STRUCTURE.getAtRadius(VariableType.Vpv, r)).anyMatch(v -> v <= 0 )) return false;
+        else if (IntStream.range(0, (int) earthRadius())
+                    .mapToDouble(r -> STRUCTURE.getAtRadius(VariableType.RHO, r)).anyMatch(v -> v <= 0 )) return false;
+        return true;
     }
 
     /**
@@ -133,8 +134,8 @@ public class PolynomialStructure implements VelocityStructure {
     private PolynomialFunction computeReplacement(double boundary, double earthRadius, PolynomialFunction lowerFunction,
                                                   PolynomialFunction upperFunction) {
         double xLower = (boundary - D_BOUNDARY_ZONE) / earthRadius;
-        double xBoundary = boundary / earthRadius;
-        double boundaryValue = lowerFunction.value(xBoundary);
+        //double xBoundary = boundary / earthRadius;
+        //double boundaryValue = lowerFunction.value(xBoundary);
         double lowerValue = lowerFunction.value(xLower);
         double xUpper = (boundary + D_BOUNDARY_ZONE) / earthRadius;
         double upperValue = upperFunction.value(xUpper);
@@ -146,33 +147,37 @@ public class PolynomialStructure implements VelocityStructure {
     /**
      * @param r         radius to be checked
      * @param structure structure to be checked
-     * @return if the boundary is D boundary.
-     * If the functions and values(velocities and density) in the upper and lower boundaries are identical, false returns.
+     * @return Whether the boundary is D boundary.
+     * When the functions (of velocities and density) in the upper and lower boundaries are identical, this method returns false.
      */
     private static boolean isDBoundary(double r,
-                                       io.github.kensuke1984.kibrary.util.earth.PolynomialStructure_old structure) {
+                                       io.github.kensuke1984.kibrary.util.earth.PolynomialStructure structure) {
         double rPlus = r + ComputationalMesh.EPS;
         double rMinus = r - ComputationalMesh.EPS;
         int upperZone = structure.zoneOf(rPlus);
         int lowerZone = structure.zoneOf(rMinus);
-        Function<IntFunction<PolynomialFunction>, Boolean> compare =
-                ic -> ic.apply(upperZone).equals(ic.apply(lowerZone));
-        if (compare.apply(structure::getVphOf) && compare.apply(structure::getVpvOf) &&
-                compare.apply(structure::getVshOf) && compare.apply(structure::getVsvOf) &&
-                compare.apply(structure::getRhoOf)) return false;
+        // check whether the functions are identical.
+        Function<VariableType, Boolean> compare =
+                variable -> structure.getFunctionIn(variable, upperZone).equals(structure.getFunctionIn(variable, lowerZone));
+        //Function<IntFunction<PolynomialFunction>, Boolean> compare =
+        //        ic -> ic.apply(upperZone).equals(ic.apply(lowerZone));
+        if (compare.apply(VariableType.Vph) && compare.apply(VariableType.Vpv) &&
+                compare.apply(VariableType.Vsh) && compare.apply(VariableType.Vsv) &&
+                compare.apply(VariableType.RHO)) return false;
+        // check whether the boundary is D boundary
         double criterion = 1 - MAXIMUM_RATIO_OF_D_BOUNDARY / 100;
         ToDoubleFunction<DoubleUnaryOperator> toRatio = compute -> {
             double ratio = compute.applyAsDouble(rPlus) / compute.applyAsDouble(rMinus);
             return ratio < 1 ? ratio : 1 / ratio;
         };
-        Function<TransverselyIsotropicParameter, DoubleUnaryOperator> getOperater =
-                ti -> a -> structure.getTransverselyIsotropicValue(ti, a);
-        return !(toRatio.applyAsDouble(getOperater.apply(TransverselyIsotropicParameter.A)) < criterion ||
-                toRatio.applyAsDouble(getOperater.apply(TransverselyIsotropicParameter.C)) < criterion ||
-                toRatio.applyAsDouble(getOperater.apply(TransverselyIsotropicParameter.F)) < criterion ||
-                toRatio.applyAsDouble(getOperater.apply(TransverselyIsotropicParameter.L)) < criterion ||
-                toRatio.applyAsDouble(getOperater.apply(TransverselyIsotropicParameter.N)) < criterion ||
-                toRatio.applyAsDouble(structure::getRhoAt) < criterion);
+        Function<VariableType, DoubleUnaryOperator> getOperater =
+                ti -> a -> structure.mediumAt(a).get(ti);
+        return !(toRatio.applyAsDouble(getOperater.apply(VariableType.A)) < criterion ||
+                toRatio.applyAsDouble(getOperater.apply(VariableType.C)) < criterion ||
+                toRatio.applyAsDouble(getOperater.apply(VariableType.F)) < criterion ||
+                toRatio.applyAsDouble(getOperater.apply(VariableType.L)) < criterion ||
+                toRatio.applyAsDouble(getOperater.apply(VariableType.N)) < criterion ||
+                toRatio.applyAsDouble(getOperater.apply(VariableType.RHO)) < criterion);
     }
 
     /**
@@ -181,7 +186,7 @@ public class PolynomialStructure implements VelocityStructure {
     private int[] rMinIndexOfDBoundary;
 
     public PolynomialStructure(Path path) throws IOException {
-        this(new io.github.kensuke1984.kibrary.util.earth.PolynomialStructure_old(path));
+        this(io.github.kensuke1984.kibrary.util.earth.PolynomialStructureFile.read(path));
     }
 
     @Override
@@ -208,8 +213,8 @@ public class PolynomialStructure implements VelocityStructure {
      * @return [km] turningR in the i-th zone or -1 if no valid R in the i-th zone
      */
     private double findTurningR(int i, LinearEquation eq) {
-        double minR = STRUCTURE.getRMinOf(i);
-        double maxR = STRUCTURE.getRMaxOf(i);
+        double minR = STRUCTURE.getRmin()[i];
+        double maxR = STRUCTURE.getRmax()[i];
         int ansType = eq.Discriminant();
         Complex[] answer = eq.compute();
         if (ansType == 1) {
@@ -230,27 +235,27 @@ public class PolynomialStructure implements VelocityStructure {
 
     @Override
     public double earthRadius() {
-        return STRUCTURE.getRMaxOf(STRUCTURE.getNzone() - 1);
+        return STRUCTURE.getRmax()[STRUCTURE.getNZone() - 1];
     }
 
     @Override
     public double innerCoreBoundary() {
-        return STRUCTURE.getRMinOf(
-                IntStream.range(0, STRUCTURE.getNzone()).filter(i -> STRUCTURE.getQMuOf(i) < 0).min().getAsInt());
+        return STRUCTURE.getRmin()[
+                IntStream.range(0, STRUCTURE.getNZone()).filter(i -> STRUCTURE.getQMu()[i] < 0).min().getAsInt()];
     }
 
     @Override
     public double coreMantleBoundary() {
-        return STRUCTURE.getRMaxOf(
-                IntStream.range(0, STRUCTURE.getNzone()).filter(i -> STRUCTURE.getQMuOf(i) < 0).max().getAsInt());
+        return STRUCTURE.getRmax()[
+                IntStream.range(0, STRUCTURE.getNZone()).filter(i -> STRUCTURE.getQMu()[i] < 0).max().getAsInt()];
 
     }
 
     @Override
     public double[] velocityBoundaries() {
-        double[] boundaries = new double[STRUCTURE.getNzone() + 1];
+        double[] boundaries = new double[STRUCTURE.getNZone() + 1];
         for (int i = 0; i < boundaries.length - 1; i++)
-            boundaries[i] = STRUCTURE.getRMinOf(i);
+            boundaries[i] = STRUCTURE.getRmin()[i];
         boundaries[boundaries.length - 1] = earthRadius();
         return boundaries;
     }
@@ -258,8 +263,8 @@ public class PolynomialStructure implements VelocityStructure {
     @Override
     public double pTurningR(double p) {
         PolynomialFunction pFunction = new PolynomialFunction(new double[]{p});
-        for (int i = STRUCTURE.getNzone() - 1; -1 < i; i--) {
-            PolynomialFunction pvr = STRUCTURE.getVphOf(i).multiply(pFunction).add(RADIUS_SUBTRACTION); // pv-r=0
+        for (int i = STRUCTURE.getNZone() - 1; -1 < i; i--) {
+            PolynomialFunction pvr = STRUCTURE.getVph()[i].multiply(pFunction).add(RADIUS_SUBTRACTION); // pv-r=0
             LinearEquation eq = new LinearEquation(pvr);
             double r = findTurningR(i, eq);
             if (coreMantleBoundary() <= r) return r;
@@ -270,9 +275,9 @@ public class PolynomialStructure implements VelocityStructure {
     @Override
     public double iTurningR(double p) {
         PolynomialFunction pFunction = new PolynomialFunction(new double[]{p});
-        for (int i = STRUCTURE.getNzone() - 1; -1 < i; i--) {
-            if (innerCoreBoundary() < STRUCTURE.getRMinOf(i)) continue;
-            PolynomialFunction pvr = STRUCTURE.getVphOf(i).multiply(pFunction).add(RADIUS_SUBTRACTION); // pv-r=0
+        for (int i = STRUCTURE.getNZone() - 1; -1 < i; i--) {
+            if (innerCoreBoundary() < STRUCTURE.getRmin()[i]) continue;
+            PolynomialFunction pvr = STRUCTURE.getVph()[i].multiply(pFunction).add(RADIUS_SUBTRACTION); // pv-r=0
             LinearEquation eq = new LinearEquation(pvr);
             double r = findTurningR(i, eq);
             if (0 <= r && r <= innerCoreBoundary()) return r;
@@ -283,8 +288,8 @@ public class PolynomialStructure implements VelocityStructure {
     @Override
     public double svTurningR(double p) {
         PolynomialFunction pFunction = new PolynomialFunction(new double[]{p});
-        for (int i = STRUCTURE.getNzone() - 1; i > -1; i--) {
-            PolynomialFunction pvr = STRUCTURE.getVsvOf(i).multiply(pFunction).add(RADIUS_SUBTRACTION); // pv-r=0
+        for (int i = STRUCTURE.getNZone() - 1; i > -1; i--) {
+            PolynomialFunction pvr = STRUCTURE.getVsv()[i].multiply(pFunction).add(RADIUS_SUBTRACTION); // pv-r=0
             LinearEquation eq = new LinearEquation(pvr);
             double r = findTurningR(i, eq);
             if (coreMantleBoundary() <= r) return r;
@@ -295,8 +300,8 @@ public class PolynomialStructure implements VelocityStructure {
     @Override
     public double shTurningR(double p) {
         PolynomialFunction pFunction = new PolynomialFunction(new double[]{p});
-        for (int i = STRUCTURE.getNzone() - 1; -1 < i; i--) {
-            PolynomialFunction pvr = STRUCTURE.getVshOf(i).multiply(pFunction).add(RADIUS_SUBTRACTION); // pv-r=0
+        for (int i = STRUCTURE.getNZone() - 1; -1 < i; i--) {
+            PolynomialFunction pvr = STRUCTURE.getVsh()[i].multiply(pFunction).add(RADIUS_SUBTRACTION); // pv-r=0
             LinearEquation eq = new LinearEquation(pvr);
             double r = findTurningR(i, eq);
             if (coreMantleBoundary() <= r) return r;
@@ -307,9 +312,9 @@ public class PolynomialStructure implements VelocityStructure {
     @Override
     public double jvTurningR(double p) {
         PolynomialFunction pFunction = new PolynomialFunction(new double[]{p});
-        for (int i = STRUCTURE.getNzone() - 1; i > -1; i--) {
-            if (innerCoreBoundary() < STRUCTURE.getRMinOf(i)) continue;
-            PolynomialFunction pvr = STRUCTURE.getVsvOf(i).multiply(pFunction).add(RADIUS_SUBTRACTION); // pv-r=0
+        for (int i = STRUCTURE.getNZone() - 1; i > -1; i--) {
+            if (innerCoreBoundary() < STRUCTURE.getRmin()[i]) continue;
+            PolynomialFunction pvr = STRUCTURE.getVsv()[i].multiply(pFunction).add(RADIUS_SUBTRACTION); // pv-r=0
             LinearEquation eq = new LinearEquation(pvr);
             double r = findTurningR(i, eq);
             if (0 <= r && r <= innerCoreBoundary()) return r;
@@ -320,8 +325,8 @@ public class PolynomialStructure implements VelocityStructure {
     @Override
     public double jhTurningR(double p) {
         PolynomialFunction pFunction = new PolynomialFunction(new double[]{p});
-        for (int i = STRUCTURE.getNzone() - 1; -1 < i; i--) {
-            PolynomialFunction pvr = STRUCTURE.getVshOf(i).multiply(pFunction).add(RADIUS_SUBTRACTION); // pv-r=0
+        for (int i = STRUCTURE.getNZone() - 1; -1 < i; i--) {
+            PolynomialFunction pvr = STRUCTURE.getVsh()[i].multiply(pFunction).add(RADIUS_SUBTRACTION); // pv-r=0
             LinearEquation eq = new LinearEquation(pvr);
             double r = findTurningR(i, eq);
             if (0 <= r && r <= innerCoreBoundary()) return r;
@@ -332,9 +337,9 @@ public class PolynomialStructure implements VelocityStructure {
     @Override
     public double kTurningR(double p) {
         PolynomialFunction pFunction = new PolynomialFunction(new double[]{p});
-        for (int i = STRUCTURE.getNzone() - 1; -1 < i; i--) {
-            if (coreMantleBoundary() < STRUCTURE.getRMinOf(i)) continue;
-            PolynomialFunction pvr = STRUCTURE.getVphOf(i).multiply(pFunction).add(RADIUS_SUBTRACTION); // pv-r=0
+        for (int i = STRUCTURE.getNZone() - 1; -1 < i; i--) {
+            if (coreMantleBoundary() < STRUCTURE.getRmin()[i]) continue;
+            PolynomialFunction pvr = STRUCTURE.getVph()[i].multiply(pFunction).add(RADIUS_SUBTRACTION); // pv-r=0
             LinearEquation eq = new LinearEquation(pvr);
             double r = findTurningR(i, eq);
             if (innerCoreBoundary() < r && r < coreMantleBoundary()) return r;
@@ -344,32 +349,32 @@ public class PolynomialStructure implements VelocityStructure {
 
     @Override
     public double getRho(double r) {
-        return STRUCTURE.getRhoAt(r);
+        return STRUCTURE.getAtRadius(VariableType.RHO, r);
     }
 
     @Override
     public double getA(double r) {
-        return STRUCTURE.getTransverselyIsotropicValue(TransverselyIsotropicParameter.A, r);
+        return STRUCTURE.mediumAt(r).get(VariableType.A);
     }
 
     @Override
     public double getC(double r) {
-        return STRUCTURE.getTransverselyIsotropicValue(TransverselyIsotropicParameter.C, r);
+        return STRUCTURE.mediumAt(r).get(VariableType.C);
     }
 
     @Override
     public double getF(double r) {
-        return STRUCTURE.getTransverselyIsotropicValue(TransverselyIsotropicParameter.F, r);
+        return STRUCTURE.mediumAt(r).get(VariableType.F);
     }
 
     @Override
     public double getL(double r) {
-        return STRUCTURE.getTransverselyIsotropicValue(TransverselyIsotropicParameter.L, r);
+        return STRUCTURE.mediumAt(r).get(VariableType.L);
     }
 
     @Override
     public double getN(double r) {
-        return STRUCTURE.getTransverselyIsotropicValue(TransverselyIsotropicParameter.N, r);
+        return STRUCTURE.mediumAt(r).get(VariableType.N);
     }
 
 }

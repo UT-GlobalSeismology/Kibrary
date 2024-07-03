@@ -1,25 +1,42 @@
 package io.github.kensuke1984.anisotime;
 
-import io.github.kensuke1984.kibrary.Environment;
-import io.github.kensuke1984.kibrary.util.FileAid;
-import io.github.kensuke1984.kibrary.util.GadgetAid;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
+import java.net.URL;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
+import java.nio.file.OpenOption;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import java.util.TreeSet;
+import java.util.function.BiFunction;
+import java.util.function.BiPredicate;
+import java.util.function.BinaryOperator;
+import java.util.function.Consumer;
+import java.util.function.DoubleUnaryOperator;
+import java.util.function.ToDoubleFunction;
+import java.util.function.UnaryOperator;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
 import org.apache.commons.math3.fitting.PolynomialCurveFitter;
 import org.apache.commons.math3.fitting.WeightedObservedPoints;
 import org.apache.commons.math3.util.Precision;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.Serializable;
-import java.net.URL;
-import java.nio.file.*;
-import java.security.NoSuchAlgorithmException;
-import java.util.*;
-import java.util.function.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import io.github.kensuke1984.kibrary.Environment;
+import io.github.kensuke1984.kibrary.util.FileAid;
+import io.github.kensuke1984.kibrary.util.GadgetAid;
 
 /**
  * Raypath catalog for one model.
@@ -1219,7 +1236,11 @@ public class RaypathCatalog implements Serializable {
             double thetaC = toDelta.applyAsDouble(rayC);
             double theta1 = toDelta.applyAsDouble(ray1);
             double theta2 = toDelta.applyAsDouble(ray2);
-            if (Double.isNaN(thetaC) || 0 < (theta1 - thetaC) * (theta2 - thetaC)) throw new RuntimeException("STGAI");
+//TODO            if (Double.isNaN(thetaC) || 0 < (theta1 - thetaC) * (theta2 - thetaC)) throw new RuntimeException("STGAI");
+            if (Double.isNaN(thetaC) || 0 < (theta1 - thetaC) * (theta2 - thetaC)) {
+                System.err.println(theta1 + " " + theta2 + " " + thetaC);
+                throw new RuntimeException("STGAI");
+            }
             Raypath ray1C = interpolateRaypath(targetPhase, eventR, targetDelta, relativeAngle, ray1, rayC);
             Raypath ray2C = interpolateRaypath(targetPhase, eventR, targetDelta, relativeAngle, rayC, ray2);
             if (Double.isNaN(toDelta.applyAsDouble(ray1C)) && Double.isNaN(toDelta.applyAsDouble(ray2C)))

@@ -127,9 +127,17 @@ public class BasicRecordSectionCreator extends Operation {
      */
     private double reductionSlowness;
     /**
+     * Path of structure file to compute travel times instead of structureName. This is referred only for anisotimeMode
+     */
+    private Path structurePath;
+    /**
      * Name of structure to compute travel times
      */
     private String structureName;
+    /**
+     * Use anisotime to compute travel times instead of TauP
+     */
+    private boolean anisotimeMode;
 
     private double lowerDistance;
     private double upperDistance;
@@ -200,8 +208,14 @@ public class BasicRecordSectionCreator extends Operation {
             pw.println("#alignPhases ");
             pw.println("##(double) The apparent slowness to use for time reduction [s/deg] (0)");
             pw.println("#reductionSlowness ");
-            pw.println("##(String) Name of structure to compute travel times using TauP (prem)");
+            pw.println("##Path of a structure file you want to use. If this is unset, the following structureName will be referenced.");
+            pw.println("##This option is valid when the floowing anisotimeMode is true");
+            pw.println("#structurePath ");
+            pw.println("##(String) Name of structure to compute travel times (prem)");
             pw.println("#structureName ");
+            pw.println("##Whether you use anisotime to compute TRAVEL TIME CURVES instead of TauP (false).");
+            pw.println("##Note that alignPhases are computed using TauP even if this is ture.");
+            pw.println("#anisotimeMode true");
             pw.println("##(double) Lower limit of range of epicentral distance to be used [deg] [0:upperDistance) (0)");
             pw.println("#lowerDistance ");
             pw.println("##(double) Upper limit of range of epicentral distance to be used [deg] (lowerDistance:180] (180)");
@@ -268,6 +282,9 @@ public class BasicRecordSectionCreator extends Operation {
         if (property.containsKey("alignPhases"))
             alignPhases = property.parseStringArray("alignPhases", null);
         reductionSlowness = property.parseDouble("reductionSlowness", "0");
+        anisotimeMode = property.parseBoolean("anisotimeMode", "false");
+        if (anisotimeMode)
+            structurePath = property.parsePath("structurePath", null, true, workPath);
         structureName = property.parseString("structureName", "prem").toLowerCase();
 
         lowerDistance = property.parseDouble("lowerDistance", "0");
@@ -462,7 +479,11 @@ public class BasicRecordSectionCreator extends Operation {
 
             // add travel time curves
             if (displayPhases != null) {
-                plotTravelTimeCurve(startDistance, endDistance);
+                if (anisotimeMode) {
+                    plotTravelTimeCurveAnisotime(startDistance, endDistance);
+                } else {
+                    plotTravelTimeCurve(startDistance, endDistance);
+                }
             }
 
             // plot
@@ -620,6 +641,10 @@ public class BasicRecordSectionCreator extends Operation {
                 }
                 gnuplot.addLine(curveFileName, 2, 1, BasicPlotAid.USE_PHASE_APPEARANCE, "");
             }
+        }
+
+        private void plotTravelTimeCurveAnisotime(double startDistance, double endDistance) throws TauModelException {
+
         }
     }
 

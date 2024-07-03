@@ -1,13 +1,11 @@
 package io.github.kensuke1984.anisotime;
 
-import io.github.kensuke1984.kibrary.Environment;
-
-import javax.swing.*;
-import javax.swing.GroupLayout.Alignment;
-import javax.swing.event.PopupMenuEvent;
-import javax.swing.event.PopupMenuListener;
-import java.awt.*;
-import java.awt.event.*;
+import java.awt.Point;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -15,6 +13,20 @@ import java.util.Arrays;
 import java.util.Properties;
 import java.util.Timer;
 import java.util.TimerTask;
+
+import javax.swing.BorderFactory;
+import javax.swing.GroupLayout;
+import javax.swing.GroupLayout.Alignment;
+import javax.swing.JComboBox;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
+import javax.swing.event.PopupMenuEvent;
+import javax.swing.event.PopupMenuListener;
+
+import io.github.kensuke1984.kibrary.Environment;
 
 /**
  * Panel for inputting parameters

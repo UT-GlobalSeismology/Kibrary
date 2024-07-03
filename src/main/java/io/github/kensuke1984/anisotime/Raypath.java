@@ -1,21 +1,33 @@
 package io.github.kensuke1984.anisotime;
 
-import io.github.kensuke1984.kibrary.math.Integrand;
-import org.apache.commons.math3.linear.RealVector;
-import org.apache.commons.math3.util.Precision;
+import static io.github.kensuke1984.kibrary.math.Integrand.*;
 
-import java.io.*;
+import java.io.BufferedOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.PrintWriter;
+import java.io.Serializable;
 import java.nio.file.Files;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.EnumMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.DoubleFunction;
 import java.util.function.DoubleUnaryOperator;
 
-import static io.github.kensuke1984.kibrary.math.Integrand.bySimpsonRule;
-import static io.github.kensuke1984.kibrary.math.Integrand.jeffreysMethod1;
+import org.apache.commons.math3.linear.RealVector;
+import org.apache.commons.math3.util.Precision;
+
+import io.github.kensuke1984.kibrary.math.Integrand;
 
 /**
  * Every depth is written as <b>radius [km]</b>. Every angle value returns in
@@ -1458,7 +1470,7 @@ public class Raypath implements Serializable, Comparable<Raypath> {
     public int compareTo(Raypath o) {
         return Double.compare(RAY_PARAMETER, o.RAY_PARAMETER);
     }
-    
+
     /**
      * Compute the angle (in radian) between the raypath and the local vertical.
      * @param pp
@@ -1467,7 +1479,7 @@ public class Raypath implements Serializable, Comparable<Raypath> {
      * @return angle in radian
      */
     public double computeIncidentAngle(PhasePart pp, double rayParameter, double r) {
-    	double qDelta = WOODHOUSE.computeQDelta(pp, rayParameter, r);
-    	return Math.atan(r * qDelta);
+        double qDelta = WOODHOUSE.computeQDelta(pp, rayParameter, r);
+        return Math.atan(r * qDelta);
     }
 }
