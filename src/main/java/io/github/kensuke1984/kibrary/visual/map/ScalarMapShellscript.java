@@ -221,6 +221,8 @@ public class ScalarMapShellscript {
             pw.println("gmt set MAP_DEFAULT_PEN black");
             pw.println("gmt set MAP_TITLE_OFFSET 1p");
             pw.println("gmt set FONT 50");
+            pw.println("gmt set FONT_TITLE 50");
+            pw.println("gmt set FONT_ANNOT 40");
             pw.println("gmt set FONT_LABEL 50p,Helvetica,black");
             pw.println("");
             pw.println("# map parameters");
