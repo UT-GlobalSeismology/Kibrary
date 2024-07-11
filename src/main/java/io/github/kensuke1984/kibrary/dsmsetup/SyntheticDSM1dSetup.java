@@ -21,7 +21,6 @@ import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
-import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTCatalog;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 
@@ -288,9 +287,6 @@ public class SyntheticDSM1dSetup extends Operation {
         if (radius.length != sumGrid || perRho.length != sumGrid || perA.length != sumGrid || perC.length != sumGrid
                 || perF.length != sumGrid || perL.length != sumGrid || perN.length != sumGrid)
             throw new IllegalArgumentException("the Number of radius and pertirbations of parameters must be " + nzone);
-
-        // write additional info
-        property.setProperty("CMTcatalogue", GlobalCMTCatalog.getCatalogPath().toString());
     }
 
     @Override
