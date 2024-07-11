@@ -228,10 +228,10 @@ public class BasicRecordSectionCreator extends Operation {
             pw.println("#structurePath ");
             pw.println("##(String) Name of structure to compute travel times (prem)");
             pw.println("#structureName ");
-            pw.println("##Whether you use anisotime to compute TRAVEL TIME CURVES instead of TauP (false).");
+            pw.println("##(boolean) Whether you use anisotime to compute TRAVEL TIME CURVES instead of TauP (false).");
             pw.println("##Note that alignPhases are computed using TauP even if this is ture.");
             pw.println("#anisotimeMode true");
-            pw.println("##Compute travel time curves using anisotime for... (true: P-SV wave, false: SH wave) (false)");
+            pw.println("##(boolean) Compute travel time curves using anisotime for... (true: P-SV wave, false: SH wave) (false)");
             pw.println("#computeSV true");
             pw.println("##(double) Lower limit of range of epicentral distance to be used [deg] [0:upperDistance) (0)");
             pw.println("#lowerDistance ");
