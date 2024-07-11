@@ -84,6 +84,10 @@ public class OrthogonalityTest extends Operation {
     private Path weightingPropertiesPath;
     private GlobalCMTID specificEvent;
     private String specificObserverName;
+    /**
+     * Fill 0 to empty partial waveforms or not.
+     */
+    private boolean fillEmptyPartial;
 
     private WeightingHandler weightingHandler;
 
@@ -127,6 +131,8 @@ public class OrthogonalityTest extends Operation {
             pw.println("#specificEvent ");
             pw.println("##A specific observer, in the form STA_NET, must be set");
             pw.println("#specificObserverName ");
+            pw.println("##(boolean) Fill 0 to empty partial waveforms. (false)");
+            pw.println("#fillEmptyPartial ");
         }
         System.err.println(outPath + " is created.");
     }
@@ -151,6 +157,8 @@ public class OrthogonalityTest extends Operation {
         weightingPropertiesPath = property.parsePath("weightingPropertiesPath", null, true, workPath);
         specificEvent = new GlobalCMTID(property.parseString("specificEvent", null));
         specificObserverName = property.parseString("specificObserverName", null);
+
+        fillEmptyPartial = property.parseBoolean("fillEmptyPartial", "false");
     }
 
    @Override
@@ -230,13 +238,13 @@ public class OrthogonalityTest extends Operation {
        System.err.println("Setting data for main A matrix");
        AMatrixBuilder mainAMatrixBuilder = new AMatrixBuilder(mainPartialIDs, mainUnknowns, dVectorBuilder);
        System.err.println("Assembling main A matrix");
-       ParallelizedMatrix mainA = mainAMatrixBuilder.buildWithWeight(weighting, false);
+       ParallelizedMatrix mainA = mainAMatrixBuilder.buildWithWeight(weighting, fillEmptyPartial);
 
        // set and assemble test A matrix
        System.err.println("Setting data for test A matrix");
        AMatrixBuilder testAMatrixBuilder = new AMatrixBuilder(testPartialIDs, testUnknowns, dVectorBuilder);
        System.err.println("Assembling test A matrix");
-       ParallelizedMatrix testA = testAMatrixBuilder.buildWithWeight(weighting, false);
+       ParallelizedMatrix testA = testAMatrixBuilder.buildWithWeight(weighting, fillEmptyPartial);
 
        // compute correlations
        double[][] correlations = new double[testUnknowns.size()][mainUnknowns.size()];
