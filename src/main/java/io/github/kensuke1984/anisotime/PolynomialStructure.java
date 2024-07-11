@@ -64,6 +64,10 @@ public class PolynomialStructure implements VelocityStructure {
         RADIUS_SUBTRACTION = new PolynomialFunction(new double[]{0, -earthRadius()});
     }
 
+    public static PolynomialStructure of(String modelName) {
+        return new PolynomialStructure(io.github.kensuke1984.kibrary.util.earth.PolynomialStructure.of(modelName));
+    }
+
     private io.github.kensuke1984.kibrary.util.earth.PolynomialStructure checkBoundaries(
             io.github.kensuke1984.kibrary.util.earth.PolynomialStructure structure) {
         double[] dBoundaries = IntStream.range(1, structure.getNZone()).mapToDouble(i -> structure.getRmin()[i])
@@ -345,6 +349,11 @@ public class PolynomialStructure implements VelocityStructure {
             if (innerCoreBoundary() < r && r < coreMantleBoundary()) return r;
         }
         return Double.NaN;
+    }
+
+    @Override
+    public double getVariableType(VariableType type, double r) {
+        return STRUCTURE.mediumAt(r).get(type);
     }
 
     @Override

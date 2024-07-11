@@ -54,6 +54,75 @@ public class RaypathCatalog implements Serializable {
     private static final long serialVersionUID = 1261342672467429092L;
     private static final String PIAC_SHA256 = "28e29e7fc7ab8cdfbb4b710a962172982b2517a9bd1bd50c0c11d9e53761698f";
 
+    private static final Object LOCK_PREM = new Object();
+    private static final Object LOCK_ISO_PREM = new Object();
+    private static final Object LOCK_AK135 = new Object();
+
+    /**
+     * Default value of {@link #MAXIMUM_D_DELTA}
+     */
+    public static final double DEFAULT_MAXIMUM_D_DELTA = Math.toRadians(0.1);
+
+    /**
+     * Catalog for PREM. &delta;&Delta; = {@link #DEFAULT_MAXIMUM_D_DELTA}. Mesh is simple.
+     */
+    private static RaypathCatalog PREM;
+    /**
+     * Catalog for the isotropic PREM. &delta;&Delta; = {@link #DEFAULT_MAXIMUM_D_DELTA}. Mesh is simple.
+     */
+    private static RaypathCatalog ISO_PREM;
+    /**
+     * Catalog for AK135. &delta;&Delta; = {@link #DEFAULT_MAXIMUM_D_DELTA}. Mesh is simple.
+     */
+    private static RaypathCatalog AK135;
+    private static final Path SHARE_PATH = Environment.KIBRARY_SHARE;
+    private static final Path ISO_PREM_PATH = SHARE_PATH.resolve("iprem.cat");
+    private static final Path PREM_PATH = SHARE_PATH.resolve("prem.cat");
+    private static final Path AK135_PATH = SHARE_PATH.resolve("ak135.cat");
+
+    /**
+     * Minimum value of &delta;p [s/rad] (ray parameter). Even if similar raypaths
+     * satisfying {@link #MAXIMUM_D_DELTA} are not found within this value, a catalog
+     * does not have a denser ray parameter than the value.
+     */
+    private static final double MINIMUM_DELTA_P = 1e-3;
+    /**
+     * Woodhouse formula with certain velocity structure
+     */
+    private final Woodhouse1981 WOODHOUSE;
+    /**
+     * Mesh for computation
+     */
+    private final ComputationalMesh MESH;
+    /**
+     * Possible maximum gap in &Delta; [rad] for major phases such as P, S, PcP, SKS and so on.
+     */
+    private final double MAXIMUM_D_DELTA;
+    /**
+     * List of stored raypaths. Ordered by each ray parameter p.
+     */
+    private final TreeSet<Raypath> raypathList = new TreeSet<>();
+    /**
+     * Set of bounce catalogs
+     */
+    private final Set<BounceCatalog> bounceCatalogs = new HashSet<>();
+    /**
+     * Set of reflection catalogs
+     */
+    private final Set<ReflectionCatalog> reflectionCatalogs = new HashSet<>();
+    /**
+     * Raypath of Pdiff
+     */
+    private Raypath pDiff;
+    /**
+     * Raypath of SVdiff
+     */
+    private Raypath svDiff;
+    /**
+     * Raypath of SHdiff
+     */
+    private Raypath shDiff;
+
     private static Path downloadCatalogZip() throws IOException {
         Path zipPath = Files.createTempFile("piac", ".zip");
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
@@ -147,28 +216,6 @@ public class RaypathCatalog implements Serializable {
                         Double.parseDouble(args[4]));
         computeCatalog(structure, mesh, dDelta);
     }
-
-    /**
-     * Default value of {@link #MAXIMUM_D_DELTA}
-     */
-    static final double DEFAULT_MAXIMUM_D_DELTA = Math.toRadians(0.1);
-
-    /**
-     * Catalog for PREM. &delta;&Delta; = {@link #DEFAULT_MAXIMUM_D_DELTA}. Mesh is simple.
-     */
-    private static RaypathCatalog PREM;
-    /**
-     * Catalog for the isotropic PREM. &delta;&Delta; = {@link #DEFAULT_MAXIMUM_D_DELTA}. Mesh is simple.
-     */
-    private static RaypathCatalog ISO_PREM;
-    /**
-     * Catalog for AK135. &delta;&Delta; = {@link #DEFAULT_MAXIMUM_D_DELTA}. Mesh is simple.
-     */
-    private static RaypathCatalog AK135;
-    private static final Path SHARE_PATH = Environment.KIBRARY_SHARE;
-    private static final Path ISO_PREM_PATH = SHARE_PATH.resolve("iprem.cat");
-    private static final Path PREM_PATH = SHARE_PATH.resolve("prem.cat");
-    private static final Path AK135_PATH = SHARE_PATH.resolve("ak135.cat");
 
     /**
      * @param out       path to output a catalog
@@ -266,45 +313,6 @@ public class RaypathCatalog implements Serializable {
         }
         return AK135;
     }
-
-    private static final Object LOCK_PREM = new Object();
-    private static final Object LOCK_ISO_PREM = new Object();
-    private static final Object LOCK_AK135 = new Object();
-
-    /**
-     * Minimum value of &delta;p [s/rad] (ray parameter). Even if similar raypaths
-     * satisfying {@link #MAXIMUM_D_DELTA} are not found within this value, a catalog
-     * does not have a denser ray parameter than the value.
-     */
-    private static final double MINIMUM_DELTA_P = 1e-3;
-    /**
-     * Woodhouse formula with certain velocity structure
-     */
-    private final Woodhouse1981 WOODHOUSE;
-    /**
-     * Possible maximum gap in &Delta; [rad] for major phases such as P, S, PcP, SKS and so on.
-     */
-    private final double MAXIMUM_D_DELTA;
-    /**
-     * List of stored raypaths. Ordered by each ray parameter p.
-     */
-    private final TreeSet<Raypath> raypathList = new TreeSet<>();
-    /**
-     * Mesh for computation
-     */
-    private final ComputationalMesh MESH;
-    /**
-     * Raypath of Pdiff
-     */
-    private Raypath pDiff;
-    /**
-     * Raypath of SVdiff
-     */
-    private Raypath svDiff;
-    /**
-     * Raypath of SHdiff
-     */
-    private Raypath shDiff;
 
     /**
      * We compute epicentral distances &Delta;<sup>(P)</sup><sub>i</sub> (P or
@@ -695,15 +703,6 @@ public class RaypathCatalog implements Serializable {
         }
 
     }
-
-    /**
-     * Set of bounce catalogs
-     */
-    private final Set<BounceCatalog> bounceCatalogs = new HashSet<>();
-    /**
-     * Set of reflection catalogs
-     */
-    private final Set<ReflectionCatalog> reflectionCatalogs = new HashSet<>();
 
     /**
      * Bounce waves P, S, PKP, PKIKP... Each catalog has raypaths which bounce in a same layer in the structure.

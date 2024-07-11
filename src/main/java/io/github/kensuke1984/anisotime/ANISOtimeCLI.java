@@ -196,12 +196,14 @@ final class ANISOtimeCLI {
         } else {
             structure = createVelocityStructure();
             eventR = structure.earthRadius() - Double.parseDouble(cmd.getOptionValue("h", "0"));
-            if (structure.equals(VelocityStructure.iprem())) catalog = RaypathCatalog.iprem();
-            else if (structure.equals(VelocityStructure.prem())) catalog = RaypathCatalog.prem();
-            else if (structure.equals(VelocityStructure.ak135())) catalog = RaypathCatalog.ak135();
-            else {
-                ComputationalMesh mesh = ComputationalMesh.simple(structure);
-                catalog = RaypathCatalog.computeCatalog(structure, mesh, RaypathCatalog.DEFAULT_MAXIMUM_D_DELTA);
+            if (!cmd.hasOption("p")) {
+                if (structure.equals(VelocityStructure.iprem())) catalog = RaypathCatalog.iprem();
+                else if (structure.equals(VelocityStructure.prem())) catalog = RaypathCatalog.prem();
+                else if (structure.equals(VelocityStructure.ak135())) catalog = RaypathCatalog.ak135();
+                else {
+                    ComputationalMesh mesh = ComputationalMesh.simple(structure);
+                    catalog = RaypathCatalog.computeCatalog(structure, mesh, RaypathCatalog.DEFAULT_MAXIMUM_D_DELTA);
+                }
             }
         }
 

@@ -5,6 +5,8 @@ import java.util.Arrays;
 import java.util.function.DoubleUnaryOperator;
 import java.util.function.Function;
 
+import io.github.kensuke1984.kibrary.elastic.VariableType;
+
 /**
  * Structure information for computing travel time.
  *
@@ -219,6 +221,14 @@ public interface VelocityStructure extends Serializable {
      * @see "Woodhouse (1981)"
      */
     double jvTurningR(double rayParameter);
+
+
+    /**
+     * @param type {@link VariableType}
+     * @param r [km] radius
+     * @return variable type at given radius
+     */
+    public double getVariableType(VariableType type, double r);
 
     /**
      * @param r [km] radius

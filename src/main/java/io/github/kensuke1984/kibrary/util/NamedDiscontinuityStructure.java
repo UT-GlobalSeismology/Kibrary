@@ -6,7 +6,14 @@ import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+
+import io.github.kensuke1984.kibrary.elastic.VariableType;
 
 /**
  * Within each layer Bullen law v(r) = Ar<sup>B</sup> is used.
@@ -335,6 +342,31 @@ public class NamedDiscontinuityStructure implements Serializable {
      */
     public double getMohoDiscontinuity() {
         return r[indexOfMohoDiscontinuity];
+    }
+
+    public double getVariableType(VariableType type, double r) {
+        int izone = rToZone(r);
+        switch(type) {
+        case RHO:
+            return computeBullenLaw(r, rhoA[izone], rhoB[izone]);
+        case Vpv:
+            return computeBullenLaw(r, vpvA[izone], vpvB[izone]);
+        case Vph:
+            return computeBullenLaw(r, vphA[izone], vphB[izone]);
+        case Vsv:
+            return computeBullenLaw(r, vsvA[izone], vsvB[izone]);
+        case Vsh:
+            return computeBullenLaw(r, vshA[izone], vshB[izone]);
+        case ETA:
+            return computeBullenLaw(r, etaA[izone], etaB[izone]);
+        case Qmu:
+            return computeBullenLaw(r, qMuA[izone], qMuB[izone]);
+        case Qkappa:
+            return computeBullenLaw(r, qKappaA[izone], qKappaB[izone]);
+        default:
+            throw new RuntimeException("The variable type " + type + " is not utilized.");
+        }
+
     }
 
     /**
