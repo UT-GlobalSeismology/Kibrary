@@ -15,6 +15,7 @@ import org.apache.commons.cli.ParseException;
 import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.RealVector;
 
+import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.Summon;
 import io.github.kensuke1984.kibrary.inversion.setup.DVectorBuilder;
@@ -48,6 +49,7 @@ public class WeightingHandler {
     private double factorForZComponent;
     private double factorForRComponent;
     private double factorForTComponent;
+    private boolean balancePhase; //TODO Phases containing "p", "P", or "K" are now judged as PSV phase
     private boolean balanceDistance; // TODO apply
     private boolean balanceAzimuth; // TODO apply
     private boolean balanceGeometry;
@@ -103,6 +105,8 @@ public class WeightingHandler {
             pw.println("#factorForRComponent ");
             pw.println("##(double) Factor to multiply to T component. (1.0)");
             pw.println("#factorForTComponent ");
+            pw.println("##(boolean) Whether to weigh the number of timewindows of SH & PSV pahses. (false)");
+            pw.println("#balancePhase ");
 //            pw.println("##(boolean) Whether to balance epicentral distances. (false)");
 //            pw.println("#balanceDistance ");
 //            pw.println("##(boolean) Whether to balance azimuths. (false)");
@@ -129,6 +133,7 @@ public class WeightingHandler {
         factorForZComponent = property.parseDouble("factorForZComponent", "1.0");
         factorForRComponent = property.parseDouble("factorForRComponent", "1.0");
         factorForTComponent = property.parseDouble("factorForTComponent", "1.0");
+        balancePhase = property.parseBoolean("balancePhase", "false");
         balanceDistance = property.parseBoolean("balanceDistance", "false");
         balanceAzimuth = property.parseBoolean("balanceAzimuth", "false");
         balanceGeometry = property.parseBoolean("balanceGeometry", "false");
@@ -154,6 +159,20 @@ public class WeightingHandler {
             }
         }
 
+        int numSH = 0, numPSV =0;
+        if (balancePhase) {
+            for (int i = 0; i < dVector.getNTimeWindow(); i++) {
+                boolean isPSV = false, isSH = false;
+                Phase[] phases = dVector.getObsID(i).getPhases();
+                for (Phase phase : phases) {
+                    if (phase.isPSV()) isPSV = true;
+                    else isSH = true;
+                }
+                if (isPSV) numPSV++;
+                if (isSH) numSH++;
+            }
+        }
+
         //~compute weight for each timewindow
         for (int i = 0; i < dVector.getNTimeWindow(); i++) {
             double weighting = 1.0;
@@ -167,16 +186,27 @@ public class WeightingHandler {
             switch (component) {
             case Z:
                 weighting *= factorForZComponent;
-                if (balanceComponent) weighting /= Math.sqrt(numZ / (numZ + numR + numT));
+                if (balanceComponent) weighting /= Math.sqrt((double) numZ / (numZ + numR + numT));
                 break;
             case R:
                 weighting *= factorForRComponent;
-                if (balanceComponent) weighting /= Math.sqrt(numR / (numZ + numR + numT));
+                if (balanceComponent) weighting /= Math.sqrt((double) numR / (numZ + numR + numT));
                 break;
             case T:
                 weighting *= factorForTComponent;
-                if (balanceComponent) weighting /= Math.sqrt(numT / (numZ + numR + numT));
+                if (balanceComponent) weighting /= Math.sqrt((double) numT / (numZ + numR + numT));
                 break;
+            }
+
+            if (balancePhase) {
+                boolean isPSV = false, isSH = false;
+                Phase[] phases = dVector.getObsID(i).getPhases();
+                for (Phase phase : phases) {
+                    if (phase.isPSV()) isPSV = true;
+                    else isSH = true;
+                }
+                if (isPSV) weighting /= Math.sqrt((double) numPSV / (numSH + numPSV));
+                if (isSH) weighting /= Math.sqrt((double) numSH / (numSH + numPSV));
             }
 
             // balance event & observer positions
