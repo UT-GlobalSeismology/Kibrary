@@ -666,7 +666,7 @@ public class BasicRecordSectionCreator extends Operation {
             }
         }
 
-        private void plotTravelTimeCurveAnisotime(double startDistance, double endDistance, GlobalCMTID event) throws TauModelException, IOException {
+        private void plotTravelTimeCurveAnisotime(double startDistance, double endDistance, GlobalCMTID event) throws IOException, TauModelException {
             if (alignPhases != null) {
                 for (String phase : alignPhases) timeTool.appendPhaseName(phase);
             }

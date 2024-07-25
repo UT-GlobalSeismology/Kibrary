@@ -3,7 +3,12 @@ package io.github.kensuke1984.anisotime;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.Serializable;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.DoubleUnaryOperator;
 
@@ -67,25 +72,26 @@ class Woodhouse1981 implements Serializable {
         };
         computeS5 = x -> 0.5 * STRUCTURE.getRho(x) / STRUCTURE.getC(x) * (1 + STRUCTURE.getA(x) / STRUCTURE.getL(x)) -
                 computeS1(x) * computeS3(x);
-        Runnable clear = () -> {
-            try {
-                while (true) {
-                    if (s3.size() > 1000000) {
-                        s1.clear();
-                        s2.clear();
-                        s3.clear();
-                        s4.clear();
-                        s5.clear();
-                    }
-                    Thread.sleep(10000);
-                }
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        };
-        Thread cleaner = new Thread(clear);
-        cleaner.setDaemon(true);
-        cleaner.start();
+        //TODO Check the necessity of this part. This part causes resource leak in BasicRecordSectionCreator.java and BasicBinnedStackCreator.java
+//        Runnable clear = () -> {
+//            try {
+//                while (true) {
+//                    if (s3.size() > 1000000) {
+//                        s1.clear();
+//                        s2.clear();
+//                        s3.clear();
+//                        s4.clear();
+//                        s5.clear();
+//                    }
+//                    Thread.sleep(10000);
+//                }
+//            } catch (InterruptedException e) {
+//                e.printStackTrace();
+//            }
+//        };
+//        Thread cleaner = new Thread(clear);
+//        cleaner.setDaemon(true);
+//        cleaner.start();
     }
 
     private void readObject(ObjectInputStream stream) throws ClassNotFoundException, IOException {
