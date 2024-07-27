@@ -47,6 +47,7 @@ class StationXmlFile {
     private String azimuth = "";
     private String dip = "";
     private String networkDescription = "";
+    private String doi = "";
 
     /**
      * Constructor with options to be used in IRIS DMC FDSNWS STATION Web Service.
@@ -181,7 +182,6 @@ class StationXmlFile {
         return true;
     }
 
-
     String getXmlFile() {
         return xmlFileName;
     }
@@ -190,36 +190,29 @@ class StationXmlFile {
         return xmlPath;
     }
 
-
     String getNetwork() {
         return network;
     }
-
 
     String getStation() {
         return station;
     }
 
-
     String getLocation() {
         return location;
     }
-
 
     String getChannel() {
         return channel;
     }
 
-
     String getLatitude() {
         return latitude;
     }
 
-
     String getLongitude() {
         return longitude;
     }
-
 
     /**
      * @return (String) MAY BE EMPTY!!
@@ -228,7 +221,6 @@ class StationXmlFile {
         return elevation;
     }
 
-
     /**
      * @return (String) MAY BE EMPTY!!
      */
@@ -236,11 +228,9 @@ class StationXmlFile {
         return depth;
     }
 
-
     String getAzimuth() {
         return azimuth;
     }
-
 
     String getDip() {
         return dip;
@@ -250,14 +240,31 @@ class StationXmlFile {
         return networkDescription;
     }
 
+    String getDOI() {
+        return doi;
+    }
+
     private class StationXmlHandler extends DefaultHandler {
         String text;
+        /**
+         * Whether in the beginning part of "Network", before "Station" starts.
+         */
         boolean atNetworkBeginning = false;
+        /**
+         * Whether reading "DOI".
+         */
+        boolean inDOI = false;
+        /**
+         * Whether "Channel" has started.
+         */
         boolean inChannel = false;
 
         public void startElement(String uri, String localName, String qName, Attributes attributes) {
             if (qName.equals("Network")) {
                 atNetworkBeginning = true;
+            }
+            if (qName.equals("Identifier") && attributes.getValue("type").equals("DOI")) {
+                inDOI = true;
             }
             if (qName.equals("Station")) {
                 atNetworkBeginning = false;
@@ -272,8 +279,16 @@ class StationXmlFile {
         public void endElement(String uri, String localName, String qName) {
             if (atNetworkBeginning) {
                 if (qName.equals("Description")) {
-                    networkDescription = text;
+                    // if there is a meaningless " ()" at the end of description, get rid of it
+                    networkDescription = (text.endsWith(" ()") ? text.substring(0, text.length() - 3) : text);
                 }
+            }
+            if (inDOI) {
+                if (qName.equals("Identifier")) {
+                    // remove new line that is usually after the DOI
+                    doi = text.replace("\n", "").replace("\r", "");
+                }
+                inDOI = false;
             }
             if (inChannel) {
                 if (qName.equals("Latitude")) {
