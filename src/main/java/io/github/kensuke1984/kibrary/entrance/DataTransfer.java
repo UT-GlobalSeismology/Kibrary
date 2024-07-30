@@ -35,7 +35,7 @@ public final class DataTransfer {
     private DataTransfer() {}
 
     /**
-     * user PATH in IRIS
+     * User PATH in IRIS.
      */
     private static final String IRIS_USER_PATH = "/pub/userdata/" + Environment.getUserName() + "/";
     public static final String IRIS_FTP = "ftp.iris.washington.edu";
@@ -126,7 +126,7 @@ public final class DataTransfer {
             Thread.sleep(10 * 1000);
 
             // create output folder
-            Path outPath = DatasetAid.createOutputFolder(Paths.get(""), "transferred", null, GadgetAid.getTemporaryString());
+            Path outPath = DatasetAid.createOutputFolder(Paths.get(""), "transferred", null, true, GadgetAid.getTemporaryString());
 
             // download
             for (FTPFile ffile : ffiles) {

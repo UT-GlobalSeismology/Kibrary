@@ -16,6 +16,7 @@ import edu.sc.seis.TauP.TauModelException;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.external.TauPPierceWrapper;
+import io.github.kensuke1984.kibrary.math.LinearRange;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.data.DataEntry;
@@ -43,16 +44,20 @@ public class VoxelLayoutDesigner extends Operation {
 
     private final Property property;
     /**
-     * Path of the work folder
+     * Path of the work folder.
      */
     private Path workPath;
     /**
      * A tag to include in output file names. When this is empty, no tag is used.
      */
     private String fileTag;
+    /**
+     * Whether to append date string at end of output file names.
+     */
+    private boolean appendFileDate;
 
     /**
-     * Path of the input data entry list file
+     * Path of the input data entry list file.
      */
     private Path dataEntryPath;
     private String[] piercePhases;
@@ -72,12 +77,12 @@ public class VoxelLayoutDesigner extends Operation {
     private boolean crossDateLine;
 
     private double[] borderRadii;
-    private int lowerRadius;
-    private int upperRadius;
+    private double lowerRadius;
+    private double upperRadius;
     private double dRadius;
 
     /**
-     * (roughly) median radius of target region
+     * The (roughly) median radius of target region.
      */
     private double centerRadius;
 
@@ -96,10 +101,12 @@ public class VoxelLayoutDesigner extends Operation {
         Path outPath = Property.generatePath(thisClass);
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
             pw.println("manhattan " + thisClass.getSimpleName());
-            pw.println("##Path of a working directory. (.)");
+            pw.println("##Path of work folder. (.)");
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output file names. If no tag is needed, leave this unset.");
             pw.println("#fileTag ");
+            pw.println("##(boolean) Whether to append date string at end of output file names. (true)");
+            pw.println("#appendFileDate false");
             pw.println("##########Information to design horzontal positions of voxels.");
             pw.println("##Path of a data entry list file, must be set.");
             pw.println("#dataEntryPath dataEntry.lst");
@@ -131,9 +138,9 @@ public class VoxelLayoutDesigner extends Operation {
             pw.println("##(double[]) Radii of layer borders, listed using spaces [km]; [0:).");
             pw.println("##  If unset, the subsequent parameters are used.");
             pw.println("#borderRadii 3480 3530 3580 3630 3680 3730 3780 3830 3880");
-            pw.println("##(int) Lower limit of radius [km]; [0:upperRadius). (3480)");
+            pw.println("##(double) Lower limit of radius [km]; [0:upperRadius). (3480)");
             pw.println("#lowerRadius ");
-            pw.println("##(int) Upper limit of radius [km]; (lowerRadius:). (3880)");
+            pw.println("##(double) Upper limit of radius [km]; (lowerRadius:). (3880)");
             pw.println("#upperRadius ");
             pw.println("##(double) Radius spacing [km]; (0:). (50)");
             pw.println("#dRadius ");
@@ -149,6 +156,7 @@ public class VoxelLayoutDesigner extends Operation {
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
         if (property.containsKey("fileTag")) fileTag = property.parseStringSingle("fileTag", null);
+        appendFileDate = property.parseBoolean("appendFileDate", "true");
 
         dataEntryPath = property.parsePath("dataEntryPath", null, true, workPath);
         piercePhases = property.parseStringArray("piercePhases", "ScS");
@@ -158,30 +166,30 @@ public class VoxelLayoutDesigner extends Operation {
 
         if (property.containsKey("dLatitudeKm")) {
             dLatitudeKm = property.parseDouble("dLatitudeKm", null);
-            if (dLatitudeKm <= 0)
+            if (dLatitudeKm <= 0.0)
                 throw new IllegalArgumentException("dLatitudeKm must be positive.");
             setLatitudeByKm = true;
         } else {
             dLatitudeDeg = property.parseDouble("dLatitudeDeg", "5");
-            if (dLatitudeDeg <= 0)
+            if (dLatitudeDeg <= 0.0)
                 throw new IllegalArgumentException("dLatitudeDeg must be positive.");
             setLatitudeByKm = false;
         }
         latitudeOffset = property.parseDouble("latitudeOffset", "2.5");
-        if (latitudeOffset < 0)
+        if (latitudeOffset < 0.0)
             throw new IllegalArgumentException("latitudeOffset must be non-negative.");
 
         if (property.containsKey("dLongitudeKm")) {
             dLongitudeKm = property.parseDouble("dLongitudeKm", null);
-            if (dLongitudeKm <= 0)
+            if (dLongitudeKm <= 0.0)
                 throw new IllegalArgumentException("dLongitudeKm must be positive.");
             setLongitudeByKm = true;
         } else {
             dLongitudeDeg = property.parseDouble("dLongitudeDeg", "5");
-            if (dLongitudeDeg <= 0)
+            if (dLongitudeDeg <= 0.0)
                 throw new IllegalArgumentException("dLongitudeDeg must be positive.");
             longitudeOffset = property.parseDouble("longitudeOffset", "2.5");
-            if (longitudeOffset < 0 || dLongitudeDeg <= longitudeOffset)
+            if (longitudeOffset < 0.0 || dLongitudeDeg <= longitudeOffset)
                 throw new IllegalArgumentException("longitudeOffset must be in [0:dLongitudeDeg).");
             setLongitudeByKm = false;
         }
@@ -192,19 +200,19 @@ public class VoxelLayoutDesigner extends Operation {
                     .sorted().toArray();
             if (borderRadii.length < 2) throw new IllegalArgumentException("There must be at least 2 values for borderRadii.");
         } else {
-            lowerRadius = property.parseInt("lowerRadius", "3480");
-            upperRadius = property.parseInt("upperRadius", "3880");
-            if (lowerRadius < 0 || lowerRadius > upperRadius)
-                throw new IllegalArgumentException("Radius range " + lowerRadius + " , " + upperRadius + " is invalid.");
+            lowerRadius = property.parseDouble("lowerRadius", "3480");
+            upperRadius = property.parseDouble("upperRadius", "3880");
+            LinearRange.checkValidity("Radius", lowerRadius, upperRadius, 0.0);
+
             dRadius = property.parseDouble("dRadius", "50");
-            if (dRadius <= 0)
+            if (dRadius <= 0.0)
                 throw new IllegalArgumentException("dRadius must be non-negative.");
         }
     }
 
     @Override
     public void run() throws IOException {
-        centerRadius = (borderRadii != null) ? borderRadii[borderRadii.length / 2] : (lowerRadius + upperRadius) / 2;
+        centerRadius = (borderRadii != null) ? borderRadii[borderRadii.length / 2] : (lowerRadius + upperRadius) / 2.0;
         Set<DataEntry> entrySet = DataEntryListFile.readAsSet(dataEntryPath);
 
         // compute pierce points
@@ -228,27 +236,27 @@ public class VoxelLayoutDesigner extends Operation {
 
         // set voxel layer information
         double[] layerThicknesses;
-        double[] voxelRadii;
+        double[] layerRadii;
         if (borderRadii != null) {
             layerThicknesses = new double[borderRadii.length - 1];
-            voxelRadii = new double[borderRadii.length - 1];
+            layerRadii = new double[borderRadii.length - 1];
             for (int i = 0; i < borderRadii.length - 1; i++) {
                 layerThicknesses[i] = borderRadii[i + 1] - borderRadii[i];
-                voxelRadii[i] = (borderRadii[i] + borderRadii[i + 1]) / 2;
+                layerRadii[i] = (borderRadii[i] + borderRadii[i + 1]) / 2.0;
             }
         } else {
             int nRadius = (int) Math.floor((upperRadius - lowerRadius) / dRadius);
             layerThicknesses = new double[nRadius];
-            voxelRadii = new double[nRadius];
+            layerRadii = new double[nRadius];
             for (int i = 0; i < nRadius; i++) {
                 layerThicknesses[i] = dRadius;
-                voxelRadii[i] = lowerRadius + (i + 0.5) * dRadius;
+                layerRadii[i] = lowerRadius + (i + 0.5) * dRadius;
             }
         }
 
         // output
-        Path outputPath = workPath.resolve(DatasetAid.generateOutputFileName("voxel", fileTag, GadgetAid.getTemporaryString(), ".inf"));
-        VoxelInformationFile.write(layerThicknesses, voxelRadii, horizontalPixels, outputPath);
+        Path outputPath = DatasetAid.generateOutputFilePath(workPath, "voxel", fileTag, appendFileDate, GadgetAid.getTemporaryString(), ".inf");
+        VoxelInformationFile.write(layerThicknesses, layerRadii, horizontalPixels, outputPath);
     }
 
     private List<HorizontalPixel> designHorizontalPixels(List<Raypath> insideSegments) {
@@ -260,7 +268,7 @@ public class VoxelLayoutDesigner extends Operation {
         // decide number of colatitude intervals
         // Colatitude is used because its range is [0:180] and is easier to decide intervals.
         // When latitudeOffset > 0, intervals for that extra part is needed.
-        int nLatitude = (int) Math.ceil((180 + latitudeOffset) / dLatitude);
+        int nLatitude = (int) Math.ceil((180.0 + latitudeOffset) / dLatitude);
         double minLongitudes[] = new double[nLatitude];
         double maxLongitudes[] = new double[nLatitude];
         for (int i = 0; i < nLatitude; i++) {
@@ -268,7 +276,7 @@ public class VoxelLayoutDesigner extends Operation {
             maxLongitudes[i] = -Double.MAX_VALUE;
         }
         // the approximate interval to sample points along raypath segments
-        double dDistanceRef = dLatitude / 2;
+        double dDistanceRef = dLatitude / 2.0;
         // work for each raypath segment
         for (Raypath segment : insideSegments) {
             FullPosition startPosition = segment.getSource();
@@ -287,7 +295,7 @@ public class VoxelLayoutDesigner extends Operation {
                 // get latitude and longitude of sample position
                 double sampleColatitude = switchLatitudeColatitude(samplePosition.getLatitude());
                 double sampleLongitude = samplePosition.getLongitude();
-                if (crossDateLine && sampleLongitude < 0) sampleLongitude += 360;
+                if (crossDateLine && sampleLongitude < 0.0) sampleLongitude += 360.0;
                 // decide which colatitude interval the sample point is in
                 // latitudeOffset moves border latitudes to positive side, so moves border colatitudes to negative side.
                 // This way, sampleInterval will never become negative.
@@ -304,7 +312,7 @@ public class VoxelLayoutDesigner extends Operation {
             // compute center latitude of the voxel row
             double latitude = switchLatitudeColatitude((i + 0.5) * dLatitude) + latitudeOffset;
             // when using latitudeOffset, the center latitude of first or last interval may be out of legal range; in that case, skip
-            if (latitude <= -90 || 90 <= latitude) continue;
+            if (latitude <= -90.0 || 90.0 <= latitude) continue;
             // if no raypath segments entered this colatitude interval, skip
             if (minLongitudes[i] > maxLongitudes[i]) continue;
 
@@ -314,7 +322,7 @@ public class VoxelLayoutDesigner extends Operation {
                 double smallCircleRadius = centerRadius * Math.cos(Math.toRadians(latitude));
                 double dLongitudeForRow = Math.toDegrees(dLongitudeKm / smallCircleRadius);
                 int nLongitude = (int) Math.round((maxLongitudes[i] - minLongitudes[i]) / dLongitudeForRow);
-                double centerLongitude = (minLongitudes[i] + maxLongitudes[i]) / 2;
+                double centerLongitude = (minLongitudes[i] + maxLongitudes[i]) / 2.0;
 
                 double startLongitude;
                 if (nLongitude % 2 == 0) {
@@ -323,7 +331,7 @@ public class VoxelLayoutDesigner extends Operation {
                 } else {
                     // when odd number, set one pixel at center longitude
                     // This is same equation as above but is rewritten for clarity.
-                    startLongitude = centerLongitude - (nLongitude - 1) / 2 * dLongitudeForRow;
+                    startLongitude = centerLongitude - (nLongitude - 1) / 2.0 * dLongitudeForRow;
                 }
                 for (int j = 0; j < nLongitude; j++) {
                     double longitude = startLongitude + j * dLongitudeForRow;
@@ -355,7 +363,7 @@ public class VoxelLayoutDesigner extends Operation {
      * @return (double) converted colatitude or latitude
      */
     private static double switchLatitudeColatitude(double latitude) {
-        return 90 - latitude;
+        return 90.0 - latitude;
     }
 
 }

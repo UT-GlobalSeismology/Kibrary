@@ -4,6 +4,7 @@ import java.util.Arrays;
 
 import io.github.kensuke1984.kibrary.correction.FujiStaticCorrection;
 import io.github.kensuke1984.kibrary.correction.StaticCorrectionForger;
+import io.github.kensuke1984.kibrary.correction.StaticCorrectionMerge;
 import io.github.kensuke1984.kibrary.dsmsetup.OneDPartialDSMSetup;
 import io.github.kensuke1984.kibrary.dsmsetup.SyntheticDSMSetup;
 import io.github.kensuke1984.kibrary.dsmsetup.ThreeDPartialDSMSetup;
@@ -27,6 +28,7 @@ import io.github.kensuke1984.kibrary.timewindow.TimewindowMaker;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowMerge;
 import io.github.kensuke1984.kibrary.util.DatasetMerge;
 import io.github.kensuke1984.kibrary.util.data.VirtualDatasetMaker;
+import io.github.kensuke1984.kibrary.util.earth.ModelStructureConverter;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructurePerturber;
 import io.github.kensuke1984.kibrary.util.globalcmt.VirtualEventRegistration;
 import io.github.kensuke1984.kibrary.util.spc.SPC_SAC;
@@ -43,6 +45,8 @@ import io.github.kensuke1984.kibrary.visual.plot.BasicRecordSectionCreator;
 import io.github.kensuke1984.kibrary.visual.plot.BasicWaveformPlotter;
 import io.github.kensuke1984.kibrary.visual.plot.CatalogueErrorCalculator;
 import io.github.kensuke1984.kibrary.visual.plot.DataFeatureHistogram;
+import io.github.kensuke1984.kibrary.visual.plot.GeographicalFeatureHistogram;
+import io.github.kensuke1984.kibrary.visual.plot.ModelStructurePlotter;
 import io.github.kensuke1984.kibrary.visual.plot.PartialWaveformPlotter;
 import io.github.kensuke1984.kibrary.visual.plot.PolynomialStructurePlotter;
 import io.github.kensuke1984.kibrary.voxel.VoxelFileMaker;
@@ -61,8 +65,8 @@ import io.github.kensuke1984.kibrary.waveform.PseudoWaveformGenerator;
  * <p>
  * The value name set to this enum must be the same as its corresponding class name.
  *
- * @author otsuru
- * @since a long time ago
+ * @author Kensuke Konishi
+ * @since version 0.0.5.3
  * @version 2022/1/7 Recreated based on the original Manhattan.
  */
 enum Manhattan {
@@ -90,6 +94,7 @@ enum Manhattan {
     RaypathSelection(34, RaypathSelection.class),
     TimewindowMerge(37, TimewindowMerge.class),
     StaticCorrectionForger(38, StaticCorrectionForger.class),
+    StaticCorrectionMerge(39, StaticCorrectionMerge.class),
     // Compiled 40
     ActualWaveformCompiler(40, ActualWaveformCompiler.class),
     BasicIDMerge(41, BasicIDMerge.class),
@@ -97,6 +102,7 @@ enum Manhattan {
     BasicRecordSectionCreator(43, BasicRecordSectionCreator.class),
     BasicBinnedStackCreator(44, BasicBinnedStackCreator.class),
     DataFeatureHistogram(48, DataFeatureHistogram.class),
+    GeographicalFeatureHistogram(49, GeographicalFeatureHistogram.class),
     // Voxel 50
     VoxelLayoutDesigner(50, VoxelLayoutDesigner.class),
     VoxelFileMaker(51,VoxelFileMaker.class),
@@ -117,10 +123,12 @@ enum Manhattan {
     LetMeInvert(70, LetMeInvert.class),
     InversionArranger(71, InversionArranger.class),
     InversionSolver(72, InversionSolver.class),
+    ModelStructurePlotter(73, ModelStructurePlotter.class),
     ModelSetMapper(74, ModelSetMapper.class),
     ModelMapper(75, ModelMapper.class),
     PerturbationMapper(76, PerturbationMapper.class),
     CrossSectionCreator(77, CrossSectionCreator.class),
+    ModelStructureConverter(78, ModelStructureConverter.class),
     // Tests 80
     BlockModelMaker(80, BlockModelMaker.class),
     CheckerboardMaker(81, CheckerboardMaker.class),

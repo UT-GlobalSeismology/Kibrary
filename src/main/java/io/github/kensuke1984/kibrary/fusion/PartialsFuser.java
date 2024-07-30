@@ -38,32 +38,36 @@ public class PartialsFuser extends Operation {
 
     private final Property property;
     /**
-     * Path of the work folder
+     * Path of the work folder.
      */
     private Path workPath;
     /**
      * A tag to include in output folder name. When this is empty, no tag is used.
      */
     private String folderTag;
+    /**
+     * Whether to append date string at end of output folder name.
+     */
+    private boolean appendFolderDate;
 
     /**
-     * path of partial waveform folder
+     * Path of partial waveform folder.
      */
     private Path partialPath;
     /**
-     * Path of a {@link FusionInformationFile}
+     * Path of a {@link FusionInformationFile}.
      */
     private Path fusionPath;
 
     /**
-     * The design of the fusion of unknown parameters
+     * The design of the fusion of unknown parameters.
      */
     private FusionDesign fusionDesign;
 
     List<PartialID> inputPartialIDs;
     List<PartialID> fusedPartialIDs = Collections.synchronizedList(new ArrayList<>());
     /**
-     * Number of processed parameters
+     * Number of processed parameters.
      */
     private AtomicInteger nProcessedParam = new AtomicInteger();
 
@@ -82,13 +86,15 @@ public class PartialsFuser extends Operation {
         Path outPath = Property.generatePath(thisClass);
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
             pw.println("manhattan " + thisClass.getSimpleName());
-            pw.println("##Path of a work folder (.)");
+            pw.println("##Path of work folder. (.)");
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this unset.");
             pw.println("#folderTag ");
-            pw.println("##Path of a partial waveform folder, must be set");
+            pw.println("##(boolean) Whether to append date string at end of output folder name. (true)");
+            pw.println("#appendFolderDate false");
+            pw.println("##Path of a partial waveform folder, must be set.");
             pw.println("#partialPath partial");
-            pw.println("##Path of a fusion information file, must be set");
+            pw.println("##Path of a fusion information file, must be set.");
             pw.println("#fusionPath fusion.inf");
         }
         System.err.println(outPath + " is created.");
@@ -102,6 +108,7 @@ public class PartialsFuser extends Operation {
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
         if (property.containsKey("folderTag")) folderTag = property.parseStringSingle("folderTag", null);
+        appendFolderDate = property.parseBoolean("appendFolderDate", "true");
 
         partialPath = property.parsePath("partialPath", null, true, workPath);
         fusionPath = property.parsePath("fusionPath", null, true, workPath);
@@ -136,7 +143,7 @@ public class PartialsFuser extends Operation {
         newPartialIDs.addAll(fusedPartialIDs);
 
         // prepare output folder
-        Path outPath = DatasetAid.createOutputFolder(workPath, "partial", folderTag, GadgetAid.getTemporaryString());
+        Path outPath = DatasetAid.createOutputFolder(workPath, "partial", folderTag, appendFolderDate, GadgetAid.getTemporaryString());
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         // output

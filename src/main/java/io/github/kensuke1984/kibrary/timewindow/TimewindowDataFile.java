@@ -75,13 +75,15 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
  * <li> In 'timewindow.observer', information of each observer is written.</li>
  * </ol>
  *
+ * @author Kensuke Konishi
+ * @since version 0.3.1
+ * @version 2021/11/2 Renamed from timewindow.TimewindowInformationFile to timewindow.TimewindowDataFile.
  */
 public final class TimewindowDataFile {
     private TimewindowDataFile() {}
 
     /**
-     * bytes for one time window information
-     * @author anselme increased the byte size of a time window to add phase information
+     * Number of bytes used for information of one time window.
      */
     public static final int ONE_WINDOW_BYTE = 33;
 
@@ -185,6 +187,7 @@ public final class TimewindowDataFile {
                     .filter(window -> components.contains(window.getComponent()))
                     .collect(Collectors.toSet());
         }
+        System.err.println("Selected " + timewindowSet.size() + " timewindows.");
         return Collections.unmodifiableSet(timewindowSet);
     }
 
@@ -266,10 +269,12 @@ public final class TimewindowDataFile {
         return new TimewindowData(startTime, endTime, observer, event, component, usablephases);
     }
 
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
     /**
      * The binary-format timewindow information file is output in ascii format.
-     *
-     * @param args [information file name]
+     * @param args Options.
      * @throws IOException if an I/O error occurs
      */
     public static void main(String[] args) throws IOException {
@@ -294,7 +299,7 @@ public final class TimewindowDataFile {
         options.addOption(Option.builder("n").longOpt("number")
                 .desc("Just count number without creating output files").build());
         options.addOption(Option.builder("o").longOpt("output").hasArg().argName("outputFile")
-                .desc("Set path of output file").build());
+                .desc("Specify path of output file. When not set, output is same as input with extension changed to '.txt'.").build());
         return options;
     }
 

@@ -40,17 +40,17 @@ import io.github.kensuke1984.kibrary.waveform.PartialIDFile;
 public class PartialsMovieMaker extends Operation {
 
     /**
-     * How much finer to make the grid
+     * How much finer to make the grid.
      */
     public static final int GRID_SMOOTHING_FACTOR = 5;
     /**
-     * Size of vertical grid with respect to horizontal grid
+     * Size of vertical grid with respect to horizontal grid.
      */
     public static final int VERTICAL_ENLARGE_FACTOR = 2;
 
     private final Property property;
     /**
-     * Path of the work folder
+     * Path of the work folder.
      */
     private Path workPath;
     /**
@@ -58,11 +58,15 @@ public class PartialsMovieMaker extends Operation {
      */
     private String folderTag;
     /**
-     * components to make maps for
+     * Whether to append date string at end of output folder name.
+     */
+    private boolean appendFolderDate;
+    /**
+     * Components to use.
      */
     private Set<SACComponent> components;
     /**
-     * variable types to make maps for
+     * Variable types to use.
      */
     private Set<VariableType> variableTypes;
     /**
@@ -75,7 +79,7 @@ public class PartialsMovieMaker extends Operation {
     private Set<String> tendObservers = new HashSet<>();
 
     /**
-     * partial waveform folder
+     * Partial waveform folder.
      */
     private Path partialPath;
 
@@ -132,7 +136,7 @@ public class PartialsMovieMaker extends Operation {
 
     private double scale;
     /**
-     * Whether to display map as mosaic without smoothing
+     * Whether to display map as mosaic without smoothing.
      */
     private boolean mosaic;
 
@@ -151,57 +155,59 @@ public class PartialsMovieMaker extends Operation {
         Path outPath = Property.generatePath(thisClass);
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
             pw.println("manhattan " + thisClass.getSimpleName());
-            pw.println("##Path of a working directory. (.)");
+            pw.println("##Path of work folder. (.)");
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this unset.");
             pw.println("#folderTag ");
-            pw.println("##SacComponents to be used, listed using spaces (Z R T)");
+            pw.println("##(boolean) Whether to append date string at end of output folder name. (true)");
+            pw.println("#appendFolderDate false");
+            pw.println("##SacComponents to be used, listed using spaces. (Z R T)");
             pw.println("#components ");
-            pw.println("##Path of a partial waveform folder, must be set");
+            pw.println("##Path of a partial waveform folder, must be set.");
             pw.println("#partialPath partial");
-            pw.println("##VariableTypes to be used, listed using spaces (MU)");
+            pw.println("##VariableTypes to be used, listed using spaces. (MU)");
             pw.println("#variableTypes ");
-            pw.println("##GlobalCMTIDs of events to work for, listed using spaces, must be set");
+            pw.println("##GlobalCMTIDs of events to work for, listed using spaces, must be set.");
             pw.println("#tendEvents ");
-            pw.println("##Observers to work for, in the form STA_NET, listed using spaces, must be set");
+            pw.println("##Observers to work for, in the form STA_NET, listed using spaces, must be set.");
             pw.println("#tendObservers ");
-            pw.println("##########Settings of great circle arc to display in the cross section");
-            pw.println("##(double) Latitude of position 0, must be set");
+            pw.println("##########Settings of great circle arc to display in the cross section.");
+            pw.println("##(double) Latitude of position 0, must be set.");
             pw.println("#pos0Latitude ");
-            pw.println("##(double) Longitude of position 0, must be set");
+            pw.println("##(double) Longitude of position 0, must be set.");
             pw.println("#pos0Longitude ");
-            pw.println("##(double) Latitude of position 1, must be set");
+            pw.println("##(double) Latitude of position 1, must be set.");
             pw.println("#pos1Latitude ");
-            pw.println("##(double) Longitude of position 1, must be set");
+            pw.println("##(double) Longitude of position 1, must be set.");
             pw.println("#pos1Longitude ");
-            pw.println("##(double) Distance along arc before position 0 (0)");
+            pw.println("##(double) Distance along arc before position 0 [deg]. (0)");
             pw.println("#beforePos0Deg ");
-            pw.println("##(double) Distance along arc after position 0. If not set, the following afterPos1Deg will be used.");
+            pw.println("##(double) Distance along arc after position 0 [deg]. If not set, the following afterPos1Deg will be used.");
             pw.println("#afterPos0Deg ");
-            pw.println("##(double) Distance along arc after position 1 (0)");
+            pw.println("##(double) Distance along arc after position 1 [deg]. (0)");
             pw.println("#afterPos1Deg ");
-            pw.println("##########Radius display settings");
-            pw.println("##(double) Radius of zero point of vertical axis (0)");
+            pw.println("##########Radius display settings.");
+            pw.println("##(double) Radius of zero point of vertical axis [km]. (0)");
             pw.println("#zeroPointRadius 3480");
-            pw.println("##Name of zero point of vertical axis (0)");
+            pw.println("##Name of zero point of vertical axis. (0)");
             pw.println("#zeroPointName CMB");
-            pw.println("##(boolean) Whether to flip vertical axis (false)");
+            pw.println("##(boolean) Whether to flip vertical axis. (false)");
             pw.println("#flipVerticalAxis true");
             pw.println("##########The following should be set to half of dLatitude, dLongitude, and dRadius used to design voxels (or smaller).");
             pw.println("##(double) Latitude margin at both ends of region [km]. If this is unset, the following marginLatitudeDeg will be used.");
             pw.println("#marginLatitudeKm ");
-            pw.println("##(double) Latitude margin at both ends of region [deg] (2.5)");
+            pw.println("##(double) Latitude margin at both ends of region [deg]. (2.5)");
             pw.println("#marginLatitudeDeg ");
             pw.println("##(double) Longitude margin at both ends of region [km]. If this is unset, the following marginLongitudeDeg will be used.");
             pw.println("#marginLongitudeKm ");
-            pw.println("##(double) Longitude margin at both ends of region [deg] (2.5)");
+            pw.println("##(double) Longitude margin at both ends of region [deg]. (2.5)");
             pw.println("#marginLongitudeDeg ");
-            pw.println("##(double) Radius margin at both ends of region [km] (25)");
+            pw.println("##(double) Radius margin at both ends of region [km]. (25)");
             pw.println("#marginRadiusKm ");
-            pw.println("##########Parameters for perturbation values");
-            pw.println("##(double) Range of scale (1)");
+            pw.println("##########Parameters for perturbation values.");
+            pw.println("##(double) Range of scale. (1)");
             pw.println("#scale ");
-            pw.println("##(boolean) Whether to display map as mosaic without smoothing (false)");
+            pw.println("##(boolean) Whether to display map as mosaic without smoothing. (false)");
             pw.println("#mosaic ");
         }
         System.err.println(outPath + " is created.");
@@ -215,6 +221,7 @@ public class PartialsMovieMaker extends Operation {
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
         if (property.containsKey("folderTag")) folderTag = property.parseStringSingle("folderTag", null);
+        appendFolderDate = property.parseBoolean("appendFolderDate", "true");
         components = Arrays.stream(property.parseStringArray("components", "Z R T"))
                 .map(SACComponent::valueOf).collect(Collectors.toSet());
 
@@ -281,7 +288,7 @@ public class PartialsMovieMaker extends Operation {
         Set<FullPosition> discretePositions = partialIDs.stream().map(partialID -> partialID.getVoxelPosition()).collect(Collectors.toSet());
 
         // create output folder
-        Path outPath = DatasetAid.createOutputFolder(workPath, "movie", folderTag, GadgetAid.getTemporaryString());
+        Path outPath = DatasetAid.createOutputFolder(workPath, "movie", folderTag, appendFolderDate, GadgetAid.getTemporaryString());
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         for (SACComponent component : components) {

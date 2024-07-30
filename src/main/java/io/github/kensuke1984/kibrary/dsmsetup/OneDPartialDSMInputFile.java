@@ -24,6 +24,10 @@ import io.github.kensuke1984.kibrary.util.spc.SPCType;
  *
  * @author Kensuke Konishi
  * @since version 0.0.6.1
+ * @version 2021/11/18 Renamed from dsminformation.SshDSMInformationFileMaker to dsmsetup.OneDPartialDSMInputFile.
+ *
+ *
+ * TODO brush up the following:
  * @author anselme add system to comment out perturbations that are too close to the source and takes too long to compute
  * add PAR0 (partial for density)
  */

@@ -53,7 +53,7 @@ public final class PartialIDFile {
     private PartialIDFile() {}
 
     /**
-     * [byte] File size for an ID
+     * Number of bytes used for one ID.
      */
     public static final int oneIDByte = 50;
 
@@ -174,9 +174,8 @@ public final class PartialIDFile {
      * @param idPath (Path) ID file
      * @return ({@link PartialID}[]) PartialIDs without waveform data
      * @throws IOException if an I/O error occurs
-     * @deprecated (make this method private)
      */
-    public static PartialID[] read(Path idPath) throws IOException {
+    private static PartialID[] read(Path idPath) throws IOException {
         try (DataInputStream dis = new DataInputStream(new BufferedInputStream(Files.newInputStream(idPath)))) {
             System.err.print(" Reading ID file ...");
             long t = System.nanoTime();
@@ -285,11 +284,12 @@ public final class PartialIDFile {
                 usablephases, isConvolved, partialType.toParameterType(), partialType.toVariableType(), voxelPosition);
     }
 
-    ////////////////////////////////////////////////////////////////////////////////////
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     /**
      * Exports binary files in ascii format.
-     * @param args [option]
+     * @param args Options.
      * @throws IOException if an I/O error occurs
      */
     public static void main(String[] args) throws IOException{
@@ -312,7 +312,7 @@ public final class PartialIDFile {
                 .desc("The input partial waveform folder (.)").build());
         // output
         options.addOption(Option.builder("o").longOpt("output").hasArg().argName("outputFile")
-                .desc("Set path of output file").build());
+                .desc("Specify path of output file. When not set, writes in standard output.").build());
         return options;
     }
 

@@ -2,11 +2,14 @@ package io.github.kensuke1984.kibrary.inversion;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
@@ -21,6 +24,8 @@ import io.github.kensuke1984.kibrary.inversion.setup.DVectorBuilder;
 import io.github.kensuke1984.kibrary.selection.DataFeature;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
+import io.github.kensuke1984.kibrary.util.MathAid;
+import io.github.kensuke1984.kibrary.util.data.DataEntry;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.waveform.BasicID;
@@ -41,22 +46,28 @@ public class WeightingHandler {
     /**
      * {@link WeightingHandler} created with default settings, thus complete IDENTITY.
      */
-    public static WeightingHandler IDENTITY = new WeightingHandler(new Property());
+    public static final WeightingHandler IDENTITY = new WeightingHandler();
+
+    /**
+     * Maximum number of {@link EntryWeightListFile}s that can be handled.
+     */
+    private static final int MAX_INPUT = 5;
 
     private boolean amplitudeReciprocal;
+    private SACComponent standardComponent;
     private boolean balanceComponent;
     private double factorForZComponent;
     private double factorForRComponent;
     private double factorForTComponent;
-    private boolean balanceDistance; // TODO apply
-    private boolean balanceAzimuth; // TODO apply
     private boolean balanceGeometry;
 
     private List<DataFeature> dataFeatures; // TODO apply
 
+    private List<Map<DataEntry, Double>> weightMaps = new ArrayList<>();
+
     /**
      * Create default properties file.
-     * @param args [option]
+     * @param args Options.
      * @throws IOException if an I/O error occurs
      */
     public static void main(String[] args) throws IOException {
@@ -75,8 +86,10 @@ public class WeightingHandler {
     public static Options defineOptions() {
         Options options = Summon.defaultOptions();
         // output
-        options.addOption(Option.builder("t").longOpt("tag").hasArg().argName("tag")
+        options.addOption(Option.builder("T").longOpt("tag").hasArg().argName("fileTag")
                 .desc("A tag to include in output file name.").build());
+        options.addOption(Option.builder("O").longOpt("omitDate")
+                .desc("Whether to omit date string in output file name.").build());
         return options;
     }
 
@@ -86,52 +99,93 @@ public class WeightingHandler {
      * @throws IOException
      */
     public static void run(CommandLine cmdLine) throws IOException {
-        String tag = cmdLine.hasOption("t") ? cmdLine.getOptionValue("t") : null;
-        Path outputPath = Paths.get(DatasetAid.generateOutputFileName("weighting", tag, GadgetAid.getTemporaryString(), ".properties"));
+        String fileTag = cmdLine.hasOption("T") ? cmdLine.getOptionValue("T") : null;
+        boolean appendFileDate = !cmdLine.hasOption("O");
+        Path outputPath = DatasetAid.generateOutputFilePath(Paths.get(""), "weighting", fileTag,
+                appendFileDate, GadgetAid.getTemporaryString(), ".properties");
         writeDefaultPropertiesFile(outputPath);
     }
 
-    public static void writeDefaultPropertiesFile(Path outPath) throws IOException {
+    private static void writeDefaultPropertiesFile(Path outPath) throws IOException {
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
             pw.println("##(boolean) Whether to multiply reciprocal of amplitude. (false)");
-            pw.println("#amplitudeReciprocal ");
+            pw.println("#amplitudeReciprocal true");
+            pw.println("##Use amplitude of a specific component when multiplying reciprocal, from {Z, R, T}.");
+            pw.println("#standardComponent ");
             pw.println("##(boolean) Whether to weigh the number of timewindows of each component. (false)");
-            pw.println("#balanceComponent ");
+            pw.println("#balanceComponent true");
             pw.println("##(double) Factor to multiply to Z component. (1.0)");
             pw.println("#factorForZComponent ");
             pw.println("##(double) Factor to multiply to R component. (1.0)");
             pw.println("#factorForRComponent ");
             pw.println("##(double) Factor to multiply to T component. (1.0)");
             pw.println("#factorForTComponent ");
-//            pw.println("##(boolean) Whether to balance epicentral distances. (false)");
-//            pw.println("#balanceDistance ");
-//            pw.println("##(boolean) Whether to balance azimuths. (false)");
-//            pw.println("#balanceAzimuth ");
             pw.println("##(boolean) Whether to balance event & observer positions. (false)");
             pw.println("#balanceGeometry ");
+            pw.println("##########From here on, list up paths of entry weight list files to use.");
+            pw.println("########## Up to " + MAX_INPUT + " files can be managed. Any entry may be left unset.");
+            for (int i = 1; i <= MAX_INPUT; i++) {
+                pw.println("##" + MathAid.ordinalNumber(i) + " file.");
+                pw.println("#weightPath" + i + " entryWeight.lst");
+            }
         }
         System.err.println(outPath + " is created.");
     }
 
+    /**
+     * Set up from a propery file.
+     * @param propertyPath (Path) Input property file.
+     * @throws IOException
+     */
     public WeightingHandler(Path propertyPath) throws IOException {
         Property property = new Property();
         property.load(Files.newBufferedReader(propertyPath));
-        set(property);
+        // get path of folder including this property file
+        Path parentPath = (propertyPath.getParent() != null) ? propertyPath.getParent() : Paths.get("");
+        // set up parameters
+        set(property, parentPath);
+
+        System.err.print("Weighting: ");
+        if (amplitudeReciprocal) {
+            if (standardComponent != null) System.err.print("reciprocal_" + standardComponent + ", ");
+            else System.err.print("reciprocal, ");
+        }
+        if (balanceComponent) System.err.print("balanceComponent, ");
+        System.err.print("factorZ=" + factorForZComponent + ", ");
+        System.err.print("factorR=" + factorForRComponent + ", ");
+        System.err.print("factorT=" + factorForTComponent + ", ");
+        System.err.println(MathAid.switchSingularPlural(weightMaps.size(), "weight file.",  "weight files."));
     }
 
-    private WeightingHandler(Property property) {
-        set(property);
+    /**
+     * Create with default settings, thus weight is complete IDENTITY.
+     */
+    private WeightingHandler() {
+        try {
+            set(new Property(), Paths.get(""));
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
-    private void set(Property property) {
+    private void set(Property property, Path parentPath) throws IOException {
         amplitudeReciprocal = property.parseBoolean("amplitudeReciprocal", "false");
+        if (property.containsKey("standardComponent"))
+            standardComponent = SACComponent.valueOf(property.parseString("standardComponent", null));
         balanceComponent = property.parseBoolean("balanceComponent", "false");
         factorForZComponent = property.parseDouble("factorForZComponent", "1.0");
         factorForRComponent = property.parseDouble("factorForRComponent", "1.0");
         factorForTComponent = property.parseDouble("factorForTComponent", "1.0");
-        balanceDistance = property.parseBoolean("balanceDistance", "false");
-        balanceAzimuth = property.parseBoolean("balanceAzimuth", "false");
         balanceGeometry = property.parseBoolean("balanceGeometry", "false");
+
+        for (int i = 1; i <= MAX_INPUT; i++) {
+            String weightKey = "weightPath" + i;
+            if (property.containsKey(weightKey)) {
+                Path weightPath = property.parsePath(weightKey, null, true, parentPath);
+                Map<DataEntry, Double> weightMap = EntryWeightListFile.read(weightPath);
+                weightMaps.add(weightMap);
+            }
+        }
     }
 
     /**
@@ -159,22 +213,23 @@ public class WeightingHandler {
             double weighting = 1.0;
 
             // multiply reciprocal of amplitude
-            if (amplitudeReciprocal) weighting /= dVector.getObsVec(i).getLInfNorm();
+            // Square root is not taken for this because partial derivatives in A^T should also be weighted.
+            if (amplitudeReciprocal) weighting /= findAmplitude(dVector, i, standardComponent);
 
             // balance component and multiply factor for each component
-            // Take square root for number of each component because weighting matrix W will be multiplied twice, as tAWWAm=tAWWd
+            // Take square root because weighting matrix W will be multiplied twice, as tAWWAm=tAWWd
             SACComponent component = dVector.getObsID(i).getSacComponent();
             switch (component) {
             case Z:
-                weighting *= factorForZComponent;
+                weighting *= Math.sqrt(factorForZComponent);
                 if (balanceComponent) weighting /= Math.sqrt(numZ / (numZ + numR + numT));
                 break;
             case R:
-                weighting *= factorForRComponent;
+                weighting *= Math.sqrt(factorForRComponent);
                 if (balanceComponent) weighting /= Math.sqrt(numR / (numZ + numR + numT));
                 break;
             case T:
-                weighting *= factorForTComponent;
+                weighting *= Math.sqrt(factorForTComponent);
                 if (balanceComponent) weighting /= Math.sqrt(numT / (numZ + numR + numT));
                 break;
             }
@@ -182,6 +237,13 @@ public class WeightingHandler {
             // balance event & observer positions
             if (balanceGeometry) {
                 weighting /= computeGeometryWeight(dVector.getObsID(i), dVector);
+            }
+
+            // multiply values specified in weight files
+            for (int k = 0; k < weightMaps.size(); k++) {
+                DataEntry entry = dVector.getObsID(i).toDataEntry();
+                // Take square root because weighting matrix W will be multiplied twice, as tAWWAm=tAWWd
+                weighting *= Math.sqrt(weightMaps.get(k).get(entry));
             }
 
             //TODO
@@ -199,6 +261,21 @@ public class WeightingHandler {
         }
 
         return weightingVectors;
+    }
+
+    private double findAmplitude(DVectorBuilder dVector, int i, SACComponent standardComponent) {
+        BasicID obsID = dVector.getObsID(i);
+        if (standardComponent == null || obsID.getSacComponent().equals(standardComponent)) {
+            return dVector.getObsVec(i).getLInfNorm();
+        } else {
+            DataEntry standardEntry = new DataEntry(obsID.getGlobalCMTID(), obsID.getObserver(), standardComponent);
+            for (int j = 0; j < dVector.getNTimeWindow(); j++) {
+                if (dVector.getObsID(j).toDataEntry().equals(standardEntry)) {
+                    return dVector.getObsVec(j).getLInfNorm();
+                }
+            }
+            throw new IllegalStateException("Pair basicID not found for: " + obsID.toDataEntry());
+        }
     }
 
     private double computeGeometryWeight(BasicID basicID, DVectorBuilder dVector) {

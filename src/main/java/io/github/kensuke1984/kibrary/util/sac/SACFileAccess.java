@@ -23,10 +23,10 @@ import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 
 /**
- * Data in a SAC file. Binary format.
+ * SAC file (SAC: Seismic analysis code). Binary format.
  *
  * @author Kensuke Konishi
- * @version 0.0.1.2
+ * @since version 0.0.1.2
  * @see <a href=http://ds.iris.edu/ds/nodes/dmc/forms/sac/>SAC</a>
  */
 public interface SACFileAccess extends SACHeaderAccess {
@@ -190,28 +190,6 @@ public interface SACFileAccess extends SACHeaderAccess {
         }
     }
 
-    double[] getData();
-
-    @Override
-    default SACFileAccess setEventLocation(FullPosition eventLocation) {
-        return (SACFileAccess) SACHeaderAccess.super.setEventLocation(eventLocation);
-    }
-
-    @Override
-    default SACFileAccess setEventTime(LocalDateTime eventDateTime) {
-        return (SACFileAccess) SACHeaderAccess.super.setEventTime(eventDateTime);
-    }
-
-    @Override
-    default SACFileAccess setObserver(Observer observer) {
-        return (SACFileAccess) SACHeaderAccess.super.setObserver(observer);
-    }
-
-    @Override
-    default SACFileAccess setTimeMarker(SACHeaderEnum marker, double time) {
-        return (SACFileAccess) SACHeaderAccess.super.setTimeMarker(marker, time);
-    }
-
     /**
      * DELTA will be rounded off to 4 decimal values
      * <p>
@@ -231,21 +209,43 @@ public interface SACFileAccess extends SACHeaderAccess {
     }
 
     @Override
-    SACFileAccess setBoolean(SACHeaderEnum sacHeaderEnum, boolean bool);
+    default SACFileAccess withEventLocation(FullPosition eventLocation) {
+        return (SACFileAccess) SACHeaderAccess.super.withEventLocation(eventLocation);
+    }
+
+    @Override
+    default SACFileAccess withEventTime(LocalDateTime eventDateTime) {
+        return (SACFileAccess) SACHeaderAccess.super.withEventTime(eventDateTime);
+    }
+
+    @Override
+    default SACFileAccess withObserver(Observer observer) {
+        return (SACFileAccess) SACHeaderAccess.super.withObserver(observer);
+    }
+
+    @Override
+    default SACFileAccess withTimeMarker(SACHeaderEnum marker, double time) {
+        return (SACFileAccess) SACHeaderAccess.super.withTimeMarker(marker, time);
+    }
+
+    @Override
+    SACFileAccess withBoolean(SACHeaderEnum sacHeaderEnum, boolean bool);
+
+    @Override
+    SACFileAccess withInt(SACHeaderEnum sacHeaderEnum, int value);
+
+    @Override
+    SACFileAccess withSACEnumerated(SACHeaderEnum sacHeaderEnum, int value);
+
+    @Override
+    SACFileAccess withValue(SACHeaderEnum sacHeaderEnum, double value);
+
+    @Override
+    SACFileAccess withSACString(SACHeaderEnum sacHeaderEnum, String string);
 
     SACFileAccess applyButterworthFilter(ButterworthFilter filter);
 
-    @Override
-    SACFileAccess setValue(SACHeaderEnum sacHeaderEnum, double value);
-
-    @Override
-    SACFileAccess setInt(SACHeaderEnum sacHeaderEnum, int value);
-
-    @Override
-    SACFileAccess setSACEnumerated(SACHeaderEnum sacHeaderEnum, int value);
-
-    @Override
-    SACFileAccess setSACString(SACHeaderEnum sacHeaderEnum, String string);
+    double[] getData();
 
     /**
      * DEEP copy input sacData on the sacData of this.
@@ -257,10 +257,11 @@ public interface SACFileAccess extends SACHeaderAccess {
     SACFileAccess setSACData(double[] waveData);
 
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
     /**
      * SAC files in binary format will be read and output in ascii format.
-     *
-     * @param args [information file name]
+     * @param args Options.
      * @throws IOException if an I/O error occurs
      */
     public static void main(String[] args) throws IOException {
@@ -280,10 +281,10 @@ public interface SACFileAccess extends SACHeaderAccess {
         Options options = Summon.defaultOptions();
         // input
         options.addOption(Option.builder("s").longOpt("sac").hasArg().argName("sacFile")
-                .desc("Path of input SAC file").build());
+                .desc("Path of input SAC file.").build());
         // output
         options.addOption(Option.builder("o").longOpt("output").hasArg().argName("outputFile")
-                .desc("Path of output file").build());
+                .desc("Specify path of output file. When not set, output is same as input with extension changed to '.txt'.").build());
         return options;
     }
 

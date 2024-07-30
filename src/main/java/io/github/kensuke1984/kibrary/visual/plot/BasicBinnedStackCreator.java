@@ -10,24 +10,22 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.DoubleStream;
 
 import org.apache.commons.math3.linear.ArrayRealVector;
 
-import edu.sc.seis.TauP.Arrival;
 import edu.sc.seis.TauP.TauModelException;
 import edu.sc.seis.TauP.TauP_Time;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
-import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotColorName;
 import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotFile;
+import io.github.kensuke1984.kibrary.math.CircularRange;
+import io.github.kensuke1984.kibrary.math.LinearRange;
 import io.github.kensuke1984.kibrary.math.Trace;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
-import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.sac.WaveformType;
@@ -56,25 +54,25 @@ import io.github.kensuke1984.kibrary.waveform.BasicIDPairUp;
 public class BasicBinnedStackCreator extends Operation {
 
     /**
-     * The interval of exporting travel times
+     * The interval of exporting travel times.
      */
     private static final double TRAVEL_TIME_INTERVAL = 1;
     /**
-     * The interval of deciding graph size; should be a multiple of TRAVEL_TIME_INTERVAL
+     * The interval of deciding graph size; should be a multiple of TRAVEL_TIME_INTERVAL.
      */
     private static final int GRAPH_SIZE_INTERVAL = 2;
     /**
-     * How much space to provide at the rim of the graph in the y axis
+     * How much space to provide at the rim of the graph in the y axis.
      */
     private static final int Y_AXIS_RIM = 2;
     /**
-     * How much space to provide at the rim of the graph in the time axis
+     * How much space to provide at the rim of the graph in the time axis.
      */
     private static final int TIME_RIM = 10;
 
     private final Property property;
     /**
-     * Path of the work folder
+     * Path of the work folder.
      */
     private Path workPath;
     /**
@@ -82,20 +80,24 @@ public class BasicBinnedStackCreator extends Operation {
      */
     private String folderTag;
     /**
-     * components to be included in the dataset
+     * Whether to append date string at end of output folder name.
+     */
+    private boolean appendFolderDate;
+    /**
+     * Components to use.
      */
     private Set<SACComponent> components;
 
     /**
-     * Path of a basic waveform folder
+     * Path of a basic waveform folder.
      */
     private Path mainBasicPath;
     /**
-     * Path of reference waveform folder 1
+     * Path of reference waveform folder 1.
      */
     private Path refBasicPath1;
     /**
-     * Path of reference waveform folder 2
+     * Path of reference waveform folder 2.
      */
     private Path refBasicPath2;
 
@@ -109,15 +111,15 @@ public class BasicBinnedStackCreator extends Operation {
     private double ampScale;
 
     /**
-     * Whether to plot the figure with azimuth as the Y-axis
+     * Whether to plot the figure with azimuth as the Y-axis.
      */
     private boolean byAzimuth;
     /**
-     * Whether to set the azimuth range to [-180:180) instead of [0:360)
+     * Whether to set the azimuth range to [-180:180) instead of [0:360).
      */
     private boolean flipAzimuth;
     /**
-     * Names of phases to plot travel time curves
+     * Names of phases to plot travel time curves.
      */
     private String[] displayPhases;
     /**
@@ -125,18 +127,16 @@ public class BasicBinnedStackCreator extends Operation {
      */
     private String[] alignPhases;
     /**
-     * apparent velocity to use when reducing time [s/deg]
+     * Apparent velocity to use when reducing time [s/deg].
      */
     private double reductionSlowness;
     /**
-     * Name of structure to compute travel times
+     * Name of structure to compute travel times.
      */
     private String structureName;
 
-    private double lowerDistance;
-    private double upperDistance;
-    private double lowerAzimuth;
-    private double upperAzimuth;
+    private LinearRange distanceRange;
+    private CircularRange azimuthRange;
 
     private int mainSynStyle;
     private String mainSynName;
@@ -150,7 +150,7 @@ public class BasicBinnedStackCreator extends Operation {
     private double samplingStep;
 
     /**
-     * Inxtance of tool to use to compute travel times
+     * Instance of tool to use to compute travel times.
      */
     private TauP_Time timeTool;
 
@@ -169,61 +169,63 @@ public class BasicBinnedStackCreator extends Operation {
         Path outPath = Property.generatePath(thisClass);
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
             pw.println("manhattan " + thisClass.getSimpleName());
-            pw.println("##Path of a working directory. (.)");
+            pw.println("##Path of work folder. (.)");
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this unset.");
             pw.println("#folderTag ");
-            pw.println("##SacComponents to be used, listed using spaces (Z R T)");
+            pw.println("##(boolean) Whether to append date string at end of output folder name. (true)");
+            pw.println("#appendFolderDate false");
+            pw.println("##SacComponents to be used, listed using spaces. (Z R T)");
             pw.println("#components ");
-            pw.println("##Path of a basic waveform folder (.)");
+            pw.println("##Path of a basic waveform folder. (.)");
             pw.println("#mainBasicPath ");
-            pw.println("##Path of reference basic waveform folder 1, when plotting their waveforms");
+            pw.println("##Path of reference basic waveform folder 1, when plotting their waveforms.");
             pw.println("#refBasicPath1 ");
-            pw.println("##Path of reference basic waveform folder 2, when plotting their waveforms");
+            pw.println("##Path of reference basic waveform folder 2, when plotting their waveforms.");
             pw.println("#refBasicPath2 ");
             pw.println("##GlobalCMTIDs of events to work for, listed using spaces. To use all events, leave this unset.");
             pw.println("#tendEvents ");
-            pw.println("##(double) The width of each bin [deg] (1.0)");
+            pw.println("##(double) The width of each bin [deg]. (1.0)");
             pw.println("#binWidth ");
-            pw.println("##Method for standarization of observed waveform amplitude, from {obsEach,synEach,obsMean,synMean} (synEach)");
+            pw.println("##Method for standarization of observed waveform amplitude, from {obsEach,synEach,obsMean,synMean}. (synEach)");
             pw.println("#obsAmpStyle ");
-            pw.println("##Method for standarization of synthetic waveform amplitude, from {obsEach,synEach,obsMean,synMean} (synEach)");
+            pw.println("##Method for standarization of synthetic waveform amplitude, from {obsEach,synEach,obsMean,synMean}. (synEach)");
             pw.println("#synAmpStyle ");
-            pw.println("##(double) Coefficient to multiply to all waveforms (1.0)");
+            pw.println("##(double) Coefficient to multiply to all waveforms. (1.0)");
             pw.println("#ampScale ");
-            pw.println("##(boolean) Whether to plot the figure with azimuth as the Y-axis (false)");
+            pw.println("##(boolean) Whether to plot the figure with azimuth as the Y-axis. (false)");
             pw.println("#byAzimuth ");
-            pw.println("##(boolean) Whether to set the azimuth range to [-180:180) instead of [0:360) (false)");
-            pw.println("## This is effective when using south-to-north raypaths in byAzimuth mode.");
+            pw.println("##(boolean) Whether to set the azimuth range to [-180:180) instead of [0:360). (false)");
+            pw.println("##  This is effective when using south-to-north raypaths in byAzimuth mode.");
             pw.println("#flipAzimuth ");
             pw.println("##Names of phases to plot travel time curves, listed using spaces. Only when byAzimuth is false.");
             pw.println("#displayPhases ");
             pw.println("##Names of phases to use for alignment, listed using spaces. When unset, the following reductionSlowness will be used.");
             pw.println("##  When multiple phases are set, the fastest arrival of them will be used for alignment.");
             pw.println("#alignPhases ");
-            pw.println("##(double) The apparent slowness to use for time reduction [s/deg] (0)");
+            pw.println("##(double) The apparent slowness to use for time reduction [s/deg]. (0)");
             pw.println("#reductionSlowness ");
-            pw.println("##(String) Name of structure to compute travel times using TauP (prem)");
+            pw.println("##(String) Name of structure to compute travel times using TauP. (prem)");
             pw.println("#structureName ");
-            pw.println("##(double) Lower limit of range of epicentral distance to be used [deg] [0:upperDistance) (0)");
+            pw.println("##(double) Lower limit of range of epicentral distance to be used [deg], inclusive; [0:upperDistance). (0)");
             pw.println("#lowerDistance ");
-            pw.println("##(double) Upper limit of range of epicentral distance to be used [deg] (lowerDistance:180] (180)");
+            pw.println("##(double) Upper limit of range of epicentral distance to be used [deg], exclusive; (lowerDistance:180] .(180)");
             pw.println("#upperDistance ");
-            pw.println("##(double) Lower limit of range of azimuth to be used [deg] [-360:upperAzimuth) (0)");
+            pw.println("##(double) Lower limit of range of azimuth to be used [deg]; [-180:360], inclusive. (0)");
             pw.println("#lowerAzimuth ");
-            pw.println("##(double) Upper limit of range of azimuth to be used [deg] (lowerAzimuth:360] (360)");
+            pw.println("##(double) Upper limit of range of azimuth to be used [deg]; [-180:360], exclusive. (360)");
             pw.println("#upperAzimuth ");
-            pw.println("##Plot style for main synthetic waveform, from {0:no plot, 1:red, 2:green, 3:blue} (1)");
+            pw.println("##Plot style for main synthetic waveform, from {0:no plot, 1:red, 2:green, 3:blue}. (1)");
             pw.println("#mainSynStyle 2");
-            pw.println("##Name for main synthetic waveform (synthetic)");
+            pw.println("##Name for main synthetic waveform. (synthetic)");
             pw.println("#mainSynName recovered");
-            pw.println("##Plot style for reference synthetic waveform 1, from {0:no plot, 1:red, 2:green, 3:blue} (0)");
+            pw.println("##Plot style for reference synthetic waveform 1, from {0:no plot, 1:red, 2:green, 3:blue}. (0)");
             pw.println("#refSynStyle1 1");
-            pw.println("##Name for reference synthetic waveform 1 (reference1)");
+            pw.println("##Name for reference synthetic waveform 1. (reference1)");
             pw.println("#refSynName1 initial");
-            pw.println("##Plot style for reference synthetic waveform 2, from {0:no plot, 1:red, 2:green, 3:blue} (0)");
+            pw.println("##Plot style for reference synthetic waveform 2, from {0:no plot, 1:red, 2:green, 3:blue}. (0)");
             pw.println("#refSynStyle2 ");
-            pw.println("##Name for reference synthetic waveform 2 (reference2)");
+            pw.println("##Name for reference synthetic waveform 2. (reference2)");
             pw.println("#refSynName2 ");
         }
         System.err.println(outPath + " is created.");
@@ -237,6 +239,7 @@ public class BasicBinnedStackCreator extends Operation {
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
         if (property.containsKey("folderTag")) folderTag = property.parseStringSingle("folderTag", null);
+        appendFolderDate = property.parseBoolean("appendFolderDate", "true");
         components = Arrays.stream(property.parseStringArray("components", "Z R T"))
                 .map(SACComponent::valueOf).collect(Collectors.toSet());
 
@@ -266,15 +269,13 @@ public class BasicBinnedStackCreator extends Operation {
         reductionSlowness = property.parseDouble("reductionSlowness", "0");
         structureName = property.parseString("structureName", "prem").toLowerCase();
 
-        lowerDistance = property.parseDouble("lowerDistance", "0");
-        upperDistance = property.parseDouble("upperDistance", "180");
-        if (lowerDistance < 0 || lowerDistance > upperDistance || 180 < upperDistance)
-            throw new IllegalArgumentException("Distance range " + lowerDistance + " , " + upperDistance + " is invalid.");
+        double lowerDistance = property.parseDouble("lowerDistance", "0");
+        double upperDistance = property.parseDouble("upperDistance", "180");
+        distanceRange = new LinearRange("Distance", lowerDistance, upperDistance, 0.0, 180.0);
 
-        lowerAzimuth = property.parseDouble("lowerAzimuth", "0");
-        upperAzimuth = property.parseDouble("upperAzimuth", "360");
-        if (lowerAzimuth < -360 || lowerAzimuth > upperAzimuth || 360 < upperAzimuth)
-            throw new IllegalArgumentException("Azimuth range " + lowerAzimuth + " , " + upperAzimuth + " is invalid.");
+        double lowerAzimuth = property.parseDouble("lowerAzimuth", "0");
+        double upperAzimuth = property.parseDouble("upperAzimuth", "360");
+        azimuthRange = new CircularRange("Azimuth", lowerAzimuth, upperAzimuth, -180.0, 360.0);
 
         mainSynStyle = property.parseInt("mainSynStyle", "1");
         mainSynName = property.parseString("mainSynName", "synthetic");
@@ -326,7 +327,7 @@ public class BasicBinnedStackCreator extends Operation {
                    .collect(Collectors.toList());
        }
 
-       Path outPath = DatasetAid.createOutputFolder(workPath, "binStack", folderTag, GadgetAid.getTemporaryString());
+       Path outPath = DatasetAid.createOutputFolder(workPath, "binStack", folderTag, appendFolderDate, GadgetAid.getTemporaryString());
        property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
        try {
@@ -436,8 +437,7 @@ public class BasicBinnedStackCreator extends Operation {
                         .computeAzimuthDeg(obsID.getObserver().getPosition());
 
                 // skip waveform if distance or azimuth is out of bounds
-                if (distance < lowerDistance || upperDistance < distance
-                        || MathAid.checkAngleRange(azimuth, lowerAzimuth, upperAzimuth) == false) {
+                if (distanceRange.check(distance) == false || azimuthRange.check(azimuth) == false) {
                     continue;
                 }
 
@@ -516,7 +516,8 @@ public class BasicBinnedStackCreator extends Operation {
 
             // add travel time curves
             if (displayPhases != null) {
-                plotTravelTimeCurve(startDistance, endDistance);
+                BasicPlotAid.plotTravelTimeCurve(timeTool, displayPhases, alignPhases, reductionSlowness, startDistance, endDistance,
+                        null, "", eventPath, component, gnuplot);
             }
 
             gnuplot.write();
@@ -655,76 +656,6 @@ public class BasicBinnedStackCreator extends Operation {
                     newY[i] = sum;
                 }
                 return new Trace(newX, newY);
-            }
-        }
-
-        private void plotTravelTimeCurve(double startDistance, double endDistance) throws IOException, TauModelException {
-            int iNum = (int) Math.round((endDistance - startDistance) / TRAVEL_TIME_INTERVAL) + 1;
-
-            // set names of all phases to display, and the phase to align if it is specified
-            timeTool.setPhaseNames(displayPhases);
-            if (alignPhases != null) {
-                for (String phase : alignPhases) timeTool.appendPhaseName(phase);
-            }
-
-            // calculate travel times and store in arrays
-            Double[][] travelTimes = new Double[displayPhases.length][iNum];
-            Double[] alignTimes = new Double[iNum];
-            for (int i = 0; i < iNum; i++) {
-                double distance = startDistance + i * TRAVEL_TIME_INTERVAL;
-                timeTool.calculate(distance);
-                List<Arrival> arrivals = timeTool.getArrivals();
-                for (int p = 0; p < displayPhases.length; p++) {
-                    String phase = displayPhases[p];
-                    Optional<Arrival> arrivalOpt = arrivals.stream().filter(arrival -> arrival.getPhase().getName().equals(phase)).findFirst();
-                    if (arrivalOpt.isPresent()) {
-                        travelTimes[p][i] = arrivalOpt.get().getTime();
-                    }
-                }
-                if (alignPhases != null) {
-                    List<String> alignPhaseList = Arrays.asList(alignPhases);
-                    Optional<Arrival> arrivalOpt = arrivals.stream().filter(arrival -> alignPhaseList.contains(arrival.getPhase().getName())).findFirst();
-                    if (arrivalOpt.isPresent()) {
-                        alignTimes[i] = arrivalOpt.get().getTime();
-                    }
-                }
-            }
-
-            // output file and add curve
-            for (int p = 0; p < displayPhases.length; p++) {
-                String phase = displayPhases[p];
-                String curveFileName = "curve_" + component + "_" + phase + ".txt";
-                Path curvePath = eventPath.resolve(curveFileName);
-                boolean wrotePhaseLabel = false;
-                try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(curvePath))) {
-                    for (int i = 0; i < iNum; i++) {
-                        // write only at distances where travel time exists
-                        if (travelTimes[p][i] != null) {
-                            double distance = startDistance + i * TRAVEL_TIME_INTERVAL;
-                            // reduce time by alignPhase or reductionSlowness
-                            if (alignPhases != null) {
-                                // write only at distances where travel time of alignPhase exists
-                                if (alignTimes[i] != null) {
-                                    pw.println(distance + " " + (travelTimes[p][i] - alignTimes[i]));
-                                }
-                                // add label at first appearance
-                                if (wrotePhaseLabel == false) {
-                                    gnuplot.addLabel(phase, "first", travelTimes[p][i] - alignTimes[i], distance, GnuplotColorName.turquoise);
-                                    wrotePhaseLabel = true;
-                                }
-                            } else {
-                                double reduceTime = reductionSlowness * distance;
-                                pw.println(distance + " " + (travelTimes[p][i] - reduceTime));
-                                // add label at first appearance
-                                if (wrotePhaseLabel == false) {
-                                    gnuplot.addLabel(phase, "first", travelTimes[p][i] - reduceTime, distance, GnuplotColorName.turquoise);
-                                    wrotePhaseLabel = true;
-                                }
-                            }
-                        }
-                    }
-                }
-                gnuplot.addLine(curveFileName, 2, 1, BasicPlotAid.USE_PHASE_APPEARANCE, "");
             }
         }
     }

@@ -12,6 +12,7 @@ import java.util.List;
 
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
+import io.github.kensuke1984.kibrary.math.LinearRange;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.MathAid;
@@ -29,13 +30,17 @@ public class VoxelFileMaker extends Operation {
 
     private final Property property;
     /**
-     * Path of the work folder
+     * Path of the work folder.
      */
     private Path workPath;
     /**
      * A tag to include in output file names. When this is empty, no tag is used.
      */
     private String fileTag;
+    /**
+     * Whether to append date string at end of output file names.
+     */
+    private boolean appendFileDate;
 
     private double lowerLatitude;
     private double upperLatitude;
@@ -53,12 +58,12 @@ public class VoxelFileMaker extends Operation {
     private double longitudeOffset;
 
     private double[] borderRadii;
-    private int lowerRadius;
-    private int upperRadius;
+    private double lowerRadius;
+    private double upperRadius;
     private double dRadius;
 
     /**
-     * (roughly) median radius of target region
+     * The (roughly) median radius of target region.
      */
     private double centerRadius;
 
@@ -77,10 +82,12 @@ public class VoxelFileMaker extends Operation {
         Path outPath = Property.generatePath(thisClass);
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
             pw.println("manhattan " + thisClass.getSimpleName());
-            pw.println("##Path of a working directory. (.)");
+            pw.println("##Path of work folder. (.)");
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output file names. If no tag is needed, leave this unset.");
             pw.println("#fileTag ");
+            pw.println("##(boolean) Whether to append date string at end of output file names. (true)");
+            pw.println("#appendFileDate false");
             pw.println("##########Parameters for the CENTER positions of voxels to create.");
             pw.println("##(double) Lower limit of latitude [deg]; [-90:upperLatitude). (0)");
             pw.println("#lowerLatitude ");
@@ -108,9 +115,9 @@ public class VoxelFileMaker extends Operation {
             pw.println("##(double[]) Radii of layer borders, listed using spaces [km]; [0:).");
             pw.println("##  If unset, the subsequent parameters are used.");
             pw.println("#borderRadii 3480 3530 3580 3630 3680 3730 3780 3830 3880");
-            pw.println("##(int) Lower limit of radius [km]; [0:upperRadius). (3480)");
+            pw.println("##(double) Lower limit of radius [km]; [0:upperRadius). (3480)");
             pw.println("#lowerRadius ");
-            pw.println("##(int) Upper limit of radius [km]; (lowerRadius:). (3880)");
+            pw.println("##(double) Upper limit of radius [km]; (lowerRadius:). (3880)");
             pw.println("#upperRadius ");
             pw.println("##(double) Radius spacing [km]; (0:). (50)");
             pw.println("#dRadius ");
@@ -126,43 +133,42 @@ public class VoxelFileMaker extends Operation {
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
         if (property.containsKey("fileTag")) fileTag = property.parseStringSingle("fileTag", null);
+        appendFileDate = property.parseBoolean("appendFileDate", "true");
 
         lowerLatitude = property.parseDouble("lowerLatitude", "0");
         upperLatitude = property.parseDouble("upperLatitude", "0");
-        if (lowerLatitude < -90 || lowerLatitude > upperLatitude || 90 < upperLatitude)
-            throw new IllegalArgumentException("Latitude range " + lowerLatitude + " , " + upperLatitude + " is invalid.");
+        LinearRange.checkValidity("Latitude", lowerLatitude, upperLatitude, -90.0, 90.0);
 
         lowerLongitude = property.parseDouble("lowerLongitude", "0");
         upperLongitude = property.parseDouble("upperLongitude", "180");
-        if (lowerLongitude < -180 || lowerLongitude > upperLongitude || 360 < upperLongitude)
-            throw new IllegalArgumentException("Longitude range " + lowerLongitude + " , " + upperLongitude + " is invalid.");
+        LinearRange.checkValidity("Longitude", lowerLongitude, upperLongitude, -180.0, 360.0);
 
         if (property.containsKey("dLatitudeKm")) {
             dLatitudeKm = property.parseDouble("dLatitudeKm", null);
-            if (dLatitudeKm <= 0)
+            if (dLatitudeKm <= 0.0)
                 throw new IllegalArgumentException("dLatitudeKm must be positive.");
             setLatitudeByKm = true;
         } else {
             dLatitudeDeg = property.parseDouble("dLatitudeDeg", "5");
-            if (dLatitudeDeg <= 0)
+            if (dLatitudeDeg <= 0.0)
                 throw new IllegalArgumentException("dLatitudeDeg must be positive.");
             setLatitudeByKm = false;
         }
         latitudeOffset = property.parseDouble("latitudeOffset", "0");
-        if (latitudeOffset < 0)
+        if (latitudeOffset < 0.0)
             throw new IllegalArgumentException("latitudeOffset must be non-negative.");
 
         if (property.containsKey("dLongitudeKm")) {
             dLongitudeKm = property.parseDouble("dLongitudeKm", null);
-            if (dLongitudeKm <= 0)
+            if (dLongitudeKm <= 0.0)
                 throw new IllegalArgumentException("dLongitudeKm must be positive.");
             setLongitudeByKm = true;
         } else {
             dLongitudeDeg = property.parseDouble("dLongitudeDeg", "5");
-            if (dLongitudeDeg <= 0)
+            if (dLongitudeDeg <= 0.0)
                 throw new IllegalArgumentException("dLongitudeDeg must be positive.");
             longitudeOffset = property.parseDouble("longitudeOffset", "0");
-            if (longitudeOffset < 0)
+            if (longitudeOffset < 0.0)
                 throw new IllegalArgumentException("longitudeOffset must be non-negative.");
             setLongitudeByKm = false;
         }
@@ -172,46 +178,46 @@ public class VoxelFileMaker extends Operation {
                     .sorted().toArray();
             if (borderRadii.length < 2) throw new IllegalArgumentException("There must be at least 2 values for borderRadii.");
         } else {
-            lowerRadius = property.parseInt("lowerRadius", "3480");
-            upperRadius = property.parseInt("upperRadius", "3880");
-            if (lowerRadius < 0 || lowerRadius > upperRadius)
-                throw new IllegalArgumentException("Radius range " + lowerRadius + " , " + upperRadius + " is invalid.");
+            lowerRadius = property.parseDouble("lowerRadius", "3480");
+            upperRadius = property.parseDouble("upperRadius", "3880");
+            LinearRange.checkValidity("Radius", lowerRadius, upperRadius, 0.0);
+
             dRadius = property.parseDouble("dRadius", "50");
-            if (dRadius <= 0)
+            if (dRadius <= 0.0)
                 throw new IllegalArgumentException("dRadius must be non-negative.");
         }
     }
 
     @Override
     public void run() throws IOException {
-        centerRadius = (borderRadii != null) ? borderRadii[borderRadii.length / 2] : (lowerRadius + upperRadius) / 2;
+        centerRadius = (borderRadii != null) ? borderRadii[borderRadii.length / 2] : (lowerRadius + upperRadius) / 2.0;
 
         // decide horizontal distribution of voxels
         List<HorizontalPixel> horizontalPixels = designHorizontalPixels();
 
         // set voxel layer information
         double[] layerThicknesses;
-        double[] voxelRadii;
+        double[] layerRadii;
         if (borderRadii != null) {
             layerThicknesses = new double[borderRadii.length - 1];
-            voxelRadii = new double[borderRadii.length - 1];
+            layerRadii = new double[borderRadii.length - 1];
             for (int i = 0; i < borderRadii.length - 1; i++) {
                 layerThicknesses[i] = borderRadii[i + 1] - borderRadii[i];
-                voxelRadii[i] = (borderRadii[i] + borderRadii[i + 1]) / 2;
+                layerRadii[i] = (borderRadii[i] + borderRadii[i + 1]) / 2.0;
             }
         } else {
             int nRadius = (int) Math.floor((upperRadius - lowerRadius) / dRadius);
             layerThicknesses = new double[nRadius];
-            voxelRadii = new double[nRadius];
+            layerRadii = new double[nRadius];
             for (int i = 0; i < nRadius; i++) {
                 layerThicknesses[i] = dRadius;
-                voxelRadii[i] = lowerRadius + (i + 0.5) * dRadius;
+                layerRadii[i] = lowerRadius + (i + 0.5) * dRadius;
             }
         }
 
         // output
-        Path outputPath = workPath.resolve(DatasetAid.generateOutputFileName("voxel", fileTag, GadgetAid.getTemporaryString(), ".inf"));
-        VoxelInformationFile.write(layerThicknesses, voxelRadii, horizontalPixels, outputPath);
+        Path outputPath = DatasetAid.generateOutputFilePath(workPath, "voxel", fileTag, appendFileDate, GadgetAid.getTemporaryString(), ".inf");
+        VoxelInformationFile.write(layerThicknesses, layerRadii, horizontalPixels, outputPath);
     }
 
     private List<HorizontalPixel> designHorizontalPixels() {
@@ -242,7 +248,7 @@ public class VoxelFileMaker extends Operation {
                 } else {
                     // when odd number, set one pixel at center longitude
                     // This is same equation as above but is rewritten for clarity.
-                    startLongitude = centerLongitude - (nLongitude - 1) / 2 * dLongitudeForRow;
+                    startLongitude = centerLongitude - (nLongitude - 1) / 2.0 * dLongitudeForRow;
                 }
                 for (int j = 0; j < nLongitude; j++) {
                     double longitude = startLongitude + j * dLongitudeForRow;

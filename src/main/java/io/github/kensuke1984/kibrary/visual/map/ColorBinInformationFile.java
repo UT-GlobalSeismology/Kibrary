@@ -14,6 +14,7 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
 import io.github.kensuke1984.kibrary.Summon;
+import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.InformationFileReader;
 
@@ -82,11 +83,11 @@ public class ColorBinInformationFile {
     }
 
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     /**
      * Creates a template color bin information file.
-     *
-     * @param args
+     * @param args Options.
      * @throws IOException if an I/O error occurs
      */
     public static void main(String[] args) throws IOException {
@@ -115,8 +116,10 @@ public class ColorBinInformationFile {
         options.addOptionGroup(inputOption);
 
         // output
-        options.addOption(Option.builder("o").longOpt("output").hasArg().argName("outputFile")
-                .desc("Set path of output file").build());
+        options.addOption(Option.builder("T").longOpt("tag").hasArg().argName("fileTag")
+                .desc("A tag to include in output file name.").build());
+        options.addOption(Option.builder("O").longOpt("omitDate")
+                .desc("Whether to omit date string in output file name.").build());
 
         return options;
     }
@@ -127,10 +130,11 @@ public class ColorBinInformationFile {
      * @throws IOException
      */
     public static void run(CommandLine cmdLine) throws IOException {
+        String fileTag = cmdLine.hasOption("T") ? cmdLine.getOptionValue("T") : null;
+        boolean appendFileDate = !cmdLine.hasOption("O");
+        Path outputPath = DatasetAid.generateOutputFilePath(Paths.get(""), "colorBin", fileTag, appendFileDate, GadgetAid.getTemporaryString(), ".inf");
 
-        Path outputPath = cmdLine.hasOption("o") ? Paths.get(cmdLine.getOptionValue("o"))
-                : Paths.get("colorBin" + GadgetAid.getTemporaryString() + ".inf");
-
+        // decide colors
         int values[];
         String colors[];
         if (cmdLine.hasOption("d")) {
@@ -147,6 +151,7 @@ public class ColorBinInformationFile {
             throw new IllegalArgumentException();
         }
 
+        // output
         write(values, colors, outputPath);
     }
 }

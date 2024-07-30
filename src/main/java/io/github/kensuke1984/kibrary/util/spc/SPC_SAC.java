@@ -58,7 +58,7 @@ public final class SPC_SAC extends Operation {
 
     private final Property property;
     /**
-     * Path of the work folder
+     * Path of the work folder.
      */
     private Path workPath;
     /**
@@ -66,40 +66,44 @@ public final class SPC_SAC extends Operation {
      */
     private String folderTag;
     /**
-     * Path of the output folder
+     * Whether to append date string at end of output folder name.
+     */
+    private boolean appendFolderDate;
+    /**
+     * Path of the output folder.
      */
     private Path outPath;
     /**
-     * components to be computed
+     * Components to use.
      */
     private Set<SACComponent> components;
 
     private Path shPath;
     private Path psvPath;
     /**
-     * The SPC modes that shall be used: SH, PSV, or BOTH
+     * The SPC modes that shall be used: SH, PSV, or BOTH.
      */
     private SpcFileAid.UsableSPCMode usableSPCMode;
     /**
-     * the name of a folder containing SPC files (e.g. PREM)（""）
+     * Name of folder containing SPC files (e.g. PREM).
      */
     private String modelName;
 
     /**
-     * source time function. 0: none, 1: boxcar, 2: triangle, 3: asymmetric triangle, 4: auto
+     * Source time function. {0: none, 1: boxcar, 2: triangle, 3: asymmetric triangle, 4: auto}
      */
     private SourceTimeFunctionType sourceTimeFunctionType;
     /**
-     * Folder containing user-defined source time functions
+     * Folder containing user-defined source time functions.
      */
     private Path userSourceTimeFunctionPath;
     /**
-     * Catalog containing source time function durations
+     * Catalog containing source time function durations.
      */
     private Path sourceTimeFunctionCatalogPath;
 
     /**
-     * sampling Hz [Hz] must be 20 now.
+     * Sampling Hz [Hz]. must be 20 now.
      */
     private double samplingHz;
     /**
@@ -107,7 +111,7 @@ public final class SPC_SAC extends Operation {
      */
     private boolean computeTimePartial;
     /**
-     * If this is true, the SACExtension of computed files will be that of observed SAC files
+     * If this is true, the SACExtension of computed files will be that of observed SAC files.
      */
     private boolean computeAsObserved;
 
@@ -115,7 +119,7 @@ public final class SPC_SAC extends Operation {
     private Set<SPCFileName> psvSPCs;
     private SourceTimeFunctionHandler stfHandler;
     /**
-     * Number of sac files that are done creating
+     * Number of sac files that are done creating.
      */
     private AtomicInteger numberOfCreatedSAC = new AtomicInteger();
 
@@ -134,17 +138,19 @@ public final class SPC_SAC extends Operation {
         Path outPath = Property.generatePath(thisClass);
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
             pw.println("manhattan " + thisClass.getSimpleName());
-            pw.println("##Path of a working folder (.)");
+            pw.println("##Path of work folder. (.)");
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this unset.");
             pw.println("#folderTag ");
-            pw.println("##SACComponents to be exported, listed using spaces (Z R T)");
+            pw.println("##(boolean) Whether to append date string at end of output folder name. (true)");
+            pw.println("#appendFolderDate false");
+            pw.println("##SACComponents to be exported, listed using spaces. (Z R T)");
             pw.println("#components ");
-            pw.println("##Path of an SH folder (.)");
+            pw.println("##Path of an SH folder. (.)");
             pw.println("#shPath ");
-            pw.println("##Path of a PSV folder (.)");
+            pw.println("##Path of a PSV folder. (.)");
             pw.println("#psvPath ");
-            pw.println("##The mode of spc files that have been computed, from {SH, PSV, BOTH} (BOTH)");
+            pw.println("##The mode of spc files that have been computed, from {SH, PSV, BOTH}. (BOTH)");
             pw.println("#usableSPCMode ");
             pw.println("##The model name used; e.g. if it is PREM, spectrum files in 'eventDir/PREM' are used.");
             pw.println("##  If this is unset, then automatically set as the name of the folder in the eventDirs");
@@ -152,16 +158,16 @@ public final class SPC_SAC extends Operation {
             pw.println("#modelName ");
             pw.println("##Path of folder containing source time functions. If not set, the following sourceTimeFunctionType will be used.");
             pw.println("#userSourceTimeFunctionPath ");
-            pw.println("##Type of source time function, from {0:none, 1:boxcar, 2:triangle, 3:asymmetricTriangle, 4:auto} (0)");
+            pw.println("##Type of source time function, from {0:none, 1:boxcar, 2:triangle, 3:asymmetricTriangle, 4:auto}. (0)");
             pw.println("##  When 'auto' is selected, the function specified in the GCMT catalog will be used.");
             pw.println("#sourceTimeFunctionType ");
             pw.println("##Path of a catalog to set source time function durations. If unneeded, leave this unset.");
             pw.println("#sourceTimeFunctionCatalogPath ");
-            pw.println("##SamplingHz (20) !You can not change yet!");
+            pw.println("##Sampling frequency [Hz]. (20) !You can not change yet!");
             pw.println("#samplingHz ");
-            pw.println("##(boolean) If this is true, temporal partial is computed (false)");
+            pw.println("##(boolean) If this is true, temporal partial is computed. (false)");
             pw.println("#computeTimePartial ");
-            pw.println("##(boolean) If this is true, the SACExtension of computed files will be that of observed (false)");
+            pw.println("##(boolean) If this is true, the SACExtension of computed files will be that of observed. (false)");
             pw.println("##  This is only valid when computeTimePartial is false.");
             pw.println("#computeAsObserved ");
         }
@@ -176,6 +182,7 @@ public final class SPC_SAC extends Operation {
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
         if (property.containsKey("folderTag")) folderTag = property.parseStringSingle("folderTag", null);
+        appendFolderDate = property.parseBoolean("appendFolderDate", "true");
         components = Arrays.stream(property.parseStringArray("components", "Z R T"))
                 .map(SACComponent::valueOf).collect(Collectors.toSet());
 
@@ -240,7 +247,7 @@ public final class SPC_SAC extends Operation {
             throw new IllegalStateException("Number of PSV files and SH files does not match.");
         }
 
-        outPath = DatasetAid.createOutputFolder(workPath, "spcsac", folderTag, GadgetAid.getTemporaryString());
+        outPath = DatasetAid.createOutputFolder(workPath, "spcsac", folderTag, appendFolderDate, GadgetAid.getTemporaryString());
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         ExecutorService es = ThreadAid.createFixedThreadPool();

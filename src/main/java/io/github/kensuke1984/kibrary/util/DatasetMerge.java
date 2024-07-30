@@ -16,6 +16,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACFileName;
 
 /**
  * Operation for merging datasets of SAC files.
+ * Event directories are created in outPath, and symbolic links to each SAC file is created in the event directories.
  *
  * @author otsuru
  * @since 2022/4/18
@@ -26,11 +27,11 @@ public class DatasetMerge extends Operation {
 
     private final Property property;
     /**
-     * Path of the work folder
+     * Path of the work folder.
      */
     private Path workPath;
     /**
-     * The first part of the name of output basic ID and waveform files
+     * The first part of the name of output basic ID and waveform files.
      */
     private String nameRoot;
     /**
@@ -38,7 +39,11 @@ public class DatasetMerge extends Operation {
      */
     private String folderTag;
     /**
-     * List of paths of input dataset folders
+     * Whether to append date string at end of output folder name.
+     */
+    private boolean appendFolderDate;
+    /**
+     * List of paths of input dataset folders.
      */
     private List<Path> inPaths = new ArrayList<>();
 
@@ -57,16 +62,18 @@ public class DatasetMerge extends Operation {
         Path outPath = Property.generatePath(thisClass);
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
             pw.println("manhattan " + thisClass.getSimpleName());
-            pw.println("##Path of a work folder (.)");
+            pw.println("##Path of work folder. (.)");
             pw.println("#workPath ");
-            pw.println("##(String) The first part of the name of output dataset folders, must be set");
+            pw.println("##(String) The first part of the name of output dataset folders, must be set.");
             pw.println("#nameRoot ");
             pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this unset.");
             pw.println("#folderTag ");
+            pw.println("##(boolean) Whether to append date string at end of output folder name. (true)");
+            pw.println("#appendFolderDate false");
             pw.println("##########From here on, list up paths of dataset folders to merge.");
             pw.println("########## Up to " + MAX_IN + " folders can be managed. Any entry may be left unset.");
             for (int i = 1; i <= MAX_IN; i++) {
-                pw.println("##" + MathAid.ordinalNumber(i) + " dataset");
+                pw.println("##" + MathAid.ordinalNumber(i) + " dataset.");
                 pw.println("#inPath" + i + " ");
             }
         }
@@ -82,6 +89,7 @@ public class DatasetMerge extends Operation {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
         nameRoot = property.parseStringSingle("nameRoot", null);
         if (property.containsKey("folderTag")) folderTag = property.parseStringSingle("folderTag", null);
+        appendFolderDate = property.parseBoolean("appendFolderDate", "true");
 
         for (int i = 1; i <= MAX_IN; i++) {
             String inKey = "inPath" + i;
@@ -95,14 +103,14 @@ public class DatasetMerge extends Operation {
     public void run() throws IOException {
         int inputNum = inPaths.size();
         if (inputNum == 0) {
-            System.err.println("No input dataset folders found.");
+            System.err.println("!! No input dataset folders found.");
             return;
         } else if (inputNum == 1) {
-            System.err.println("Only 1 dataset folder found. Merging will not be done.");
+            System.err.println("!! Only 1 dataset folder found. Merging will not be done.");
             return;
         }
 
-        Path outPath = DatasetAid.createOutputFolder(workPath, nameRoot, folderTag, GadgetAid.getTemporaryString());
+        Path outPath = DatasetAid.createOutputFolder(workPath, nameRoot, folderTag, appendFolderDate, GadgetAid.getTemporaryString());
 
         // each datset folder
         for (Path inPath : inPaths) {
@@ -112,7 +120,7 @@ public class DatasetMerge extends Operation {
             for (EventFolder eventDir : eventDirs) {
                 Set<SACFileName> sacFiles = eventDir.sacFileSet();
                 // skip event folder if it is empty
-                if(sacFiles.size() == 0) continue;
+                if (sacFiles.size() == 0) continue;
 
                 Path outEventPath = outPath.resolve(eventDir.getName());
                 Files.createDirectories(outEventPath);
@@ -121,8 +129,8 @@ public class DatasetMerge extends Operation {
                 for (SACFileName sacFile : sacFiles) {
 
                     Path outSacPath = outEventPath.resolve(sacFile.getName());
-                    if(Files.exists(outSacPath)) {
-                        System.err.println("Duplication of " + sacFile.getName() + " , skipping.");
+                    if (Files.exists(outSacPath)) {
+                        System.err.println("!! Duplication of " + sacFile.getName() + " , skipping.");
                     } else {
                         Files.createSymbolicLink(outSacPath, Paths.get("..", "..").resolve(sacFile.toPath()));
                     }

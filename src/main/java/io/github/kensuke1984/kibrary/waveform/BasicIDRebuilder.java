@@ -41,7 +41,7 @@ public class BasicIDRebuilder extends Operation {
 
     private final Property property;
     /**
-     * Path of the work folder
+     * Path of the work folder.
      */
     private Path workPath;
     /**
@@ -49,29 +49,33 @@ public class BasicIDRebuilder extends Operation {
      */
     private String folderTag;
     /**
-     * components to be included in the dataset
+     * Whether to append date string at end of output folder name.
+     */
+    private boolean appendFolderDate;
+    /**
+     * Components to use.
      */
     private Set<SACComponent> components;
 
     /**
-     * path of basic waveform folder
+     * Path of basic waveform folder.
      */
     private Path basicPath;
     /**
-     * Path of a data entry file for selection
+     * Path of a data entry file for selection.
      */
     private Path dataEntryPath;
 
     /**
-     * Phases that must be included in timewindows to be selected
+     * Phases that must be included in timewindows to be selected.
      */
     private String[] requiredPhases;
     /**
-     * Whether to choose BasicIDs with duplication
+     * Whether to choose BasicIDs with duplication.
      */
     private boolean bootstrap;
     /**
-     * How many of the BasicIDs to sample [%] (100% is the total number after selection)
+     * How many of the BasicIDs to sample [%]. (100% is the total number after selection)
      */
     private double subsamplingPercent;
 
@@ -94,22 +98,24 @@ public class BasicIDRebuilder extends Operation {
         Path outPath = Property.generatePath(thisClass);
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
             pw.println("manhattan " + thisClass.getSimpleName());
-            pw.println("##Path of a work folder (.)");
+            pw.println("##Path of work folder. (.)");
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this unset.");
             pw.println("#folderTag ");
-            pw.println("##SacComponents to be used, listed using spaces (Z R T)");
+            pw.println("##(boolean) Whether to append date string at end of output folder name. (true)");
+            pw.println("#appendFolderDate false");
+            pw.println("##SacComponents to be used, listed using spaces. (Z R T)");
             pw.println("#components ");
-            pw.println("##Path of a basic waveform folder, must be set");
+            pw.println("##Path of a basic waveform folder, must be set.");
             pw.println("#basicPath actual");
-            pw.println("##Path of a data entry list file, if you want to select raypaths");
+            pw.println("##Path of a data entry list file, if you want to select raypaths.");
             pw.println("#dataEntryPath selectedEntry.lst");
             pw.println("##Phases to be included in timewindows to use, listed using spaces. To use all phases, leave this unset.");
             pw.println("#requiredPhases ");
-            pw.println("##(boolean) Perform a bootstrap test (false)");
+            pw.println("##(boolean) Whether to perform bootstrap test. (false)");
             pw.println("#bootstrap ");
-            pw.println("##(double) Percent of basic IDs to use in subsampling test (100)");
-            pw.println("## Here, 100% is the number of basic IDs after selection.");
+            pw.println("##(double) Percent of basic IDs to use in subsampling test. (100)");
+            pw.println("##  Here, 100% is the number of basic IDs after selection.");
             pw.println("#subsamplingPercent ");
         }
         System.err.println(outPath + " is created.");
@@ -123,6 +129,7 @@ public class BasicIDRebuilder extends Operation {
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
         if (property.containsKey("folderTag")) folderTag = property.parseStringSingle("folderTag", null);
+        appendFolderDate = property.parseBoolean("appendFolderDate", "true");
         components = Arrays.stream(property.parseStringArray("components", "Z R T"))
                 .map(SACComponent::valueOf).collect(Collectors.toSet());
 
@@ -171,7 +178,7 @@ public class BasicIDRebuilder extends Operation {
         finalList.addAll(synIDs);
 
         // prepare output folder
-        Path outPath = DatasetAid.createOutputFolder(workPath, "rebuilt", folderTag, GadgetAid.getTemporaryString());
+        Path outPath = DatasetAid.createOutputFolder(workPath, "rebuilt", folderTag, appendFolderDate, GadgetAid.getTemporaryString());
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         // output

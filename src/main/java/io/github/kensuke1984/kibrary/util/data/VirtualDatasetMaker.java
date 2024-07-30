@@ -33,7 +33,7 @@ public class VirtualDatasetMaker extends Operation {
 
     private final Property property;
     /**
-     * Path of the work folder
+     * Path of the work folder.
      */
     private Path workPath;
     /**
@@ -41,7 +41,11 @@ public class VirtualDatasetMaker extends Operation {
      */
     private String fileTag;
     /**
-     * components to be used
+     * Whether to append date string at end of output file names.
+     */
+    private boolean appendFileDate;
+    /**
+     * Components to use.
      */
     private Set<SACComponent> components;
 
@@ -62,26 +66,28 @@ public class VirtualDatasetMaker extends Operation {
         Path outPath = Property.generatePath(thisClass);
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
             pw.println("manhattan " + thisClass.getSimpleName());
-            pw.println("##Path of a work folder (.)");
+            pw.println("##Path of work folder. (.)");
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output file names. If no tag is needed, leave this unset.");
             pw.println("#fileTag ");
-            pw.println("##SacComponents to be used, listed using spaces (Z R T)");
+            pw.println("##(boolean) Whether to append date string at end of output file names. (true)");
+            pw.println("#appendFileDate false");
+            pw.println("##SacComponents to be used, listed using spaces. (Z R T)");
             pw.println("#components ");
             pw.println("##GlobalCMTIDs of events to work for, listed using spaces. (000000A)");
             pw.println("#tendEvents ");
             pw.println("##########The following parameters are for the virtual observers to create.");
-            pw.println("##(int) Lower limit of latitude [deg] [-90:upperLatitude) (0)");
+            pw.println("##(int) Lower limit of latitude [deg]; [-90:upperLatitude). (0)");
             pw.println("#lowerLatitude ");
-            pw.println("##(int) Upper limit of latitude [deg] (lowerLatitude:90] (0)");
+            pw.println("##(int) Upper limit of latitude [deg]; (lowerLatitude:90]. (0)");
             pw.println("#upperLatitude ");
-            pw.println("##(int) Lower limit of longitude [deg] [-180:upperLongitude) (10)");
+            pw.println("##(int) Lower limit of longitude [deg]; [-180:upperLongitude). (10)");
             pw.println("#lowerLongitude ");
-            pw.println("##(int) Upper limit of longitude [deg] (lowerLongitude:360] (170)");
+            pw.println("##(int) Upper limit of longitude [deg]; (lowerLongitude:360]. (170)");
             pw.println("#upperLongitude ");
-            pw.println("##(int) Latitude spacing [deg] (5)");
+            pw.println("##(int) Latitude spacing [deg], (0:). (5)");
             pw.println("#dLatitudeDeg ");
-            pw.println("##(int) Longitude spacing [deg] (5)");
+            pw.println("##(int) Longitude spacing [deg], (0:). (5)");
             pw.println("#dLongitudeDeg ");
         }
         System.err.println(outPath + " is created.");
@@ -95,6 +101,7 @@ public class VirtualDatasetMaker extends Operation {
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
         if (property.containsKey("fileTag")) fileTag = property.parseStringSingle("fileTag", null);
+        appendFileDate = property.parseBoolean("appendFileDate", "true");
         components = Arrays.stream(property.parseStringArray("components", "Z R T"))
                 .map(SACComponent::valueOf).collect(Collectors.toSet());
 
@@ -120,7 +127,6 @@ public class VirtualDatasetMaker extends Operation {
         dLongitudeDeg = property.parseInt("dLongitudeDeg", "5");
         if (dLongitudeDeg <= 0)
             throw new IllegalArgumentException("dLongitudeDeg must be positive");
-
     }
 
     @Override
@@ -148,7 +154,7 @@ public class VirtualDatasetMaker extends Operation {
         }
 
         // output
-        Path outputPath = workPath.resolve(DatasetAid.generateOutputFileName("dataEntry", fileTag, GadgetAid.getTemporaryString(), ".lst"));
+        Path outputPath = DatasetAid.generateOutputFilePath(workPath, "dataEntry", fileTag, appendFileDate, GadgetAid.getTemporaryString(), ".lst");
         DataEntryListFile.writeFromSet(entrySet, outputPath);
     }
 

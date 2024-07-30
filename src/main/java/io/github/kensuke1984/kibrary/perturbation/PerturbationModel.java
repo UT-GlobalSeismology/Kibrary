@@ -126,4 +126,20 @@ public class PerturbationModel {
         return map;
     }
 
+    /**
+     * Get absolute perturbed values for a certain variable at all voxels.
+     * @param type ({@link VariableType})
+     * @return (LinkedHashMap of {@link FullPosition}, Double) Correspondence of position and absolute perturbed value
+     *
+     * @author otsuru
+     * @since 2023/7/12
+     */
+    public Map<FullPosition, Double> getAbsoluteForType(VariableType type) {
+        // This is created as LinkedHashMap to preserve the order of voxels
+        Map<FullPosition, Double> map = new LinkedHashMap<>();
+        for (PerturbationVoxel voxel : voxelList) {
+            map.put(voxel.getPosition(), voxel.getAbsolute(type));
+        }
+        return map;
+    }
 }

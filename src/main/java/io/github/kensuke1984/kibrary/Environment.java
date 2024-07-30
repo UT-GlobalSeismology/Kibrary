@@ -16,7 +16,7 @@ import org.apache.commons.cli.Options;
  * Runtime environment
  *
  * @author Kensuke Konishi
- * @version 0.1.5
+ * @since version 0.1.5
  */
 public class Environment {
     private Environment() {}
@@ -113,9 +113,11 @@ public class Environment {
         return PROPERTY.getProperty("institute");
     }
 
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
     /**
-     * Shows environment information
-     *
+     * Shows environment information.
      * @param args will be ignored
      */
     public static void main(String[] args) {
@@ -145,7 +147,7 @@ public class Environment {
         System.out.println("Java version: " + System.getProperty("java.version"));
         System.out.println("Java Virtual version: " + System.getProperty("java.vm.version"));
         System.out.println("Java Runtime version: " + System.getProperty("java.runtime.version"));
-        System.out.println("Available processor: " + Runtime.getRuntime().availableProcessors());
-        System.out.println("Max memory[GB]: " + Runtime.getRuntime().maxMemory() / 1000000000.0);
+        System.out.println("Available processors: " + Runtime.getRuntime().availableProcessors());
+        System.out.println("Max memory [GB]: " + Runtime.getRuntime().maxMemory() / 1000000000.0);
     }
 }

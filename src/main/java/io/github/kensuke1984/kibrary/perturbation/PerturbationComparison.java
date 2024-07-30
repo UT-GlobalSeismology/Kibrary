@@ -24,6 +24,10 @@ import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 
 /**
+ * Class to compare 2 models.
+ * The difference and ratio of the two models are exported.
+ * The cosine similarity and L2 model distance is also computed.
+ *
  * @author otsuru
  * @since 2022/12/1
  */
@@ -31,8 +35,7 @@ public class PerturbationComparison {
 
     /**
      * Compare two perturbation models.
-     * @param args [option]
-     *      [voxelPath  partialTypes...]
+     * @param args Options.
      * @throws IOException
      */
     public static void main(String[] args) throws IOException {
@@ -55,8 +58,12 @@ public class PerturbationComparison {
                 .desc("Path of perturbation file to compare").build());
         options.addOption(Option.builder("d").longOpt("denominator").hasArg().argName("perturbationFile").required()
                 .desc("Path of perturbation file to compare to").build());
-        options.addOption(Option.builder("t").longOpt("tag").hasArg().argName("tag")
+
+        // output
+        options.addOption(Option.builder("T").longOpt("tag").hasArg().argName("folderTag")
                 .desc("A tag to include in output folder name.").build());
+        options.addOption(Option.builder("O").longOpt("omitDate")
+                .desc("Whether to omit date string in output folder name.").build());
 
         return options;
     }
@@ -95,8 +102,10 @@ public class PerturbationComparison {
         double l2Average = numeratorVector.add(denominatorVector).mapDivide(2).getNorm();
         double l2Denominator = denominatorVector.getNorm();
 
-        String folderTag = cmdLine.hasOption("t") ? cmdLine.getOptionValue("t") : null;
-        Path outPath = DatasetAid.createOutputFolder(Paths.get(""), "comparison", folderTag, GadgetAid.getTemporaryString());
+        // create output folder
+        String folderTag = cmdLine.hasOption("T") ? cmdLine.getOptionValue("T") : null;
+        boolean appendFolderDate = !cmdLine.hasOption("O");
+        Path outPath = DatasetAid.createOutputFolder(Paths.get(""), "comparison", folderTag, appendFolderDate, GadgetAid.getTemporaryString());
 
         // output ratio and difference maps as perturbation list files
         String fileNameRoot = FileAid.extractNameRoot(numeratorPath);

@@ -44,7 +44,7 @@ public class OrthogonalityTest extends Operation {
 
     private final Property property;
     /**
-     * Path of the work folder
+     * Path of the work folder.
      */
     private Path workPath;
     /**
@@ -52,32 +52,36 @@ public class OrthogonalityTest extends Operation {
      */
     private String folderTag;
     /**
-     * output directory Path
+     * Whether to append date string at end of output folder name.
+     */
+    private boolean appendFolderDate;
+    /**
+     * Path of the output folder.
      */
     private Path outPath;
     /**
-     * components to be included in the dataset
+     * Components to use.
      */
     private Set<SACComponent> components;
 
     /**
-     * partial waveform folder for the target region
+     * Partial waveform folder for the target region.
      */
     private Path mainPartialPath;
     /**
-     * unknown parameter file for the target region
+     * Unknown parameter file for the target region.
      */
     private Path mainUnknownsPath;
     /**
-     * partial waveform folder created for this test
+     * Partial waveform folder created for this test.
      */
     private Path testPartialPath;
     /**
-     * unknown parameter file created for this test
+     * Unknown parameter file created for this test.
      */
     private Path testUnknownsPath;
     /**
-     * basic waveform folder
+     * Basic waveform folder.
      * This is used to align the two sets of partial waveforms in the same order and to compute the weightings.
      */
     private Path basicPath;
@@ -102,30 +106,32 @@ public class OrthogonalityTest extends Operation {
         Path outPath = Property.generatePath(thisClass);
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
             pw.println("manhattan " + thisClass.getSimpleName());
-            pw.println("##Path of a working directory. (.)");
+            pw.println("##Path of work folder. (.)");
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this unset.");
             pw.println("#folderTag ");
-            pw.println("##SacComponents to be used, listed using spaces (Z R T)");
+            pw.println("##(boolean) Whether to append date string at end of output folder name. (true)");
+            pw.println("#appendFolderDate false");
+            pw.println("##SacComponents to be used, listed using spaces. (Z R T)");
             pw.println("#components ");
-            pw.println("##########Information for voxels in the target region");
-            pw.println("##Path of a partial waveform folder for the target region, must be set");
+            pw.println("##########Information for voxels in the target region.");
+            pw.println("##Path of a partial waveform folder for the target region, must be set.");
             pw.println("#mainPartialPath partial");
-            pw.println("##Path of an unknown parameter list file　for the target region, must be set");
+            pw.println("##Path of an unknown parameter list file　for the target region, must be set.");
             pw.println("#mainUnknownsPath unknowns.lst");
-            pw.println("##########Information for the test voxels");
-            pw.println("##Path of a partial waveform folder created for this test, must be set");
+            pw.println("##########Information for the test voxels.");
+            pw.println("##Path of a partial waveform folder created for this test, must be set.");
             pw.println("#testPartialPath partial");
-            pw.println("##Path of an unknown parameter list file　created for this test, must be set");
+            pw.println("##Path of an unknown parameter list file　created for this test, must be set.");
             pw.println("#testUnknownsPath unknowns.lst");
-            pw.println("##########Information of event-observer pairs");
-            pw.println("##Path of a basic waveform folder, must be set");
+            pw.println("##########Information of event-observer pairs.");
+            pw.println("##Path of a basic waveform folder, must be set.");
             pw.println("#basicPath actual");
             pw.println("##Path of a weighting properties file, must be set.");
             pw.println("#weightingPropertiesPath ");
-            pw.println("##GCMT ID of a specific event, must be set");
+            pw.println("##GCMT ID of a specific event, must be set.");
             pw.println("#specificEvent ");
-            pw.println("##A specific observer, in the form STA_NET, must be set");
+            pw.println("##A specific observer, in the form STA_NET, must be set.");
             pw.println("#specificObserverName ");
         }
         System.err.println(outPath + " is created.");
@@ -139,6 +145,7 @@ public class OrthogonalityTest extends Operation {
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
         if (property.containsKey("folderTag")) folderTag = property.parseStringSingle("folderTag", null);
+        appendFolderDate = property.parseBoolean("appendFolderDate", "true");
         components = Arrays.stream(property.parseStringArray("components", "Z R T"))
                 .map(SACComponent::valueOf).collect(Collectors.toSet());
 
@@ -176,7 +183,7 @@ public class OrthogonalityTest extends Operation {
        double[][] correlations;
        Path outputPath;
 
-       outPath = DatasetAid.createOutputFolder(workPath, "orthogonality", folderTag, GadgetAid.getTemporaryString());
+       outPath = DatasetAid.createOutputFolder(workPath, "orthogonality", folderTag, appendFolderDate, GadgetAid.getTemporaryString());
        property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
        // one event to one observer

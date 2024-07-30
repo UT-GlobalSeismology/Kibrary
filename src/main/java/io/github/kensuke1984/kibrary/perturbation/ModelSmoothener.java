@@ -28,16 +28,20 @@ public class ModelSmoothener extends Operation {
 
     private final Property property;
     /**
-     * Path of the work folder
+     * Path of the work folder.
      */
     private Path workPath;
     /**
      * A tag to include in output folder name. When this is empty, no tag is used.
      */
     private String folderTag;
+    /**
+     * Whether to append date string at end of output folder name.
+     */
+    private boolean appendFolderDate;
 
     /**
-     * Path of perturbation file
+     * Path of perturbation file.
      */
     private Path perturbationPath;
     private double lowerRadius;
@@ -58,15 +62,17 @@ public class ModelSmoothener extends Operation {
         Path outPath = Property.generatePath(thisClass);
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
             pw.println("manhattan " + thisClass.getSimpleName());
-            pw.println("##Path of a work folder (.)");
+            pw.println("##Path of work folder. (.)");
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this blank.");
             pw.println("#folderTag ");
+            pw.println("##(boolean) Whether to append date string at end of output folder name. (true)");
+            pw.println("#appendFolderDate false");
             pw.println("##Path of perturbation file, must be set.");
             pw.println("#perturbationPath vsPercent.lst");
-            pw.println("##Lower limit of radius range [0:upperRadius) (0)");
+            pw.println("##Lower limit of radius range [km]; [0:upperRadius). (0)");
             pw.println("#lowerRadius ");
-            pw.println("##Upper limit of radius range (lowerRadius:) (6371)");
+            pw.println("##Upper limit of radius range [km]; (lowerRadius:). (6371)");
             pw.println("#upperRadius ");
         }
         System.err.println(outPath + " is created.");
@@ -80,14 +86,14 @@ public class ModelSmoothener extends Operation {
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
         if (property.containsKey("folderTag")) folderTag = property.parseStringSingle("folderTag", null);
+        appendFolderDate = property.parseBoolean("appendFolderDate", "true");
 
         perturbationPath = property.parsePath("perturbationPath", null, true, workPath);
 
         lowerRadius = property.parseDouble("lowerRadius", "0");
         upperRadius = property.parseDouble("upperRadius", "6371");
-        if (lowerRadius > upperRadius)
+        if (lowerRadius < 0 || lowerRadius > upperRadius)
             throw new IllegalArgumentException("Radius range " + lowerRadius + " , " + upperRadius + " is invalid.");
-
     }
 
     @Override
@@ -112,7 +118,7 @@ public class ModelSmoothener extends Operation {
             smoothedMap.put(horizontalPosition.toFullPosition(averagedRadius), average);
         }
 
-        Path outPath = DatasetAid.createOutputFolder(workPath, "smoothed", folderTag, GadgetAid.getTemporaryString());
+        Path outPath = DatasetAid.createOutputFolder(workPath, "smoothed", folderTag, appendFolderDate, GadgetAid.getTemporaryString());
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         Path outputPerturbationFile = outPath.resolve(perturbationPath.getFileName());

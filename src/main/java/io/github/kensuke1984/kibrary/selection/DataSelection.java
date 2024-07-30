@@ -23,6 +23,7 @@ import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.correction.StaticCorrectionData;
 import io.github.kensuke1984.kibrary.correction.StaticCorrectionDataFile;
+import io.github.kensuke1984.kibrary.math.LinearRange;
 import io.github.kensuke1984.kibrary.math.Trace;
 import io.github.kensuke1984.kibrary.timewindow.Timewindow;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
@@ -61,14 +62,13 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  * Timewindows with no phases will be written in standard output.
  *
  * @author Kensuke Konishi
- * @version 0.1.2.1
- * @author anselme add additional selection critera
+ * @since version 0.1.2.1
  */
 public class DataSelection extends Operation {
 
     private final Property property;
     /**
-     * Path of the work folder
+     * Path of the work folder.
      */
     private Path workPath;
     /**
@@ -76,28 +76,32 @@ public class DataSelection extends Operation {
      */
     private String fileTag;
     /**
-     * Path of the output information file
+     * Whether to append date string at end of output file names.
+     */
+    private boolean appendFileDate;
+    /**
+     * Path of the output information file.
      */
     private Path outputFeaturePath;
     /**
-     * Path of the output timewindow file
+     * Path of the output timewindow file.
      */
     private Path outputSelectedPath;
     /**
-     * components for computation
+     * Components to use.
      */
     private Set<SACComponent> components;
     /**
-     * sampling Hz [Hz] in sac files
+     * Sampling Hz [Hz] in sac files.
      */
     private double sacSamplingHz;
 
     /**
-     * the directory of observed data
+     * Folder containing observed data.
      */
     private Path obsPath;
     /**
-     * the directory of synthetic data
+     * Folder containing synthetic data.
      */
     private Path synPath;
     /**
@@ -105,41 +109,30 @@ public class DataSelection extends Operation {
      */
     private boolean convolved;
     /**
-     * Path of the input timewindow file
+     * Path of the input timewindow file.
      */
     private Path timewindowPath;
     private Path staticCorrectionPath;
 
     /**
-     * Maximum of static correction shift
+     * Maximum of static correction shift.
      */
     private double maxStaticShift;
+
     /**
-     * Minimum correlation coefficient
+     * Correlation coefficient range.
      */
-    private double minCorrelation;
+    private LinearRange correlationRange;
     /**
-     * Maximum correlation coefficient
+     * Normalized variance range.
      */
-    private double maxCorrelation;
+    private LinearRange varianceRange;
     /**
-     * Minimum normalized variance
+     * Amplitude ratio range.
      */
-    private double minVariance;
+    private LinearRange ratioRange;
     /**
-     * Maximum normalized variance
-     */
-    private double maxVariance;
-    /**
-     * Minimum amplitude ratio
-     */
-    private double minRatio;
-    /**
-     * Maximum of amplitude ratio
-     */
-    private double maxRatio;
-    /**
-     * Threshold of S/N ratio that is selected
+     * Threshold of S/N ratio that is to be selected.
      */
     private double minSNratio;
     private boolean requirePhase;
@@ -165,43 +158,45 @@ public class DataSelection extends Operation {
         Path outPath = Property.generatePath(thisClass);
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
             pw.println("manhattan " + thisClass.getSimpleName());
-            pw.println("##Path of a working folder (.)");
+            pw.println("##Path of work folder. (.)");
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output file names. If no tag is needed, leave this unset.");
             pw.println("#fileTag ");
-            pw.println("##Sac components to be used, listed using spaces (Z R T)");
+            pw.println("##(boolean) Whether to append date string at end of output file names. (true)");
+            pw.println("#appendFileDate false");
+            pw.println("##Sac components to be used, listed using spaces. (Z R T)");
             pw.println("#components ");
-            pw.println("##(double) sacSamplingHz (20)");
+            pw.println("##(double) SAC sampling frequency [Hz]. (20)");
             pw.println("#sacSamplingHz cant change now");
-            pw.println("##Path of a root folder containing observed dataset (.)");
+            pw.println("##Path of a root folder containing observed dataset. (.)");
             pw.println("#obsPath ");
-            pw.println("##Path of a root folder containing synthetic dataset (.)");
+            pw.println("##Path of a root folder containing synthetic dataset. (.)");
             pw.println("#synPath ");
-            pw.println("##(boolean) Whether the synthetics have already been convolved (true)");
+            pw.println("##(boolean) Whether the synthetics have already been convolved. (true)");
             pw.println("#convolved ");
-            pw.println("##Path of a timewindow file, must be defined");
+            pw.println("##Path of a timewindow file, must be set.");
             pw.println("#timewindowPath timewindow.dat");
-            pw.println("##Path of a static correction file, if static correction time-shift shall be applied");
+            pw.println("##Path of a static correction file, if static correction time-shift shall be applied.");
             pw.println("#staticCorrectionPath staticCorrection.dat");
-            pw.println("##(double) Threshold of static correction time shift (10.)");
+            pw.println("##(double) Threshold of static correction time shift [s]. (10.)");
             pw.println("#maxStaticShift ");
-            pw.println("##(double) Lower threshold of correlation [-1:maxCorrelation] (0)");
+            pw.println("##(double) Lower threshold of correlation, inclusive; [-1:maxCorrelation). (0)");
             pw.println("#minCorrelation ");
-            pw.println("##(double) Upper threshold of correlation [minCorrelation:1] (1)");
+            pw.println("##(double) Upper threshold of correlation, exclusive; (minCorrelation:1]. (1)");
             pw.println("#maxCorrelation ");
-            pw.println("##(double) Lower threshold of normalized variance [0:maxVariance] (0)");
+            pw.println("##(double) Lower threshold of normalized variance, inclusive; [0:maxVariance). (0)");
             pw.println("#minVariance ");
-            pw.println("##(double) Upper threshold of normalized variance [minVariance:) (2)");
+            pw.println("##(double) Upper threshold of normalized variance, exclusive; (minVariance:). (2)");
             pw.println("#maxVariance ");
-            pw.println("##(double) Lower threshold of amplitude ratio [0:maxRatio] (0.5)");
+            pw.println("##(double) Lower threshold of amplitude ratio, inclusive; [0:maxRatio). (0.5)");
             pw.println("#minRatio ");
-            pw.println("##(double) Upper threshold of amplitude ratio [minRatio:) (2)");
+            pw.println("##(double) Upper threshold of amplitude ratio, exclusive; (minRatio:). (2)");
             pw.println("#maxRatio ");
-            pw.println("##(double) Threshold of S/N ratio (lower limit) [0:) (0)");
+            pw.println("##(double) Threshold of S/N ratio (lower limit), inclusive; [0:). (0)");
             pw.println("#minSNratio ");
-            pw.println("##(boolean) Whether to require phases to be included in timewindow (true)");
+            pw.println("##(boolean) Whether to require phases to be included in timewindow. (true)");
             pw.println("#requirePhase ");
-            pw.println("##(boolean) Whether to exclude surface wave (false)");
+            pw.println("##(boolean) Whether to exclude surface wave. (false)");
             pw.println("#excludeSurfaceWave ");
         }
         System.err.println(outPath + " is created.");
@@ -215,6 +210,7 @@ public class DataSelection extends Operation {
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
         if (property.containsKey("fileTag")) fileTag = property.parseStringSingle("fileTag", null);
+        appendFileDate = property.parseBoolean("appendFileDate", "true");
         components = Arrays.stream(property.parseStringArray("components", "Z R T"))
                 .map(SACComponent::valueOf).collect(Collectors.toSet());
         sacSamplingHz = 20; // TODO property.parseDouble("sacSamplingHz", "20");
@@ -230,18 +226,15 @@ public class DataSelection extends Operation {
         maxStaticShift = property.parseDouble("maxStaticShift", "10.");
         if (maxStaticShift < 0)
             throw new IllegalArgumentException("Static shift threshold " + maxStaticShift + " is invalid, must be >= 0.");
-        minCorrelation = property.parseDouble("minCorrelation", "0");
-        maxCorrelation = property.parseDouble("maxCorrelation", "1");
-        if (minCorrelation < -1 || minCorrelation > maxCorrelation || 1 < maxCorrelation)
-            throw new IllegalArgumentException("Correlation range " + minCorrelation + " , " + maxCorrelation + " is invalid.");
-        minVariance = property.parseDouble("minVariance", "0");
-        maxVariance = property.parseDouble("maxVariance", "2");
-        if (minVariance < 0 || minVariance > maxVariance)
-            throw new IllegalArgumentException("Normalized variance range " + minVariance + " , " + maxVariance + " is invalid.");
-        minRatio = property.parseDouble("minRatio", "0.5");
-        maxRatio = property.parseDouble("maxRatio", "2");
-        if (minRatio < 0 || minRatio > maxRatio)
-            throw new IllegalArgumentException("Amplitude ratio range " + minRatio + " , " + maxRatio + " is invalid.");
+        double minCorrelation = property.parseDouble("minCorrelation", "0");
+        double maxCorrelation = property.parseDouble("maxCorrelation", "1");
+        correlationRange = new LinearRange("Correlation", minCorrelation, maxCorrelation, -1.0, 1.0);
+        double minVariance = property.parseDouble("minVariance", "0");
+        double maxVariance = property.parseDouble("maxVariance", "2");
+        varianceRange = new LinearRange("Variance", minVariance, maxVariance, 0.0);
+        double minRatio = property.parseDouble("minRatio", "0.5");
+        double maxRatio = property.parseDouble("maxRatio", "2");
+        ratioRange = new LinearRange("Ratio", minRatio, maxRatio, 0.0);
         minSNratio = property.parseDouble("minSNratio", "0");
         if (minSNratio < 0)
             throw new IllegalArgumentException("S/N ratio threshold " + minSNratio + " is invalid, must be >= 0.");
@@ -249,8 +242,8 @@ public class DataSelection extends Operation {
         excludeSurfaceWave = property.parseBoolean("excludeSurfaceWave", "false");
 
         String dateStr = GadgetAid.getTemporaryString();
-        outputFeaturePath = workPath.resolve(DatasetAid.generateOutputFileName("dataFeature", fileTag, dateStr, ".lst"));
-        outputSelectedPath = workPath.resolve(DatasetAid.generateOutputFileName("selectedTimewindow", fileTag, dateStr, ".dat"));
+        outputFeaturePath = DatasetAid.generateOutputFilePath(workPath, "dataFeature", fileTag, appendFileDate, dateStr, ".lst");
+        outputSelectedPath = DatasetAid.generateOutputFilePath(workPath, "selectedTimewindow", fileTag, appendFileDate, dateStr, ".dat");
         dataFeatureSet = Collections.synchronizedSet(new HashSet<>());
         goodTimewindowSet = Collections.synchronizedSet(new HashSet<>());
     }
@@ -279,8 +272,8 @@ public class DataSelection extends Operation {
         System.err.println();
 
         System.err.println(MathAid.switchSingularPlural(goodTimewindowSet.size(), "timewindow is", "timewindows are") + " selected.");
-        TimewindowDataFile.write(goodTimewindowSet, outputSelectedPath);
-        DataFeatureListFile.write(dataFeatureSet, outputFeaturePath);
+        if (goodTimewindowSet.size() > 0) TimewindowDataFile.write(goodTimewindowSet, outputSelectedPath);
+        if (dataFeatureSet.size() > 0) DataFeatureListFile.write(dataFeatureSet, outputFeaturePath);
     }
 
     /**
@@ -308,14 +301,12 @@ public class DataSelection extends Operation {
         double posSideRatio = feature.getNegSideRatio();
         double negSideRatio = feature.getPosSideRatio();
         double absRatio = feature.getAbsRatio();
-        double cor = feature.getCorrelation();
-        double var = feature.getVariance();
-        double sn = feature.getSNRatio();
+        double correlation = feature.getCorrelation();
+        double variance = feature.getVariance();
+        double snRatio = feature.getSNRatio();
 
-        boolean isok = (minRatio <= posSideRatio && posSideRatio <= maxRatio)
-                && (minRatio <= negSideRatio && negSideRatio <= maxRatio)
-                && (minRatio <= absRatio && absRatio <= maxRatio) && (minCorrelation <= cor &&  cor <= maxCorrelation)
-                && (minVariance <= var && var <= maxVariance) && (minSNratio <= sn);
+        boolean isok = ratioRange.check(posSideRatio) && ratioRange.check(negSideRatio) && ratioRange.check(absRatio) &&
+                correlationRange.check(correlation) && varianceRange.check(variance) && (minSNratio <= snRatio);
         return isok;
     }
 

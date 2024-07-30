@@ -9,12 +9,12 @@ import io.github.kensuke1984.kibrary.filter.HighPassFilter;
 import io.github.kensuke1984.kibrary.filter.LowPassFilter;
 
 /**
- * SAC file<br>
- * (SAC: Seismic analysis code)<br>
+ * SAC file (SAC: Seismic analysis code). Binary format.
+ * <p>
  * This class is <b>immutable</b>
  *
  * @author Kensuke Konishi
- * @version 1.0.0.1
+ * @since version 1.0.0.1
  * @see <a href=http://ds.iris.edu/ds/nodes/dmc/forms/sac/>SAC</a>
  */
 class SACFile extends SACHeader implements SACFileAccess {
@@ -46,20 +46,20 @@ class SACFile extends SACHeader implements SACFileAccess {
             BandPassFilter bp = (BandPassFilter) filter;
             double periodMax = 2.0 * Math.PI * sd.getValue(SACHeaderEnum.DELTA) / bp.getOmegaL();
             double periodMin = 2.0 * Math.PI * sd.getValue(SACHeaderEnum.DELTA) / bp.getOmegaH();
-            sd = sd.setValue(SACHeaderEnum.USER0, periodMin).setValue(SACHeaderEnum.USER1, periodMax);
+            sd = sd.withValue(SACHeaderEnum.USER0, periodMin).withValue(SACHeaderEnum.USER1, periodMax);
         } else if (filter instanceof LowPassFilter) {
             LowPassFilter lp = (LowPassFilter) filter;
             double periodMin = 2.0 * Math.PI * getValue(SACHeaderEnum.DELTA) / lp.getOmegaP();
-            sd = sd.setValue(SACHeaderEnum.USER0, periodMin);
+            sd = sd.withValue(SACHeaderEnum.USER0, periodMin);
         } else if (filter instanceof HighPassFilter) {
             HighPassFilter hp = (HighPassFilter) filter;
             double periodMax = 2.0 * Math.PI * getValue(SACHeaderEnum.DELTA) / hp.getOmegaP();
-            sd = sd.setValue(SACHeaderEnum.USER1, periodMax);
+            sd = sd.withValue(SACHeaderEnum.USER1, periodMax);
         } else if (filter instanceof BandStopFilter) {
             BandStopFilter bsf = (BandStopFilter) filter;
             double periodMin = 2 * Math.PI * getValue(SACHeaderEnum.DELTA) / bsf.getOmegaL();
             double periodMax = 2 * Math.PI * getValue(SACHeaderEnum.DELTA) / bsf.getOmegaH();
-            sd = sd.setValue(SACHeaderEnum.USER0, periodMax).setValue(SACHeaderEnum.USER1, periodMin);
+            sd = sd.withValue(SACHeaderEnum.USER0, periodMax).withValue(SACHeaderEnum.USER1, periodMin);
         }
         double[] sacdata = filter.applyFilter(waveData.clone());
         sd = sd.setSACData(sacdata);
@@ -104,30 +104,28 @@ class SACFile extends SACHeader implements SACFileAccess {
     }
 
     @Override
-    public SACFile setValue(SACHeaderEnum sacHeaderEnum, double value) {
-        return (SACFile) super.setValue(sacHeaderEnum, value);
+    public SACFile withBoolean(SACHeaderEnum sacHeaderEnum, boolean bool) {
+        return (SACFile) super.withBoolean(sacHeaderEnum, bool);
     }
 
     @Override
-    public SACFile setBoolean(SACHeaderEnum sacHeaderEnum, boolean bool) {
-        return (SACFile) super.setBoolean(sacHeaderEnum, bool);
-    }
-
-
-    @Override
-    public SACFile setInt(SACHeaderEnum sacHeaderEnum, int value) {
-        return (SACFile) super.setInt(sacHeaderEnum, value);
-    }
-
-
-    @Override
-    public SACFile setSACEnumerated(SACHeaderEnum sacHeaderEnum, int value) {
-        return (SACFile) super.setSACEnumerated(sacHeaderEnum, value);
+    public SACFile withInt(SACHeaderEnum sacHeaderEnum, int value) {
+        return (SACFile) super.withInt(sacHeaderEnum, value);
     }
 
     @Override
-    public SACFile setSACString(SACHeaderEnum sacHeaderEnum, String string) {
-        return (SACFile) super.setSACString(sacHeaderEnum, string);
+    public SACFile withSACEnumerated(SACHeaderEnum sacHeaderEnum, int value) {
+        return (SACFile) super.withSACEnumerated(sacHeaderEnum, value);
+    }
+
+    @Override
+    public SACFile withValue(SACHeaderEnum sacHeaderEnum, double value) {
+        return (SACFile) super.withValue(sacHeaderEnum, value);
+    }
+
+    @Override
+    public SACFile withSACString(SACHeaderEnum sacHeaderEnum, String string) {
+        return (SACFile) super.withSACString(sacHeaderEnum, string);
     }
 
     @Override

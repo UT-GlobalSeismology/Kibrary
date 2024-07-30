@@ -185,12 +185,12 @@ public class MantleCorrection {
     private void setOutput() {
         switch (phaseName) {
         case "ScS":
-            bouncepointPath = Paths.get(DatasetAid.generateOutputFileName("bouncepoint_ScS", threeDmodel, GadgetAid.getTemporaryString(), ".lst"));
-            outPath = Paths.get(DatasetAid.generateOutputFileName("mantleCorrection_S-ScS", threeDmodel, GadgetAid.getTemporaryString(), ".dat"));
+            bouncepointPath = DatasetAid.generateOutputFilePath(Paths.get(""), "bouncepoint_ScS", threeDmodel, true, GadgetAid.getTemporaryString(), ".lst");
+            outPath = DatasetAid.generateOutputFilePath(Paths.get(""), "mantleCorrection_S-ScS", threeDmodel, true, GadgetAid.getTemporaryString(), ".dat");
             break;
         case "PcP":
-            bouncepointPath = Paths.get(DatasetAid.generateOutputFileName("bouncepoint_PcP", threeDmodel, GadgetAid.getTemporaryString(), ".lst"));
-            outPath = Paths.get(DatasetAid.generateOutputFileName("mantleCorrection_P-PcP", threeDmodel, GadgetAid.getTemporaryString(), ".dat"));
+            bouncepointPath = DatasetAid.generateOutputFilePath(Paths.get(""), "bouncepoint_PcP", threeDmodel, true, GadgetAid.getTemporaryString(), ".lst");
+            outPath = DatasetAid.generateOutputFilePath(Paths.get(""), "mantleCorrection_P-PcP", threeDmodel, true, GadgetAid.getTemporaryString(), ".dat");
             break;
         default:
             throw new RuntimeException("Error: phase " + phaseName + " not implemented yet");

@@ -39,36 +39,40 @@ public class ModelMapper extends Operation {
 
     private final Property property;
     /**
-     * Path of the work folder
+     * Path of the work folder.
      */
     private Path workPath;
     /**
      * A tag to include in output folder name. When this is empty, no tag is used.
      */
     private String folderTag;
+    /**
+     * Whether to append date string at end of output folder name.
+     */
+    private boolean appendFolderDate;
 
     /**
-     * Path of model file
+     * Path of model file.
      */
     private Path modelPath;
     /**
-     * file of 1D structure used in inversion
+     * File of 1D structure used in inversion.
      */
     private Path initialStructurePath;
     /**
-     * name of 1D structure used in inversion
+     * Name of 1D structure used in inversion.
      */
     private String initialStructureName;
     /**
-     * file of 1D structure to map perturbations against
+     * File of 1D structure to map perturbations against.
      */
     private Path referenceStructurePath;
     /**
-     * name of 1D structure to map perturbations against
+     * Name of 1D structure to map perturbations against.
      */
     private String referenceStructureName;
     /**
-     * Path of a {@link FusionInformationFile}
+     * Path of a {@link FusionInformationFile}.
      */
     private Path fusionPath;
     private Set<VariableType> variableTypes;
@@ -79,6 +83,9 @@ public class ModelMapper extends Operation {
      */
     private int[] displayLayers;
     private int nPanelsPerRow;
+    /**
+     * Map region in the form lonMin/lonMax/latMin/latMax, when it is set manually.
+     */
     private String mapRegion;
     private double marginLatitudeRaw;
     private boolean setMarginLatitudeByKm;
@@ -86,7 +93,7 @@ public class ModelMapper extends Operation {
     private boolean setMarginLongitudeByKm;
     private double scale;
     /**
-     * Whether to display map as mosaic without smoothing
+     * Whether to display map as mosaic without smoothing.
      */
     private boolean mosaic;
 
@@ -105,46 +112,48 @@ public class ModelMapper extends Operation {
         Path outPath = Property.generatePath(thisClass);
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
             pw.println("manhattan " + thisClass.getSimpleName());
-            pw.println("##Path of a work folder (.)");
+            pw.println("##Path of work folder. (.)");
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this blank.");
             pw.println("#folderTag ");
+            pw.println("##(boolean) Whether to append date string at end of output folder name. (true)");
+            pw.println("#appendFolderDate false");
             pw.println("##Path of model file, must be set.");
             pw.println("#modelPath model.lst");
             pw.println("##Path of an initial structure file used in inversion. If this is unset, the following initialStructureName will be referenced.");
             pw.println("#initialStructurePath ");
-            pw.println("##Name of an initial structure model used in inversion (PREM)");
+            pw.println("##Name of an initial structure model used in inversion. (PREM)");
             pw.println("#initialStructureName ");
             pw.println("##Path of a structure file to map perturbations against. If this is unset, the following referenceStructureName will be referenced.");
             pw.println("#referenceStructurePath ");
-            pw.println("##Name of a structure model to map perturbations against (PREM)");
+            pw.println("##Name of a structure model to map perturbations against. (PREM)");
             pw.println("#referenceStructureName ");
-            pw.println("##Path of a fusion information file, if adaptive grid inversion is conducted");
+            pw.println("##Path of a fusion information file, if adaptive grid inversion is conducted.");
             pw.println("#fusionPath fusion.inf");
-            pw.println("##Variable types to map, listed using spaces (Vs)");
+            pw.println("##Variable types to map, listed using spaces. (Vs)");
             pw.println("#variableTypes ");
-            pw.println("##(double[]) The display values of each layer boundary, listed from the inside using spaces (0 50 100 150 200 250 300 350 400)");
+            pw.println("##(double[]) The display values of each layer boundary, listed from the inside using spaces. (0 50 100 150 200 250 300 350 400)");
             pw.println("#boundaries ");
-            pw.println("##(int[]) Indices of layers to display, listed from the inside using spaces, when specific layers are to be displayed");
+            pw.println("##(int[]) Indices of layers to display, listed from the inside using spaces, when specific layers are to be displayed.");
             pw.println("##  Layers are numbered 0, 1, 2, ... from the inside.");
             pw.println("#displayLayers ");
-            pw.println("##(int) Number of panels to display in each row (4)");
+            pw.println("##(int) Number of panels to display in each row. (4)");
             pw.println("#nPanelsPerRow ");
-            pw.println("##To specify the map region, set it in the form lonMin/lonMax/latMin/latMax, range lon:[-180,360] lat:[-90,90]");
+            pw.println("##To specify the map region, set it in the form lonMin/lonMax/latMin/latMax, range lon:[-180,360] lat:[-90,90].");
             pw.println("#mapRegion -180/180/-90/90");
             pw.println("##########The following should be set to half of dLatitude and dLongitude used to design voxels (or smaller).");
             pw.println("##(double) Latitude margin at both ends [km]. If this is unset, the following marginLatitudeDeg will be used.");
             pw.println("#marginLatitudeKm ");
-            pw.println("##(double) Latitude margin at both ends [deg] (2.5)");
+            pw.println("##(double) Latitude margin at both ends [deg]. (2.5)");
             pw.println("#marginLatitudeDeg ");
             pw.println("##(double) Longitude margin at both ends [km]. If this is unset, the following marginLongitudeDeg will be used.");
             pw.println("#marginLongitudeKm ");
-            pw.println("##(double) Longitude margin at both ends [deg] (2.5)");
+            pw.println("##(double) Longitude margin at both ends [deg]. (2.5)");
             pw.println("#marginLongitudeDeg ");
             pw.println("##########Parameters for perturbation values");
-            pw.println("##(double) Range of percent scale (3)");
+            pw.println("##(double) Range of percent scale. (3)");
             pw.println("#scale ");
-            pw.println("##(boolean) Whether to display map as mosaic without smoothing (false)");
+            pw.println("##(boolean) Whether to display map as mosaic without smoothing. (false)");
             pw.println("#mosaic ");
         }
         System.err.println(outPath + " is created.");
@@ -158,6 +167,7 @@ public class ModelMapper extends Operation {
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
         if (property.containsKey("folderTag")) folderTag = property.parseStringSingle("folderTag", null);
+        appendFolderDate = property.parseBoolean("appendFolderDate", "true");
 
         modelPath = property.parsePath("modelPath", null, true, workPath);
         if (property.containsKey("initialStructurePath")) {
@@ -235,7 +245,7 @@ public class ModelMapper extends Operation {
         boolean crossDateLine = HorizontalPosition.crossesDateLine(positions);
         double gridInterval = PerturbationMapShellscript.decideGridSampling(positions);
 
-        Path outPath = DatasetAid.createOutputFolder(workPath, "modelMap", folderTag, GadgetAid.getTemporaryString());
+        Path outPath = DatasetAid.createOutputFolder(workPath, "modelMap", folderTag, appendFolderDate, GadgetAid.getTemporaryString());
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         for (VariableType variable : variableTypes) {

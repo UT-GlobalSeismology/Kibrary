@@ -73,14 +73,13 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
  * the input binary-format file is output in ascii format in the standard output.
  *
  * @author Kensuke Konishi
- * @version 0.2.2
- * @author anselme add phase information
+ * @since version 0.2.2
  */
 public final class StaticCorrectionDataFile {
     private StaticCorrectionDataFile() {}
 
     /**
-     * The number of bytes for one time shift data
+     * Number of bytes used for one time shift data.
      */
     public static final int ONE_CORRECTION_BYTE = 37;
 
@@ -227,10 +226,12 @@ public final class StaticCorrectionDataFile {
         return new StaticCorrectionData(observer, id, comp, start, timeshift, amplitude, usablephases);
     }
 
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
     /**
-     * Shows all static corrections in a file
-     *
-     * @param args [static correction file name]
+     * Shows all static corrections in a file.
+     * @param args Options.
      * @throws IOException if an I/O error occurs
      */
     public static void main(String[] args) throws IOException {
@@ -255,7 +256,7 @@ public final class StaticCorrectionDataFile {
         options.addOption(Option.builder("n").longOpt("number")
                 .desc("Just count number without creating output files").build());
         options.addOption(Option.builder("o").longOpt("output").hasArg().argName("outputFile")
-                .desc("Set path of output file").build());
+                .desc("Specify path of output file. When not set, output is same as input with extension changed to '.txt'.").build());
         return options;
     }
 

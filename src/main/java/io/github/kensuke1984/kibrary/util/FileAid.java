@@ -113,9 +113,9 @@ public final class FileAid {
      * @throws IOException if any
      */
     public static Path download(URL url) throws IOException {
-        ReadableByteChannel rbc = Channels.newChannel(url.openStream());
         Path out = Files.createTempFile("dl", "tmp");
-        try (FileOutputStream fos = new FileOutputStream(out.toFile()); FileChannel fc = fos.getChannel()) {
+        try (ReadableByteChannel rbc = Channels.newChannel(url.openStream());
+                FileOutputStream fos = new FileOutputStream(out.toFile()); FileChannel fc = fos.getChannel()) {
             fc.transferFrom(rbc, 0, Long.MAX_VALUE);
         }
         return out;
@@ -143,8 +143,8 @@ public final class FileAid {
             frame.setLocationRelativeTo(null);
             frame.setVisible(true);
         }
-        try (FileOutputStream fos = new FileOutputStream(outPath.toFile());
-             BufferedInputStream bufferedInputStream = new BufferedInputStream(url.openStream())) {
+        try (BufferedInputStream bufferedInputStream = new BufferedInputStream(url.openStream());
+                FileOutputStream fos = new FileOutputStream(outPath.toFile())) {
             byte[] buf = new byte[8192];
             int x = 0;
             int downloaded = 0;
