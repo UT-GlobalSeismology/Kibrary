@@ -148,6 +148,7 @@ public class GnuplotFile {
 
             if (!keySettings.isEmpty()) {
                 pw.println("set key " + keySettings);
+                pw.println("#unset key");
             } else {
                 pw.println("unset key");
             }

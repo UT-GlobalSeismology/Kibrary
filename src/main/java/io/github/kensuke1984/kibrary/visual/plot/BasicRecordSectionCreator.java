@@ -463,9 +463,9 @@ public class BasicRecordSectionCreator extends Operation {
             Path plotPath = DatasetAid.generateOutputFilePath(eventPath, "recordSection", fileTag, true, dateString, "_" + component.toString() + ".plt");
 
             gnuplot = new GnuplotFile(plotPath);
-            gnuplot.setOutput("pdf", plotPath.getFileName().toString().replace(".plt", ".pdf"), 21, 29.7, true);
-            gnuplot.setMarginH(15, 25);
-            gnuplot.setMarginV(15, 15);
+            gnuplot.setOutput("png", plotPath.getFileName().toString().replace(".plt", ".png"), 480, 640, false);
+//            gnuplot.setMarginH(15, 25);
+//            gnuplot.setMarginV(15, 15);
             gnuplot.setFont("Arial", 20, 15, 15, 15, 10);
             gnuplot.setCommonKey(true, false, "top right");
 

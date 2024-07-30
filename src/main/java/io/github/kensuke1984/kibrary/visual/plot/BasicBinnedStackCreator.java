@@ -521,9 +521,9 @@ public class BasicBinnedStackCreator extends Operation {
         private void binStackPlotSetup() {
             gnuplot = new GnuplotFile(eventPath.resolve(fileNameRoot + ".plt"));
 
-            gnuplot.setOutput("pdf", fileNameRoot + ".pdf", 21, 29.7, true);
-            gnuplot.setMarginH(15, 10);
-            gnuplot.setMarginV(15, 15);
+            gnuplot.setOutput("png", fileNameRoot + ".png", 480, 640, false);
+//            gnuplot.setMarginH(15, 10);
+//            gnuplot.setMarginV(15, 15);
             gnuplot.setFont("Arial", 20, 15, 15, 15, 10);
             gnuplot.setCommonKey(true, false, "top right");
 

@@ -27,6 +27,7 @@ import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.data.DataEntry;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
+import io.github.kensuke1984.kibrary.util.sac.WaveformType;
 import io.github.kensuke1984.kibrary.waveform.BasicID;
 
 /**
@@ -52,7 +53,7 @@ public class WeightingHandler {
      */
     private static final int MAX_INPUT = 5;
 
-    private boolean amplitudeReciprocal;
+    private WaveformType reciprocalType;
     private SACComponent standardComponent;
     private boolean balanceComponent;
     private double factorForZComponent;
@@ -106,8 +107,8 @@ public class WeightingHandler {
 
     private static void writeDefaultPropertiesFile(Path outPath) throws IOException {
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
-            pw.println("##(boolean) Whether to multiply reciprocal of amplitude. (false)");
-            pw.println("#amplitudeReciprocal true");
+            pw.println("##Type of waveform, from {OBS,SYN}, when to multiply reciprocal of its amplitude.");
+            pw.println("#reciprocalType OBS");
             pw.println("##Use amplitude of a specific component when multiplying reciprocal, from {Z, R, T}.");
             pw.println("#standardComponent ");
             pw.println("##(boolean) Whether to weigh the number of timewindows of each component. (false)");
@@ -144,9 +145,9 @@ public class WeightingHandler {
         set(property, parentPath);
 
         System.err.print("Weighting: ");
-        if (amplitudeReciprocal) {
-            if (standardComponent != null) System.err.print("reciprocal_" + standardComponent + ", ");
-            else System.err.print("reciprocal, ");
+        if (reciprocalType != null) {
+            if (standardComponent != null) System.err.print("reciprocal_" + reciprocalType + "_" + standardComponent + ", ");
+            else System.err.print("reciprocal_" + reciprocalType + ", ");
         }
         if (balanceComponent) System.err.print("balanceComponent, ");
         System.err.print("factorZ=" + factorForZComponent + ", ");
@@ -167,9 +168,13 @@ public class WeightingHandler {
     }
 
     private void set(Property property, Path parentPath) throws IOException {
-        amplitudeReciprocal = property.parseBoolean("amplitudeReciprocal", "false");
+        if (property.containsKey("reciprocalType"))
+            reciprocalType = WaveformType.valueOf(property.parseString("reciprocalType", null));
+        else if (property.parseBoolean("amplitudeReciprocal", "false") == true)     // TODO delete (this is temporarily here for backward compatibility)
+            reciprocalType = WaveformType.OBS;                                      // TODO delete (this is temporarily here for backward compatibility)
         if (property.containsKey("standardComponent"))
             standardComponent = SACComponent.valueOf(property.parseString("standardComponent", null));
+
         balanceComponent = property.parseBoolean("balanceComponent", "false");
         factorForZComponent = property.parseDouble("factorForZComponent", "1.0");
         factorForRComponent = property.parseDouble("factorForRComponent", "1.0");
@@ -212,7 +217,8 @@ public class WeightingHandler {
 
             // multiply reciprocal of amplitude
             // Square root is not taken for this because partial derivatives in A^T should also be weighted.
-            if (amplitudeReciprocal) weighting /= findAmplitude(dVector, i, standardComponent);
+            if (reciprocalType == WaveformType.OBS) weighting /= findObsAmplitude(dVector, i, standardComponent);
+            else if (reciprocalType == WaveformType.SYN) weighting /= findSynAmplitude(dVector, i, standardComponent);
 
             // balance component and multiply factor for each component
             // Take square root because weighting matrix W will be multiplied twice, as tAWWAm=tAWWd
@@ -255,7 +261,7 @@ public class WeightingHandler {
         return weightingVectors;
     }
 
-    private double findAmplitude(DVectorBuilder dVector, int i, SACComponent standardComponent) {
+    private double findObsAmplitude(DVectorBuilder dVector, int i, SACComponent standardComponent) {
         BasicID obsID = dVector.getObsID(i);
         if (standardComponent == null || obsID.getSacComponent().equals(standardComponent)) {
             return dVector.getObsVec(i).getLInfNorm();
@@ -267,6 +273,21 @@ public class WeightingHandler {
                 }
             }
             throw new IllegalStateException("Pair basicID not found for: " + obsID.toDataEntry());
+        }
+    }
+
+    private double findSynAmplitude(DVectorBuilder dVector, int i, SACComponent standardComponent) {
+        BasicID synID = dVector.getSynID(i);
+        if (standardComponent == null || synID.getSacComponent().equals(standardComponent)) {
+            return dVector.getSynVec(i).getLInfNorm();
+        } else {
+            DataEntry standardEntry = new DataEntry(synID.getGlobalCMTID(), synID.getObserver(), standardComponent);
+            for (int j = 0; j < dVector.getNTimeWindow(); j++) {
+                if (dVector.getSynID(j).toDataEntry().equals(standardEntry)) {
+                    return dVector.getSynVec(j).getLInfNorm();
+                }
+            }
+            throw new IllegalStateException("Pair basicID not found for: " + synID.toDataEntry());
         }
     }
 
