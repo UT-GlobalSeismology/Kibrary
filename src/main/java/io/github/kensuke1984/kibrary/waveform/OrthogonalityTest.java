@@ -55,22 +55,10 @@ public class OrthogonalityTest extends Operation {
      */
     private boolean appendFolderDate;
     /**
-     * Path of the output folder.
-     */
-    private Path outPath;
-    /**
      * Components to use.
      */
     private Set<SACComponent> components;
 
-    /**
-     * Partial waveform folder for the target region.
-     */
-    private Path mainPartialPath;
-    /**
-     * Unknown parameter file for the target region.
-     */
-    private Path mainUnknownsPath;
     /**
      * Partial waveform folder created for this test.
      */
@@ -79,6 +67,14 @@ public class OrthogonalityTest extends Operation {
      * Unknown parameter file created for this test.
      */
     private Path testUnknownsPath;
+    /**
+     * Partial waveform folder for the target region.
+     */
+    private Path mainPartialPath;
+    /**
+     * Unknown parameter file for the target region.
+     */
+    private Path mainUnknownsPath;
     /**
      * Basic waveform folder.
      * This is used to align the two sets of partial waveforms in the same order and to compute the weightings.
@@ -112,16 +108,16 @@ public class OrthogonalityTest extends Operation {
             pw.println("#appendFolderDate false");
             pw.println("##SacComponents to be used, listed using spaces. (Z R T)");
             pw.println("#components ");
-            pw.println("##########Information for voxels in the target region.");
-            pw.println("##Path of a partial waveform folder for the target region, must be set.");
-            pw.println("#mainPartialPath partial");
-            pw.println("##Path of an unknown parameter list file　for the target region, must be set.");
-            pw.println("#mainUnknownsPath unknowns.lst");
             pw.println("##########Information for the test voxels.");
             pw.println("##Path of a partial waveform folder created for this test, must be set.");
             pw.println("#testPartialPath partial");
             pw.println("##Path of an unknown parameter list file　created for this test, must be set.");
             pw.println("#testUnknownsPath unknowns.lst");
+            pw.println("##########Information for voxels in the target region.");
+            pw.println("##Path of a partial waveform folder for the target region, must be set.");
+            pw.println("#mainPartialPath partial");
+            pw.println("##Path of an unknown parameter list file　for the target region, must be set.");
+            pw.println("#mainUnknownsPath unknowns.lst");
             pw.println("##########Information of event-observer pairs.");
             pw.println("##Path of a basic waveform folder, must be set.");
             pw.println("#basicPath actual");
@@ -147,10 +143,10 @@ public class OrthogonalityTest extends Operation {
         components = Arrays.stream(property.parseStringArray("components", "Z R T"))
                 .map(SACComponent::valueOf).collect(Collectors.toSet());
 
-        mainPartialPath = property.parsePath("mainPartialPath", null, true, workPath);
-        mainUnknownsPath = property.parsePath("mainUnknownsPath", null, true, workPath);
         testPartialPath = property.parsePath("testPartialPath", null, true, workPath);
         testUnknownsPath = property.parsePath("testUnknownsPath", null, true, workPath);
+        mainPartialPath = property.parsePath("mainPartialPath", null, true, workPath);
+        mainUnknownsPath = property.parsePath("mainUnknownsPath", null, true, workPath);
 
         basicPath = property.parsePath("basicPath", null, true, workPath);
         weightingPropertiesPath = property.parsePath("weightingPropertiesPath", null, true, workPath);
@@ -158,166 +154,189 @@ public class OrthogonalityTest extends Operation {
         specificObserverName = property.parseString("specificObserverName", null);
     }
 
-   @Override
-   public void run() throws IOException {
-       List<UnknownParameter> mainUnknowns = UnknownParameterFile.read(mainUnknownsPath);
-       List<UnknownParameter> testUnknowns = UnknownParameterFile.read(testUnknownsPath);
+    @Override
+    public void run() throws IOException {
+        List<UnknownParameter> testUnknowns = UnknownParameterFile.read(testUnknownsPath);
+        List<UnknownParameter> mainUnknowns = UnknownParameterFile.read(mainUnknownsPath);
 
-       List<BasicID> basicIDs = BasicIDFile.read(basicPath, true);
-       basicIDs = basicIDs.stream().filter(id -> components.contains(id.getSacComponent())).collect(Collectors.toList());
-       long nSpecificObserver = basicIDs.stream().map(BasicID::getObserver)
-               .filter(observer -> observer.toString().equals(specificObserverName)).distinct().count();
-       if (nSpecificObserver == 0) {
-           System.err.println("CAUTION: observer with name " + specificObserverName + " does not exist!");
-       } else if (nSpecificObserver > 1) {
-           System.err.println("CAUTION: more than 1 observer with the name " + specificObserverName + "!");
-       }
+        List<BasicID> basicIDs = BasicIDFile.read(basicPath, true);
+        basicIDs = basicIDs.stream().filter(id -> components.contains(id.getSacComponent())).collect(Collectors.toList());
+        long nSpecificObserver = basicIDs.stream().map(BasicID::getObserver)
+                .filter(observer -> observer.toString().equals(specificObserverName)).distinct().count();
+        if (nSpecificObserver == 0) {
+            System.err.println("CAUTION: observer with name " + specificObserverName + " does not exist!");
+        } else if (nSpecificObserver > 1) {
+            System.err.println("CAUTION: more than 1 observer with the name " + specificObserverName + "!");
+        }
 
-       List<PartialID> mainPartialIDs = PartialIDFile.read(mainPartialPath, true);
-       List<PartialID> testPartialIDs = PartialIDFile.read(testPartialPath, true);
+        List<PartialID> testPartialIDs = PartialIDFile.read(testPartialPath, true);
+        List<PartialID> mainPartialIDs = PartialIDFile.read(mainPartialPath, true);
 
-       weightingHandler = new WeightingHandler(weightingPropertiesPath);
+        weightingHandler = new WeightingHandler(weightingPropertiesPath);
 
-       double[][] correlations;
-       Path outputPath;
+        Path outPath = DatasetAid.createOutputFolder(workPath, "orthogonality", folderTag, appendFolderDate, null);
+        property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
-       outPath = DatasetAid.createOutputFolder(workPath, "orthogonality", folderTag, appendFolderDate, null);
-       property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
+        Path outPanelPath;
 
-       // one event to one observer
-       System.err.println("## One event to one observer ##");
-       List<BasicID> oneToOneBasicIDs = basicIDs.stream()
-               .filter(id -> id.getGlobalCMTID().equals(specificEvent) && id.getObserver().toString().equals(specificObserverName))
-               .collect(Collectors.toList());
-       correlations = computeCorrelations(mainPartialIDs, testPartialIDs, mainUnknowns, testUnknowns, oneToOneBasicIDs);
-       outputPath = outPath.resolve("oneToOne.txt");
-       outputCorrelations(correlations, outputPath);
+        // one event to one observer
+        System.err.println("## One event to one observer ##");
+        List<BasicID> oneToOneBasicIDs = basicIDs.stream()
+                .filter(id -> id.getGlobalCMTID().equals(specificEvent) && id.getObserver().toString().equals(specificObserverName))
+                .collect(Collectors.toList());
+        outPanelPath = outPath.resolve("oneToOne");
+        computeCorrelations(testPartialIDs, mainPartialIDs, testUnknowns, mainUnknowns, oneToOneBasicIDs, outPanelPath);
 
-       // one event to all observers
-       System.err.println("## One event to all observers ##");
-       List<BasicID> oneToAllBasicIDs = basicIDs.stream()
-               .filter(id -> id.getGlobalCMTID().equals(specificEvent))
-               .collect(Collectors.toList());
-       correlations = computeCorrelations(mainPartialIDs, testPartialIDs, mainUnknowns, testUnknowns, oneToAllBasicIDs);
-       outputPath = outPath.resolve("oneToAll.txt");
-       outputCorrelations(correlations, outputPath);
+        // one event to all observers
+        System.err.println("## One event to all observers ##");
+        List<BasicID> oneToAllBasicIDs = basicIDs.stream()
+                .filter(id -> id.getGlobalCMTID().equals(specificEvent))
+                .collect(Collectors.toList());
+        outPanelPath = outPath.resolve("oneToAll");
+        computeCorrelations(testPartialIDs, mainPartialIDs, testUnknowns, mainUnknowns, oneToAllBasicIDs, outPanelPath);
 
-       // one event to one observer
-       System.err.println("## All events to one observer ##");
-       List<BasicID> allToOneBasicIDs = basicIDs.stream()
-               .filter(id -> id.getObserver().toString().equals(specificObserverName))
-               .collect(Collectors.toList());
-       correlations = computeCorrelations(mainPartialIDs, testPartialIDs, mainUnknowns, testUnknowns, allToOneBasicIDs);
-       outputPath = outPath.resolve("allToOne.txt");
-       outputCorrelations(correlations, outputPath);
+        // one event to one observer
+        System.err.println("## All events to one observer ##");
+        List<BasicID> allToOneBasicIDs = basicIDs.stream()
+                .filter(id -> id.getObserver().toString().equals(specificObserverName))
+                .collect(Collectors.toList());
+        outPanelPath = outPath.resolve("allToOne");
+        computeCorrelations(testPartialIDs, mainPartialIDs, testUnknowns, mainUnknowns, allToOneBasicIDs, outPanelPath);
 
-       // all events to all observers
-       System.err.println("## All events to all observers ##");
-       correlations = computeCorrelations(mainPartialIDs, testPartialIDs, mainUnknowns, testUnknowns, basicIDs);
-       outputPath = outPath.resolve("allToAll.txt");
-       outputCorrelations(correlations, outputPath);
+        // all events to all observers
+        System.err.println("## All events to all observers ##");
+        outPanelPath = outPath.resolve("allToAll");
+        computeCorrelations(testPartialIDs, mainPartialIDs, testUnknowns, mainUnknowns, basicIDs, outPanelPath);
 
-       createPlot(mainUnknowns, testUnknowns);
-   }
+        createPlot(testUnknowns, mainUnknowns, specificEvent, specificObserverName, outPath);
+    }
 
-   private double[][] computeCorrelations(List<PartialID> mainPartialIDs, List<PartialID> testPartialIDs,
-           List<UnknownParameter> mainUnknowns, List<UnknownParameter> testUnknowns, List<BasicID> basicIDs) throws IOException {
+    private void computeCorrelations(List<PartialID> testPartialIDs, List<PartialID> mainPartialIDs,
+            List<UnknownParameter> testUnknowns, List<UnknownParameter> mainUnknowns, List<BasicID> basicIDs, Path outPanelPath) throws IOException {
+        // when no raypaths exist, skip without creating directory
+        if (basicIDs.size() == 0) {
+            System.err.println("! No raypaths found; skipping.");
+            return;
+        }
 
-       // set DVector
-       System.err.println("Setting data for d vector");
-       DVectorBuilder dVectorBuilder = new DVectorBuilder(basicIDs);
+        Files.createDirectories(outPanelPath);
 
-       // set weighting
-       System.err.println("Setting weighting");
-       RealVector[] weighting = weightingHandler.weightWaveforms(dVectorBuilder);
+        // set DVector
+        System.err.println("Setting data for d vector");
+        DVectorBuilder dVectorBuilder = new DVectorBuilder(basicIDs);
 
-       // set and assemble main A matrix
-       System.err.println("Assembling main A matrix");
-       AMatrixBuilder mainAMatrixBuilder = new AMatrixBuilder(mainUnknowns, dVectorBuilder);
-       ParallelizedMatrix mainA = mainAMatrixBuilder.buildWithWeight(mainPartialIDs, weighting, false);
+        // set weighting
+        System.err.println("Setting weighting");
+        RealVector[] weighting = weightingHandler.weightWaveforms(dVectorBuilder);
 
-       // set and assemble test A matrix
-       System.err.println("Assembling test A matrix");
-       AMatrixBuilder testAMatrixBuilder = new AMatrixBuilder(testUnknowns, dVectorBuilder);
-       ParallelizedMatrix testA = testAMatrixBuilder.buildWithWeight(testPartialIDs, weighting, false);
+        // set and assemble test A matrix
+        System.err.println("Assembling test A matrix");
+        AMatrixBuilder testAMatrixBuilder = new AMatrixBuilder(testUnknowns, dVectorBuilder);
+        ParallelizedMatrix testA = testAMatrixBuilder.buildWithWeight(testPartialIDs, weighting, false);
 
-       // compute correlations
-       double[][] correlations = new double[testUnknowns.size()][mainUnknowns.size()];
-       for (int i = 0; i < testUnknowns.size(); i++) {
-           RealVector testPartialVector = testA.getColumnVector(i);
-           for (int j = 0; j < mainUnknowns.size(); j++) {
-               RealVector mainPartialVector = mainA.getColumnVector(j);
+        // set and assemble main A matrix
+        System.err.println("Assembling main A matrix");
+        AMatrixBuilder mainAMatrixBuilder = new AMatrixBuilder(mainUnknowns, dVectorBuilder);
+        ParallelizedMatrix mainA = mainAMatrixBuilder.buildWithWeight(mainPartialIDs, weighting, false);
 
-               double correlation = mainPartialVector.dotProduct(testPartialVector) / mainPartialVector.getNorm() / testPartialVector.getNorm();
-               correlations[i][j] = correlation;
-           }
-       }
-       return correlations;
-   }
+        // compute norms and inner products, then correlations
+        double[] testPartialNorms = new double[testUnknowns.size()];
+        double[] mainPartialNorms = new double[mainUnknowns.size()];
+        double[][] innerProducts = new double[testUnknowns.size()][mainUnknowns.size()];
+        double[][] correlations = new double[testUnknowns.size()][mainUnknowns.size()];
+        for (int i = 0; i < testUnknowns.size(); i++) {
+            RealVector testPartialVector = testA.getColumnVector(i);
+            testPartialNorms[i] = testPartialVector.getNorm();
 
-   private void outputCorrelations(double[][] correlations, Path outputPath) throws IOException {
-       try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath))) {
-           for (int j = 0; j < correlations[0].length; j++) {
-               pw.print(j);
-               for (int i = 0; i < correlations.length; i++) {
-                   pw.print(" " + correlations[i][j]);
-               }
-               pw.println();
-           }
-       }
-   }
+            for (int j = 0; j < mainUnknowns.size(); j++) {
+                RealVector mainPartialVector = mainA.getColumnVector(j);
+                if (i == 0) mainPartialNorms[j] = mainPartialVector.getNorm();
 
-   private void createPlot(List<UnknownParameter> mainUnknowns, List<UnknownParameter> testUnknowns) throws IOException {
-       GnuplotFile gnuplot = new GnuplotFile(outPath.resolve("orthogonality.plt"));
-       gnuplot.setOutput("png", "orthogonality.png", 1280, 960, false);
-       gnuplot.setFont("Arial", 20, 18, 18, 16, 18);
-       gnuplot.setNMultiplotColumn(2);
-       gnuplot.unsetCommonKey();
-       gnuplot.setCommonXlabel("voxel #");
-       gnuplot.setCommonYlabel("cosine");
-       gnuplot.setCommonXrange(0, mainUnknowns.size() - 1);
-       gnuplot.setCommonYrange(-1, 1);
+                innerProducts[i][j] = mainPartialVector.dotProduct(testPartialVector);
+                correlations[i][j] = innerProducts[i][j] / mainPartialNorms[j] / testPartialNorms[i];
+            }
+        }
 
-       int nAppearances = 8;
-       GnuplotLineAppearance appearances[] = new GnuplotLineAppearance[nAppearances];
-       appearances[0] = new GnuplotLineAppearance(1, GnuplotColorName.red, 1);
-       appearances[1] = new GnuplotLineAppearance(1, GnuplotColorName.gold, 1);
-       appearances[2] = new GnuplotLineAppearance(1, GnuplotColorName.forest_green, 1);
-       appearances[3] = new GnuplotLineAppearance(1, GnuplotColorName.cyan, 1);
-       appearances[4] = new GnuplotLineAppearance(1, GnuplotColorName.blue, 1);
-       appearances[5] = new GnuplotLineAppearance(1, GnuplotColorName.dark_violet, 1);
-       appearances[6] = new GnuplotLineAppearance(1, GnuplotColorName.magenta, 1);
-       appearances[7] = new GnuplotLineAppearance(1, GnuplotColorName.dark_gray, 1);
+        // output in files
+        outputVector(testPartialNorms, outPanelPath.resolve("testPartialNorms.lst"));
+        outputVector(mainPartialNorms, outPanelPath.resolve("mainPartialNorms.lst"));
+        outputMatrix(innerProducts, outPanelPath.resolve("innerProducts.lst"));
+        outputMatrix(correlations, outPanelPath.resolve("correlations.lst"));
+    }
 
-       for (int i = 0; i < testUnknowns.size(); i++) {
-           gnuplot.setTitle("1 event (" + specificEvent + ") and 1 station (" + specificObserverName.replace("_", "\\\\_") + ")");
-           gnuplot.addLine("oneToOne.txt", 1, i + 2, appearances[i % nAppearances],
-                   MathAid.simplestString(testUnknowns.get(i).getPosition().getDepth()) + " km");
-       }
-       gnuplot.nextField();
+    private static void outputVector(double[] vector, Path outputPath) throws IOException {
+        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath))) {
+            for (int i = 0; i < vector.length; i++) {
+                pw.println(vector[i]);
+            }
+        }
+    }
 
-       for (int i = 0; i < testUnknowns.size(); i++) {
-           gnuplot.setTitle("1 event (" + specificEvent + "), all stations");
-           gnuplot.addLine("oneToAll.txt", 1, i + 2, appearances[i % nAppearances],
-                   MathAid.simplestString(testUnknowns.get(i).getPosition().getDepth()) + " km");
-       }
-       gnuplot.nextField();
+    static void outputMatrix(double[][] matrix, Path outputPath) throws IOException {
+        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath))) {
+            for (int j = 0; j < matrix[0].length; j++) {
+                pw.print(j);
+                for (int i = 0; i < matrix.length; i++) {
+                    pw.print(" " + matrix[i][j]);
+                }
+                pw.println();
+            }
+        }
+    }
 
-       for (int i = 0; i < testUnknowns.size(); i++) {
-           gnuplot.setTitle("1 station (" + specificObserverName.replace("_", "\\\\_") + "), all events");
-           gnuplot.addLine("allToOne.txt", 1, i + 2, appearances[i % nAppearances],
-                   MathAid.simplestString(testUnknowns.get(i).getPosition().getDepth()) + " km");
-       }
-       gnuplot.nextField();
+    static void createPlot(List<UnknownParameter> testUnknowns, List<UnknownParameter> mainUnknowns,
+            GlobalCMTID specificEvent, String specificObserverName, Path outPath) throws IOException {
+        GnuplotFile gnuplot = new GnuplotFile(outPath.resolve("orthogonality.plt"));
+        gnuplot.setOutput("png", "orthogonality.png", 1280, 960, false);
+        gnuplot.setFont("Arial", 20, 18, 18, 16, 18);
+        gnuplot.setNMultiplotColumn(2);
+        gnuplot.unsetCommonKey();
+        gnuplot.setCommonXlabel("voxel #");
+        gnuplot.setCommonYlabel("cosine");
+        gnuplot.setCommonXrange(0, mainUnknowns.size() - 1);
+        gnuplot.setCommonYrange(-1, 1);
 
-       for (int i = 0; i < testUnknowns.size(); i++) {
-           gnuplot.setTitle("All events and all stations");
-           gnuplot.setKey(false, true, "top right");
-           gnuplot.addLine("allToAll.txt", 1, i + 2, appearances[i % nAppearances],
-                   MathAid.simplestString(testUnknowns.get(i).getPosition().getDepth()) + " km");
-       }
+        int nAppearances = 8;
+        GnuplotLineAppearance appearances[] = new GnuplotLineAppearance[nAppearances];
+        appearances[0] = new GnuplotLineAppearance(1, GnuplotColorName.red, 1);
+        appearances[1] = new GnuplotLineAppearance(1, GnuplotColorName.gold, 1);
+        appearances[2] = new GnuplotLineAppearance(1, GnuplotColorName.forest_green, 1);
+        appearances[3] = new GnuplotLineAppearance(1, GnuplotColorName.cyan, 1);
+        appearances[4] = new GnuplotLineAppearance(1, GnuplotColorName.blue, 1);
+        appearances[5] = new GnuplotLineAppearance(1, GnuplotColorName.dark_violet, 1);
+        appearances[6] = new GnuplotLineAppearance(1, GnuplotColorName.magenta, 1);
+        appearances[7] = new GnuplotLineAppearance(1, GnuplotColorName.dark_gray, 1);
 
-       gnuplot.write();
-       if (!gnuplot.execute()) System.err.println("gnuplot failed!!");
-   }
+        for (int i = 0; i < testUnknowns.size(); i++) {
+            gnuplot.setTitle("1 event (" + specificEvent + ") and 1 station (" + specificObserverName.replace("_", "\\\\_") + ")");
+            gnuplot.addLine("oneToOne/correlations.lst", 1, i + 2, appearances[i % nAppearances],
+                    MathAid.simplestString(testUnknowns.get(i).getPosition().getDepth()) + " km");
+        }
+        gnuplot.nextField();
+
+        for (int i = 0; i < testUnknowns.size(); i++) {
+            gnuplot.setTitle("1 event (" + specificEvent + "), all stations");
+            gnuplot.addLine("oneToAll/correlations.lst", 1, i + 2, appearances[i % nAppearances],
+                    MathAid.simplestString(testUnknowns.get(i).getPosition().getDepth()) + " km");
+        }
+        gnuplot.nextField();
+
+        for (int i = 0; i < testUnknowns.size(); i++) {
+            gnuplot.setTitle("1 station (" + specificObserverName.replace("_", "\\\\_") + "), all events");
+            gnuplot.addLine("allToOne/correlations.lst", 1, i + 2, appearances[i % nAppearances],
+                    MathAid.simplestString(testUnknowns.get(i).getPosition().getDepth()) + " km");
+        }
+        gnuplot.nextField();
+
+        for (int i = 0; i < testUnknowns.size(); i++) {
+            gnuplot.setTitle("All events and all stations");
+            gnuplot.setKey(false, true, "top right");
+            gnuplot.addLine("allToAll/correlations.lst", 1, i + 2, appearances[i % nAppearances],
+                    MathAid.simplestString(testUnknowns.get(i).getPosition().getDepth()) + " km");
+        }
+
+        gnuplot.write();
+        if (!gnuplot.execute()) System.err.println("gnuplot failed!!");
+    }
+
 }
