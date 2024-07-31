@@ -120,6 +120,41 @@ public final class DatasetAid {
     }
 
     /**
+     * Displays the number of some object read from an input file.
+     * @param num (int) Number of some object
+     * @param singular (String) Singular form of name of object
+     * @param plural (String) Plural form of name of object
+     * @param inputPath (Path) Input file.
+     * @return  (boolean) true of the number is non-zero
+     *
+     * @author otsuru
+     * @since 2023/3/24
+     */
+    public static void printNumInput(int num, String singular, String plural, Path inputPath) {
+        if (num == 0) {
+            System.err.println("No " + plural + " found in " + inputPath);
+        } else {
+            System.err.println(MathAid.switchSingularPlural(num, singular + " is", plural + " are") + " found in " + inputPath);
+        }
+    }
+
+    /**
+     * Checks whether a given number of some object read from an input file is non-zero, and displays the number.
+     * @param num (int) Number of some object
+     * @param singular (String) Singular form of name of object
+     * @param plural (String) Plural form of name of object
+     * @param outputPath (Path) Output file.
+     * @return  (boolean) true of the number is non-zero
+     *
+     * @author otsuru
+     * @since 2023/3/24
+     */
+    public static void printNumOutput(int num, String singular, String plural, Path outputPath) {
+        System.err.println("Outputting " + MathAid.switchSingularPlural(num, singular, plural) + " in " + outputPath);
+    }
+
+
+    /**
      * Collect all SAC files inside event folders under a given folder.
      * Errors in reading each event folder is just noticed. Such event folders will be ignored.
      *

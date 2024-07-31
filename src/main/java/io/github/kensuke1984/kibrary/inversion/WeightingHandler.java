@@ -2,11 +2,14 @@ package io.github.kensuke1984.kibrary.inversion;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
@@ -22,6 +25,7 @@ import io.github.kensuke1984.kibrary.inversion.setup.DVectorBuilder;
 import io.github.kensuke1984.kibrary.selection.DataFeature;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
+import io.github.kensuke1984.kibrary.util.data.DataEntry;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.waveform.BasicID;
@@ -44,6 +48,11 @@ public class WeightingHandler {
      */
     public static WeightingHandler IDENTITY = new WeightingHandler(new Property());
 
+    /**
+     * Maximum number of {@link EntryWeightListFile}s that can be handled.
+     */
+    private static final int MAX_INPUT = 5;
+
     private boolean amplitudeReciprocal;
     private boolean balanceComponent;
     private double factorForZComponent;
@@ -55,6 +64,8 @@ public class WeightingHandler {
     private boolean balanceGeometry;
 
     private List<DataFeature> dataFeatures; // TODO apply
+
+    private List<Map<DataEntry, Double>> weightMaps = new ArrayList<>();
 
     /**
      * Create default properties file.
@@ -120,14 +131,21 @@ public class WeightingHandler {
     public WeightingHandler(Path propertyPath) throws IOException {
         Property property = new Property();
         property.load(Files.newBufferedReader(propertyPath));
-        set(property);
+        // get path of folder including this property file
+        Path parentPath = (propertyPath.getParent() != null) ? propertyPath.getParent() : Paths.get("");
+        // set up parameters
+        set(property, parentPath);
     }
 
     private WeightingHandler(Property property) {
-        set(property);
+        try {
+            set(property, Paths.get(""));
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
-    private void set(Property property) {
+    private void set(Property property, Path parentPath) throws IOException {
         amplitudeReciprocal = property.parseBoolean("amplitudeReciprocal", "false");
         balanceComponent = property.parseBoolean("balanceComponent", "false");
         factorForZComponent = property.parseDouble("factorForZComponent", "1.0");
@@ -137,6 +155,15 @@ public class WeightingHandler {
         balanceDistance = property.parseBoolean("balanceDistance", "false");
         balanceAzimuth = property.parseBoolean("balanceAzimuth", "false");
         balanceGeometry = property.parseBoolean("balanceGeometry", "false");
+
+        for (int i = 1; i <= MAX_INPUT; i++) {
+            String weightKey = "weightPath" + i;
+            if (property.containsKey(weightKey)) {
+                Path weightPath = property.parsePath(weightKey, null, true, parentPath);
+                Map<DataEntry, Double> weightMap = EntryWeightListFile.read(weightPath);
+                weightMaps.add(weightMap);
+            }
+        }
     }
 
     /**
@@ -212,6 +239,13 @@ public class WeightingHandler {
             // balance event & observer positions
             if (balanceGeometry) {
                 weighting /= computeGeometryWeight(dVector.getObsID(i), dVector);
+            }
+
+            // multiply values specified in weight files
+            for (int k = 0; k < weightMaps.size(); k++) {
+                DataEntry entry = dVector.getObsID(i).toDataEntry();
+                // Take square root because weighting matrix W will be multiplied twice, as tAWWAm=tAWWd
+                weighting *= Math.sqrt(weightMaps.get(k).get(entry));
             }
 
             //TODO
