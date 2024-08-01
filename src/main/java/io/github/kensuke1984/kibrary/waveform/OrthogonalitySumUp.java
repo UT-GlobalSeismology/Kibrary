@@ -173,7 +173,7 @@ public class OrthogonalitySumUp extends Operation {
                 }
             }
             for (int j = 0; j < numMain; j++) {
-                mainPartialNorm2s_sum[j] = mainPartialNorms_this[j] * mainPartialNorms_this[j];
+                mainPartialNorm2s_sum[j] += mainPartialNorms_this[j] * mainPartialNorms_this[j];
             }
         }
 
@@ -186,6 +186,7 @@ public class OrthogonalitySumUp extends Operation {
 
         // output
         Path outPanelPath = outPath.resolve(panelName);
+        Files.createDirectories(outPanelPath);
         outputVectorSqrt(testPartialNorm2s_sum, outPanelPath.resolve("testPartialNorms.lst"));
         outputVectorSqrt(mainPartialNorm2s_sum, outPanelPath.resolve("mainPartialNorms.lst"));
         OrthogonalityTest.outputMatrix(innerProducts_sum, outPanelPath.resolve("innerProducts.lst"));

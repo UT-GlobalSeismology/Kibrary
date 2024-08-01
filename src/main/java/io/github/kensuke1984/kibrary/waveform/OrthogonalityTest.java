@@ -85,6 +85,7 @@ public class OrthogonalityTest extends Operation {
     private String specificObserverName;
 
     private WeightingHandler weightingHandler;
+    private boolean hasFailedPanel = false;
 
     /**
      * @param args (String[]) Arguments: none to create a property file, path of property file to run it.
@@ -208,7 +209,11 @@ public class OrthogonalityTest extends Operation {
         outPanelPath = outPath.resolve("allToAll");
         computeCorrelations(testPartialIDs, mainPartialIDs, testUnknowns, mainUnknowns, basicIDs, outPanelPath);
 
-        createPlot(testUnknowns, mainUnknowns, specificEvent, specificObserverName, outPath);
+        if (!hasFailedPanel) {
+            createPlot(testUnknowns, mainUnknowns, specificEvent, specificObserverName, outPath);
+        } else {
+            System.err.println("! Skipping plot because failed panel exists.");
+        }
     }
 
     private void computeCorrelations(List<PartialID> testPartialIDs, List<PartialID> mainPartialIDs,
@@ -216,6 +221,7 @@ public class OrthogonalityTest extends Operation {
         // when no raypaths exist, skip without creating directory
         if (basicIDs.size() == 0) {
             System.err.println("! No raypaths found; skipping.");
+            hasFailedPanel = true;
             return;
         }
 
