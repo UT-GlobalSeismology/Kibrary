@@ -14,13 +14,15 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.apache.commons.math3.linear.ArrayRealVector;
+import org.apache.commons.math3.linear.RealVector;
+
 import edu.sc.seis.TauP.TauModelException;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.external.TauPPierceWrapper;
 import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotFile;
 import io.github.kensuke1984.kibrary.inversion.EntryWeightListFile;
-import io.github.kensuke1984.kibrary.math.ParallelizedMatrix;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.FileAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
@@ -249,92 +251,24 @@ public class GeographicalFeatureHistogram extends Operation {
             distanceMap.put(entry, iDistance);
             azimuthMap.put(entry, iAzimuth);
         }
-
-//        int n = nDistance + nAzimuth;
-//        int m = entryList.size();
-//        // set h0 (average of each histogram) & w0 (initial weighting for each entry) vector
-//        double[] h0Array = new double[n];
-//        double[] w0Array = new double[m];
-//        Arrays.fill(h0Array, 0, nDistance - 1, (double) m / nDistance);
-//        Arrays.fill(h0Array, nDistance, n - 1, (double) m / nAzimuth);
-//        Arrays.fill(w0Array, 1.);
-//        RealVector h0 = new ArrayRealVector(h0Array, false);
-//        RealVector w0 = new ArrayRealVector(w0Array, false);
-//        // set G (counting each entry belongs to which bin of each histograms) matrix
-//        ParallelizedMatrix g = initializeGMatrix(nDistance, nAzimuth, m);
-//
-//        double[] distanceBins = new double[nDistance];
-//        double[] azimuthBins = new double[nAzimuth];
-//        for (int i = 0; i < nDistance; i++) {
-//            distanceBins[i] = Arrays.stream(g.getRow(i)).sum();
-//        }
-//        for (int i = 0; i < nAzimuth; i++) {
-//            azimuthBins[i] = Arrays.stream(g.getRow(nDistance + i)).sum();
-//        }
         // plot raw histograms
         Path outPath = DatasetAid.createOutputFolder(Paths.get(""), "histogram", folderTag, appendFolderDate, GadgetAid.getTemporaryString());
         plotHistograms(distanceBins, outPath, "raw", "distance");
         plotHistograms(azimuthBins, outPath, "raw", "azimuth");
 
-//        double[] abicsDist = new double[lambdas.length];
-//        double[] abicsAz = new double[lambdas.length];
+        double[][] normsDist = new double[lambdas.length][2];
+        double[][] normsAz = new double[lambdas.length][2];
         for (int i = 0; i < lambdas.length; i++) {
-//            abics[i] = computeWeights(g, h0, w0, lambdas[i], nDistance, nAzimuth, outPath);
-//            abicsDist[i] = computeWeights(lambdas[i], distanceBins, distanceMap, outPath, "distance");
-//            abicsAz[i] = computeWeights(lambdas[i], azimuthBins, azimuthMap, outPath, "azimuth");
-            computeWeights(lambdas[i], distanceBins, distanceMap, outPath, "distance");
-            computeWeights(lambdas[i], azimuthBins, azimuthMap, outPath, "azimuth");
+            normsDist[i] = computeWeights(lambdas[i], distanceBins, distanceMap, outPath, "distance");
+            normsAz[i] = computeWeights(lambdas[i], azimuthBins, azimuthMap, outPath, "azimuth");
+//            computeWeights(lambdas[i], distanceBins, distanceMap, outPath, "distance");
+ //           computeWeights(lambdas[i], azimuthBins, azimuthMap, outPath, "azimuth");
         }
-//        Path abicDistPath = outPath.resolve("abic_dist.lst");
-//        writeABIC(abicDistPath, lambdas, abicsDist);
-//        Path abicAzPath = outPath.resolve("abic_az.lst");
-//        writeABIC(abicAzPath, lambdas, abicsAz);
+        Path normDistPath = outPath.resolve("norm_dist.lst");
+        writeNorms(normDistPath, lambdas, normsDist);
+        Path normAzPath = outPath.resolve("norm_az.lst");
+        writeNorms(normAzPath, lambdas, normsAz);
     }
-
-   private ParallelizedMatrix initializeGMatrix(int nDistance, int nAzimuth, int m) {
-       ParallelizedMatrix g = new ParallelizedMatrix(nDistance + nAzimuth, m);
-       g.scalarMultiply(0);
-       // if using turning point azimuth, compute using TauPPierce
-       TauPPierceWrapper pierceTool = null;
-       if (azimuthType.equals("turning")) {
-           try {
-               pierceTool = new TauPPierceWrapper(structureName, turningPointPhase);
-               pierceTool.compute(new HashSet<>(entryList));
-           } catch (TauModelException e) {
-               throw new RuntimeException(e);
-           }
-       }
-       for (int j = 0; j < m; j++) {
-           DataEntry entry = entryList.get(j);
-           FullPosition eventPosition = entry.getEvent().getEventData().getCmtPosition();
-           HorizontalPosition observerPosition = entry.getObserver().getPosition();
-           double distance = Math.toDegrees(eventPosition.computeEpicentralDistanceRad(observerPosition));
-           double azimuth;
-           if (azimuthType.equals("turning")) {
-               if (pierceTool.hasRaypaths(entry)) {
-                   // When there are several raypaths for a given phase name, the first arrival is chosen.
-                   // When there are multiple bottoming points for a raypath, the first one is used.
-                   // Any phase (except for "p" or "s") should have a bottoming point, so a non-existence is not considered.
-                   azimuth = pierceTool.get(entry, 0).computeTurningAzimuthDeg(0);
-               } else {
-                   System.err.println("Cannot compute turning point for " + entry + ", skipping.");
-                   continue;
-               }
-           } else if (azimuthType.equals("back")) {
-               azimuth = eventPosition.computeBackAzimuthDeg(observerPosition);
-           } else if (azimuthType.equals("forward")) {
-               azimuth = eventPosition.computeAzimuthDeg(observerPosition);
-           } else {
-               throw new IllegalArgumentException("azimuthType must be choosed from {forward, back, turning}");
-           }
-           if (!expandAzimuth && azimuth > 180) azimuth -= 180;
-           int iDistance = (int) (distance / distanceInterval);
-           int iAzimuth = (int) (azimuth / azimuthInterval);
-           g.setEntry(iDistance, j, 1.0);
-           g.setEntry(nDistance + iAzimuth, j, 1.0);
-       }
-       return g;
-   }
 
    private void plotHistograms(double[] bins, Path outPath, String tag, String type) throws IOException {
        String typeName = null;
@@ -399,17 +333,17 @@ public class GeographicalFeatureHistogram extends Operation {
         histogramPlot.execute();
     }
 
-    private static void writeABIC(Path abicPath, double[] lambdas, double[] abics) throws IOException {
-        if (lambdas.length != abics.length) throw new RuntimeException("The number of lambdas and ABIC values are different");
-        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(abicPath))) {
-            pw.println("# lambda ABIC");
+    private static void writeNorms(Path normPath, double[] lambdas, double[][] norms) throws IOException {
+        if (lambdas.length != norms.length) throw new RuntimeException("The number of lambdas and ABIC values are different");
+        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(normPath))) {
+            pw.println("# lambda norm(h_weight - h_ave) norm(h_weight - h_raw)");
             for (int i = 0; i < lambdas.length; i++) {
-                pw.println(lambdas[i] + " " + abics[i]);
+                pw.println(lambdas[i] + " " + norms[i][0] + " " + norms[i][1]);
             }
         }
     }
 
-    private void computeWeights(double lambda, double[] bins, Map<DataEntry,Integer> map, Path outPath, String type) throws IOException {
+    private double[] computeWeights(double lambda, double[] bins, Map<DataEntry,Integer> map, Path outPath, String type) throws IOException {
         int num = Arrays.stream(bins).filter(b -> b != 0.).toArray().length;
         double average = (double) entryList.size() / num;
         double[] weightArray = new double[bins.length];
@@ -435,50 +369,12 @@ public class GeographicalFeatureHistogram extends Operation {
         Path weightPath = outPath.resolve("entryWeight_" + type + "_" + lambdaCode + ".lst");
         EntryWeightListFile.write(weightMap, weightPath);
 
-//        RealVector rawVec = new ArrayRealVector(bins, false);
-//        RealVector aveVec = new ArrayRealVector(averageArray, false);
-//        RealVector weightVec = new ArrayRealVector(weightArray, false);
-//        double norm = Math.pow(weightVec.subtract(aveVec).getNorm(), 2) + lambda * Math.pow(weightVec.subtract(rawVec).getNorm(), 2);
-//        double abic = num * Math.log(norm) + num * Math.log(1. + 1. / lambda);
-//        return abic;
+        RealVector rawVec = new ArrayRealVector(bins, false);
+        RealVector aveVec = new ArrayRealVector(averageArray, false);
+        RealVector weightVec = new ArrayRealVector(weightArray, false);
+        double[] norms = new double[2];
+        norms[0] = weightVec.subtract(aveVec).getNorm();
+        norms[1] = weightVec.subtract(rawVec).getNorm();
+        return norms;
     }
-
-//    private double computeWeights(ParallelizedMatrix g, RealVector h0, RealVector w0, double lambda, int nDistance, int nAzimuth, Path outPath) throws IOException {
-//        int n = g.getRowDimension();
-//        int m = g.getColumnDimension();
-//        // compute "Gt G + lambda I" matrix
-//        RealMatrix gtg = g.computeAtA();
-//        for (int j = 0; j < m; j++) {
-//            gtg.addToEntry(j, j, lambda);
-//        }
-//        //compute "Gt h0 + lambda w0" vector
-//        RealVector gth0 = g.preMultiply(h0);
-//        gth0.mapAdd(lambda);
-//        // compute w & h vector
-//        System.err.println("compute w vector");
-//        RealVector w = MatrixUtils.inverse(gtg).operate(gth0);
-//        System.err.println("compute h vector");
-//        RealVector h = g.operate(w);
-//        // compute ABIC value
-//        System.err.println("compute ABIC");
-//        double norm = Math.pow(h.subtract(h0).getNorm(), 2) + lambda * Math.pow(w.subtract(w0).getNorm(), 2);
-//        double det = new LUDecomposition(gtg).getDeterminant();
-//        double abic = n * Math.log(norm) - m * Math.log(lambda) + Math.log(det);
-//
-//        double[] hArray = h.toArray();
-//        double[] wArray = w.toArray();
-//        Map<DataEntry, Double> weightMap = new HashMap<>();
-//        for (int j = 0; j < m; j++) {
-//            weightMap.put(entryList.get(j), wArray[j]);
-//        }
-//        double[] distanceBins = Arrays.copyOfRange(hArray, 0, nDistance - 1);
-//        double[] azimuthBins = Arrays.copyOfRange(hArray, nDistance, n - 1);
-//        // output
-//        String lambdaCode = MathAid.simplestString(lambda, "d");
-//        plotHistograms(distanceBins, azimuthBins, outPath, lambdaCode);
-//        Path weightPath = outPath.resolve("entryWeight_" + lambdaCode + ".lst");
-//        EntryWeightListFile.write(weightMap, weightPath);
-//
-//        return abic;
-//    }
 }
