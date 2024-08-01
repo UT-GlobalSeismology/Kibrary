@@ -90,6 +90,10 @@ public class MatrixAssembly {
 
     }
 
+    public double getNumIndependent() {
+        return dVectorBuilder.getNumIndependent();
+    }
+
     public DVectorBuilder getDVectorBuilder() {
         return dVectorBuilder;
     }

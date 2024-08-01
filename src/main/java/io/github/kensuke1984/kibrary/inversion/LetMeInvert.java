@@ -163,7 +163,7 @@ public class LetMeInvert extends Operation {
         MatrixAssembly assembler = new MatrixAssembly(basicIDs, partialIDs, unknowns, weightingHandler, fillEmptyPartial);
         RealMatrix ata = assembler.getAta();
         RealVector atd = assembler.getAtd();
-        int dLength = assembler.getD().getDimension();
+        double numIndependent = assembler.getNumIndependent();
         double dNorm = assembler.getD().getNorm();
         double obsNorm = assembler.getObs().getNorm();
         System.err.println("Normalized variance of input waveforms is " + assembler.getNormalizedVariance());
@@ -175,11 +175,11 @@ public class LetMeInvert extends Operation {
         // output matrices
         AtAFile.write(ata, outPath.resolve("ata.lst"));
         AtdFile.write(atd, outPath.resolve("atd.lst"));
-        AtdFile.writeDInfo(dLength, dNorm, obsNorm, outPath.resolve("dInfo.inf"));
+        AtdFile.writeDInfo(numIndependent, dNorm, obsNorm, outPath.resolve("dInfo.inf"));
         UnknownParameterFile.write(unknowns, outPath.resolve("unknowns.lst"));
 
         // solve inversion and evaluate
-        ResultEvaluation evaluation = new ResultEvaluation(ata, atd, dLength, dNorm, obsNorm);
+        ResultEvaluation evaluation = new ResultEvaluation(ata, atd, numIndependent, dNorm, obsNorm);
         for (InverseMethodEnum method : inverseMethods) {
             Path outMethodPath = outPath.resolve(method.simpleName());
 

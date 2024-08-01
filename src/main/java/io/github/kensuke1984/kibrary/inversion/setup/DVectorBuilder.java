@@ -45,6 +45,10 @@ public final class DVectorBuilder {
      */
     private int npts;
     /**
+     * Number of independent data in the whole vector.
+     */
+    private final double numIndependent;
+    /**
      * Number of timewindows
      */
     private final int nTimeWindow;
@@ -73,6 +77,7 @@ public final class DVectorBuilder {
         System.err.println(" " + MathAid.switchSingularPlural(nTimeWindow, "timewindow is", "timewindows are") + " used");
 
         npts = read();
+        numIndependent = computeNumIndependent();
     }
 
     private int read() {
@@ -95,6 +100,27 @@ public final class DVectorBuilder {
                 throw new RuntimeException("Obs is 0 or NaN: " + obsIDs[i] + " " + obsVecs[i].getLInfNorm());
         }
         return npts;
+    }
+
+    /**
+     * Compute the number of independent data in the whole data vector,
+     * considering the lower period of passband and the sampling frequency.
+     * The redundancy parameter is not considered here.
+     * @return (double) Number of independent data in the whole vector.
+     *
+     * @author otsuru
+     * @since 2024/4/2
+     */
+    private double computeNumIndependent() {
+        double currentNumIndependent = 0.0;
+        for (int i = 0; i < nTimeWindow; i++) {
+            int npts = obsIDs[i].getNpts();
+            double minPeriod = obsIDs[i].getMinPeriod();
+            double samplingHz = obsIDs[i].getSamplingHz();
+            // (total number of points) = (lower period of passband / sampling period) * (number of independent data)
+            currentNumIndependent += npts / minPeriod / samplingHz;
+        }
+        return currentNumIndependent;
     }
 
     /**
@@ -235,6 +261,13 @@ public final class DVectorBuilder {
      */
     public int getNpts() {
         return npts;
+    }
+
+    /**
+     * @return (double) Number of independent data in the whole vector.
+     */
+    public double getNumIndependent() {
+        return numIndependent;
     }
 
     /**

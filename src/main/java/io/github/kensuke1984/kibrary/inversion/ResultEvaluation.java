@@ -16,14 +16,14 @@ public class ResultEvaluation {
 
     private final RealMatrix ata;
     private final RealVector atd;
-    private final int dLength;
+    private final double numIndependent;
     private final double dNorm;
     private final double obsNorm;
 
-    public ResultEvaluation(RealMatrix ata, RealVector atd, int dLength, double dNorm, double obsNorm) {
+    public ResultEvaluation(RealMatrix ata, RealVector atd, double numIndependent, double dNorm, double obsNorm) {
         this.ata = ata;
         this.atd = atd;
-        this.dLength = dLength;
+        this.numIndependent = numIndependent;
         this.dNorm = dNorm;
         this.obsNorm = obsNorm;
     }
@@ -90,7 +90,7 @@ public class ResultEvaluation {
      */
     private double[] computeAIC(double[] variance, double alpha) {
         double[] aic = new double[variance.length];
-        int independentN = (int) (dLength / alpha);
+        int independentN = (int) (numIndependent / alpha);
         for (int i = 0; i < aic.length; i++)
             aic[i] = MathAid.computeAIC(variance[i], independentN, i);
         return aic;

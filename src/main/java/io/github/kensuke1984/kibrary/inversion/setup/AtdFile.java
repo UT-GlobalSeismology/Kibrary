@@ -26,10 +26,10 @@ public class AtdFile {
         }
     }
 
-    public static void writeDInfo(int dLength, double dNorm, double obsNorm, Path outputPath, OpenOption... options) throws IOException {
+    public static void writeDInfo(double numIndependent, double dNorm, double obsNorm, Path outputPath, OpenOption... options) throws IOException {
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath, options))) {
-            pw.println("# dLength dNorm obsNorm");
-            pw.println(dLength + " " + dNorm + " " + obsNorm);
+            pw.println("# numIndependent dNorm obsNorm");
+            pw.println(numIndependent + " " + dNorm + " " + obsNorm);
         }
     }
 
