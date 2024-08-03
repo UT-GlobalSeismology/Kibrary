@@ -119,6 +119,10 @@ public class BasicBinnedStackCreator extends Operation {
      */
     private String[] displayPhases;
     /**
+     * Whether to plot travel time curves as shaded thick lines.
+     */
+    private boolean shadeCurve;
+    /**
      * Names of phases to use to align the record section. The fastest of these arrivals is used.
      */
     private String[] alignPhases;
@@ -195,6 +199,8 @@ public class BasicBinnedStackCreator extends Operation {
             pw.println("#flipAzimuth ");
             pw.println("##Names of phases to plot travel time curves, listed using spaces. Only when byAzimuth is false.");
             pw.println("#displayPhases ");
+            pw.println("##(boolean) Whether to plot travel time curves as shaded thick lines. (false)");
+            pw.println("#shadeCurve ");
             pw.println("##Names of phases to use for alignment, listed using spaces. When unset, the following reductionSlowness will be used.");
             pw.println("##  When multiple phases are set, the fastest arrival of them will be used for alignment.");
             pw.println("#alignPhases ");
@@ -259,6 +265,7 @@ public class BasicBinnedStackCreator extends Operation {
 
         if (property.containsKey("displayPhases") && byAzimuth == false)
             displayPhases = property.parseStringArray("displayPhases", null);
+        shadeCurve = property.parseBoolean("shadeCurve", "false");
         if (property.containsKey("alignPhases"))
             alignPhases = property.parseStringArray("alignPhases", null);
         reductionSlowness = property.parseDouble("reductionSlowness", "0");
@@ -510,8 +517,8 @@ public class BasicBinnedStackCreator extends Operation {
 
             // add travel time curves
             if (displayPhases != null) {
-                BasicPlotAid.plotTravelTimeCurve(timeTool, displayPhases, alignPhases, reductionSlowness, startDistance, endDistance,
-                        null, "", eventPath, component, gnuplot);
+                BasicPlotAid.plotTravelTimeCurve(timeTool, displayPhases, shadeCurve, alignPhases, reductionSlowness,
+                        startDistance, endDistance, null, "", eventPath, component, gnuplot);
             }
 
             gnuplot.write();

@@ -120,9 +120,12 @@ public enum GnuplotColorName {
     chartreuse, // #7cff40 = 124 255  64
     greenyellow, // #a0ff20 = 160 255  32
     slategray, // #a0b6cd = 160 182 205
+
+    SHADE, // explicitly defined below
     ;
 
     public String nameColorName() {
+        if (this == SHADE) return "#F0808080";
         return name().replaceAll("_", "-");
     }
 
