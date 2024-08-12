@@ -474,11 +474,11 @@ public final class PolynomialStructure {
         String[] outString = new String[6 * (nZone) + 7];
         outString[0] = String.valueOf(nZone) + " nzone";
         outString[1] = "c  - Radius (km) -    --- Density (g/cm^3) ---";
-        outString[2] = "c                     ---   Vpv     (km/s) ---";
-        outString[3] = "c                     ---   Vph     (km/s) ---";
-        outString[4] = "c                     ---   Vsv     (km/s) ---";
-        outString[5] = "c                     ---   Vsh     (km/s) ---";
-        outString[6] = "c                     ---   eta     (ND  ) ---             - Qmu -  - Qkappa -";
+        outString[2] = "c                     ---   Vpv    (km/s)  ---";
+        outString[3] = "c                     ---   Vph    (km/s)  ---";
+        outString[4] = "c                     ---   Vsv    (km/s)  ---";
+        outString[5] = "c                     ---   Vsh    (km/s)  ---";
+        outString[6] = "c                     ---   eta     (ND)   ---             - Qmu -  - Qkappa -";
         for (int i = 0; i < nZone; i++) {
             outString[6 * i + 7] = rMin[i] + " " + rMax[i] + " " + stringFor(rho[i]);
             outString[6 * i + 8] = "          " + stringFor(vpv[i]);

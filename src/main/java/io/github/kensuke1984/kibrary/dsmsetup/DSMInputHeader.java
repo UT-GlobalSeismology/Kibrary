@@ -131,17 +131,18 @@ class DSMInputHeader {
 
     String[] outputDSMHeader() {
         List<String> outputLines = new ArrayList<>();
-        outputLines.add("c tlen npts");
-        outputLines.add(tlen + " " + np);
+        outputLines.add("c parameters for the periodic range");
+        outputLines.add(tlen + " " + np + "  tlen (s), np");
         outputLines.add("c relative error (see GT95 eq. 6.2)");
-        outputLines.add(relativeError + " re");
-        outputLines.add("c ampratio to use in grid cut-off" + " (1.d-10 is recommended)");
-        outputLines.add(ratc + " ratc");
-        outputLines.add("c ampratio to use in l-cutoff" + " (see KTG04 fig.8)");
-        outputLines.add(ratl + " ratl");
-        outputLines.add("c artificial damping " + "for wrap-around (see GO94 5.1)");
-        outputLines.add(String.valueOf(artificialDamping));
-        outputLines.add(imin + " " + imax);
+        outputLines.add(relativeError + "  re");
+        outputLines.add("c ampratio to use in grid cut-off (1.d-10 is recommended)");
+        outputLines.add(ratc + "  ratc");
+        outputLines.add("c ampratio to use in l-cutoff (see KTG04 fig.8)");
+        outputLines.add(ratl + "  ratl");
+        outputLines.add("c artificial damping for wrap-around (see GO94 5.1)");
+        outputLines.add(artificialDamping + "  adamp");
+        outputLines.add("c frequency index range");
+        outputLines.add(imin + " " + imax + "  imin, imax");
 
         return outputLines.toArray(new String[11]);
     }
