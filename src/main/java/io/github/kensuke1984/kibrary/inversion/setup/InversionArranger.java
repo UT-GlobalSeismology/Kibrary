@@ -14,6 +14,8 @@ import org.apache.commons.math3.linear.RealVector;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.inversion.WeightingHandler;
+import io.github.kensuke1984.kibrary.math.MatrixFile;
+import io.github.kensuke1984.kibrary.math.VectorFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
@@ -129,9 +131,9 @@ public class InversionArranger extends Operation {
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         // output
-        AtAFile.write(ata, outPath.resolve("ata.lst"));
-        AtdFile.write(atd, outPath.resolve("atd.lst"));
-        AtdFile.writeDInfo(dLength, dNorm, obsNorm, outPath.resolve("dInfo.inf"));
+        MatrixFile.write(ata, outPath.resolve("ata.lst"));
+        VectorFile.write(atd, outPath.resolve("atd.lst"));
+        MatrixAssembly.writeDInfo(dLength, dNorm, obsNorm, outPath.resolve("dInfo.inf"));
         UnknownParameterFile.write(unknowns, outPath.resolve("unknowns.lst"));
     }
 

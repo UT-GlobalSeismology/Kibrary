@@ -17,7 +17,7 @@ import org.apache.commons.math3.linear.RealVector;
  *      href=https://en.wikipedia.org/wiki/Conjugate_gradient_method>English
  *      wiki</a>
  */
-public class BiConjugateGradientStabilizedMethod extends InverseProblem {
+public class BiConjugateGradientStabilizedMethod extends InversionMethod {
 
 	public RealMatrix getP() {
 		return p;
@@ -46,7 +46,7 @@ public class BiConjugateGradientStabilizedMethod extends InverseProblem {
 		this.atd = atd;
 		int column = ata.getColumnDimension();
 		p = MatrixUtils.createRealMatrix(column, column);
-		ans = MatrixUtils.createRealMatrix(column, column);
+		answer = MatrixUtils.createRealMatrix(column, column);
 		a = new ArrayRealVector(column);
 	}
 
@@ -54,7 +54,7 @@ public class BiConjugateGradientStabilizedMethod extends InverseProblem {
 	public void compute() {
 		int column = ata.getColumnDimension();
 		p = MatrixUtils.createRealMatrix(column, column);
-		ans = MatrixUtils.createRealMatrix(column, column);
+		answer = MatrixUtils.createRealMatrix(column, column);
 		a = new ArrayRealVector(column);
 		System.err.println("Solving by BiCGSTAB method.");
 		p.setColumnVector(0, new ArrayRealVector(column));
@@ -77,7 +77,7 @@ public class BiConjugateGradientStabilizedMethod extends InverseProblem {
 		
 //		a.setEntry(0, r.dotProduct(p.getColumnVector(0)) / atap.dotProduct(p.getColumnVector(0))); // a0
 
-		ans.setColumnVector(0, new ArrayRealVector(column));
+		answer.setColumnVector(0, new ArrayRealVector(column));
 		
 		// ///////
 		
@@ -87,13 +87,13 @@ public class BiConjugateGradientStabilizedMethod extends InverseProblem {
 			p.setColumnVector(i, p.getColumnVector(i - 1).subtract(v.mapMultiply(omega_p)).mapMultiply(beta).add(r) );
 			v = ata.operate(p.getColumnVector(i));
 			alpha = rho / r0.dotProduct(v);
-			h = ans.getColumnVector(i-1).add(p.getColumnVector(i).mapMultiply(alpha));
+			h = answer.getColumnVector(i-1).add(p.getColumnVector(i).mapMultiply(alpha));
 			s = r.subtract(v.mapMultiply(alpha));
 			t = ata.operate(s);
 			omega = t.dotProduct(s) / t.dotProduct(t);
 			rho_p = rho;
 			rho = -omega * r0.dotProduct(t);
-			ans.setColumnVector(i, h.add(s.mapMultiply(omega)));
+			answer.setColumnVector(i, h.add(s.mapMultiply(omega)));
 			r = s.subtract(t.mapMultiply(omega));
 			
 			System.out.println(i + " " + beta + " " + alpha + " " + omega + " " + rho + " " + r0.dotProduct(v) + " " + s.getNorm()); // beta very large for some i

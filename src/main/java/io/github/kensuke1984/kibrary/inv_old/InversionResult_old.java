@@ -798,7 +798,7 @@ public class InversionResult_old {
                                 parts -> Double.parseDouble(((String[]) parts)[4]))));
         for (InverseMethodEnum inverse : inverseMethods) {
             // TODO
-            if (inverse == InverseMethodEnum.LEAST_SQUARES_METHOD)
+            if (inverse == InverseMethodEnum.LEAST_SQUARES)
                 continue;
             Path path = rootPath.resolve(inverse.simpleName() + "/variance.txt");
             answerVarianceMap.put(inverse,

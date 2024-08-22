@@ -1,5 +1,11 @@
 package io.github.kensuke1984.kibrary.inversion.setup;
 
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.nio.file.Files;
+import java.nio.file.OpenOption;
+import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.List;
 
 import org.apache.commons.math3.linear.RealMatrix;
@@ -7,6 +13,7 @@ import org.apache.commons.math3.linear.RealVector;
 
 import io.github.kensuke1984.kibrary.inversion.WeightingHandler;
 import io.github.kensuke1984.kibrary.math.ParallelizedMatrix;
+import io.github.kensuke1984.kibrary.util.InformationFileReader;
 import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
 import io.github.kensuke1984.kibrary.waveform.BasicID;
@@ -124,6 +131,18 @@ public class MatrixAssembly {
             ata = a.computeAtA();
         }
         return ata;
+    }
+
+    public static void writeDInfo(int dLength, double dNorm, double obsNorm, Path outputPath, OpenOption... options) throws IOException {
+        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath, options))) {
+            pw.println("# dLength dNorm obsNorm");
+            pw.println(dLength + " " + dNorm + " " + obsNorm);
+        }
+    }
+
+    public static double[] readDInfo(Path path) throws IOException {
+        InformationFileReader reader = new InformationFileReader(path, true);
+        return Arrays.stream(reader.next().split("\\s+")).mapToDouble(Double::parseDouble).toArray();
     }
 
 }

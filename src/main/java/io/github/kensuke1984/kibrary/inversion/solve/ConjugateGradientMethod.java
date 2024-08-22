@@ -1,30 +1,34 @@
 package io.github.kensuke1984.kibrary.inversion.solve;
 
 import org.apache.commons.math3.linear.ArrayRealVector;
-import org.apache.commons.math3.linear.LUDecomposition;
 import org.apache.commons.math3.linear.MatrixUtils;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
 
 /**
- * Conjugate gradient method
+ * Conjugate gradient method.
+ * <p>
+ * See Appendix 3 of Kawai et al. (2014) for further information.
  *
  * @author Kensuke Konishi
- * @version 0.0.3.2
+ * @since version 0.0.3.2
  * @see <a href=https://ja.wikipedia.org/wiki/%E5%85%B1%E5%BD%B9%E5%8B%BE%E9%85%8D%E6%B3%95>Japanese wiki</a>,
  * <a href=https://en.wikipedia.org/wiki/Conjugate_gradient_method>English wiki</a>
  */
-public class ConjugateGradientMethod extends InverseProblem {
+public class ConjugateGradientMethod extends InversionMethod {
 
     /**
-     * m = ai*pi
+     * Alpha = (alpha1, alpha2, ...)
      */
-    private RealVector a;
-
+    private final RealVector alpha;
     /**
-     * P = (p1, p2,....)
+     * P = (p1, p2, ....)
      */
-    private RealMatrix p;
+    private final RealMatrix p;
+    /**
+     * m_0
+     */
+    private final RealVector m0;
 
     /**
      * AtAδm= AtD を解く
@@ -33,91 +37,81 @@ public class ConjugateGradientMethod extends InverseProblem {
      * @param atd AtD
      */
     public ConjugateGradientMethod(RealMatrix ata, RealVector atd) {
+        this(ata, atd, null);
+    }
+
+    /**
+     * Set up CG method to find m.
+     * @param ata (RealMatrix) A<sup>T</sup>A.
+     * @param atd (RealVector) A<sup>T</sup>d.
+     * @param m0 (RealVector) Initial vector m<sub>0</sub>.
+     */
+    public ConjugateGradientMethod(RealMatrix ata, RealVector atd, RealVector m0) {
         this.ata = ata;
         this.atd = atd;
         int column = ata.getColumnDimension();
+        // when initial vector is not set, set it as zero-vector
+        this.m0 = (m0 != null) ? m0 : new ArrayRealVector(column);
+        // set up matrices
         p = MatrixUtils.createRealMatrix(column, column);
-        ans = MatrixUtils.createRealMatrix(column, column);
-        a = new ArrayRealVector(column);
+        answer = MatrixUtils.createRealMatrix(column, column);
+        alpha = new ArrayRealVector(column);
     }
 
     /**
-     * AtdをスタートにCGを解いていく CG法による答え i列目にi番目でのCGベクトルを用いた解(0:cg1...)
+     * Compute using CG method.
+     * The i-th answer is stored in the (i-1)th column of {@link InversionMethod#answer} (0:CG1 , 1:CG2 , ...).
      */
     @Override
     public void compute() {
-        System.err.println("Solving by CG method.");
-        int column = ata.getColumnDimension();
-        p = MatrixUtils.createRealMatrix(column, column);
-        ans = MatrixUtils.createRealMatrix(column, column);
-        a = new ArrayRealVector(column);
-        p.setColumnVector(0, atd.mapMultiply(-1));
-        RealVector r = atd; // r_k = Atd -AtAm_k (A35)
+        System.err.println("Solving by CG (conjugate gradient) method.");
 
+        // r_0 = Atd - AtA m_0
+        RealVector r = atd.subtract(ata.operate(m0));
+        // p_0 = r_0
+        p.setColumnVector(0, r);
+
+        // remember AtA p
         RealVector atap = ata.operate(p.getColumnVector(0));
+        // alpha = r p / p AtA p
+        alpha.setEntry(0, p.getColumnVector(0).dotProduct(r) / p.getColumnVector(0).dotProduct(atap));
+        // m_1 = m_0 + alpha p
+        answer.setColumnVector(0, p.getColumnVector(0).mapMultiply(alpha.getEntry(0)).add(m0));
 
-        a.setEntry(0, r.dotProduct(p.getColumnVector(0)) / atap.dotProduct(p.getColumnVector(0))); // a0
-
-        ans.setColumnVector(0, p.getColumnVector(0).mapMultiply(a.getEntry(0)));
-
-        // ///////
         for (int i = 1; i < ata.getColumnDimension(); i++) {
-            r = r.subtract(atap.mapMultiply(a.getEntry(i - 1)));
+            // r_{k+1} = r_k - alpha AtA p
+            r = r.subtract(atap.mapMultiply(alpha.getEntry(i - 1)));
+            // beta = - r AtA p / p AtA p
+            double b = - r.dotProduct(atap) / p.getColumnVector(i - 1).dotProduct(atap);
+            // p_{k+1} = r + beta p
+            p.setColumnVector(i, r.add(p.getColumnVector(i - 1).mapMultiply(b)));
 
-            double atapr = atap.dotProduct(r); // p AtA r
-            double patap = p.getColumnVector(i - 1).dotProduct(atap); // ptatap
-            double b = atapr / patap; // (A36)
-            p.setColumnVector(i, r.subtract(p.getColumnVector(i - 1).mapMultiply(b)));
-
+            // remember new AtA p
             atap = ata.operate(p.getColumnVector(i));
-            double paap = p.getColumnVector(i).dotProduct(atap);
-            double rp = r.dotProduct(p.getColumnVector(i));
-
-            a.setEntry(i, rp / paap);
-
-            ans.setColumnVector(i, p.getColumnVector(i).mapMultiply(a.getEntry(i)).add(ans.getColumnVector(i - 1)));
+            // alpha = r p / p AtA p
+            alpha.setEntry(i, p.getColumnVector(i).dotProduct(r) / p.getColumnVector(i).dotProduct(atap));
+            // m_{k+1} = m_k + alpha p
+            answer.setColumnVector(i, p.getColumnVector(i).mapMultiply(alpha.getEntry(i)).add(answer.getColumnVector(i - 1)));
         }
-    }
-
-    @Override
-    public RealMatrix computeCovariance(double sigmaD, int j) {
-        RealMatrix covariance = MatrixUtils.createRealMatrix(getNParameter(), getNParameter());
-        double sigmaD2 = sigmaD * sigmaD;
-        for (int i = 0; i < j ; i++) {
-            double paap = p.getColumnVector(i).dotProduct(ata.operate(p.getColumnVector(i)));
-            RealMatrix p = this.p.getColumnMatrix(i);
-            double sigmaD2paap = sigmaD2 / paap;
-            covariance = covariance.add(p.multiply(p.transpose()).scalarMultiply(sigmaD2paap));
-        }
-        return covariance;
     }
 
     /**
-     * L<sub>i, j</sub> = p<sup>T</sup><sub>i</sub> A<sup>T</sup>A p<sub>i</sub>
-     * i=j 0 i≠j
-     *
-     * @return L<sub>i, j</sub>
+     * Cov(<b>m</b><sub>j</sub>) = &sigma;<sub>D</sub><sup>2</sup> &Sigma;<sub>i=1</sub><sup>j</sup>
+     *  (<b>p</b><sub>i</sub> <b>p</b><sub>i</sub><sup>T</sup>)
+     *  / (<b>p</b><sub>i</sub><sup>T</sup> A<sup>T</sup>A <b>p</b><sub>i</sub>) . <br>
+     * See eq. (A33) of Kawai et al. (2014).
      */
-    public RealMatrix getL() {
-        RealMatrix l = MatrixUtils.createRealMatrix(getNParameter(), getNParameter());
-        for (int i = 0; i < getNParameter(); i++) {
-            RealVector p = this.p.getColumnVector(i);
-            double val = p.dotProduct(ata.operate(p));
-            l.setEntry(i, i, val);
-        }
-        return l;
-    }
-
-    @Deprecated
-    public RealMatrix computeCovariance() {
-        // RealMatrix ata = this.ata;
+    @Override
+    public RealMatrix computeCovariance(double sigmaD, int j) {
         RealMatrix covariance = MatrixUtils.createRealMatrix(getNParameter(), getNParameter());
-
-        // new LUDecomposition(getL()).getSolver().getInverse();
-        // covariance = p.multiply(getL().inverse()).multiply(p.transpose());
-        // //TODO
-        covariance = p.multiply(new LUDecomposition(getL()).getSolver().getInverse()).multiply(p.transpose());
-
+        for (int i = 0; i < j ; i++) {
+            // p_i^T A^T A p_i
+            double paap = p.getColumnVector(i).dotProduct(ata.operate(p.getColumnVector(i)));
+            double coeff = sigmaD * sigmaD / paap;
+            // get p_i as a 1-column matrix
+            RealMatrix pi = p.getColumnMatrix(i);
+            covariance = covariance.add(pi.multiply(pi.transpose()).scalarMultiply(coeff));
+        }
         return covariance;
     }
 

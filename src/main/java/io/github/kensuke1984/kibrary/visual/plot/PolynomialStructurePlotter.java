@@ -35,7 +35,7 @@ import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
  */
 public class PolynomialStructurePlotter extends Operation {
 
-    private static final int MAX_INPUT = 3;
+    private static final int MAX_INPUT = 6;
     private static final int NUM_VARIABLES = 6;
     private static final String[] COLORS = {
             "dark-violet", "dark-orange", "dark-green", "red", "medium-blue", "gray30",
@@ -274,7 +274,7 @@ public class PolynomialStructurePlotter extends Operation {
        else if (dashByVariable) iDash = iVariable + 1;
        else iDash = 1;
 
-       String lineTypeString = "dt " + iDash + " lc rgb '" + COLORS[iColor] + "'";
+       String lineTypeString = "dt " + iDash + " lc rgb '" + COLORS[iColor % COLORS.length] + "'";
        return lineTypeString;
    }
 
