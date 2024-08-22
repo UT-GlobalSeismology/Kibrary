@@ -168,12 +168,9 @@ public class InversionSumSolver extends Operation {
         RealVector atd = null;
         for (int i = 0; i < inputNum; i++) {
             Path inversionPath = inversionPaths.get(i);
-            double[] dInfoEach = MatrixAssembly.readDInfo(inversionPath.resolve("dInfo.inf"));
-            List<UnknownParameter> unknownsEach = UnknownParameterFile.read(inversionPath.resolve("unknowns.lst"));
-            RealMatrix ataEach = MatrixFile.read(inversionPath.resolve("ata.lst"));
-            RealVector atdEach = VectorFile.read(inversionPath.resolve("atd.lst"));
 
             // check that the unknowns are the same for all inversion folders
+            List<UnknownParameter> unknownsEach = UnknownParameterFile.read(inversionPath.resolve("unknowns.lst"));
             if (i == 0) {
                 unknowns = unknownsEach;
             } else {
@@ -182,6 +179,9 @@ public class InversionSumSolver extends Operation {
             }
 
             // accumulate ata and atd
+            double[] dInfoEach = MatrixAssembly.readDInfo(inversionPath.resolve("dInfo.inf"));
+            RealMatrix ataEach = MatrixFile.read(inversionPath.resolve("ata.lst"));
+            RealVector atdEach = VectorFile.read(inversionPath.resolve("atd.lst"));
             ata = (i == 0) ? ataEach : ata.add(ataEach);
             atd = (i == 0) ? atdEach : atd.add(atdEach);
             numIndependent += dInfoEach[0];

@@ -31,7 +31,7 @@ import io.github.kensuke1984.kibrary.timewindow.Timewindow;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
-import io.github.kensuke1984.kibrary.util.SpcFileAid;
+import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.Earth;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
@@ -40,9 +40,9 @@ import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructureFile;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
-import io.github.kensuke1984.kibrary.util.spc.PartialType;
 import io.github.kensuke1984.kibrary.util.spc.SPCFile;
 import io.github.kensuke1984.kibrary.util.spc.SPCFileAccess;
+import io.github.kensuke1984.kibrary.util.spc.SPCFileAid;
 import io.github.kensuke1984.kibrary.util.spc.SPCFileName;
 import io.github.kensuke1984.kibrary.util.spc.SPCMode;
 import io.github.kensuke1984.kibrary.util.spc.ThreeDPartialMaker;
@@ -110,14 +110,6 @@ public class PartialWaveformAssembler3D extends Operation {
      * Components to use.
      */
     private Set<SACComponent> components;
-    /**
-     * spcFileをコンボリューションして時系列にする時のサンプリングHz デフォルトは２０ TODOまだ触れない
-     */
-    private double partialSamplingHz = 20;
-    /**
-     * 最後に時系列で切り出す時のサンプリングヘルツ(Hz)
-     */
-    private double finalSamplingHz;
 
     /**
      * Path of a timewindow file.
@@ -136,17 +128,13 @@ public class PartialWaveformAssembler3D extends Operation {
      */
     private Set<VariableType> variableTypes;
     /**
-     * FPpool folder, containig event folders.
+     * FPpool folder, containing event folders.
      */
     private Path fpPath;
     /**
-     * BPpool folder, containig event folders with observers as sources.
+     * BPpool folder, containing event folders with observers as sources.
      */
     private Path bpPath;
-    /**
-     * BPcat folder, to be used in catalog mode.
-     */
-    private Path bpCatalogPath;
     /**
      * Name of folder, under the event folders, which contains the SPC files.
      * If SPC files are directly under the event folders, set as "".
@@ -155,29 +143,7 @@ public class PartialWaveformAssembler3D extends Operation {
     /**
      * The SPC modes that shall be used, from {SH, PSV, BOTH}.
      */
-    private SpcFileAid.UsableSPCMode usableSPCMode;
-
-    /**
-     * Whether to use BP catalog.
-     */
-    private boolean bpCatalogMode;
-    private double thetamin;
-    private double thetamax;
-    private double dtheta;
-
-    /**
-     * Source time function. {0: none, 1: boxcar, 2: triangle, 3: asymmetric triangle, 4: auto}
-     */
-    private SourceTimeFunctionType sourceTimeFunctionType;
-    /**
-     * Folder containing user-defined source time functions.
-     */
-    private Path userSourceTimeFunctionPath;
-    /**
-     * Catalog containing source time function durations.
-     */
-    private Path sourceTimeFunctionCatalogPath;
-
+    private SPCFileAid.UsableSPCMode usableSPCMode;
     /**
      * Time length (DSM parameter).
      */
@@ -186,6 +152,39 @@ public class PartialWaveformAssembler3D extends Operation {
      * Number of steps in frequency domain (DSM parameter).
      */
     private int np;
+
+    /**
+     * Whether to use BP catalog.
+     */
+    private boolean bpCatalogMode;
+    /**
+     * BPcat folder, to be used in catalog mode.
+     */
+    private Path bpCatalogPath;
+    private double thetamin;
+    private double thetamax;
+    private double dtheta;
+
+    /**
+     * Folder containing user-defined source time functions.
+     */
+    private Path userSourceTimeFunctionPath;
+    /**
+     * Source time function. {0: none, 1: boxcar, 2: triangle, 3: asymmetric triangle, 4: auto}
+     */
+    private SourceTimeFunctionType sourceTimeFunctionType;
+    /**
+     * Catalog containing source time function durations.
+     */
+    private Path sourceTimeFunctionCatalogPath;
+    /**
+     * Sampling frequency for intermediate computations [Hz].
+     */
+    private double partialSamplingHz;
+    /**
+     * Sampling frequency in output files [Hz].
+     */
+    private double finalSamplingHz;
     /**
      * Lower frequency of bandpass [Hz].
      */
@@ -206,7 +205,6 @@ public class PartialWaveformAssembler3D extends Operation {
      * Structure file for Q partial.
      */
     private Path qStructurePath;
-
 
     private int nThreads;
     /**
@@ -256,15 +254,11 @@ public class PartialWaveformAssembler3D extends Operation {
             pw.println("#appendFolderDate false");
             pw.println("##SacComponents to be used. (Z R T)");
             pw.println("#components ");
-            pw.println("##(double) SAC sampling frequency [Hz]. (20)");
-            pw.println("#partialSamplingHz cant change now");
-            pw.println("##(double) Sampling frequency in output files [Hz], must be a factor of sacSamplingHz. (1)");
-            pw.println("#finalSamplingHz ");
             pw.println("##Path of a timewindow data file, must be set.");
             pw.println("#timewindowPath timewindow.dat");
             pw.println("##Path of a data entry list file, if you want to select raypaths.");
             pw.println("#dataEntryPath selectedEntry.lst");
-            pw.println("##Path of a voxel information file, if you want to select the voxels to be worked for.");
+            pw.println("##Path of a voxel information file, if you want to select the voxels to compute for.");
             pw.println("#voxelPath voxel.inf");
             pw.println("##VariableTypes to compute for at each voxel, listed using spaces. (MU)");
             pw.println("#variableTypes ");
@@ -276,6 +270,10 @@ public class PartialWaveformAssembler3D extends Operation {
             pw.println("#modelName ");
             pw.println("##The mode of spc files that have been computed, from {SH, PSV, BOTH}. (BOTH)");
             pw.println("#usableSPCMode ");
+            pw.println("##(double) Time length [s], set in spectrum files. (3276.8)");
+            pw.println("#tlen ");
+            pw.println("##(int) Number of points in frequency domain, set in spectrum files. (512)");
+            pw.println("#np ");
             pw.println("##########Settings for BP catalog.");
             pw.println("##(boolean) Whether to interpolate BP from a catalog. (false)");
             pw.println("#bpCatalogMode ");
@@ -291,10 +289,10 @@ public class PartialWaveformAssembler3D extends Operation {
             pw.println("#sourceTimeFunctionType ");
             pw.println("##Path of a catalog to set source time function durations. If unneeded, leave this unset.");
             pw.println("#sourceTimeFunctionCatalogPath ");
-            pw.println("##Time length to be computed, must be a power of 2 over 10. (3276.8)");
-            pw.println("#tlen ");
-            pw.println("##Number of points to be computed in frequency domain, must be a power of 2. (512)");
-            pw.println("#np ");
+            pw.println("##(double) Sampling frequency for computation [Hz], must be (a power of 2)/tlen. (20)");
+            pw.println("#partialSamplingHz ");
+            pw.println("##(double) Sampling frequency in output files [Hz], must be a factor of partialSamplingHz. (1)");
+            pw.println("#finalSamplingHz ");
             pw.println("##Lower limit of the frequency band [Hz]. (0.005)");
             pw.println("#lowFreq ");
             pw.println("##Higher limit of the frequency band [Hz]. (0.08)");
@@ -320,10 +318,6 @@ public class PartialWaveformAssembler3D extends Operation {
         appendFolderDate = property.parseBoolean("appendFolderDate", "true");
         components = Arrays.stream(property.parseStringArray("components", "Z R T"))
                 .map(SACComponent::valueOf).collect(Collectors.toSet());
-        partialSamplingHz = 20;  // TODO property.parseDouble("sacSamplingHz", "20");
-        finalSamplingHz = property.parseDouble("finalSamplingHz", "1");
-        if (partialSamplingHz % finalSamplingHz != 0)
-            throw new IllegalArgumentException("Must choose a finalSamplingHz that divides " + partialSamplingHz);
 
         timewindowPath = property.parsePath("timewindowPath", null, true, workPath);
         if (property.containsKey("dataEntryPath")) {
@@ -332,14 +326,15 @@ public class PartialWaveformAssembler3D extends Operation {
         if (property.containsKey("voxelPath")) {
             voxelPath = property.parsePath("voxelPath", null, true, workPath);
         }
-
         variableTypes = Arrays.stream(property.parseStringArray("variableTypes", "MU")).map(VariableType::valueOf)
                 .collect(Collectors.toSet());
         for (VariableType type : variableTypes)
             if (type.equals(VariableType.TIME)) throw new IllegalArgumentException("This class does not handle time partials.");
 
         modelName = property.parseString("modelName", "PREM");  //TODO: use the same system as SPC_SAC ?
-        usableSPCMode = SpcFileAid.UsableSPCMode.valueOf(property.parseString("usableSPCMode", "BOTH").toUpperCase());
+        usableSPCMode = SPCFileAid.UsableSPCMode.valueOf(property.parseString("usableSPCMode", "BOTH").toUpperCase());
+        tlen = property.parseDouble("tlen", "3276.8");
+        np = property.parseInt("np", "512");
 
         fpPath = property.parsePath("fpPath", "FPpool", true, workPath);
         bpCatalogMode = property.parseBoolean("bpCatalogMode", "false");
@@ -363,8 +358,12 @@ public class PartialWaveformAssembler3D extends Operation {
             sourceTimeFunctionCatalogPath = property.parsePath("sourceTimeFunctionCatalogPath", null, true, workPath);
         }
 
-        tlen = property.parseDouble("tlen", "3276.8");
-        np = property.parseInt("np", "512");
+        partialSamplingHz = property.parseDouble("partialSamplingHz", "20");
+        // check validity
+        SPCFileAid.findNpts(tlen, partialSamplingHz);
+        finalSamplingHz = property.parseDouble("finalSamplingHz", "1");
+        if (!MathAid.isInteger(partialSamplingHz / finalSamplingHz))
+            throw new IllegalArgumentException("partialSamplingHz/finalSamplingHz must be integer.");
         lowFreq = property.parseDouble("lowFreq", "0.005");
         highFreq = property.parseDouble("highFreq", "0.08");
         filterNp = property.parseInt("filterNp", "4");
@@ -395,10 +394,10 @@ public class PartialWaveformAssembler3D extends Operation {
         // This is independent of event or observer, thus is read here (not later in the loops).
         if (bpCatalogMode) {
             System.err.println("Using BP catalog");
-            if (usableSPCMode != SpcFileAid.UsableSPCMode.PSV)
-                bpCatalogSH = SpcFileAid.collectOrderedSpcFileNamePFPB(bpCatalogPath.resolve(modelName), SPCMode.SH);
-            if (usableSPCMode != SpcFileAid.UsableSPCMode.SH)
-                bpCatalogPSV = SpcFileAid.collectOrderedSpcFileNamePFPB(bpCatalogPath.resolve(modelName), SPCMode.PSV);
+            if (usableSPCMode != SPCFileAid.UsableSPCMode.PSV)
+                bpCatalogSH = SPCFileAid.collectOrderedSpcFileNamePFPB(bpCatalogPath.resolve(modelName), SPCMode.SH);
+            if (usableSPCMode != SPCFileAid.UsableSPCMode.SH)
+                bpCatalogPSV = SPCFileAid.collectOrderedSpcFileNamePFPB(bpCatalogPath.resolve(modelName), SPCMode.PSV);
             bpCatNum = (int) ((thetamax - thetamin) / dtheta) + 1;
         }
 
@@ -497,11 +496,11 @@ public class PartialWaveformAssembler3D extends Operation {
         List<SPCFileName> shList = null;
         List<SPCFileName> psvList = null;
         if (type.equals(VariableType.RHO)) {
-            if (usableSPCMode != SpcFileAid.UsableSPCMode.PSV) shList = SpcFileAid.collectOrderedSpcFileNameUFUB(spcModelPath, SPCMode.SH);
-            if (usableSPCMode != SpcFileAid.UsableSPCMode.SH) psvList = SpcFileAid.collectOrderedSpcFileNameUFUB(spcModelPath, SPCMode.PSV);
+            if (usableSPCMode != SPCFileAid.UsableSPCMode.PSV) shList = SPCFileAid.collectOrderedSpcFileNameUFUB(spcModelPath, SPCMode.SH);
+            if (usableSPCMode != SPCFileAid.UsableSPCMode.SH) psvList = SPCFileAid.collectOrderedSpcFileNameUFUB(spcModelPath, SPCMode.PSV);
         } else {
-            if (usableSPCMode != SpcFileAid.UsableSPCMode.PSV) shList = SpcFileAid.collectOrderedSpcFileNamePFPB(spcModelPath, SPCMode.SH);
-            if (usableSPCMode != SpcFileAid.UsableSPCMode.SH) psvList = SpcFileAid.collectOrderedSpcFileNamePFPB(spcModelPath, SPCMode.PSV);
+            if (usableSPCMode != SPCFileAid.UsableSPCMode.PSV) shList = SPCFileAid.collectOrderedSpcFileNamePFPB(spcModelPath, SPCMode.SH);
+            if (usableSPCMode != SPCFileAid.UsableSPCMode.SH) psvList = SPCFileAid.collectOrderedSpcFileNamePFPB(spcModelPath, SPCMode.PSV);
         }
 
         // organize for each pixel
@@ -628,10 +627,10 @@ public class PartialWaveformAssembler3D extends Operation {
                 dhBP[i] = (distanceBP - theta) / dtheta;
 
                 // add BP file to list
-                if (usableSPCMode != SpcFileAid.UsableSPCMode.PSV) {
+                if (usableSPCMode != SPCFileAid.UsableSPCMode.PSV) {
                     bpFiles.add(SPCFile.getInstance(bpCatalogSH.get(ipointBP + i), phiBP, voxelPos, observerPos));
                 }
-                if (usableSPCMode != SpcFileAid.UsableSPCMode.SH) {
+                if (usableSPCMode != SPCFileAid.UsableSPCMode.SH) {
                     bpFiles.add(SPCFile.getInstance(bpCatalogPSV.get(ipointBP + i), phiBP, voxelPos, observerPos));
                 }
             }
@@ -680,15 +679,15 @@ public class PartialWaveformAssembler3D extends Operation {
                 // otherwise, fpFiles=[fp] and bpFiles=[bp0, bp1, bp2]
                 if (fpFiles.size() == 2) {
                     threedPartialMaker = new ThreeDPartialMaker(fpFiles.get(0), fpFiles.get(1), bpFiles.get(0), bpFiles.get(1),
-                            bpFiles.get(2), bpFiles.get(3), bpFiles.get(4), bpFiles.get(5), dhBP);
+                            bpFiles.get(2), bpFiles.get(3), bpFiles.get(4), bpFiles.get(5), dhBP, partialSamplingHz);
                 } else {
-                    threedPartialMaker = new ThreeDPartialMaker(fpFiles.get(0), bpFiles.get(0), bpFiles.get(1), bpFiles.get(2), dhBP);
+                    threedPartialMaker = new ThreeDPartialMaker(fpFiles.get(0), bpFiles.get(0), bpFiles.get(1), bpFiles.get(2), dhBP, partialSamplingHz);
                 }
             } else {
                 if (fpFiles.size() == 2) {
-                    threedPartialMaker = new ThreeDPartialMaker(fpFiles.get(0), fpFiles.get(1), bpFiles.get(0), bpFiles.get(1));
+                    threedPartialMaker = new ThreeDPartialMaker(fpFiles.get(0), fpFiles.get(1), bpFiles.get(0), bpFiles.get(1), partialSamplingHz);
                 } else {
-                    threedPartialMaker = new ThreeDPartialMaker(fpFiles.get(0), bpFiles.get(0));
+                    threedPartialMaker = new ThreeDPartialMaker(fpFiles.get(0), bpFiles.get(0), partialSamplingHz);
                 }
             }
             threedPartialMaker.setSourceTimeFunction(sourceTimeFunctions.get(event));
@@ -703,7 +702,7 @@ public class PartialWaveformAssembler3D extends Operation {
                     continue;
 
                 for (SACComponent component : neededComponents) {
-                    double[] partial = threedPartialMaker.createPartialSerial(component, ibody, PartialType.of(ParameterType.VOXEL, variableType));
+                    double[] partial = threedPartialMaker.createPartial(component, ibody, variableType, false);
 
                     timewindows.stream().filter(timewindow -> timewindow.getComponent() == component).forEach(window -> {
                         Trace cutTrace = cutAndFilter(partial, window);

@@ -52,16 +52,6 @@ import io.github.kensuke1984.kibrary.util.sac.SACUtil;
 class EventProcessor implements Runnable {
 
     /**
-     * [s] delta for SAC files. SAC files with different delta will be interpolated
-     * or downsampled.
-     */
-    private static final double  DELTA = 0.05;
-    /**
-     * [Hz] Sampling Hz in write SAC files
-     */
-    private static final double SAMPLING_HZ = 20;
-
-    /**
      * Path of the input folder containing SAC files.
      */
     private final Path inputSacSetPath;
@@ -106,6 +96,11 @@ class EventProcessor implements Runnable {
      * The maximum length of output time series.
      */
     private double maxTlen;
+    /**
+     * Sampling frequency [Hz] of SAC files to produce. SAC files with a different frequency will be interpolated or downsampled.
+     */
+    private double samplingHz = 20;
+
     /**
      * Whether to remove intermediate files.
      */
@@ -164,16 +159,19 @@ class EventProcessor implements Runnable {
      * @param distanceRange ({@link LinearRange}) Epicentral distance range.
      * @param latitudeRange ({@link LinearRange}) Latitude range.
      * @param longitudeRange ({@link CircularRange}) Longitude range.
-     * @param grid (double) Threshold to judge which stations are in the same position.
-     * @param maxTlen (double) The maximum length of output time series.
+     * @param coordinateGrid (double) Threshold to judge which stations are in the same position [deg].
+     * @param maxTlen (double) The maximum length of output time series [s].
+     * @param samplingHz (double) The frequency to sample the waveforms [Hz].
      * @param remove (boolean) If this is true, then all intermediate files will be removed at the end.
      */
-    void setParameters(LinearRange distanceRange, LinearRange latitudeRange, CircularRange longitudeRange, double grid, double maxTlen, boolean remove) {
+    void setParameters(LinearRange distanceRange, LinearRange latitudeRange, CircularRange longitudeRange, double coordinateGrid,
+            double maxTlen, double samplingHz, boolean remove) {
         this.distanceRange = distanceRange;
         this.latitudeRange = latitudeRange;
         this.longitudeRange = longitudeRange;
-        this.coordinateGrid = grid;
+        this.coordinateGrid = coordinateGrid;
         this.maxTlen = maxTlen;
+        this.samplingHz = samplingHz;
         this.removeIntermediateFiles = remove;
     }
 
@@ -378,7 +376,8 @@ class EventProcessor implements Runnable {
             // read
             sacD.inputCMD("r " + sacPath.getFileName());
 
-            sacD.inputCMD("interpolate delta " + DELTA);
+            double delta = MathAid.roundForPrecision(1.0 / samplingHz);
+            sacD.inputCMD("interpolate delta " + delta);
             sacD.inputCMD("w over");
         }
     }
@@ -451,7 +450,7 @@ class EventProcessor implements Runnable {
                 sm.zeroPad();
 
                 // SAC start time is set to the event time, and the SAC file is cut so that npts = 2^n
-                sm.trim((int) MathAid.ceil(maxTlen * SAMPLING_HZ));
+                sm.trim((int) MathAid.ceil(maxTlen * samplingHz));
 
                 // move SAC files after treatment into the merged folder
                 FileAid.moveToDirectory(sacPath, doneModifyPath, true);
@@ -524,7 +523,7 @@ class EventProcessor implements Runnable {
 
                 int npts = Integer.parseInt(headerMap.get(SACHeaderEnum.NPTS));
 
-                SacDeconvolution sd = new SacDeconvolution(modPath, spectraPath, afterPath, SAMPLING_HZ / npts, SAMPLING_HZ);
+                SacDeconvolution sd = new SacDeconvolution(modPath, spectraPath, afterPath, samplingHz / npts, samplingHz);
 
                 // execute deconvolution
                 try {
@@ -575,11 +574,11 @@ class EventProcessor implements Runnable {
      */
     private boolean runEvalresp(Map<SACHeaderEnum, String> headerMap, Path inputPath) throws IOException {
         int npts = Integer.parseInt(headerMap.get(SACHeaderEnum.NPTS));
-        double minFreq = SAMPLING_HZ / npts;
+        double minFreq = samplingHz / npts;
         String command =
                 "evalresp " + headerMap.get(SACHeaderEnum.KSTNM) + " " + headerMap.get(SACHeaderEnum.KCMPNM) + " " +
                         event.getCMTTime().getYear() + " " + event.getCMTTime().getDayOfYear() + " " + minFreq + " " +
-                        SAMPLING_HZ + " " + headerMap.get(SACHeaderEnum.NPTS) +
+                        samplingHz + " " + headerMap.get(SACHeaderEnum.NPTS) +
                         " -n " + headerMap.get(SACHeaderEnum.KNETWK) + " -l " + headerMap.get(SACHeaderEnum.KHOLE) +
                         " -f " + inputPath.toAbsolutePath() +
                         " -s lin -r cs -u vel";

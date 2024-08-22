@@ -15,18 +15,17 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
  * <p>
  * This class is <b>IMMUTABlE</b>
  * <p>
- * When a time window for a synthetic is [t1, t2], then <br>
- * use a window of [t1-timeshift, t2-timeshift] in a observed one.<br>
- * and amplitude observed dataset is divided by the AMPLITUDE.
+ * The time shift value <i>t</i> indicates how much time the observed waveform should be shifted in the positive direction,
+ * which means how much time the observed time window should be shifted in the negative direction.
+ * So, use synthetic time window [t1 : t2] and observed time window [t1-t : t2-t].
  * <p>
- * In short, time correction value is relative pick time in synthetic - the one
- * in observed.
+ * In other words, the time shift value is the relative pick time in synthetic - the one in observed.
  * <p>
  * Amplitude correction value (AMPLITUDE) is observed / synthetic.
  * <p>
  * Time shift is rounded off to the second decimal place.
  * <p>
- * To identify which time window for a waveform, SYNTHETIC_TIME is also used.
+ * To identify which time window of a waveform this corresponds to, {@link #synStartTime} is also used.
  *
  * @author Kensuke Konishi
  * @since a long time ago
@@ -41,34 +40,33 @@ public class StaticCorrectionData implements Comparable<StaticCorrectionData> {
     private final GlobalCMTID eventID;
     private final SACComponent component;
     /**
-     * start time of timewindow for synthetic waveform
+     * Start time of window for synthetic waveform.
      */
     private final double synStartTime;
     /**
-     * seismic phases included in the timewindow (e.g. S, ScS)
+     * Seismic phases included in the time window (e.g. S, ScS).
      */
     private final Phase[] phases;
 
     /**
-     * time shift [s]<br>
-     * Synthetic [t1, t2], Observed [t1 - TIME, t2 - TIME]
+     * Time shift [s].
+     * Use synthetic window [t1 : t2] and observed window [t1 - timeShift : t2 - timeShift].
      */
     private final double timeShift;
     /**
-     * amplitude correction: obs / syn<br>
+     * Amplitude correction: obs / syn.
      * Observed should be divided by this value.
      */
     private final double amplitudeRatio;
 
     /**
-     * When a time window for a synthetic is [start, end], then
-     * use a window of [start-timeshift, end-timeshift] in the corresponding
-     * observed one.<br>
-     * Example, if you want to align a phase which arrives Ts in synthetic and
-     * To in observed, the timeshift will be Ts-To.<br>
-     * Amplitude ratio shall be observed / synthetic. Observed will be divided by this value.
+     * When a time window for a synthetic is [start : end],
+     * then use a window of [start-timeshift : end-timeshift] in the corresponding observed one.
+     * For example, if you want to align a phase which arrives at Ts in synthetic and at To in observed, the time shift will be Ts-To.
      * <p>
-     * synStartTime may be used only for identification when your dataset contain multiple time windows in one waveform.
+     * Amplitude ratio is observed / synthetic. Observed should be divided by this value.
+     * <p>
+     * synStartTime is used only for identification when your dataset contains multiple time windows in one waveform.
      *
      * @param observer        for shift
      * @param eventID        for shift
@@ -91,8 +89,8 @@ public class StaticCorrectionData implements Comparable<StaticCorrectionData> {
 
     /**
      * Judges whether this static correction is for the given timewindow.
-     * @param t (TimewindowData) Timewindow to judge
-     * @return (boolean) true if the timewindow is the correct one
+     * @param t (TimewindowData) Timewindow to judge.
+     * @return (boolean) Whether the timewindow is the correct one.
      */
     public boolean isForTimewindow(TimewindowData t) {
         return (t.getObserver().equals(observer) && t.getGlobalCMTID().equals(eventID) && t.getComponent() == component
@@ -127,7 +125,7 @@ public class StaticCorrectionData implements Comparable<StaticCorrectionData> {
     }
 
     /**
-     * @return value of synthetic start time for identification when you use multiple time windows.
+     * @return (double) Value of synthetic start time for identification when you use multiple time windows.
      */
     public double getSynStartTime() {
         return synStartTime;
@@ -138,14 +136,14 @@ public class StaticCorrectionData implements Comparable<StaticCorrectionData> {
     }
 
     /**
-     * @return value of time shift [s] (syn-obs)
+     * @return (double) Value of time shift [s] (syn-obs).
      */
     public double getTimeshift() {
         return timeShift;
     }
 
     /**
-     * @return value of amplitude ratio (obs / syn)
+     * @return (double) Value of amplitude ratio (obs / syn).
      */
     public double getAmplitudeRatio() {
         return amplitudeRatio;

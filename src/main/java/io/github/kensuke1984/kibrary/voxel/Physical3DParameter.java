@@ -7,7 +7,6 @@ import org.apache.commons.lang3.StringUtils;
 
 import io.github.kensuke1984.kibrary.elastic.VariableType;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
-import io.github.kensuke1984.kibrary.util.spc.PartialType;
 
 /**
  * Elastic parameter in a 3-D voxel.
@@ -35,13 +34,6 @@ public class Physical3DParameter implements UnknownParameter {
         return new Physical3DParameter(VariableType.valueOf(parts[1]),
                 new FullPosition(Double.parseDouble(parts[2]), Double.parseDouble(parts[3]), Double.parseDouble(parts[4])),
                 Double.parseDouble(parts[5]));
-    }
-
-    @Deprecated
-    public Physical3DParameter(PartialType partialType, FullPosition voxelPosition, double size) {
-        this.variableType = partialType.toVariableType();
-        this.voxelPosition = voxelPosition;
-        this.size = size;
     }
 
     public Physical3DParameter(VariableType variableType, FullPosition voxelPosition, double size) {
@@ -81,12 +73,6 @@ public class Physical3DParameter implements UnknownParameter {
         } else if (!voxelPosition.equals(other.voxelPosition))
             return false;
         return true;
-    }
-
-    @Override
-    @Deprecated
-    public PartialType getPartialType() {
-        return PartialType.of(PARAMETER_TYPE, variableType);
     }
 
     @Override

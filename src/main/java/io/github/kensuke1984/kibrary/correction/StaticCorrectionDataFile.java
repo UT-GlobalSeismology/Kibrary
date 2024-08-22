@@ -39,7 +39,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 
 
 /**
- * Information file containing static corrections for each timewindow. See {@link StaticCorrectionData}. Binary-format.
+ * Information file containing static corrections for each time window. See {@link StaticCorrectionData}. Binary-format.
  *
  * <p>
  * The file consists of 5 sections:
@@ -139,7 +139,7 @@ public final class StaticCorrectionDataFile {
                     else
                         dos.writeShort(-1);
                 }
-                dos.writeByte(correction.getComponent().valueOf());
+                dos.writeByte(correction.getComponent().getNumber());
                 dos.writeFloat((float) correction.getSynStartTime());
                 dos.writeFloat((float) correction.getTimeshift());
                 dos.writeFloat((float) correction.getAmplitudeRatio());
@@ -216,7 +216,7 @@ public final class StaticCorrectionDataFile {
         }
         Phase[] usablephases = new Phase[tmpset.size()];
         usablephases = tmpset.toArray(usablephases);
-        SACComponent comp = SACComponent.getComponent(bb.get());
+        SACComponent comp = SACComponent.ofNumber(bb.get());
         double start = bb.getFloat();
         double timeshift = bb.getFloat();
         double amplitude = bb.getFloat();

@@ -41,25 +41,25 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  * Operation that selects satisfactory observed and synthetic data
  * based on amplitude ratio, correlation, and/or variance.
  * <p>
- * Timewindows in the input {@link TimewindowDataFile} that satisfy the following criteria will be worked for:
+ * Time windows in the input {@link TimewindowDataFile} that satisfy the following criteria will be worked for:
  * <ul>
  * <li> the component is included in the components specified in the property file </li>
  * <li> observed waveform data exists for the (event, observer, component)-pair </li>
  * <li> synthetic waveform data exists for the (event, observer, component)-pair </li>
  * </ul>
  * Both observed and synthetic data must be in event folders under obsDir and synDir (they can be the same folder).
- * Resulting data selection entries will be created for each timewindow,
+ * Resulting data selection entries will be created for each time window,
  * thus specified by a (event, observer, component, timeframe)-pair.
  * <p>
- * When a {@link StaticCorrectionDataFile} is given as input, time shifts will be applied to each timewindow.
+ * When a {@link StaticCorrectionDataFile} is given as input, time shifts will be applied to each time window.
  * <p>
- * Selected timewindows will be written in binary format in "selectedTimewindow*.dat".
+ * Selected time windows will be written in binary format in "selectedTimewindow*.dat".
  * See {@link TimewindowDataFile}.
  * <p>
  * Information of data features used in data selection will be written in ascii format in "dataFeature*.lst".
  * See {@link DataFeatureListFile}.
  * <p>
- * Timewindows with no phases will be written in standard output.
+ * Time windows with no phases will be written in standard output.
  *
  * @author Kensuke Konishi
  * @since a long time ago
@@ -83,11 +83,11 @@ public class DataSelection extends Operation {
      * Components to use.
      */
     private Set<SACComponent> components;
-    /**
-     * Sampling Hz [Hz] in sac files.
-     */
-    private double sacSamplingHz;
 
+    /**
+     * Path of the input time window file.
+     */
+    private Path timewindowPath;
     /**
      * Folder containing observed data.
      */
@@ -97,20 +97,19 @@ public class DataSelection extends Operation {
      */
     private Path synPath;
     /**
-     * コンボリューションされている波形かそうでないか （両方は無理）
+     * Whether the synthetics have already been convolved.
      */
     private boolean convolved;
     /**
-     * Path of the input timewindow file.
+     * Sampling frequency of input SAC files [Hz].
      */
-    private Path timewindowPath;
+    private double sacSamplingHz;
     private Path staticCorrectionPath;
 
     /**
      * Maximum of static correction shift.
      */
     private double upperStaticShift;
-
     /**
      * Correlation coefficient range.
      */
@@ -158,16 +157,16 @@ public class DataSelection extends Operation {
             pw.println("#appendFileDate false");
             pw.println("##Sac components to be used, listed using spaces. (Z R T)");
             pw.println("#components ");
-            pw.println("##(double) SAC sampling frequency [Hz]. (20)");
-            pw.println("#sacSamplingHz cant change now");
+            pw.println("##Path of a time window file, must be set.");
+            pw.println("#timewindowPath timewindow.dat");
             pw.println("##Path of a root folder containing observed dataset. (.)");
             pw.println("#obsPath ");
             pw.println("##Path of a root folder containing synthetic dataset. (.)");
             pw.println("#synPath ");
             pw.println("##(boolean) Whether the synthetics have already been convolved. (true)");
             pw.println("#convolved ");
-            pw.println("##Path of a timewindow file, must be set.");
-            pw.println("#timewindowPath timewindow.dat");
+            pw.println("##(double) Sampling frequency of input SAC files [Hz]. (20)");
+            pw.println("#sacSamplingHz ");
             pw.println("##Path of a static correction file, if static correction time-shift shall be applied.");
             pw.println("#staticCorrectionPath staticCorrection.dat");
             pw.println("##(double) Threshold of static correction time shift [s]. (10.)");
@@ -205,12 +204,12 @@ public class DataSelection extends Operation {
         appendFileDate = property.parseBoolean("appendFileDate", "true");
         components = Arrays.stream(property.parseStringArray("components", "Z R T"))
                 .map(SACComponent::valueOf).collect(Collectors.toSet());
-        sacSamplingHz = 20; // TODO property.parseDouble("sacSamplingHz", "20");
 
+        timewindowPath = property.parsePath("timewindowPath", null, true, workPath);
         obsPath = property.parsePath("obsPath", ".", true, workPath);
         synPath = property.parsePath("synPath", ".", true, workPath);
         convolved = property.parseBoolean("convolved", "true");
-        timewindowPath = property.parsePath("timewindowPath", null, true, workPath);
+        sacSamplingHz = property.parseDouble("sacSamplingHz", "20");
         if (property.containsKey("staticCorrectionPath")) {
             staticCorrectionPath = property.parsePath("staticCorrectionPath", null, true, workPath);
         }
@@ -236,10 +235,10 @@ public class DataSelection extends Operation {
 
     @Override
     public void run() throws IOException {
-        // gather all timewindows to be processed
+        // gather all time windows to be processed
         sourceTimewindowSet = TimewindowDataFile.read(timewindowPath)
                 .stream().filter(window -> components.contains(window.getComponent())).collect(Collectors.toSet());
-        // collect all events that exist in the timewindow set
+        // collect all events that exist in the time window set
         Set<GlobalCMTID> eventSet = sourceTimewindowSet.stream().map(TimewindowData::getGlobalCMTID)
                 .collect(Collectors.toSet());
 
@@ -257,7 +256,7 @@ public class DataSelection extends Operation {
         // this println() is for starting new line after writing "."s
         System.err.println();
 
-        System.err.println(MathAid.switchSingularPlural(goodTimewindowSet.size(), "timewindow is", "timewindows are") + " selected.");
+        System.err.println(MathAid.switchSingularPlural(goodTimewindowSet.size(), "time window is", "time windows are") + " selected.");
 
         // output
         String dateString = GadgetAid.getTemporaryString();
@@ -356,7 +355,7 @@ public class DataSelection extends Operation {
                 SACComponent component = timewindow.getComponent();
 
                 // check delta
-                double delta = 1 / sacSamplingHz;
+                double delta = MathAid.roundForPrecision(1.0 / sacSamplingHz);
                 if (delta != obsSac.getValue(SACHeaderEnum.DELTA) || delta != synSac.getValue(SACHeaderEnum.DELTA)) {
                     System.err.println();
                     System.err.println("!! Deltas are invalid, skipping: " + timewindow);

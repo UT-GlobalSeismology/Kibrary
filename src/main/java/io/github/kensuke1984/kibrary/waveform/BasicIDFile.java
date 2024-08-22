@@ -269,7 +269,7 @@ public final class BasicIDFile {
         WaveformType type = 0 < bb.get() ? WaveformType.OBS : WaveformType.SYN;
         Observer observer = observers[bb.getShort()];
         GlobalCMTID event = events[bb.getShort()];
-        SACComponent component = SACComponent.getComponent(bb.get());
+        SACComponent component = SACComponent.ofNumber(bb.get());
         double[] period = periodRanges[bb.get()];
         Set<Phase> tmpset = new HashSet<>();
         for (int i = 0; i < 10; i++) {

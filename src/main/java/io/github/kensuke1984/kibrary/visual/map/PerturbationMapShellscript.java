@@ -8,6 +8,8 @@ import java.util.Arrays;
 import java.util.Set;
 import java.util.stream.IntStream;
 
+import org.apache.commons.math3.util.FastMath;
+
 import io.github.kensuke1984.kibrary.elastic.VariableType;
 import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
@@ -265,11 +267,11 @@ public class PerturbationMapShellscript {
     static double decideGridSampling(Set<? extends HorizontalPosition> positions) {
         double positionInterval = HorizontalPosition.findLatitudeInterval(positions);
         int power = (int) MathAid.floor(Math.log10(positionInterval));
-        double coef = positionInterval / Math.pow(10, power);
+        double coef = positionInterval / FastMath.pow(10, power);
         if (coef < 1) throw new IllegalStateException("Grid interval decision went wrong");
-        else if (coef < 2) return 1.0 * Math.pow(10, power) / SMOOTHING_FACTOR;
-        else if (coef < 5) return 2.0 * Math.pow(10, power) / SMOOTHING_FACTOR;
-        else if (coef < 10) return 5.0 * Math.pow(10, power) / SMOOTHING_FACTOR;
+        else if (coef < 2) return 1.0 * FastMath.pow(10, power) / SMOOTHING_FACTOR;
+        else if (coef < 5) return 2.0 * FastMath.pow(10, power) / SMOOTHING_FACTOR;
+        else if (coef < 10) return 5.0 * FastMath.pow(10, power) / SMOOTHING_FACTOR;
         else throw new IllegalStateException("Grid interval decision went wrong");
     }
 

@@ -43,7 +43,7 @@ public class TimewindowMerge extends Operation {
     private boolean appendFileDate;
 
     /**
-     * Paths of input timewindow files.
+     * Paths of input time window files.
      */
     private List<Path> timewindowPaths = new ArrayList<>();
 
@@ -69,7 +69,7 @@ public class TimewindowMerge extends Operation {
             pw.println("#fileTag ");
             pw.println("##(boolean) Whether to append date string at end of output file names. (true)");
             pw.println("#appendFileDate false");
-            pw.println("##########From here on, list up paths of timewindow files.");
+            pw.println("##########From here on, list up paths of time window files.");
             pw.println("##########  Up to " + MAX_NUM + " files can be managed. Any index may be left blank.");
             for (int i = 1; i <= MAX_NUM; i++) {
                 pw.println("##" + MathAid.ordinalNumber(i) + " file.");
@@ -108,7 +108,7 @@ public class TimewindowMerge extends Operation {
             return;
         }
 
-        // read timewindows from all input files
+        // read time windows from all input files
         Set<TimewindowData> timewindows = new HashSet<>();
         for (Path timewindowPath : timewindowPaths) {
             Set<TimewindowData> srcTimewindows = TimewindowDataFile.read(timewindowPath);

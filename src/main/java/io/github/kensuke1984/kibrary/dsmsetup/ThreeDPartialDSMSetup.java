@@ -114,11 +114,11 @@ public class ThreeDPartialDSMSetup extends Operation {
     private String structureName;
 
     /**
-     * Time length [s], must be a power of 2 divided by 10. (2<sup>n</sup>/10)
+     * Time length [s], must be (a power of 2)/samplingHz.
      */
     private double tlen;
     /**
-     * Number of steps in frequency domain, must be a power of 2.
+     * Number of steps in frequency domain, should not exceed tlen*samplingHz/2.
      */
     private int np;
     /**
@@ -181,13 +181,13 @@ public class ThreeDPartialDSMSetup extends Operation {
             pw.println("#observerPath observer.lst");
             pw.println("##Path of a voxel information file for perturbation points, must be set.");
             pw.println("#voxelPath voxel.inf");
-            pw.println("##Path of a structure file you want to use. If this is unset, the following structureName will be referenced.");
+            pw.println("##Path of structure file to use. If this is unset, the following structureName will be referenced.");
             pw.println("#structurePath ");
-            pw.println("##Name of a structure model you want to use. (PREM)");
+            pw.println("##Name of structure model to use. (PREM)");
             pw.println("#structureName ");
-            pw.println("##Time length to be computed, must be a power of 2 over 10. (3276.8)");
+            pw.println("##Time length to compute [s], must be (a power of 2)/(desired sampling frequency). (3276.8)");
             pw.println("#tlen ");
-            pw.println("##Number of points to be computed in frequency domain, must be a power of 2. (512)");
+            pw.println("##(int) Number of points to compute in frequency domain, should not exceed tlen*(desired sampling frequency)/2. (512)");
             pw.println("#np ");
             pw.println("##(boolean) Whether to use MPI in the subsequent DSM computations. (true)");
             pw.println("#mpi false");
@@ -238,6 +238,31 @@ public class ThreeDPartialDSMSetup extends Operation {
             thetamin = tmpthetainfo[0];
             thetamax = tmpthetainfo[1];
             dtheta = tmpthetainfo[2];
+        }
+
+        // check that settings match with reusePath
+        if (reusePath != null) checkReusePath();
+    }
+
+    private void checkReusePath() throws IOException {
+        Path lastPropertyPath = reusePath.resolve("_" + this.getClass().getSimpleName() + ".properties");
+        Property lastProperty = new Property();
+        lastProperty.readFrom(lastPropertyPath);
+
+        if (!voxelPath.equals(lastProperty.parsePath("voxelPath", null, true, workPath)))
+            throw new IllegalStateException("voxelPath does not match with reused folder.");
+        if (structurePath != null) {
+            if (!lastProperty.containsKey("structurePath") || !structurePath.equals(lastProperty.parsePath("structurePath", null, true, workPath)))
+                throw new IllegalStateException("structurePath does not match with reused folder.");
+        } else {
+            if (!lastProperty.containsKey("structureName") || !structureName.equals(lastProperty.parseString("structureName", null)))
+                throw new IllegalStateException("structureName does not match with reused folder.");
+        }
+        if (tlen != lastProperty.parseDouble("tlen", null)) {
+            throw new IllegalStateException("tlen does not match with reused folder.");
+        }
+        if (np != lastProperty.parseInt("np", null)) {
+            throw new IllegalStateException("np does not match with reused folder.");
         }
     }
 
@@ -346,6 +371,7 @@ public class ThreeDPartialDSMSetup extends Operation {
             System.err.println(" " + MathAid.switchSingularPlural(nSkipped, "source was", "sources were")
                     + " skipped; directory already exists.");
         System.err.println(" " + MathAid.switchSingularPlural(nCreated, "source", "sources") + " created in " + fpPoolPath);
+        if (nCreated == 0) return;
 
         // output list and shellscripts for execution of shfp and psvfp
         Path fpListPath = DatasetAid.generateOutputFilePath(outPath, "fpList", fileTag, appendFileDate, dateString, ".txt");
@@ -394,6 +420,7 @@ public class ThreeDPartialDSMSetup extends Operation {
             System.err.println(" " + MathAid.switchSingularPlural(nSkipped, "source was", "sources were")
                     + " skipped; directory already exists.");
         System.err.println(" " + MathAid.switchSingularPlural(nCreated, "source", "sources") + " created in " + bpPoolPath);
+        if (nCreated == 0) return;
 
         if (catalogMode) {
             BPInputFile bp = new BPInputFile(header, structure, tlen, np, voxelRadii, voxelPositions);

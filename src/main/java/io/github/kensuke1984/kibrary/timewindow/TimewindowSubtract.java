@@ -15,7 +15,7 @@ import io.github.kensuke1984.kibrary.Summon;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 
 /**
- * Removes timewindows of a timewindow file from those of another.
+ * Removes time windows of a time window file from those of another.
  *
  * @author ?
  * @since a long time ago
@@ -24,7 +24,7 @@ import io.github.kensuke1984.kibrary.util.DatasetAid;
 public class TimewindowSubtract {
 
     /**
-     * Removes timewindows of a timewindow file from those of another.
+     * Removes time windows of a time window file from those of another.
      * @param args Options.
      * @throws IOException if an I/O error occurs
      */
@@ -45,9 +45,9 @@ public class TimewindowSubtract {
         Options options = Summon.defaultOptions();
         // input
         options.addOption(Option.builder("a").longOpt("original").hasArg().argName("originalTimewindowFile").required()
-                .desc("Path of original timewindow file.").build());
+                .desc("Path of original time window file.").build());
         options.addOption(Option.builder("b").longOpt("subtract").hasArg().argName("subtractTimewindowFile").required()
-                .desc("Path of timewindow file to be subtracted.").build());
+                .desc("Path of time window file to be subtracted.").build());
         // output
         options.addOption(Option.builder("T").longOpt("tag").hasArg().argName("fileTag")
                 .desc("A tag to include in output file name.").build());

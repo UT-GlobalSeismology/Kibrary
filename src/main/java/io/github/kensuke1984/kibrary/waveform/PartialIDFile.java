@@ -27,7 +27,6 @@ import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.sac.WaveformType;
-import io.github.kensuke1984.kibrary.util.spc.PartialType;
 
 /**
  * Utilities for reading a pair of an ID file and a waveform file created using {@link WaveformDataWriter}
@@ -159,9 +158,8 @@ public final class PartialIDFile {
      * @param dataPath (Path) Data file.
      * @return ({@link PartialID}[]) PartialIDs containing waveform data.
      * @throws IOException
-     * @deprecated (make this method private)
      */
-    public static PartialID[] read(Path idPath, Path dataPath) throws IOException {
+    private static PartialID[] read(Path idPath, Path dataPath) throws IOException {
         // Read IDs
         PartialID[] ids = read(idPath);
 
@@ -269,7 +267,7 @@ public final class PartialIDFile {
         ByteBuffer bb = ByteBuffer.wrap(bytes);
         Observer observer = observers[bb.getShort()];
         GlobalCMTID event = events[bb.getShort()];
-        SACComponent component = SACComponent.getComponent(bb.get());
+        SACComponent component = SACComponent.ofNumber(bb.get());
         double[] period = periodRanges[bb.get()];
         Set<Phase> tmpset = new HashSet<>();
         for (int i = 0; i < 10; i++) {
@@ -285,7 +283,7 @@ public final class PartialIDFile {
         boolean isConvolved = 0 < bb.get();
         // startByte is read, but not used
         long startByte = bb.getLong();
-        PartialType partialType = PartialType.getType(bb.get());
+        PartialType partialType = PartialType.ofNumber(bb.get());
         FullPosition voxelPosition = voxelPositions[bb.getShort()];
         return new PartialID(observer, event, component, samplingHz, startTime, npts, period[0], period[1],
                 usablephases, isConvolved, partialType.toParameterType(), partialType.toVariableType(), voxelPosition);

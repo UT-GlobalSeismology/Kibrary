@@ -31,29 +31,28 @@ import io.github.kensuke1984.kibrary.util.data.DataEntryListFile;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
-import io.github.kensuke1984.kibrary.util.sac.SACFileAccess;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
 
 /**
- * Operation that creates a data file of timewindows.
+ * Operation that creates a data file of time windows.
  * <p>
  * Either a {@link DataEntryListFile} or a dataset folder containing observed SAC files should be given as input.
  * <p>
  * When a dataset folder is given as input,
- * timewindows are created for all SAC files in event folders under obsDir that satisfy the following criteria:
+ * time windows are created for all SAC files in event folders under obsDir that satisfy the following criteria:
  * <ul>
  * <li> is observed waveform </li>
  * <li> the component is included in the components specified in the property file </li>
  * </ul>
  * <p>
  * When a {@link DataEntryListFile} is provided as input,
- * timewindows are created for all data entries that satisfy the following criteria:
+ * time windows are created for all data entries that satisfy the following criteria:
  * <ul>
  * <li> the component is included in the components specified in the property file </li>
  * </ul>
  * <p>
  * For each input (event, observer, component) data pair,
- * several timewindows may be created for different phases.
+ * several time windows may be created for different phases.
  * Thus, output data can be specified as a (event, observer, component, timeframe)-pair.
  * <p>
  * This class creates a window for each specified phase,
@@ -63,8 +62,8 @@ import io.github.kensuke1984.kibrary.util.sac.SACFileName;
  * and abandons overlapped parts between these.
  * Arrival times are computed by TauP.
  * <p>
- * Timewindow information is written in binary format in "timewindow*.dat".
- * Data entries that could not produce timewindows are written in "invalidTimewindow*.txt".
+ * Time window information is written in binary format in "timewindow*.dat".
+ * Data entries that could not produce time windows are written in "invalidTimewindow*.txt".
  * Travel time information is written in "travelTime*.inf".
  * See {@link TimewindowDataFile}.
  *
@@ -87,7 +86,7 @@ public class TimewindowMaker extends Operation {
      */
     private boolean appendFileDate;
     /**
-     * Path of output file to list up SAC files that could not produce timewindows.
+     * Path of output file to list up SAC files that could not produce time windows.
      */
     private Path outInvalidPath;
     /**
@@ -105,41 +104,41 @@ public class TimewindowMaker extends Operation {
     private Path obsPath;
 
     /**
-     * Phases to be included in timewindows.
+     * Phases to be included in time windows.
      */
     private Set<Phase> usePhases;
     /**
-     * Phases not to be included in timewindows.
+     * Phases not to be included in time windows.
      */
     private Set<Phase> avoidPhases;
     /**
-     * Time length that the timewindow shall include before each phase arrival [sec].
-     * If the value is 5 (not -5), each timewindow starts 5 sec before the first usePhase arrival.
+     * Time length that the time window shall include before each phase arrival [sec].
+     * If the value is 5 (not -5), each time window starts 5 sec before the first usePhase arrival.
      */
     private double frontShift;
     /**
-     * Time length that the timewindow shall include after each phase arrival [sec].
-     * If the value is 10, each timewindow ends 10 secs after the last usephase arrival.
+     * Time length that the time window shall include after each phase arrival [sec].
+     * If the value is 10, each time window ends 10 secs after the last usephase arrival.
      */
     private double rearShift;
     /**
-     * Time length that the timewindow must not include before each arrival of phases to be avoided [sec].
+     * Time length that the time window must not include before each arrival of phases to be avoided [sec].
      */
     private double avoidFrontShift;
     /**
-     * Time length that the timewindow must not include after each arrival of phases to be avoided [sec].
+     * Time length that the time window must not include after each arrival of phases to be avoided [sec].
      */
     private double avoidRearShift;
 
     /**
-     * Minimum length of each timewindow.
+     * Minimum length of each time window.
      */
     private double minLength;
 
     /**
-     * Whether to allow split timewindows.
-     * If not, timewindows are discarded when avoidPhases arrive between or near usePhases
-     * and blanks are filled when timewindows of usePhases aren't overlapped.
+     * Whether to allow split time windows.
+     * If not, time windows are discarded when avoidPhases arrive between or near usePhases
+     * and blanks are filled when time windows of usePhases aren't overlapped.
      */
     private boolean allowSplitWindows;
     /**
@@ -149,7 +148,7 @@ public class TimewindowMaker extends Operation {
 
     private boolean majorArc;
     /**
-     * Whether to use duplicate arrivals of usePhases when deciding timewindows.
+     * Whether to use duplicate arrivals of usePhases when deciding time windows.
      * In case of triplication of usePhases, use only the first arrival.
      */
     private boolean useDuplicatePhases;
@@ -186,10 +185,10 @@ public class TimewindowMaker extends Operation {
             pw.println("#dataEntryPath dataEntry.lst");
             pw.println("##Path of a root folder containing observed dataset. (.)");
             pw.println("#obsPath ");
-            pw.println("##########Settings of timewindows to be created.");
-            pw.println("##TauPPhases to be included in timewindow, listed using spaces. (S)");
+            pw.println("##########Settings of time windows to be created.");
+            pw.println("##TauPPhases to be included in time window, listed using spaces. (S)");
             pw.println("#usePhases S ScS");
-            pw.println("##TauPPhases not to be included in timewindow, listed using spaces, if any.");
+            pw.println("##TauPPhases not to be included in time window, listed using spaces, if any.");
             pw.println("#avoidPhases sS sScS");
             pw.println("##(double) Time length to include before phase arrival of usePhases [s]. (20)");
             pw.println("#frontShift ");
@@ -199,17 +198,17 @@ public class TimewindowMaker extends Operation {
             pw.println("#avoidFrontShift ");
             pw.println("##(double) Time length to be excluded after phase arrival of avoidPhases [s]. (60)");
             pw.println("#avoidRearShift ");
-            pw.println("##(double) Minimum length of timewindows [sec]. (0)");
+            pw.println("##(double) Minimum length of time windows [sec]. (0)");
             pw.println("#minLength ");
-            pw.println("##(boolean) Whether to allow split timewindows. (false)");
-            pw.println("##  If not, timewindows are discarded when avoidPhases arrive between or near usePhases");
-            pw.println("##    and blanks are filled when timewindows of usePhases aren't overlapped.");
+            pw.println("##(boolean) Whether to allow split time windows. (false)");
+            pw.println("##  If not, time windows are discarded when avoidPhases arrive between or near usePhases");
+            pw.println("##    and blanks are filled when time windows of usePhases aren't overlapped.");
             pw.println("#allowSplitWindows ");
             pw.println("##(String) Name of structure to compute travel times using TauP. (prem)");
             pw.println("#structureName ");
             pw.println("##(boolean) Whether or not to use major arc phases. (false)");
             pw.println("#majorArc ");
-            pw.println("##(boolean) Whether to use duplicate arrivals of usePhases when deciding timewindows (e.g. in case of triplication). (true)");
+            pw.println("##(boolean) Whether to use duplicate arrivals of usePhases when deciding time windows (e.g. in case of triplication). (true)");
             pw.println("##  If not, only the first arrival of each usePhase will be considered.");
             pw.println("#useDuplicatePhases ");
         }
@@ -270,8 +269,7 @@ public class TimewindowMaker extends Operation {
                 Set<SACFileName> sacFileNames = eventDir.sacFileSet().stream()
                         .filter(sfn -> sfn.isOBS() && components.contains(sfn.getComponent())).collect(Collectors.toSet());
                 for (SACFileName sacFileName : sacFileNames) {
-                    SACFileAccess sacFile = sacFileName.read();
-                    entrySet.add(new DataEntry(sacFile.getGlobalCMTID(), sacFile.getObserver(), sacFile.getComponent()));
+                    entrySet.add(sacFileName.readHeader().toDataEntry());
                 }
             }
         }
@@ -322,7 +320,7 @@ public class TimewindowMaker extends Operation {
     }
 
     /**
-     * Make timewindow for the input data entry.
+     * Make time window for the input data entry.
      * @param entry ({@link DataEntry}) Data entry to work for.
      * @param timeTool (TauP_Time) Time tool, with structure, phases, and event already set.
      * @throws IOException
@@ -406,11 +404,11 @@ public class TimewindowMaker extends Operation {
     }
 
     /**
-     * Creates timewindows allowing them to be split.
-     * If timewindows of avoidPhases overlap the timewindows of usePhases, the timewindow will be cut.
+     * Creates time windows allowing them to be split.
+     * If time windows of avoidPhases overlap the time windows of usePhases, the time window will be cut.
      * @param usePhaseTimes (double[]) Travel times of phases to be used, must be in order.
      * @param avoidPhaseTimes (double[]) Travel times of phases not to be included, must be in order.
-     * @return ({@link Timewindow}[]) created timewindows. If nothing remains after eliminating avoidWindows, null.
+     * @return ({@link Timewindow}[]) Created time windows. If nothing remains after eliminating avoidWindows, null.
      * @author anselme
      */
     private Timewindow[] createWindowsAllowingSplits(double[] usePhaseTimes, double[] avoidPhaseTimes) {
@@ -431,12 +429,12 @@ public class TimewindowMaker extends Operation {
     }
 
     /**
-     * Creates a timewindow given the first and last arrival times.
+     * Creates a time window given the first and last arrival times.
      * The blank between them is filled, even if they are far apart.
-     * @param initialPhaseTime (double) Travel time of first usePhase
-     * @param finalPhaseTime (double) Travel time of last usePhase
+     * @param initialPhaseTime (double) Travel time of first usePhase.
+     * @param finalPhaseTime (double) Travel time of last usePhase.
      * @param avoidPhaseTimes (double[]) Travel times of avoidPhases, must be in order.
-     * @return ({@link Timewindow}[]) Array containing the single created timewindow.
+     * @return ({@link Timewindow}[]) Array containing the single created time window.
      *          If nothing remains after eliminating avoidWindows, null.
      * @author rei
      */
@@ -457,9 +455,9 @@ public class TimewindowMaker extends Operation {
     }
 
     /**
-     * If there are any overlapping timewindows, merge them.
-     * @param windows ({@link Timewindow}[]) Timewindows to be merged, must be in order by start time
-     * @return ({@link Timewindow}[]) Timewindows containing all the input windows in order
+     * If there are any overlapping time windows, merge them.
+     * @param windows ({@link Timewindow}[]) Time windows to be merged, must be in order by start time.
+     * @return ({@link Timewindow}[]) Time windows containing all the input windows in order.
      */
     private static Timewindow[] mergeWindows(Timewindow[] windows) {
         if (windows.length == 1)
@@ -468,7 +466,7 @@ public class TimewindowMaker extends Operation {
         Timewindow windowA = windows[0];
         for (int i = 1; i < windows.length; i++) {
             Timewindow windowB = windows[i];
-            if (windowA.overlap(windowB)) {
+            if (windowA.overlaps(windowB)) {
                 windowA = windowA.merge(windowB);
             } else {
                 windowList.add(windowA);
@@ -481,11 +479,11 @@ public class TimewindowMaker extends Operation {
     }
 
     /**
-     * Eliminate timewindows of avoidPhases from timewindows of usePhases.
-     * If a timewindow of avoidPhases fits inside a timewindow of usePhases, only the first usable part is selected.
-     * @param useWindows ({@link Timewindow}[]) Timewindows to use, must be in order by start time
-     * @param avoidWindows ({@link Timewindow}[]) Timewindows to avoid, must be in order by start time
-     * @return ({@link Timewindow}[]) Timewindows to use. If nothing remains, null.
+     * Eliminate time windows of avoidPhases from time windows of usePhases.
+     * If a time window of avoidPhases fits inside a time window of usePhases, only the first usable part is selected.
+     * @param useWindows ({@link Timewindow}[]) Time windows to use, must be in order by start time.
+     * @param avoidWindows ({@link Timewindow}[]) Time windows to avoid, must be in order by start time.
+     * @return ({@link Timewindow}[]) Time windows to use. If nothing remains, null.
      */
     private static Timewindow[] considerAvoidPhases(Timewindow[] useWindows, Timewindow[] avoidWindows) {
         List<Timewindow> resultWindows = new ArrayList<>();
@@ -503,12 +501,12 @@ public class TimewindowMaker extends Operation {
     /**
      * Eliminate avoidTimewindow from useTimewindow.
      * If avoidTimewindow fits inside useTimewindow, the first usable part is selected.
-     * @param useWindow ({@link Timewindow}) Timewindow to use
-     * @param avoidWindow ({@link Timewindow}) Timewindow to avoid
-     * @return ({@link Timewindow}) Timewindow to use. If nothing remains, null.
+     * @param useWindow ({@link Timewindow}) Time window to use.
+     * @param avoidWindow ({@link Timewindow}) Time window to avoid.
+     * @return ({@link Timewindow}) Time window to use. If nothing remains, null.
      */
     private static Timewindow cutWindow(Timewindow useWindow, Timewindow avoidWindow) {
-        if (!useWindow.overlap(avoidWindow)) return useWindow;
+        if (!useWindow.overlaps(avoidWindow)) return useWindow;
         if (avoidWindow.startTime <= useWindow.startTime) {
             return useWindow.endTime <= avoidWindow.endTime ? null :
                     new Timewindow(avoidWindow.endTime, useWindow.endTime);
@@ -534,7 +532,7 @@ public class TimewindowMaker extends Operation {
     }
 
     /**
-     * Report invalid entry in invalidList
+     * Report invalid entry in invalid list file.
      * @param entry ({@link DataEntry}) Data entry to report.
      * @param reason (String) Why the entry is invalid.
      * @throws IOException

@@ -9,7 +9,6 @@ import java.util.Collections;
 import java.util.List;
 
 import org.apache.commons.math3.complex.Complex;
-import org.apache.commons.math3.util.FastMath;
 
 import io.github.kensuke1984.kibrary.util.earth.Earth;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
@@ -17,54 +16,63 @@ import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 
 /**
  * Spectrum file written by DSM. Binary format.
+ * <p>
+ * Note that the data values in spectrum files are displacement velocity in the frequency domain, with unit [km].
+ * <p>
+ * Each file can contain information for multiple perturbation radii, but only for a single horizontal pixel.
  *
  * @author Kensuke Konishi
  * @since a long time ago
  */
 public class SPCFile implements SPCFileAccess {
 
-    private String sourceID;
-    private String receiverID;
-    private SPCFileName spcFileName;
-    private double tlen;
-    private int np;
+    private final SPCFileName spcFileName;
+    private SPCType spcFileType;
+    private int nbody;
+    private double[] bodyR;
+    private List<SPCBody> spcBodies;
 
+    private String sourceID;
     /**
-     * 震源の位置
+     * Position of the source.
      */
     private FullPosition sourcePosition;
+    private String receiverID;
     /**
-     * 観測点の位置 深さの情報は含まない
+     * Horizontal position of the receiver. Does not include depth information.
      */
     private HorizontalPosition receiverPosition;
+    private double tlen;
+    private int np;
     private double omegai;
-    private List<SPCBody> spcBody;
-    private int nbody;
-    private int nComponent;
-    private double[] bodyR;
-    private SPCType spcFileType;
+    /**
+     * Number of elements in each spcBody.
+     */
+    private int nElement;
 
     public SPCFile(SPCFileName spcFileName) {
         this.spcFileName = spcFileName;
     }
 
     /**
-     * Interpolation for BP/FP catalog
-     * @param bp1
-     * @param bp2
-     * @param bp3
-     * @param dh
+     * @param spcFileName
+     * @param phi
      * @return
+     * @throws IOException
      * @author anselme
      */
-    public static SPCFile interpolate(SPCFile bp1, SPCFile bp2, SPCFile bp3, double[] dh) {
-        SPCFile bp = bp1;
-        for (int ibody = 0; ibody < bp1.nbody; ibody++) {
-            SPCBody body = SPCBody.interpolate(bp1.spcBody.get(ibody), bp2.spcBody.get(ibody), bp3.spcBody.get(ibody), dh);
-            bp.spcBody.set(ibody, body);
-        }
+    public static final SPCFile getInstance(SPCFileName spcFileName, double phi) throws IOException {
+        return getInstance(spcFileName, phi, null, null);
+    }
 
-        return bp;
+    /**
+     * @param spcFileName
+     * @return
+     * @throws IOException
+     * @author anselme
+     */
+    public static final SPCFile getInstance(SPCFileName spcFileName) throws IOException {
+        return getInstance(spcFileName, 0., null, null);
     }
 
     /**
@@ -103,24 +111,25 @@ public class SPCFile implements SPCFileAccess {
             } else {  // synthetic, FP, or BP
                 specFile.spcFileType = SPCType.ofNumber(typeNumber);
             }
-            specFile.nComponent = specFile.spcFileType.getNComponent();
+            specFile.nElement = specFile.spcFileType.getNElement();
 
-            specFile.spcBody = new ArrayList<>(nbody);
+            specFile.spcBodies = new ArrayList<>(nbody);
             for (int i = 0; i < nbody; i++)
-                specFile.spcBody.add(new SPCBody(specFile.nComponent, np));
+                specFile.spcBodies.add(new SPCBody(specFile.nElement, np));
 
-            // data part
+            //~data part
             specFile.omegai = dis.readDouble();
 
-            if (receiverPosition == null)
+            // read receiver position
+            if (receiverPosition == null) {
                 specFile.receiverPosition = new HorizontalPosition(dis.readDouble(), dis.readDouble());
-            else {
+            } else {
                 dis.readDouble();
                 dis.readDouble();
                 specFile.receiverPosition = receiverPosition;
             }
 
-            //
+            // read source position
             switch (specFile.spcFileType) {
             case RHO1D:
             case LAMBDA1D:
@@ -163,7 +172,7 @@ public class SPCFile implements SPCFileAccess {
                 break;
             case UB:
             case PB:
-                specFile.sourcePosition = new FullPosition(dis.readDouble(), dis.readDouble(), 0); // TODO
+                specFile.sourcePosition = new FullPosition(dis.readDouble(), dis.readDouble(), 0); // TODO radius is incorrect
                 break;
             default:
                 throw new RuntimeException("Unexpected");
@@ -174,19 +183,22 @@ public class SPCFile implements SPCFileAccess {
                 for (int i = 0; i < nbody; i++)
                     specFile.bodyR[i] = dis.readDouble();
 
-            double cosphi = FastMath.cos(phi);
-            double sinphi = FastMath.sin(phi);
-            double cos2phi = FastMath.cos(2 * phi);
-            double sin2phi = FastMath.sin(2 * phi);
+            double cosphi = Math.cos(phi);
+            double sinphi = Math.sin(phi);
+            double cos2phi = Math.cos(2 * phi);
+            double sin2phi = Math.sin(2 * phi);
 
-            // read body
-            for (int i = 0; i < np + 1; i++) {
-                for (SPCBody body : specFile.spcBody) {
-                    Complex[] u = new Complex[specFile.nComponent];
+            //~read body
+            int hasZero = 0;
+            for (int i = 0; i < np + hasZero; i++) {
+                for (SPCBody body : specFile.spcBodies) {
+                    Complex[] u = new Complex[specFile.nElement];
                     int ip = dis.readInt();
+                    // Added this to account for SPC files with and without data for ip=0.  2024/4/17 otsuru
+                    if (ip == 0) hasZero = 1;
 
                     if (specFile.spcFileType.equals(SPCType.PBSHCAT)) {
-                        for (int k = 0; k < specFile.nComponent; k++) {
+                        for (int k = 0; k < specFile.nElement; k++) {
                             if (SPCTensorComponent.isBPSHCATzero(k+1))
                                 u[k] = Complex.ZERO;
                             else {
@@ -194,11 +206,6 @@ public class SPCFile implements SPCFileAccess {
                                 double tmpImag_m1 = dis.readDouble();
                                 double tmpReal_p1 = dis.readDouble();
                                 double tmpImag_p1 = dis.readDouble();
-
-//								System.out.println(k + " " + tmpReal_m1 + " " + tmpReal_p1 + " " + tmpImag_m1 + " " + tmpImag_p1);
-
-//								double cosphi = FastMath.cos(phi);
-//								double sinphi = FastMath.sin(phi);
 
                                 double tmpReal = tmpReal_m1*cosphi + tmpImag_m1*sinphi
                                         + tmpReal_p1*cosphi - tmpImag_p1*sinphi;
@@ -208,20 +215,14 @@ public class SPCFile implements SPCFileAccess {
                                 u[k] = new Complex(tmpReal, tmpImag);
                             }
                         }
-                    }
-                    else if (specFile.spcFileType.equals(SPCType.PBPSVCAT)) {
-                        for (int k = 0; k < specFile.nComponent; k++) {
+                    } else if (specFile.spcFileType.equals(SPCType.PBPSVCAT)) {
+                        for (int k = 0; k < specFile.nElement; k++) {
                             double tmpReal_m1 = dis.readDouble();
                             double tmpImag_m1 = dis.readDouble();
                             double tmpReal_m0 = dis.readDouble();
                             double tmpImag_m0 = dis.readDouble();
                             double tmpReal_p1 = dis.readDouble();
                             double tmpImag_p1 = dis.readDouble();
-
-//								System.out.println(k + " " + tmpReal_m1 + " " + tmpReal_p1 + " " + tmpReal_m0 +  " " + tmpImag_m0 + " " + tmpImag_m1 + " " + tmpImag_p1);
-
-//								double cosphi = FastMath.cos(phi);
-//								double sinphi = FastMath.sin(phi);
 
                             double tmpReal = tmpReal_m0 + tmpReal_m1*cosphi + tmpImag_m1*sinphi
                                     + tmpReal_p1*cosphi - tmpImag_p1*sinphi;
@@ -230,9 +231,8 @@ public class SPCFile implements SPCFileAccess {
 
                             u[k] = new Complex(tmpReal, tmpImag);
                         }
-                    }
-                    else if (specFile.spcFileType.equals(SPCType.PFSHCAT) ) {
-                        for (int k = 0; k < specFile.nComponent; k++) {
+                    } else if (specFile.spcFileType.equals(SPCType.PFSHCAT) ) {
+                        for (int k = 0; k < specFile.nElement; k++) {
                             double tmpReal_m2 = dis.readDouble();
                             double tmpImag_m2 = dis.readDouble();
                             double tmpReal_m1 = dis.readDouble();
@@ -253,9 +253,8 @@ public class SPCFile implements SPCFileAccess {
 
                             u[k] = new Complex(tmpReal, tmpImag);
                         }
-                    }
-                    else if (specFile.spcFileType.equals(SPCType.PFPSVCAT) ) {
-                        for (int k = 0; k < specFile.nComponent; k++) {
+                    } else if (specFile.spcFileType.equals(SPCType.PFPSVCAT) ) {
+                        for (int k = 0; k < specFile.nElement; k++) {
                             double tmpReal_m2 = dis.readDouble();
                             double tmpImag_m2 = dis.readDouble();
                             double tmpReal_m1 = dis.readDouble();
@@ -278,15 +277,14 @@ public class SPCFile implements SPCFileAccess {
 
                             u[k] = new Complex(tmpReal, tmpImag);
                         }
-                    }
-                    else {
-                        for (int k = 0; k < specFile.nComponent; k++) {
+                    } else {
+                        for (int k = 0; k < specFile.nElement; k++) {
                             u[k] = new Complex(dis.readDouble(), dis.readDouble());
                         }
                     }
 
                     try {
-                        body.add(ip, u);
+                        body.setValues(ip, u);
                     } catch (Exception e) {
                         System.err.println(spcFileName);
                         throw e;
@@ -298,24 +296,42 @@ public class SPCFile implements SPCFileAccess {
     }
 
     /**
-     * @param spcFileName
-     * @param phi
+     * Interpolation for BP/FP catalog
+     * @param bp1
+     * @param bp2
+     * @param bp3
+     * @param dh
      * @return
-     * @throws IOException
      * @author anselme
      */
-    public static final SPCFile getInstance(SPCFileName spcFileName, double phi) throws IOException {
-        return getInstance(spcFileName, phi, null, null);
+    public static SPCFile interpolate(SPCFile bp1, SPCFile bp2, SPCFile bp3, double[] dh) {
+        SPCFile bp = bp1;
+        for (int ibody = 0; ibody < bp1.nbody; ibody++) {
+            SPCBody body = SPCBody.interpolate(bp1.spcBodies.get(ibody), bp2.spcBodies.get(ibody), bp3.spcBodies.get(ibody), dh);
+            bp.spcBodies.set(ibody, body);
+        }
+
+        return bp;
     }
 
-    /**
-     * @param spcFileName
-     * @return
-     * @throws IOException
-     * @author anselme
-     */
-    public static final SPCFile getInstance(SPCFileName spcFileName) throws IOException {
-        return getInstance(spcFileName, 0., null, null);
+    @Override
+    public void setSpcBody(int i, SPCBody body) {
+        spcBodies.set(i, body.copy());
+    }
+
+    @Override
+    public int nbody() {
+        return nbody;
+    }
+
+    @Override
+    public double[] getBodyR() {
+        return bodyR.clone();
+    }
+
+    @Override
+    public List<SPCBody> getSpcBodyList() {
+        return Collections.unmodifiableList(spcBodies);
     }
 
     /**
@@ -326,6 +342,11 @@ public class SPCFile implements SPCFileAccess {
     @Override
     public String getSourceID() {
         return sourceID;
+    }
+
+    @Override
+    public FullPosition getSourcePosition() {
+        return sourcePosition;
     }
 
     /**
@@ -339,17 +360,8 @@ public class SPCFile implements SPCFileAccess {
     }
 
     @Override
-    public FullPosition getSourcePosition() {
-        return sourcePosition;
-    }
-
-    @Override
     public HorizontalPosition getReceiverPosition() {
         return receiverPosition;
-    }
-
-    public SPCFileName getSpcFileName() {
-        return spcFileName;
     }
 
     @Override
@@ -368,27 +380,13 @@ public class SPCFile implements SPCFileAccess {
     }
 
     @Override
-    public List<SPCBody> getSpcBodyList() {
-        return Collections.unmodifiableList(spcBody);
-    }
-
-    @Override
-    public int nbody() {
-        return nbody;
-    }
-
-    @Override
     public SPCType getSpcFileType() {
         return spcFileType;
     }
 
     @Override
-    public double[] getBodyR() {
-        return bodyR.clone();
+    public SPCFileName getSpcFileName() {
+        return spcFileName;
     }
 
-    @Override
-    public void setSpcBody(int i, SPCBody body) {
-        spcBody.set(i, body.copy());
-    }
 }

@@ -22,7 +22,7 @@ public final class MathAid {
     /**
      * The margin to decide if 0.00...01 = 0, 0.9999... = 1, etc.
      */
-    public static final double PRECISION_EPSILON = Math.pow(10, -PRECISION_DECIMALS);
+    public static final double PRECISION_EPSILON = FastMath.pow(10, -PRECISION_DECIMALS);
 
     /**
      * Compute AIC.
@@ -57,6 +57,31 @@ public final class MathAid {
      */
     public static int divideUp(int dividend, int divisor) {
         return (dividend + divisor - 1) / divisor;
+    }
+
+    /**
+     * Check if a value is integer.
+     * @param value (double) Value to check.
+     * @return (boolean) Whether the value is integer.
+     *
+     * @author otsuru
+     * @since 2024/4/6
+     */
+    public static boolean isInteger(double value) {
+        // compare the integer part with the value rounded to get rid of the error
+        return Math.floor(value) == Precision.round(value, PRECISION_DECIMALS);
+    }
+
+    /**
+     * Check if a value is a terminating decimal.
+     * @param value (double) Value to check.
+     * @return (boolean) Whether the value is a terminating decimal.
+     *
+     * @author otsuru
+     * @since 2024/4/10
+     */
+    public static boolean isTerminatingDecimal(double value) {
+        return Precision.round(value, PRECISION_DECIMALS) == Precision.round(value, PRECISION_DECIMALS + 2);
     }
 
     /**
@@ -279,6 +304,18 @@ public final class MathAid {
      */
     public static double ceil(double value) {
         return Math.ceil(Precision.round(value, PRECISION_DECIMALS));
+    }
+
+    /**
+     * Round a value to git rid of computation error (ex. fixing 0.9999... to 1 or fixing 1.00...01 to 1).
+     * @param value (double) Input value.
+     * @return (double) Rounded result.
+     *
+     * @author otsuru
+     * @since 2024/4/6
+     */
+    public static double roundForPrecision(double value) {
+        return Precision.round(value, PRECISION_DECIMALS);
     }
 
 }

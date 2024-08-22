@@ -11,7 +11,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.apache.commons.math3.linear.RealMatrix;
-import org.apache.commons.math3.util.FastMath;
 
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
@@ -194,8 +193,8 @@ public class AdaptiveGridDesigner extends Operation {
                     if (!parameterList.get(i).getVariableType().equals(parameterList.get(j).getVariableType()))
                         continue;
 
-                    double coeff = ata.getEntry(i, j) / FastMath.sqrt(ata.getEntry(i, i) * ata.getEntry(j, j));
-                    double ampRatio = FastMath.sqrt(ata.getEntry(i, i) / ata.getEntry(j, j));
+                    double coeff = ata.getEntry(i, j) / Math.sqrt(ata.getEntry(i, i) * ata.getEntry(j, j));
+                    double ampRatio = Math.sqrt(ata.getEntry(i, i) / ata.getEntry(j, j));
                     if (ata.getEntry(i, i) > minDiagonalAmplitude && coeff > minCorrelation && ampRatio > minAmpRatio && ampRatio < 1 / minAmpRatio) {
                         GadgetAid.dualPrintln(pw, i + " " + j + " " + ata.getEntry(i, i) + " " + ata.getEntry(i, j) + " " + coeff);
                         GadgetAid.dualPrintln(pw, " - " + parameterList.get(i));

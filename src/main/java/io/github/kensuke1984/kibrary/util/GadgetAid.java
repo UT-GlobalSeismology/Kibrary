@@ -29,6 +29,7 @@ import org.apache.commons.io.input.CloseShieldInputStream;
 import org.apache.commons.mail.DefaultAuthenticator;
 import org.apache.commons.mail.Email;
 import org.apache.commons.mail.SimpleEmail;
+import org.apache.commons.math3.util.FastMath;
 
 import io.github.kensuke1984.kibrary.Environment;
 
@@ -190,12 +191,12 @@ public final class GadgetAid {
      * is j-th degit in the i-th pattern
      */
     public static double[][] makePatterns(int num, double[] values) {
-        int patternN = (int) Math.pow(values.length, num);
+        int patternN = (int) FastMath.pow(values.length, num);
         double[][] patterns = new double[patternN][num];
         int i = 0;
         do {
             for (int j = 0; j < num; j++)
-                patterns[i][j] = values[(i / (int) Math.pow(values.length, j)) % values.length];
+                patterns[i][j] = values[(i / (int) FastMath.pow(values.length, j)) % values.length];
         } while (++i < patternN);
         return patterns;
     }

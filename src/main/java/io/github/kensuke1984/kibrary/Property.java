@@ -1,5 +1,7 @@
 package io.github.kensuke1984.kibrary;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
@@ -24,7 +26,7 @@ import io.github.kensuke1984.kibrary.util.GadgetAid;
 public class Property extends Properties {
 
     /**
-     * Creates a new property file for an {@link Operation} listed in {@link Manhattan}.
+     * Create a new property file for an {@link Operation} listed in {@link Manhattan}.
      *
      * @param args  none to choose an operation <br>
      *              [operation name] to work for that operation
@@ -63,9 +65,9 @@ public class Property extends Properties {
     }
 
     /**
-     * Generates a path of a properties file, for a specified class.
-     * @param classInstance The class to use for the file name
-     * @return Path for a new properties file
+     * Generate a path of a properties file, for a specified class.
+     * @param classInstance (Class) The class to use for the file name.
+     * @return (Path) Generated path for a new properties file.
      *
      * @since 2021/12/12
      * @author otsuru
@@ -75,40 +77,56 @@ public class Property extends Properties {
     }
 
     /**
-     * Creates a new empty instance.
+     * Create a new empty instance.
      */
     public Property() {
         super();
     }
 
     /**
-     * Outputs properties in a file.
-     * @param path
+     * Read in data from a property file.
+     * @param path (Path) Input property file.
+     * @throws IOException
+     *
+     * @author otsuru
+     * @since 2024/4/6
+     */
+    public void readFrom(Path path) throws IOException {
+        try (BufferedReader br = Files.newBufferedReader(path)) {
+            load(br);
+        }
+    }
+
+    /**
+     * Output properties in a file.
+     * @param path (Path) Output property file.
      * @throws IOException
      */
     public void write(Path path) throws IOException {
         String manhattan = (containsKey("manhattan") ? getProperty("manhattan") : "(unknown manhattan)");
-        store(Files.newBufferedWriter(path), "Properties for " + manhattan);
+        try (BufferedWriter bw = Files.newBufferedWriter(path)){
+            store(bw, "Properties for " + manhattan);
+        }
     }
 
     /**
-     * Gets a pre-specified value, or sets a default value, and returns it in String.
+     * Get a pre-specified value, or sets a default value, and returns it in String.
      * @param key (String) Name of key. Must not be empty.
      * @param defaltValue (String) Default value to set to the key. Require a value to be specified by setting this null.
      *          This must not be "".
-     * @return (String) value to the correcponding key, with subsequent spaces trimmed
+     * @return (String) Value to the correcponding key, with subsequent spaces trimmed.
      */
     public String parseString(String key, String defaltValue) {
         return checkAndPutDefault(key, defaltValue);
     }
 
     /**
-     * Gets a pre-specified value, or sets a default value, and returns it in String.
+     * Get a pre-specified value, or sets a default value, and returns it in String.
      * The value is checked so that it includes no spaces. To be used especially for keys that will become file names.
      * @param key (String) Name of key. Must not be empty.
      * @param defaltValue (String) Default value to set to the key. Require a value to be specified by setting this null.
      *          This must not be "".
-     * @return (String) value to the correcponding key, with subsequent spaces trimmed
+     * @return (String) Value to the correcponding key, with subsequent spaces trimmed.
      */
     public String parseStringSingle(String key, String defaltValue) {
         String string = checkAndPutDefault(key, defaltValue);
@@ -117,33 +135,33 @@ public class Property extends Properties {
     }
 
     /**
-     * Gets a pre-specified value, or sets a default value, and returns it in String[].
+     * Get a pre-specified value, or sets a default value, and returns it in String[].
      * @param key (String) Name of key. Must not be empty.
      * @param defaltValue (String) Default value to set to the key. Require a value to be specified by setting this null.
      *          This must not be "".
-     * @return (String[]) array of value to the correcponding key, with subsequent spaces trimmed, split at spaces
+     * @return (String[]) Array of value to the correcponding key, with subsequent spaces trimmed, split at spaces.
      */
     public String[] parseStringArray(String key, String defaltValue) {
         return checkAndPutDefault(key, defaltValue).split("\\s+");
     }
 
     /**
-     * Gets a pre-specified value, or sets a default value, and returns it as boolean.
+     * Get a pre-specified value, or sets a default value, and returns it as boolean.
      * @param key (String) Name of key. Must not be empty.
      * @param defaltValue (String) Default value to set to the key. Require a value to be specified by setting this null.
      *          This must not be "".
-     * @return (boolean) value to the correcponding key
+     * @return (boolean) Value to the correcponding key.
      */
     public boolean parseBoolean(String key, String defaltValue) {
         return Boolean.parseBoolean(checkAndPutDefault(key, defaltValue));
     }
 
     /**
-     * Gets a pre-specified value, or sets a default value, and returns it in boolean[].
+     * Get a pre-specified value, or sets a default value, and returns it in boolean[].
      * @param key (String) Name of key. Must not be empty.
      * @param defaltValue (String) Default value to set to the key. Require a value to be specified by setting this null.
      *          This must not be "".
-     * @return (boolean[]) array of value to the correcponding key, split at spaces
+     * @return (boolean[]) Array of value to the correcponding key, split at spaces.
      */
     public boolean[] parseBooleanArray(String key, String defaltValue) {
         String[] strings = checkAndPutDefault(key, defaltValue).split("\\s+");
@@ -155,57 +173,57 @@ public class Property extends Properties {
     }
 
     /**
-     * Gets a pre-specified value, or sets a default value, and returns it as int.
+     * Get a pre-specified value, or sets a default value, and returns it as int.
      * @param key (String) Name of key. Must not be empty.
      * @param defaltValue (String) Default value to set to the key. Require a value to be specified by setting this null.
      *          This must not be "".
-     * @return (int) value to the correcponding key
+     * @return (int) Value to the correcponding key.
      */
     public int parseInt(String key, String defaltValue) {
         return Integer.parseInt(checkAndPutDefault(key, defaltValue));
     }
 
     /**
-     * Gets a pre-specified value, or sets a default value, and returns it in int[].
+     * Get a pre-specified value, or sets a default value, and returns it in int[].
      * @param key (String) Name of key. Must not be empty.
      * @param defaltValue (String) Default value to set to the key. Require a value to be specified by setting this null.
      *          This must not be "".
-     * @return (int[]) array of value to the correcponding key, split at spaces
+     * @return (int[]) Array of value to the correcponding key, split at spaces.
      */
     public int[] parseIntArray(String key, String defaltValue) {
         return Arrays.stream(checkAndPutDefault(key, defaltValue).split("\\s+")).mapToInt(Integer::parseInt).toArray();
     }
 
     /**
-     * Gets a pre-specified value, or sets a default value, and returns it as double.
+     * Get a pre-specified value, or sets a default value, and returns it as double.
      * @param key (String) Name of key. Must not be empty.
      * @param defaltValue (String) Default value to set to the key. Require a value to be specified by setting this null.
      *          This must not be "".
-     * @return (double) value to the correcponding key
+     * @return (double) Value to the correcponding key.
      */
     public double parseDouble(String key, String defaltValue) {
         return Double.parseDouble(checkAndPutDefault(key, defaltValue));
     }
 
     /**
-     * Gets a pre-specified value, or sets a default value, and returns it in double[].
+     * Get a pre-specified value, or sets a default value, and returns it in double[].
      * @param key (String) Name of key. Must not be empty.
      * @param defaltValue (String) Default value to set to the key. Require a value to be specified by setting this null.
      *          This must not be "".
-     * @return (double[]) array of value to the correcponding key, split at spaces
+     * @return (double[]) Array of value to the correcponding key, split at spaces.
      */
     public double[] parseDoubleArray(String key, String defaltValue) {
         return Arrays.stream(checkAndPutDefault(key, defaltValue).split("\\s+")).mapToDouble(Double::parseDouble).toArray();
     }
 
     /**
-     * Gets a pre-specified value, or sets a default value, and returns it as Path.
+     * Get a pre-specified value, or sets a default value, and returns it as Path.
      * @param key (String) Name of key. Must not be empty.
      * @param defaltValue (String) Default value to set to the key. Require a value to be specified by setting this null.
      *          This must not be ""; use "." for current path.
-     * @param requireExisting (boolean) When true, checks whether the path exists
-     * @param workPath (Path) The value of the key will be resolved under this workPath
-     * @return (Path) Path of the value to the correcponding key, resolved under workPath
+     * @param requireExisting (boolean) When true, checks whether the path exists.
+     * @param workPath (Path) The value of the key will be resolved under this workPath.
+     * @return (Path) Path of the value to the correcponding key, resolved under workPath.
      * @throws NoSuchFileException if the specified path does not exist
      */
     public Path parsePath(String key, String defaltValue, boolean requireExisting, Path workPath) throws NoSuchFileException {
@@ -225,7 +243,7 @@ public class Property extends Properties {
      * @param key (String) Name of key to check, must not be empty
      * @param defaultValue (String) Value to set to the key if it is not yet specified.
      *          Require a value to be specified by setting this null. This must not be "".
-     * @return (String) value to the correcponding key, with subsequent spaces trimmed
+     * @return (String) Value to the correcponding key, with subsequent spaces trimmed.
      */
     private String checkAndPutDefault(String key, String defaultValue) {
         if (StringUtils.isEmpty(key)) {

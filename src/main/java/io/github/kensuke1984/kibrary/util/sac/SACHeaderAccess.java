@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 
+import io.github.kensuke1984.kibrary.util.data.DataEntry;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
@@ -108,6 +109,14 @@ public interface SACHeaderAccess {
      */
     default GlobalCMTID getGlobalCMTID() {
         return new GlobalCMTID(getSACString(SACHeaderEnum.KEVNM));
+    }
+
+    /**
+     * Get {@link DataEntry} instance for this SAC header.
+     * @return ({@link DataEntry}) Entry for this SAC header.
+     */
+    default DataEntry toDataEntry() {
+        return new DataEntry(getGlobalCMTID(), getObserver(), getComponent());
     }
 
     /**

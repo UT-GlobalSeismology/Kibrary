@@ -28,17 +28,12 @@ import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
  */
 public interface SPCFileAccess {
 
+    void setSpcBody(int i, SPCBody body);
+
     /**
      * @return number of bodies
      */
     int nbody();
-
-    /**
-     * @return list of spc bodies
-     */
-    List<SPCBody> getSpcBodyList();
-
-    void setSpcBody(int i, SPCBody body);
 
     /**
      * @return array of body Rs
@@ -46,32 +41,37 @@ public interface SPCFileAccess {
     double[] getBodyR();
 
     /**
-     * @return (FullPosition) Position of a seismic source.
+     * @return list of spc bodies
      */
-    FullPosition getSourcePosition();
+    List<SPCBody> getSpcBodyList();
 
     /**
-     * @return ID of a source
+     * @return (String) ID of source.
      */
     String getSourceID();
 
     /**
-     * @return ID of observer (station_network)
+     * @return ({@link FullPosition}) Position of source.
+     */
+    FullPosition getSourcePosition();
+
+    /**
+     * @return (String) ID of receiver (in form "station_network").
      */
     String getReceiverID();
 
     /**
-     * @return HorizontalPosition of an observer.
+     * @return ({@link HorizontalPosition}) Position of receiver.
      */
     HorizontalPosition getReceiverPosition();
 
     /**
-     * @return length of time
+     * @return (double) Time length [s].
      */
     double tlen();
 
     /**
-     * @return number of steps in frequency domain.
+     * @return (int) Number of steps in frequency domain.
      */
     int np();
 
@@ -158,10 +158,10 @@ public interface SPCFileAccess {
         double r = dsmOutput.getBodyR()[0];
 
         SPCType spcType = dsmOutput.getSpcFileType();
-        int nComponent = spcType.getNComponent();
+        int nComponent = spcType.getNElement();
         Complex[][] spcs = new Complex[nComponent][];
         for (int i = 0; i < nComponent; i++) {
-            spcs[i] = dsmOutput.getSpcBodyList().get(0).getSpcComponent(i).getValueInFrequencyDomain();
+            spcs[i] = dsmOutput.getSpcBodyList().get(0).getSpcElement(i).getValueInFrequencyDomain();
         }
 
         if (outputPath != null) {

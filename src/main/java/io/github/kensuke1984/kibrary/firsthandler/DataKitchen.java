@@ -17,6 +17,7 @@ import io.github.kensuke1984.kibrary.math.CircularRange;
 import io.github.kensuke1984.kibrary.math.LinearRange;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.EventFolder;
+import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.ThreadAid;
 
 /**
@@ -33,11 +34,8 @@ import io.github.kensuke1984.kibrary.util.ThreadAid;
  * See also {@link EventProcessor}.
  * <p>
  *
- * TODO NPTSで合わないものを捨てる？
- *
  * @author otsuru
- * @since 2021/09/14
- * This class is a modification of FirstHandler, which was the Java version of First handler ported from the perl software.
+ * @since 2021/09/14 Created as a modification of FirstHandler, which was the Java version of First handler ported from the perl software.
  */
 public class DataKitchen extends Operation {
 
@@ -59,7 +57,6 @@ public class DataKitchen extends Operation {
      * Which catalog to use. {0: CMT, 1: PDE}
      */
     private int catalog;
-    private double samplingHz;
 
     private LinearRange distanceRange;
     private LinearRange latitudeRange;
@@ -73,6 +70,10 @@ public class DataKitchen extends Operation {
      * The maximum length of output time series.
      */
     private double maxTlen;
+    /**
+     * Sampling frequency [Hz] of SAC files to produce.
+     */
+    private double samplingHz;
     /**
      * Whether to remove intermediate files.
      */
@@ -99,10 +100,8 @@ public class DataKitchen extends Operation {
             pw.println("#folderTag ");
             pw.println("##(boolean) Whether to append date string at end of output folder name. (true)");
             pw.println("#appendFolderDate false");
-            pw.println("##The name of catalog to use from {cmt, pde}. (cmt)");
+            pw.println("##The catalog to use, from {cmt, pde}. (cmt)");
             pw.println("#catalog  CANT CHANGE NOW"); // TODO
-            pw.println("##(double) Sampling frequency [Hz]. can not be changed now. (20)");
-            pw.println("#samplingHz CANT CHANGE NOW");
             pw.println("##Lower limit of epicentral distance range [deg], inclusive; [0:upperDistance). (0)");
             pw.println("#lowerDistance 70");
             pw.println("##Upper limit of epicentral distance range [deg], exclusive; (lowerDistance:180]. (180)");
@@ -122,6 +121,8 @@ public class DataKitchen extends Operation {
             pw.println("##  This should be shorter than 20 times the earliest arrival time of the phases you wish to use.");
             pw.println("##  The acutal length will be decided so that npts is a power of 2 and does not exceed this timelength nor the SAC data length.");
             pw.println("#maxTlen ");
+            pw.println("##(double) Sampling frequency [Hz]. Its reciprocal must be a terminating decimal. (20)");
+            pw.println("#samplingHz ");
             pw.println("##(boolean) Whether to remove intermediate files. (true)");
             pw.println("#removeIntermediateFile ");
         }
@@ -150,7 +151,6 @@ public class DataKitchen extends Operation {
             default:
                 throw new IllegalArgumentException("Invalid catalog name.");
         }
-        samplingHz = property.parseDouble("samplingHz", "20"); // TODO
 
         double lowerDistance = property.parseDouble("lowerDistance", "0");
         double upperDistance = property.parseDouble("upperDistance", "180");
@@ -169,6 +169,9 @@ public class DataKitchen extends Operation {
             throw new IllegalArgumentException("coordinateGrid must be non-negative.");
 
         maxTlen = property.parseDouble("maxTlen", "3276.8");
+        samplingHz = property.parseDouble("samplingHz", "20");
+        if (!MathAid.isTerminatingDecimal(1.0 / samplingHz))
+            throw new IllegalArgumentException("Reciprocal of samplingHz must be a terminating decimal.");
         removeIntermediateFile = property.parseBoolean("removeIntermediateFile", "true");
     }
 
@@ -199,7 +202,7 @@ public class DataKitchen extends Operation {
         }).filter(Objects::nonNull).collect(Collectors.toSet());
 
         // set parameters
-        eps.forEach(p -> p.setParameters(distanceRange, latitudeRange, longitudeRange, coordinateGrid, maxTlen, removeIntermediateFile));
+        eps.forEach(p -> p.setParameters(distanceRange, latitudeRange, longitudeRange, coordinateGrid, maxTlen, samplingHz, removeIntermediateFile));
 
         ExecutorService es = ThreadAid.createFixedThreadPool();
         eps.forEach(es::execute);
