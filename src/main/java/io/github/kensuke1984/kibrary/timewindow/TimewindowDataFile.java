@@ -300,7 +300,7 @@ public final class TimewindowDataFile {
         options.addOption(Option.builder("n").longOpt("number")
                 .desc("Just count number without creating output files").build());
         options.addOption(Option.builder("o").longOpt("output").hasArg().argName("outputFile")
-                .desc("Set path of output file").build());
+                .desc("Specify path of output file.").build());
         return options;
     }
 

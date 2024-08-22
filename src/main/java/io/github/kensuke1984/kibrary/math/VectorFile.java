@@ -88,7 +88,7 @@ public class VectorFile {
 
         // output
         options.addOption(Option.builder("o").longOpt("output").hasArg().argName("outputFile")
-                .desc("Set path of output file").build());
+                .desc("Specify path of output file.").build());
 
         return options;
     }

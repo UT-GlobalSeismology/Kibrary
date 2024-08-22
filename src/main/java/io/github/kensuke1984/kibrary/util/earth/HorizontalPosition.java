@@ -5,6 +5,8 @@ import java.util.Collection;
 import org.apache.commons.math3.util.FastMath;
 import org.apache.commons.math3.util.Precision;
 
+import io.github.kensuke1984.kibrary.math.CircularRange;
+import io.github.kensuke1984.kibrary.math.LinearRange;
 import io.github.kensuke1984.kibrary.math.geometry.Ellipse;
 import io.github.kensuke1984.kibrary.math.geometry.Point2D;
 import io.github.kensuke1984.kibrary.math.geometry.RThetaPhi;
@@ -12,9 +14,7 @@ import io.github.kensuke1984.kibrary.math.geometry.XYZ;
 
 /**
  * <p>
- * 2D Position on Earth.
- * <p>
- * Latitude Longitude
+ * 2D Position on Earth (specified by latitude and longitude).
  * <p>
  * This class is <b>almost IMMUTABLE</b> (expect that it is not a final class).
  * Classes that extend this class must be <b>IMMUTABLE</b>.
@@ -85,8 +85,8 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
 
     /**
      * Construct from geographic latitude and longitude.
-     * @param latitude (double) Geographic latitude [deg]. [-90, 90]
-     * @param longitude (double) Longitude [deg]. [-180, 360)
+     * @param latitude (double) Geographic latitude [deg]. [-90:90]
+     * @param longitude (double) Longitude [deg]. [-180:360]
      */
     public HorizontalPosition(double latitude, double longitude) {
         this.latitude = new Latitude(latitude);
@@ -95,40 +95,54 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
 
     /**
      * Checks whether this position is inside a given coordinate range.
+     * Lower limit is included; upper limit is excluded. However, upper latitude limit is included when it is 90.
+     * @param lowerLatitude (double) Lower limit of latitude range [deg]; [-90:upperLatitude).
+     * @param upperLatitude (double) Upper limit of latitude range [deg]; (lowerLatitude:90].
+     * @param lowerLongitude (double) Lower limit of longitude range [deg]; [-180:360].
+     * @param upperLongitude (double) Upper limit of longitude range [deg]; [-180:360].
+     * @return (boolean) Whether this position is inside the given range.
+     *
+     * @author otsuru
+     * @since 2021/11/21
+     * @deprecated
+     */
+    public boolean isInRange(double lowerLatitude, double upperLatitude, double lowerLongitude, double upperLongitude) {
+
+        // latitude
+        // Reject values below lower limit, but include lower limit.
+        if (latitude.getLatitude() < lowerLatitude) return false;
+        // Reject values above or equal to upper limit, but do not reject when upper limit is 90.
+        if (upperLatitude < 90 && upperLatitude <= latitude.getLatitude()) return false;
+
+        // longitude
+        double lowerLongitudeFixed = Longitude.fix(lowerLongitude);
+        double upperLongitudeFixed = Longitude.fix(upperLongitude);
+        if (upperLongitudeFixed <= lowerLongitudeFixed) {
+            // Accept values in [-180:upperLongitude),[lowerLongitude:180].
+            // When lowerLongitude == upperLongitude (this happens for -180 & 180 or 0 & 360), everything is accepted.
+            if (longitude.getLongitude() < upperLongitudeFixed || lowerLongitudeFixed <= longitude.getLongitude()) return true;
+            else return false;
+        } else {
+            // Accept values in [lowerLongitude:upperLongitude).
+            if (longitude.getLongitude() < lowerLongitudeFixed || upperLongitudeFixed <= longitude.getLongitude()) return false;
+            else return true;
+        }
+    }
+
+    /**
+     * Checks whether this position is inside a given coordinate range.
      * Lower limit is included; upper limit is excluded.
-     * @param minLatitude (double) [-90:maxLatitude)
-     * @param maxLatitude (double) (minLatitude:90]
-     * @param minLongitude (double) [-180:maxLongitude)
-     * @param maxLongitude (double) (minLongitude:360]
+     * However, upper latitude limit is included when it is 90 (if maximum latitude is correctly set as 90).
+     * @param latitudeRange ({@link LinearRange}) Latitude range [deg].
+     * @param longitudeRange ({@link CircularRange}) Longitude range [deg].
      * @return (boolean) Whether this position is inside the given range.
      *
      * @author otsuru
      * @since 2021/11/21
      */
-    public boolean isInRange(double minLatitude, double maxLatitude, double minLongitude, double maxLongitude) {
-        if (minLatitude < -90 || minLatitude > maxLatitude || 90 < maxLatitude
-                || minLongitude < -180 || minLongitude > maxLongitude || 360 < maxLongitude) {
-            throw new IllegalArgumentException("The input coordinage range: " + minLatitude + ", " + maxLatitude + ", "
-                    + minLongitude + ", " + maxLongitude + " is invalid.");
-        }
-
-        //latitude
-        if (latitude.getLatitude() < minLatitude || maxLatitude <= latitude.getLatitude()) return false;
-
-        // longitude; min [-180, 180) and max [-180, 180)
-        if (maxLongitude < 180) {
-            if (longitude.getLongitude() < minLongitude || maxLongitude <= longitude.getLongitude()) return false;
-        }
-        // longitude; min [-180, 180) and max [180, 360]
-        if (minLongitude < 180 && 180 <= maxLongitude) {
-            if (longitude.getLongitude() < minLongitude && maxLongitude - 360 <= longitude.getLongitude()) return false;
-        }
-        // longitude; min [180, 360] and max [180, 360]
-        if (180 <= minLongitude && 180 <= maxLongitude) {
-            if (longitude.getLongitude() < minLongitude - 360 || maxLongitude - 360 <= longitude.getLongitude()) return false;
-        }
-
-        return true;
+    public boolean isInRange(LinearRange latitudeRange, CircularRange longitudeRange) {
+        if (latitudeRange.check(latitude.getLatitude()) && longitudeRange.check(longitude.getLongitude())) return true;
+        else return false;
     }
 
     @Override
@@ -150,7 +164,7 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
     }
 
     /**
-     * Sorting order is Latitude &rarr; Longitude.
+     * Sorting order is latitude &rarr; longitude.
      */
     @Override
     public int compareTo(HorizontalPosition o) {
@@ -328,7 +342,7 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
     }
 
     /**
-     * Geographic latitude [deg]. [-90, 90]
+     * Geographic latitude [deg]. [-90:90]
      * @return (double) Geographic latitude [deg].
      */
     public double getLatitude() {
@@ -336,7 +350,7 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
     }
 
     /**
-     * Geocentric latitude [rad]. [-&pi;/2, &pi;/2]
+     * Geocentric latitude [rad]. [-&pi;/2:&pi;/2]
      * @return (double) Geocentric latitude [rad].
      */
     public double getGeocentricLatitude() {
@@ -344,7 +358,7 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
     }
 
     /**
-     * Geocentric colatitude in spherical coordinate &theta; [rad]. [0, &pi;]
+     * Geocentric colatitude in spherical coordinate &theta; [rad]. [0:&pi;]
      * @return (double) Geocentric colatitude &theta; [rad].
      */
     public double getTheta() {
@@ -352,7 +366,7 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
     }
 
     /**
-     * Longitude [deg] in range [-180, 180).
+     * Longitude [deg] in range [-180:180).
      * @return (double) Longitude [deg].
      */
     public double getLongitude() {
@@ -360,8 +374,8 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
     }
 
     /**
-     * Longitude [deg], either in range [0:360) or [-180, 180).
-     * @param crossDateLine (boolean) Whether to use range [0:360). Otherwise, [-180, 180).
+     * Longitude [deg], either in range [0:360) or [-180:180).
+     * @param crossDateLine (boolean) Whether to use range [0:360). Otherwise, [-180:180).
      * @return (double) Longitude [deg].
      *
      * @author otsuru
@@ -372,7 +386,7 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
     }
 
     /**
-     * Longitude in spherical coordinate &phi; [rad] in range [-&pi;, &pi;).
+     * Longitude in spherical coordinate &phi; [rad] in range [-&pi;:&pi;).
      * @return (double) Longitude &phi; [rad].
      */
     public double getPhi() {

@@ -12,6 +12,7 @@ import java.util.List;
 
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
+import io.github.kensuke1984.kibrary.math.LinearRange;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.MathAid;
@@ -129,40 +130,38 @@ public class VoxelFileMaker extends Operation {
 
         lowerLatitude = property.parseDouble("lowerLatitude", "0");
         upperLatitude = property.parseDouble("upperLatitude", "0");
-        if (lowerLatitude < -90 || lowerLatitude > upperLatitude || 90 < upperLatitude)
-            throw new IllegalArgumentException("Latitude range " + lowerLatitude + " , " + upperLatitude + " is invalid.");
+        LinearRange.checkValidity("Latitude", lowerLatitude, upperLatitude, -90.0, 90.0);
 
         lowerLongitude = property.parseDouble("lowerLongitude", "0");
         upperLongitude = property.parseDouble("upperLongitude", "180");
-        if (lowerLongitude < -180 || lowerLongitude > upperLongitude || 360 < upperLongitude)
-            throw new IllegalArgumentException("Longitude range " + lowerLongitude + " , " + upperLongitude + " is invalid.");
+        LinearRange.checkValidity("Longitude", lowerLongitude, upperLongitude, -180.0, 360.0);
 
         if (property.containsKey("dLatitudeKm")) {
             dLatitudeKm = property.parseDouble("dLatitudeKm", null);
-            if (dLatitudeKm <= 0)
+            if (dLatitudeKm <= 0.0)
                 throw new IllegalArgumentException("dLatitudeKm must be positive.");
             setLatitudeByKm = true;
         } else {
             dLatitudeDeg = property.parseDouble("dLatitudeDeg", "5");
-            if (dLatitudeDeg <= 0)
+            if (dLatitudeDeg <= 0.0)
                 throw new IllegalArgumentException("dLatitudeDeg must be positive.");
             setLatitudeByKm = false;
         }
         latitudeOffset = property.parseDouble("latitudeOffset", "0");
-        if (latitudeOffset < 0)
+        if (latitudeOffset < 0.0)
             throw new IllegalArgumentException("latitudeOffset must be non-negative.");
 
         if (property.containsKey("dLongitudeKm")) {
             dLongitudeKm = property.parseDouble("dLongitudeKm", null);
-            if (dLongitudeKm <= 0)
+            if (dLongitudeKm <= 0.0)
                 throw new IllegalArgumentException("dLongitudeKm must be positive.");
             setLongitudeByKm = true;
         } else {
             dLongitudeDeg = property.parseDouble("dLongitudeDeg", "5");
-            if (dLongitudeDeg <= 0)
+            if (dLongitudeDeg <= 0.0)
                 throw new IllegalArgumentException("dLongitudeDeg must be positive.");
             longitudeOffset = property.parseDouble("longitudeOffset", "0");
-            if (longitudeOffset < 0)
+            if (longitudeOffset < 0.0)
                 throw new IllegalArgumentException("longitudeOffset must be non-negative.");
             setLongitudeByKm = false;
         }
@@ -174,17 +173,17 @@ public class VoxelFileMaker extends Operation {
         } else {
             lowerRadius = property.parseDouble("lowerRadius", "3480");
             upperRadius = property.parseDouble("upperRadius", "3880");
-            if (lowerRadius < 0 || lowerRadius > upperRadius)
-                throw new IllegalArgumentException("Radius range " + lowerRadius + " , " + upperRadius + " is invalid.");
+            LinearRange.checkValidity("Radius", lowerRadius, upperRadius, 0.0);
+
             dRadius = property.parseDouble("dRadius", "50");
-            if (dRadius <= 0)
+            if (dRadius <= 0.0)
                 throw new IllegalArgumentException("dRadius must be non-negative.");
         }
     }
 
     @Override
     public void run() throws IOException {
-        centerRadius = (borderRadii != null) ? borderRadii[borderRadii.length / 2] : (lowerRadius + upperRadius) / 2;
+        centerRadius = (borderRadii != null) ? borderRadii[borderRadii.length / 2] : (lowerRadius + upperRadius) / 2.0;
 
         // decide horizontal distribution of voxels
         List<HorizontalPixel> horizontalPixels = designHorizontalPixels();
@@ -197,7 +196,7 @@ public class VoxelFileMaker extends Operation {
             layerRadii = new double[borderRadii.length - 1];
             for (int i = 0; i < borderRadii.length - 1; i++) {
                 layerThicknesses[i] = borderRadii[i + 1] - borderRadii[i];
-                layerRadii[i] = (borderRadii[i] + borderRadii[i + 1]) / 2;
+                layerRadii[i] = (borderRadii[i] + borderRadii[i + 1]) / 2.0;
             }
         } else {
             int nRadius = (int) Math.floor((upperRadius - lowerRadius) / dRadius);
@@ -242,7 +241,7 @@ public class VoxelFileMaker extends Operation {
                 } else {
                     // when odd number, set one pixel at center longitude
                     // This is same equation as above but is rewritten for clarity.
-                    startLongitude = centerLongitude - (nLongitude - 1) / 2 * dLongitudeForRow;
+                    startLongitude = centerLongitude - (nLongitude - 1) / 2.0 * dLongitudeForRow;
                 }
                 for (int j = 0; j < nLongitude; j++) {
                     double longitude = startLongitude + j * dLongitudeForRow;

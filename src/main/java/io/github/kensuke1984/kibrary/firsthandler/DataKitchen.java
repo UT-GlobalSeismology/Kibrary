@@ -13,6 +13,8 @@ import java.util.stream.Collectors;
 
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
+import io.github.kensuke1984.kibrary.math.CircularRange;
+import io.github.kensuke1984.kibrary.math.LinearRange;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
@@ -31,12 +33,12 @@ import io.github.kensuke1984.kibrary.util.ThreadAid;
  * <p>
  * See also {@link EventProcessor}.
  * <p>
- * This class is a modification of FirstHandler, which was the Java version of First handler ported from the perl software.
- * <p>
+ *
  * TODO NPTSで合わないものを捨てる？
  *
- * @since 2021/09/14
  * @author otsuru
+ * @since 2021/09/14
+ * This class is a modification of FirstHandler, which was the Java version of First handler ported from the perl software.
  */
 public class DataKitchen extends Operation {
 
@@ -60,12 +62,10 @@ public class DataKitchen extends Operation {
     private int catalog;
     private double samplingHz;
 
-    private double minDistance;
-    private double maxDistance;
-    private double minLatitude;
-    private double maxLatitude;
-    private double minLongitude;
-    private double maxLongitude;
+    private LinearRange distanceRange;
+    private LinearRange latitudeRange;
+    private CircularRange longitudeRange;
+
     /**
      * threshold to judge which stations are in the same position [deg]
      */
@@ -102,23 +102,23 @@ public class DataKitchen extends Operation {
             pw.println("#catalog  CANT CHANGE NOW"); // TODO
             pw.println("##(double) Sampling frequency [Hz]. can not be changed now. (20)");
             pw.println("#samplingHz CANT CHANGE NOW");
-            pw.println("##Lower limit of epicentral distance range [deg]; [0:maxDistance). (0)");
-            pw.println("#minDistance 70");
-            pw.println("##Upper limit of epicentral distance range [deg]; (minDistance:180]. (180)");
-            pw.println("#maxDistance 100");
-            pw.println("##Lower limit of station latitude [deg]; [-90:maxLatitude). (-90)");
-            pw.println("#minLatitude ");
-            pw.println("##Upper limit of station latitude [deg]; (minLatitude:90]. (90)");
-            pw.println("#maxLatitude ");
-            pw.println("##Lower limit of station longitude [deg]; [-180:maxLongitude). (-180)");
-            pw.println("#minLongitude ");
-            pw.println("##Upper limit of station longitude [deg]; (minLongitude:360]. (180)");
-            pw.println("#maxLongitude ");
+            pw.println("##Lower limit of epicentral distance range [deg], inclusive; [0:upperDistance). (0)");
+            pw.println("#lowerDistance 70");
+            pw.println("##Upper limit of epicentral distance range [deg], exclusive; (lowerDistance:180]. (180)");
+            pw.println("#upperDistance 100");
+            pw.println("##Lower limit of station latitude [deg], inclusive; [-90:upperLatitude). (-90)");
+            pw.println("#lowerLatitude ");
+            pw.println("##Upper limit of station latitude [deg], exclusive; (lowerLatitude:90]. (90)");
+            pw.println("#upperLatitude ");
+            pw.println("##Lower limit of station longitude [deg], inclusive; [-180:360]. (-180)");
+            pw.println("#lowerLongitude ");
+            pw.println("##Upper limit of station longitude [deg], exclusive; [-180:360]. (180)");
+            pw.println("#upperLongitude ");
             pw.println("##Threshold to judge which stations are in the same position, non-negative [deg]. (0.01)"); // = about 1 km
-            pw.println("## If two stations are closer to each other than this threshold, one will be eliminated.");
+            pw.println("##  If two stations are closer to each other than this threshold, one will be eliminated.");
             pw.println("#coordinateGrid ");
             pw.println("##(double) The maximum length of output time series. (3276.8)");
-            pw.println("## This should be shorter than 20 times the earliest arrival time of the phases you wish to use.");
+            pw.println("##  This should be shorter than 20 times the earliest arrival time of the phases you wish to use.");
             pw.println("##  The acutal length will be decided so that npts is a power of 2 and does not exceed this timelength nor the SAC data length.");
             pw.println("#maxTlen ");
             pw.println("##(boolean) Whether to remove intermediate files. (true)");
@@ -150,20 +150,17 @@ public class DataKitchen extends Operation {
         }
         samplingHz = property.parseDouble("samplingHz", "20"); // TODO
 
-        minDistance = property.parseDouble("minDistance", "0");
-        maxDistance = property.parseDouble("maxDistance", "180");
-        if (minDistance < 0 || minDistance > maxDistance || 180 < maxDistance)
-            throw new IllegalArgumentException("Distance range " + minDistance + " , " + maxDistance + " is invalid.");
+        double lowerDistance = property.parseDouble("lowerDistance", "0");
+        double upperDistance = property.parseDouble("upperDistance", "180");
+        distanceRange = new LinearRange("Distance", lowerDistance, upperDistance, 0.0, 180.0);
 
-        minLatitude = property.parseDouble("minLatitude", "-90");
-        maxLatitude = property.parseDouble("maxLatitude", "90");
-        if (minLatitude < -90 || minLatitude > maxLatitude || 90 < maxLatitude)
-            throw new IllegalArgumentException("Latitude range " + minLatitude + " , " + maxLatitude + " is invalid.");
+        double lowerLatitude = property.parseDouble("lowerLatitude", "-90");
+        double upperLatitude = property.parseDouble("upperLatitude", "90");
+        latitudeRange = new LinearRange("Latitude", lowerLatitude, upperLatitude, -90.0, 90.0);
 
-        minLongitude = property.parseDouble("minLongitude", "-180");
-        maxLongitude = property.parseDouble("maxLongitude", "180");
-        if (minLongitude < -180 || minLongitude > maxLongitude || 360 < maxLongitude)
-            throw new IllegalArgumentException("Longitude range " + minLongitude + " , " + maxLongitude + " is invalid.");
+        double lowerLongitude = property.parseDouble("lowerLongitude", "-180");
+        double upperLongitude = property.parseDouble("upperLongitude", "180");
+        longitudeRange = new CircularRange("Longitude", lowerLongitude, upperLongitude, -180.0, 360.0);
 
         coordinateGrid = property.parseDouble("coordinateGrid", "0.01");
         if (coordinateGrid < 0)
@@ -200,8 +197,7 @@ public class DataKitchen extends Operation {
         }).filter(Objects::nonNull).collect(Collectors.toSet());
 
         // set parameters
-        eps.forEach(p -> p.setParameters(minDistance, maxDistance, minLatitude, maxLatitude,
-                minLongitude, maxLongitude, coordinateGrid, maxTlen, removeIntermediateFile));
+        eps.forEach(p -> p.setParameters(distanceRange, latitudeRange, longitudeRange, coordinateGrid, maxTlen, removeIntermediateFile));
 
         ExecutorService es = ThreadAid.createFixedThreadPool();
         eps.forEach(es::execute);

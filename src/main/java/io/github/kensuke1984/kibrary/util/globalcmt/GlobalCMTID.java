@@ -26,20 +26,20 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
 public final class GlobalCMTID implements Comparable<GlobalCMTID> {
 
     /**
-     * recent Harvard ID yyyymmddhhmm[A-Za-z] 2004-
+     * Recent Harvard ID, used 2004-. yyyymmddhhmm[A-Za-z]
      */
     public static final Pattern RECENT_GLOBALCMTID_PATTERN = Pattern.compile("[0-9]{12}[A-Za-z]");
     /**
-     * previous Harvard ID mmddyy[A-Za-z] 1976-2004
+     * Previous Harvard ID, used 1976-2004. mmddyy[A-Za-z]
      */
     public static final Pattern PREVIOUS_GLOBALCMTID_PATTERN = Pattern.compile("[0-9]{6}[A-Za-z]");
 
     /**
-     * maximum length to allow for an event ID
+     * Maximum length to allow for an event ID.
      */
     public static final int MAX_LENGTH = 15;
     /**
-     * maximum length of ID
+     * Maximum length of ID.
      */
     private static final int LENGTH = 13;
 
@@ -172,8 +172,8 @@ public final class GlobalCMTID implements Comparable<GlobalCMTID> {
     public static Options defineOptions() {
         Options options = Summon.defaultOptions();
 
-        options.addOption(Option.builder("i").longOpt("id").hasArg().argName("id").required()
-                .desc("Global CMT IDs, listed using commas").build());
+        options.addOption(Option.builder("i").longOpt("ids").hasArg().argName("ids").required()
+                .desc("Global CMT IDs, listed using commas.").build());
         return options;
     }
 
@@ -193,9 +193,9 @@ public final class GlobalCMTID implements Comparable<GlobalCMTID> {
             GlobalCMTID id = new GlobalCMTID(idString);
             GlobalCMTAccess event = id.getEventData();
 
-            System.out.println("ID: " + id + " Mw: " + event.getCmt().getMw());
-            System.out.println("Centroid Time: " + event.getCMTTime());
-            System.out.println("Centroid location (latitude longitude radius): " + event.getCmtPosition());
+            System.out.println("ID: " + id + "   Mw: " + event.getCmt().getMw());
+            System.out.println("Centroid time: " + event.getCMTTime());
+            System.out.println("Centroid position (latitude longitude radius): " + event.getCmtPosition());
         }
     }
 

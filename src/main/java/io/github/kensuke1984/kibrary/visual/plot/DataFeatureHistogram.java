@@ -19,6 +19,7 @@ import org.apache.commons.math3.util.Precision;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotFile;
+import io.github.kensuke1984.kibrary.math.LinearRange;
 import io.github.kensuke1984.kibrary.selection.DataFeature;
 import io.github.kensuke1984.kibrary.selection.DataFeatureListFile;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
@@ -235,17 +236,17 @@ public class DataFeatureHistogram extends Operation {
             pw.println("##(double) Interval of S/N ratio; (0:). (0.2)");
             pw.println("#dSNRatio ");
             pw.println("##########The following are parameters that decide the range of the background shaded box.");
-            pw.println("##(double) Lower end of selected range for correlation; [-1:maxSelectedCorrelation]. (0)");
+            pw.println("##(double) Lower end of selected range for correlation; [-1:maxSelectedCorrelation). (0)");
             pw.println("#minSelectedCorrelation ");
-            pw.println("##(double) Upper end of selected range for correlation; [minSelectedCorrelation:1]. (1)");
+            pw.println("##(double) Upper end of selected range for correlation; (minSelectedCorrelation:1]. (1)");
             pw.println("#maxSelectedCorrelation ");
-            pw.println("##(double) Lower end of selected range for normalized variance; [0:maxSelectedVariance]. (0)");
+            pw.println("##(double) Lower end of selected range for normalized variance; [0:maxSelectedVariance). (0)");
             pw.println("#minSelectedVariance ");
-            pw.println("##(double) Upper end of selected range for normalized variance; [minSelectedVariance:). (2)");
+            pw.println("##(double) Upper end of selected range for normalized variance; (minSelectedVariance:). (2)");
             pw.println("#maxSelectedVariance ");
-            pw.println("##(double) Lower end of selected range for amplitude ratio; [0:maxSelectedRatio]. (0.5)");
+            pw.println("##(double) Lower end of selected range for amplitude ratio; [0:maxSelectedRatio). (0.5)");
             pw.println("#minSelectedRatio ");
-            pw.println("##(double) Upper end of selected range for amplitude ratio; [minSelectedRatio:). (2)");
+            pw.println("##(double) Upper end of selected range for amplitude ratio; (minSelectedRatio:). (2)");
             pw.println("#maxSelectedRatio ");
             pw.println("##(double) Lower end of selected range for S/N ratio; [0:). (0)");
             pw.println("#minSelectedSNRatio ");
@@ -306,16 +307,13 @@ public class DataFeatureHistogram extends Operation {
 
         minSelectedCorrelation = property.parseDouble("minSelectedCorrelation", "0");
         maxSelectedCorrelation = property.parseDouble("maxSelectedCorrelation", "1");
-        if (minSelectedCorrelation < -1 || minSelectedCorrelation > maxSelectedCorrelation || 1 < maxSelectedCorrelation)
-            throw new IllegalArgumentException("Selected correlation range " + minSelectedCorrelation + " , " + maxSelectedCorrelation + " is invalid.");
+        LinearRange.checkValidity("Selected correlation", minSelectedCorrelation, maxSelectedCorrelation, -1.0, 1.0);
         minSelectedVariance = property.parseDouble("minSelectedVariance", "0");
         maxSelectedVariance = property.parseDouble("maxSelectedVariance", "2");
-        if (minSelectedVariance < 0 || minSelectedVariance > maxSelectedVariance)
-            throw new IllegalArgumentException("Selected normalized variance range " + minSelectedVariance + " , " + maxSelectedVariance + " is invalid.");
+        LinearRange.checkValidity("Selected normalized variance", minSelectedVariance, maxSelectedVariance, 0.0);
         minSelectedRatio = property.parseDouble("minSelectedRatio", "0.5");
         maxSelectedRatio = property.parseDouble("maxSelectedRatio", "2");
-        if (minSelectedRatio < 0 || minSelectedRatio > maxSelectedRatio)
-            throw new IllegalArgumentException("Selected amplitude ratio range " + minSelectedRatio + " , " + maxSelectedRatio + " is invalid.");
+        LinearRange.checkValidity("Selected amplitude ratio", minSelectedRatio, maxSelectedRatio, 0.0);
         minSelectedSNRatio = property.parseDouble("minSelectedSNRatio", "0");
         if (minSelectedSNRatio < 0)
             throw new IllegalArgumentException("Selected S/N ratio threshold " + minSelectedSNRatio + " is invalid, must be >= 0.");
