@@ -37,7 +37,7 @@ import io.github.kensuke1984.kibrary.waveform.BasicID;
 import io.github.kensuke1984.kibrary.waveform.BasicIDFile;
 
 /**
- * File containing list of data entries. See {@link DataEntry}.
+ * File containing list of {@link DataEntry}s.
  * <p>
  * Each line: globalCMTID station network latitude longitude component
  * <p>
