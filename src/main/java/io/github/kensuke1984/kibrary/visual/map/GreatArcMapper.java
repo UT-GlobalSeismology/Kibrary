@@ -6,11 +6,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.util.HashSet;
+import java.util.Set;
 
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
-import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 
 /**
@@ -199,18 +200,16 @@ public class GreatArcMapper extends Operation {
         if (mapRegion != null) {
             return mapRegion;
         } else {
-            double latMin = (startPosition.getLatitude() < endPosition.getLatitude()) ? startPosition.getLatitude() : endPosition.getLatitude();
-            double latMax = (startPosition.getLatitude() > endPosition.getLatitude()) ? startPosition.getLatitude() : endPosition.getLatitude();
-            double lonMin = (startPosition.getLongitude() < endPosition.getLongitude()) ? startPosition.getLongitude() : endPosition.getLongitude();
-            double lonMax = (startPosition.getLongitude() > endPosition.getLongitude()) ? startPosition.getLongitude() : endPosition.getLongitude();
-
-            // expand the region a bit more
-            latMin = MathAid.floor(latMin / INTERVAL) * INTERVAL - MAP_RIM;
-            latMax = MathAid.ceil(latMax / INTERVAL) * INTERVAL + MAP_RIM;
-            lonMin = MathAid.floor(lonMin / INTERVAL) * INTERVAL - MAP_RIM;
-            lonMax = MathAid.ceil(lonMax / INTERVAL) * INTERVAL + MAP_RIM;
-
-            return (int) lonMin + "/" + (int) lonMax + "/" + (int) latMin + "/" + (int) latMax;
+            double distance = startPosition.computeEpicentralDistanceDeg(endPosition);
+            double azimuth = startPosition.computeAzimuthDeg(endPosition);
+            // create set of points at 10 deg intervals
+            Set<HorizontalPosition> positions = new HashSet<>();
+            positions.add(startPosition);
+            positions.add(endPosition);
+            for (int i = 10; i < distance; i += 10) {
+                positions.add(startPosition.pointAlongAzimuth(azimuth, i));
+            }
+            return ScalarMapShellscript.decideMapRegion(positions);
         }
     }
 }

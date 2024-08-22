@@ -46,9 +46,11 @@ public class CrossSectionWorker {
     private final double horizontalGridInterval;
     private final double verticalGridInterval;
     private final double[] radii;
+    private final double meanRadius;
 
     private final double marginLatitudeDeg;
-    private final double marginLongitudeDeg;
+    private final double marginLongitudeRaw;
+    private final boolean setMarginLongitudeByKm;
     private final double marginRadius;
 
     /**
@@ -77,9 +79,11 @@ public class CrossSectionWorker {
     private final String plotFileNameRoot;
     private final String scalarFileName;
 
+
     private boolean maskExists = false;
     private double maskThreshold;
     private String maskFileName;
+
 
     /**
      * Set parameters that should be used when creating cross sections.
@@ -137,9 +141,10 @@ public class CrossSectionWorker {
         radii = discretePositions.stream().mapToDouble(FullPosition::getR).distinct().sorted().toArray();
 
         // decide margins
-        double meanRadius = Arrays.stream(radii).average().getAsDouble();
+        meanRadius = Arrays.stream(radii).average().getAsDouble();
         this.marginLatitudeDeg = setMarginLatitudeByKm ? Math.toDegrees(marginLatitudeRaw / meanRadius) : marginLatitudeRaw;
-        this.marginLongitudeDeg = setMarginLongitudeByKm ? Math.toDegrees(marginLongitudeRaw / meanRadius) : marginLongitudeRaw;
+        this.marginLongitudeRaw = marginLongitudeRaw;
+        this.setMarginLongitudeByKm =setMarginLongitudeByKm;
         this.marginRadius = marginRadius;
 
         // other settings
@@ -156,7 +161,7 @@ public class CrossSectionWorker {
         // set file name root of output files
         this.plotFileNameRoot = variable.toString().toLowerCase() + scalarType.toNaturalString() + ((tag != null) ? ("_" + tag + "_") : "");
         // set scalar file name
-        String tag1 = (tag != null) ? (tag + "_XY") : "XY";
+        String tag1 = (tag != null) ? (tag + "_XZ") : "XZ";
         this.scalarFileName = ScalarListFile.generateFileName(variable, scalarType, tag1);
     }
 
@@ -170,7 +175,7 @@ public class CrossSectionWorker {
         this.maskExists = true;
         this.maskThreshold = maskThreshold;
         // set scalar file name
-        String tag2 = (tag != null) ? (tag + "_forMaskXY") : "forMaskXY";
+        String tag2 = (tag != null) ? (tag + "_forMaskXZ") : "forMaskXZ";
         this.maskFileName = ScalarListFile.generateFileName(maskVariable, maskScalarType, tag2);
     }
 
@@ -204,10 +209,11 @@ public class CrossSectionWorker {
     private void computeCrossSectionData(Map<FullPosition, Double> discreteMap, double[] radii, Map<Double, HorizontalPosition> samplePositionMap,
             double verticalGridInterval, Path outputPath) throws IOException {
         //~for each radius and latitude, resample values at sampleLongitudes
-        double[] sampleLongitudes = samplePositionMap.values().stream().mapToDouble(HorizontalPosition::getLongitude)
+        boolean crossDateLine = HorizontalPosition.crossesDateLine(samplePositionMap.values());
+        double[] sampleLongitudes = samplePositionMap.values().stream().mapToDouble(pos -> pos.getLongitude(crossDateLine))
                 .distinct().sorted().toArray();
         Map<FullPosition, Double> resampledMap = Interpolation.inEachWestEastLine(discreteMap, sampleLongitudes,
-                marginLongitudeDeg, mosaic);
+                marginLongitudeRaw, setMarginLongitudeByKm, meanRadius, crossDateLine, mosaic);
         Set<FullPosition> resampledPositions = resampledMap.keySet();
 
         //~compute sampled trace at each sample point
@@ -220,17 +226,11 @@ public class CrossSectionWorker {
             Set<FullPosition> positionsInMeridian = resampledPositions.stream()
                     .filter(pos -> Precision.equals(pos.getLongitude(), sampleLongitude, HorizontalPosition.LONGITUDE_EPSILON))
                     .collect(Collectors.toSet());
-            if (positionsInMeridian.size() == 0) {
-//                System.err.println("No positions for longitude " + sampleLongitude);
-                return;
-            }
+            if (positionsInMeridian.size() == 0) return;
             double[] latitudesInMeridian = positionsInMeridian.stream().mapToDouble(pos -> pos.getLatitude()).distinct().sorted().toArray();
             double[] latitudesExtracted = extractContinuousLatitudeSequence(latitudesInMeridian, sampleLatitude, marginLatitudeDeg);
             // skip this sample point if sampleLatitude is not included in a latitude sequence (thus cannot be interpolated)
-            if (latitudesExtracted == null) {
-//                System.err.println("No data for longitude " + sampleLongitude);
-                return;
-            }
+            if (latitudesExtracted == null) return;
 
             //~create vertical trace at this sample point
             double[] values = new double[radii.length];
