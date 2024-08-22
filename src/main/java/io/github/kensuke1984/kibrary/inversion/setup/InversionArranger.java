@@ -19,10 +19,6 @@ import io.github.kensuke1984.kibrary.math.VectorFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameterFile;
-import io.github.kensuke1984.kibrary.waveform.BasicID;
-import io.github.kensuke1984.kibrary.waveform.BasicIDFile;
-import io.github.kensuke1984.kibrary.waveform.PartialID;
-import io.github.kensuke1984.kibrary.waveform.PartialIDFile;
 
 /**
  * Operation for for assembling A<sup>T</sup>A and A<sup>T</sup>d.
@@ -60,6 +56,14 @@ public class InversionArranger extends Operation {
     private Path unknownParameterPath;
 
     private Path weightingPropertiesPath;
+    /**
+     * Path of AtA file, if reusing.
+     */
+    private Path reuseAtaPath;
+    /**
+     * Fill 0 to empty partial waveforms or not.
+     */
+    private boolean fillEmptyPartial;
 
     /**
      * @param args  none to create a property file <br>
@@ -90,6 +94,10 @@ public class InversionArranger extends Operation {
             pw.println("#unknownParameterPath unknowns.lst");
             pw.println("##Path of a weighting properties file, must be set.");
             pw.println("#weightingPropertiesPath weighting.properties");
+            pw.println("##When reusing an AtA file, set its path.");
+            pw.println("#reuseAtaPath ata.lst");
+            pw.println("##(boolean) Fill 0 to empty partial waveforms. (false)");
+            pw.println("#fillEmptyPartial ");
         }
         System.err.println(outPath + " is created.");
     }
@@ -108,6 +116,8 @@ public class InversionArranger extends Operation {
         partialPath = property.parsePath("partialPath", null, true, workPath);
         unknownParameterPath = property.parsePath("unknownParameterPath", null, true, workPath);
         weightingPropertiesPath = property.parsePath("weightingPropertiesPath", null, true, workPath);
+        if (property.containsKey("reuseAtaPath")) reuseAtaPath = property.parsePath("reuseAtaPath", null, true, workPath);
+        fillEmptyPartial = property.parseBoolean("fillEmptyPartial", "false");
     }
 
     @Override
@@ -116,12 +126,19 @@ public class InversionArranger extends Operation {
         // read input
         WeightingHandler weightingHandler = new WeightingHandler(weightingPropertiesPath);
         List<UnknownParameter> unknowns = UnknownParameterFile.read(unknownParameterPath);
-        List<BasicID> basicIDs = BasicIDFile.read(basicPath, true);
-        List<PartialID> partialIDs = PartialIDFile.read(partialPath, true);
+        // read AtA if reusing
+        RealMatrix ata = null;
+        if (reuseAtaPath != null) {
+            ata = MatrixFile.read(reuseAtaPath);
+            if (ata.getColumnDimension() != ata.getRowDimension())
+                throw new IllegalStateException("Input AtA matrix is not square.");
+            if (ata.getColumnDimension() != unknowns.size())
+                throw new IllegalStateException("Dimensions of input AtA file and unknown parameter file do not match.");
+        }
 
         // assemble matrices
-        MatrixAssembly assembler = new MatrixAssembly(basicIDs, partialIDs, unknowns, weightingHandler);
-        RealMatrix ata = assembler.getAta();
+        MatrixAssembly assembler = new MatrixAssembly(basicPath, partialPath, unknowns, weightingHandler, fillEmptyPartial);
+        if (reuseAtaPath == null) ata = assembler.getAta();
         RealVector atd = assembler.getAtd();
         double numIndependent = assembler.getNumIndependent();
         double dNorm = assembler.getD().getNorm();

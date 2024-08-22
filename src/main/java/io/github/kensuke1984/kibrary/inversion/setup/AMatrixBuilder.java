@@ -27,12 +27,10 @@ import io.github.kensuke1984.kibrary.waveform.PartialID;
  */
 public final class AMatrixBuilder {
 
-    private final List<PartialID> partialIDs;
     private final DVectorBuilder dVector;
     private final List<UnknownParameter> parameterList;
 
-    public AMatrixBuilder(List<PartialID> partialIDs, List<UnknownParameter> parameterList, DVectorBuilder dVector) {
-        this.partialIDs = partialIDs;
+    public AMatrixBuilder(List<UnknownParameter> parameterList, DVectorBuilder dVector) {
         this.dVector = dVector;
         this.parameterList = parameterList;
     }
@@ -46,7 +44,7 @@ public final class AMatrixBuilder {
      * @param fillEmptyPartial (boolean)
      * @return (Matrix) A
      */
-    public ParallelizedMatrix buildWithWeight(RealVector[] weighting, boolean fillEmptyPartial) {
+    public ParallelizedMatrix buildWithWeight(List<PartialID> partialIDs, RealVector[] weighting, boolean fillEmptyPartial) {
 
         ParallelizedMatrix a = new ParallelizedMatrix(dVector.getTotalNpts(), parameterList.size());
         a.scalarMultiply(0);
