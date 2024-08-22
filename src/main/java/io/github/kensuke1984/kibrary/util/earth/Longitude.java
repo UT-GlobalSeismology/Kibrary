@@ -19,40 +19,40 @@ import io.github.kensuke1984.kibrary.util.MathAid;
 final class Longitude implements Comparable<Longitude> {
 
     /**
-     * the number of decimal places to round off the longitude value
+     * The number of decimal places to round off the longitude value.
      */
-    static final int PRECISION = 4;
+    static final int DECIMALS = 4;
 
     /**
-     * [-180, 180) geographic longitude [deg]
+     * Longitude [deg]. [-180, 180)
      */
     private final double longitude;
 
     /**
-     * [-&pi;, &pi;) &phi; in spherical coordinates [rad]
+     * Longitude &phi; in spherical coordinates [rad]. [-&pi;, &pi;)
      */
     private final double phi;
 
     /**
-     * @param longitude [deg] [-180, 360)
+     * @param longitude (double) Longitude [deg]. [-180, 360)
      */
     Longitude(double longitude) {
         if (!withinValidRange(longitude)) throw new IllegalArgumentException(
                 "The input longitude: " + longitude + " is invalid (must be in [-180, 360)).");
 
         if (180 <= longitude) {
-            this.longitude = Precision.round(longitude - 360, PRECISION);
+            this.longitude = Precision.round(longitude - 360, DECIMALS);
         } else {
-            this.longitude = Precision.round(longitude, PRECISION);
+            this.longitude = Precision.round(longitude, DECIMALS);
         }
         phi = FastMath.toRadians(this.longitude);
     }
 
     /**
-     * check if the longitude is within [-180, 360)
+     * Check if input value is within [-180, 360).
      *
-     * @param longitude [deg]
-     * @return if the longitude is valid
+     * @param longitude (double) Input value [deg].
+     * @return (boolean) Whether the longitude is valid.
      */
     private static boolean withinValidRange(double longitude) {
         return -180 <= longitude && longitude < 360;
@@ -80,7 +80,7 @@ final class Longitude implements Comparable<Longitude> {
         if (getClass() != obj.getClass()) return false;
         Longitude other = (Longitude) obj;
 
-        return Precision.equals(longitude, other.longitude, Math.pow(10, -PRECISION)/2);
+        return Precision.equals(longitude, other.longitude, Math.pow(10, -DECIMALS)/2);
     }
 
     @Override
@@ -89,17 +89,17 @@ final class Longitude implements Comparable<Longitude> {
     }
 
     /**
-     * Geographic longitude in range [-180, 180).
-     * @return (double) longitude [deg]
+     * Longitude [deg] in range [-180, 180).
+     * @return (double) Longitude [deg].
      */
     public double getLongitude() {
         return longitude;
     }
 
     /**
-     * Geographic longitude, either in range [0:360) or [-180, 180).
+     * Longitude [deg], either in range [0:360) or [-180, 180).
      * @param crossDateLine (boolean) Whether to use range [0:360). Otherwise, [-180, 180).
-     * @return (double) longitude [deg]
+     * @return (double) Longitude [deg].
      *
      * @author otsuru
      * @since 2023/4/30
@@ -109,9 +109,8 @@ final class Longitude implements Comparable<Longitude> {
     }
 
     /**
-     * [-&pi;, &pi;)
-     *
-     * @return &phi; [rad]
+     * Longitude in spherical coordinate &phi; [rad] in range [-&pi;, &pi;).
+     * @return (double) Longitude &phi; [rad].
      */
     public double getPhi() {
         return phi;
@@ -124,12 +123,12 @@ final class Longitude implements Comparable<Longitude> {
      * <li>1 (the minus sign)</li>
      * <li>3 (the integer part; 0~360)</li>
      * <li>1 (the period)</li>
-     * <li>{@value #PRECISION} (the decimal part)</li>
+     * <li>{@value #DECIMALS} (the decimal part)</li>
      * <ul>
      */
     @Override
     public String toString() {
-        return MathAid.padToString(longitude, 4, PRECISION, false);
+        return MathAid.padToString(longitude, 4, DECIMALS, false);
     }
 
     /**
@@ -140,25 +139,25 @@ final class Longitude implements Comparable<Longitude> {
      * <li>1 (the minus sign)</li>
      * <li>3 (the integer part; 0~360)</li>
      * <li>1 (the period)</li>
-     * <li>{@value #PRECISION} (the decimal part)</li>
+     * <li>{@value #DECIMALS} (the decimal part)</li>
      * <ul>
      *
      * @param crossDateLine (boolean) Whether to use range [0:360) instead of [-180:180).
-     * @return (String) Padded string of longitude
+     * @return (String) Padded string of longitude.
      *
      * @author otsuru
      * @since 2023/3/10
      */
     public String toString(boolean crossDateLine) {
         double correctedLongitude = getLongitude(crossDateLine);
-        return MathAid.padToString(correctedLongitude, 4, PRECISION, false);
+        return MathAid.padToString(correctedLongitude, 4, DECIMALS, false);
     }
 
     /**
      * Turn the longitude value into a short String code.
      * 1 letter ("N" for -100 and under, "M" for under 0, "P" for under 100, "Q" for 100 and above)
-     * followed by 2 + {@value #PRECISION} digits.
-     * @return (String) code
+     * followed by 2 + {@value #DECIMALS} digits.
+     * @return (String) Code for this longitude.
      */
     public String toCode() {
         String letter;
@@ -178,9 +177,9 @@ final class Longitude implements Comparable<Longitude> {
             absolute -= 100;
         }
 
-        int number = (int) Math.round(absolute * Math.pow(10, PRECISION));
+        int number = (int) Math.round(absolute * Math.pow(10, DECIMALS));
 
-        return letter + MathAid.padToString(number, 2 + PRECISION, true);
+        return letter + MathAid.padToString(number, 2 + DECIMALS, true);
     }
 
 }
