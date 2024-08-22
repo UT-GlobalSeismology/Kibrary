@@ -107,7 +107,6 @@ public class InversionArranger extends Operation {
         basicPath = property.parsePath("basicPath", null, true, workPath);
         partialPath = property.parsePath("partialPath", null, true, workPath);
         unknownParameterPath = property.parsePath("unknownParameterPath", null, true, workPath);
-
         weightingPropertiesPath = property.parsePath("weightingPropertiesPath", null, true, workPath);
     }
 
@@ -115,16 +114,16 @@ public class InversionArranger extends Operation {
     public void run() throws IOException {
 
         // read input
+        WeightingHandler weightingHandler = new WeightingHandler(weightingPropertiesPath);
+        List<UnknownParameter> unknowns = UnknownParameterFile.read(unknownParameterPath);
         List<BasicID> basicIDs = BasicIDFile.read(basicPath, true);
         List<PartialID> partialIDs = PartialIDFile.read(partialPath, true);
-        List<UnknownParameter> unknowns = UnknownParameterFile.read(unknownParameterPath);
-        WeightingHandler weightingHandler = new WeightingHandler(weightingPropertiesPath);
 
         // assemble matrices
         MatrixAssembly assembler = new MatrixAssembly(basicIDs, partialIDs, unknowns, weightingHandler);
         RealMatrix ata = assembler.getAta();
         RealVector atd = assembler.getAtd();
-        int dLength = assembler.getD().getDimension();
+        double numIndependent = assembler.getNumIndependent();
         double dNorm = assembler.getD().getNorm();
         double obsNorm = assembler.getObs().getNorm();
 
@@ -135,7 +134,7 @@ public class InversionArranger extends Operation {
         // output
         MatrixFile.write(ata, outPath.resolve("ata.lst"));
         VectorFile.write(atd, outPath.resolve("atd.lst"));
-        MatrixAssembly.writeDInfo(dLength, dNorm, obsNorm, outPath.resolve("dInfo.inf"));
+        MatrixAssembly.writeDInfo(numIndependent, dNorm, obsNorm, outPath.resolve("dInfo.inf"));
         UnknownParameterFile.write(unknowns, outPath.resolve("unknowns.lst"));
     }
 

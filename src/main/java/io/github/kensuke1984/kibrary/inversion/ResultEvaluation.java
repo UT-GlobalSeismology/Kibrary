@@ -22,14 +22,14 @@ public class ResultEvaluation {
 
     private final RealMatrix ata;
     private final RealVector atd;
-    private final int dLength;
+    private final double numIndependent;
     private final double dNorm;
     private final double obsNorm;
 
-    public ResultEvaluation(RealMatrix ata, RealVector atd, int dLength, double dNorm, double obsNorm) {
+    public ResultEvaluation(RealMatrix ata, RealVector atd, double numIndependent, double dNorm, double obsNorm) {
         this.ata = ata;
         this.atd = atd;
-        this.dLength = dLength;
+        this.numIndependent = numIndependent;
         this.dNorm = dNorm;
         this.obsNorm = obsNorm;
     }
@@ -63,11 +63,10 @@ public class ResultEvaluation {
 
         createScript(outPath, alphas);
     }
-
     private static void writeVariance(double[] dat, Path outputPath) throws IOException {
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath))) {
             for (int i = 0; i < dat.length; i++) {
-                // #CGVector normalizedVariance normalizedVariancePercent
+                // vector# normalizedVariance normalizedVariancePercent
                 pw.println(i + " " + dat[i] + " " + (dat[i] * 100));
             }
         }
@@ -75,8 +74,38 @@ public class ResultEvaluation {
     private static void writeAIC(double[] dat, Path outputPath) throws IOException {
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath))) {
             for (int i = 0; i < dat.length; i++) {
-                // #CGVector AIC normalizedAIC
+                // vector# AIC normalizedAIC
                 pw.println(i + " " + dat[i] + " " + (dat[i] / dat[0]));
+            }
+        }
+    }
+
+    /**
+     * Computes and writes variance for inversion results using the least squares method.
+     * @param ans (RealMatrix) The matrix containing the answers of the inversion. Each column is one answer.
+     * @param lambdas (double[]) Values of &lambda; that are computed for.
+     * @param outPath (Path) Path of output directory.
+     * @throws IOException
+     */
+    public void evaluate_LS(RealMatrix ans, double[] lambdas, Path outPath) throws IOException {
+        System.err.println("Computing variance ...");
+
+        // compute normalized variance up to basis vector maxNum
+        double[] variances = new double[lambdas.length + 1];
+        variances[0] = dNorm * dNorm / (obsNorm * obsNorm);
+        for (int i = 0; i < lambdas.length; i++) {
+            variances[i + 1] = varianceOf(ans.getColumnVector(i));
+        }
+        writeVariance_LS(variances, lambdas, outPath.resolve("variance.txt"));
+
+        createScript(outPath, new double[0]);
+    }
+    private static void writeVariance_LS(double[] dat, double[] lambdas, Path outputPath) throws IOException {
+        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath))) {
+            pw.println("infty " + dat[0] + " " + (dat[0] * 100));
+            for (int i = 1; i < dat.length; i++) {
+                // lambda normalizedVariance normalizedVariancePercent
+                pw.println(lambdas[i-1] + " " + dat[i] + " " + (dat[i] * 100));
             }
         }
     }
@@ -99,15 +128,16 @@ public class ResultEvaluation {
     }
 
     /**
-     * 自由度iに対してAICを計算する 独立データは n / alpha 各々のAIC群
+     * Compute the Akaike Information criterion (AIC) for each vector, considering the redundancy parameter.
      *
-     * @param variance varianceの列
-     * @param alpha    alpha redundancy
-     * @return array of aic
+     * @param variance (double[]) Variance for each vector.
+     * @param alpha (double) Redundancy parameter. This is the assumed redundancy in data points,
+     *                used as n/a, where n is the number of data points. Note that n/a will be (int)(n/a).
+     * @return (double[]) AIC value for each vector.
      */
     private double[] computeAIC(double[] variance, double alpha) {
         double[] aic = new double[variance.length];
-        int independentN = (int) (dLength / alpha);
+        int independentN = (int) (numIndependent / alpha);
         for (int i = 0; i < aic.length; i++)
             aic[i] = MathAid.computeAIC(variance[i], independentN, i);
         return aic;
@@ -119,9 +149,9 @@ public class ResultEvaluation {
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(scriptPath))) {
             pw.println("set term pngcairo enhanced font 'Helvetica,14'");
             pw.println("set xlabel 'i'");
-            pw.println("set ylabel 'Normalized AIC'");
+            if (alpha.length != 0) pw.println("set ylabel 'Normalized AIC'");
             pw.println("set y2label 'Normalized variance (%)'");
-            pw.println("set ytics nomirror");
+            if (alpha.length != 0) pw.println("set ytics nomirror");
             pw.println("set y2tics nomirror");
             pw.println("set output 'plot.png'");
 

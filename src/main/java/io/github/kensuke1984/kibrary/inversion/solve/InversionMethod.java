@@ -25,7 +25,7 @@ public abstract class InversionMethod {
     RealVector atd;
 
     public static InversionMethod construct(InverseMethodEnum inverseMethod, RealMatrix ata, RealVector atd,
-            double lambda_LS, RealMatrix t_LS, RealVector eta_LS, RealVector m0_CG) {
+            double[] lambdas_LS, RealMatrix t_LS, RealVector eta_LS, RealVector m0_CG) {
         if (!ata.isSquare()) throw new IllegalArgumentException("AtA must be square.");
         if (ata.getRowDimension() != atd.getDimension()) throw new IllegalArgumentException("Dimension of AtA and Atd do not match.");
 
@@ -35,7 +35,7 @@ public abstract class InversionMethod {
         case CONJUGATE_GRADIENT:
             return new ConjugateGradientMethod(ata, atd, m0_CG);
         case LEAST_SQUARES:
-            return new LeastSquaresMethod(ata, atd, lambda_LS, t_LS, eta_LS);
+            return new LeastSquaresMethod(ata, atd, lambdas_LS, t_LS, eta_LS);
         case SINGULAR_VALUE_DECOMPOSITION:
             return new SingularValueDecomposition(ata, atd);
 

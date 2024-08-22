@@ -48,7 +48,7 @@ public final class AMatrixBuilder {
      */
     public ParallelizedMatrix buildWithWeight(RealVector[] weighting, boolean fillEmptyPartial) {
 
-        ParallelizedMatrix a = new ParallelizedMatrix(dVector.getNpts(), parameterList.size());
+        ParallelizedMatrix a = new ParallelizedMatrix(dVector.getTotalNpts(), parameterList.size());
         a.scalarMultiply(0);
 
         long t = System.nanoTime();

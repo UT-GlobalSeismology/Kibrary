@@ -56,9 +56,9 @@ public class RaypathMapper extends Operation {
     // color modes, corresponding to the numbers written in the property file
     private static final int COLOR_BY_PHASE = 1;
     private static final int BIN_DISTANCE = 2;
-    private static final int BIN_AZIMUTH = 3;
-    private static final int BIN_BACKAZIMUTH = 4;
-    private static final int BIN_MIDAZIMUTH = 5;
+    private static final int BIN_SOURCE_AZIMUTH = 3;
+    private static final int BIN_BACK_AZIMUTH = 4;
+    private static final int BIN_TURNING_AZIMUTH = 5;
 
     private final Property property;
     /**
@@ -243,7 +243,7 @@ public class RaypathMapper extends Operation {
         legendJustification = property.parseString("legendJustification", "BR");
 
         // error prevention
-        if (cutAtPiercePoint == false && colorMode == BIN_MIDAZIMUTH)
+        if (cutAtPiercePoint == false && colorMode == BIN_TURNING_AZIMUTH)
             throw new IllegalArgumentException("Cannot compute midazimuth without cutAtPiercePoint");
 
         setName();
@@ -569,9 +569,9 @@ public class RaypathMapper extends Operation {
         switch (colorMode) {
         case COLOR_BY_PHASE: binColumn = 5; break;
         case BIN_DISTANCE: binColumn = 6; break;
-        case BIN_AZIMUTH: binColumn = 7; break;
-        case BIN_BACKAZIMUTH: binColumn = 8; break;
-        case BIN_MIDAZIMUTH: binColumn = 9; break;
+        case BIN_SOURCE_AZIMUTH: binColumn = 7; break;
+        case BIN_BACK_AZIMUTH: binColumn = 8; break;
+        case BIN_TURNING_AZIMUTH: binColumn = 9; break;
         default: throw new IllegalArgumentException("colorMode out of range");
         }
         return binColumn;
@@ -582,9 +582,9 @@ public class RaypathMapper extends Operation {
         switch (colorMode) {
         case COLOR_BY_PHASE: header = "Phase"; break;
         case BIN_DISTANCE: header = "Distance"; break;
-        case BIN_AZIMUTH: header = "Azimuth"; break;
-        case BIN_BACKAZIMUTH: header = "Back azimuth"; break;
-        case BIN_MIDAZIMUTH: header = "Turn azimuth"; break;
+        case BIN_SOURCE_AZIMUTH: header = "Azimuth"; break;
+        case BIN_BACK_AZIMUTH: header = "Back azimuth"; break;
+        case BIN_TURNING_AZIMUTH: header = "Azimuth"; break;
         default: throw new IllegalArgumentException("colorMode out of range");
         }
         return header;

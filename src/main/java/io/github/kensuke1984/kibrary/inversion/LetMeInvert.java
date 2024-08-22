@@ -87,7 +87,7 @@ public class LetMeInvert extends Operation {
      */
     private boolean fillEmptyPartial;
 
-    private double lambda_LS;
+    private double[] lambdas_LS;
     private Path tMatrixPath_LS;
     private Path etaVectorPath_LS;
     private Path m0VectorPath_CG;
@@ -130,8 +130,8 @@ public class LetMeInvert extends Operation {
             pw.println("##(boolean) Fill 0 to empty partial waveforms. (false)");
             pw.println("#fillEmptyPartial ");
             pw.println("##########Settings for Least Squares method.");
-            pw.println("##(double) Reguralization parameter. (0)");
-            pw.println("#lambda_LS ");
+            pw.println("##(double[]) Reguralization parameters, listed using spaces. (0)");
+            pw.println("#lambdas_LS ");
             pw.println("##(Path) Path of matrix for complex regularization patterns, when needed.");
             pw.println("#tMatrixPath_LS ");
             pw.println("##(Path) Path of vector that Tm should approach, when needed.");
@@ -156,7 +156,6 @@ public class LetMeInvert extends Operation {
         basicPath = property.parsePath("basicPath", null, true, workPath);
         partialPath = property.parsePath("partialPath", null, true, workPath);
         unknownParameterPath = property.parsePath("unknownParameterPath", null, true, workPath);
-
         weightingPropertiesPath = property.parsePath("weightingPropertiesPath", null, true, workPath);
 
         inverseMethods = Arrays.stream(property.parseStringArray("inverseMethods", "CG")).map(InverseMethodEnum::of)
@@ -166,7 +165,7 @@ public class LetMeInvert extends Operation {
 
         fillEmptyPartial = property.parseBoolean("fillEmptyPartial", "false");
 
-        lambda_LS = property.parseDouble("lambda_LS", "0");
+        lambdas_LS = property.parseDoubleArray("lambdas_LS", "0");
         if (property.containsKey("tMatrixPath_LS"))
             tMatrixPath_LS = property.parsePath("tMatrixPath_LS", null, true, workPath);
         if (property.containsKey("etaVectorPath_LS"))
@@ -179,11 +178,11 @@ public class LetMeInvert extends Operation {
     public void run() throws IOException {
 
         // read input
-        WeightingHandler weightingHandler = new WeightingHandler(weightingPropertiesPath);
-        List<UnknownParameter> unknowns = UnknownParameterFile.read(unknownParameterPath);
         RealMatrix tMatrix_LS = (tMatrixPath_LS != null) ? MatrixFile.read(tMatrixPath_LS) : null;
         RealVector etaVector_LS = (etaVectorPath_LS != null) ? VectorFile.read(etaVectorPath_LS) : null;
         RealVector m0Vector_CG = (m0VectorPath_CG != null) ? VectorFile.read(m0VectorPath_CG) : null;
+        WeightingHandler weightingHandler = new WeightingHandler(weightingPropertiesPath);
+        List<UnknownParameter> unknowns = UnknownParameterFile.read(unknownParameterPath);
         List<BasicID> basicIDs = BasicIDFile.read(basicPath, true);
         List<PartialID> partialIDs = PartialIDFile.read(partialPath, true);
 
@@ -191,7 +190,7 @@ public class LetMeInvert extends Operation {
         MatrixAssembly assembler = new MatrixAssembly(basicIDs, partialIDs, unknowns, weightingHandler, fillEmptyPartial);
         RealMatrix ata = assembler.getAta();
         RealVector atd = assembler.getAtd();
-        int dLength = assembler.getD().getDimension();
+        double numIndependent = assembler.getNumIndependent();
         double dNorm = assembler.getD().getNorm();
         double obsNorm = assembler.getObs().getNorm();
         System.err.println("Normalized variance of input waveforms is " + assembler.getNormalizedVariance());
@@ -203,21 +202,27 @@ public class LetMeInvert extends Operation {
         // output matrices
         MatrixFile.write(ata, outPath.resolve("ata.lst"));
         VectorFile.write(atd, outPath.resolve("atd.lst"));
-        MatrixAssembly.writeDInfo(dLength, dNorm, obsNorm, outPath.resolve("dInfo.inf"));
+        MatrixAssembly.writeDInfo(numIndependent, dNorm, obsNorm, outPath.resolve("dInfo.inf"));
         UnknownParameterFile.write(unknowns, outPath.resolve("unknowns.lst"));
 
         // solve inversion and evaluate
-        ResultEvaluation evaluation = new ResultEvaluation(ata, atd, dLength, dNorm, obsNorm);
+        ResultEvaluation evaluation = new ResultEvaluation(ata, atd, numIndependent, dNorm, obsNorm);
         for (InverseMethodEnum method : inverseMethods) {
             Path outMethodPath = outPath.resolve(method.simpleName());
 
             // solve problem
-            InversionMethod inversion = InversionMethod.construct(method, ata, atd, lambda_LS, tMatrix_LS, etaVector_LS, m0Vector_CG);
+            InversionMethod inversion = InversionMethod.construct(method, ata, atd, lambdas_LS, tMatrix_LS, etaVector_LS, m0Vector_CG);
             inversion.compute();
             inversion.outputAnswers(unknowns, outMethodPath);
 
             // compute normalized variance and AIC
-            evaluation.evaluate(inversion.getAnswers(), evaluateNum, alpha, outMethodPath);
+            switch (method) {
+            case LEAST_SQUARES:
+                evaluation.evaluate_LS(inversion.getAnswers(), lambdas_LS, outMethodPath);
+                break;
+            default:
+                evaluation.evaluate(inversion.getAnswers(), evaluateNum, alpha, outMethodPath);
+            }
         }
     }
 

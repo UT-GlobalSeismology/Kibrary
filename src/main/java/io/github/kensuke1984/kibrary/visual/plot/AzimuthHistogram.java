@@ -151,7 +151,8 @@ public class AzimuthHistogram {
         }
 
         // count number of records in each interval
-        int[] numberOfRecords = new int[(int) MathAid.ceil(360 / interval)];
+        int domainWidth = expand ? 360 : 180;
+        int[] numberOfRecords = new int[(int) MathAid.ceil(domainWidth / interval)];
         Map<DataEntry, Double> azimuthMap = new HashMap<>();
         for (DataEntry entry : entrySet) {
             FullPosition eventPosition = entry.getEvent().getEventData().getCmtPosition();
@@ -204,15 +205,21 @@ public class AzimuthHistogram {
         Path txtPath = outPath.resolve(typeName + "Histogram.txt");
         Path scriptPath = outPath.resolve(typeName + "Histogram.plt");
         Path weightPath = outPath.resolve("entryWeight_" + typeName + ".lst");
-        writeHistogramData(txtPath, interval, numberOfRecords, weights);
+        writeHistogramData(txtPath, interval, domainWidth, minimum, maximum, numberOfRecords, weights);
         createScript(scriptPath, xlabel, interval, minimum, maximum, xtics, conductWeighting);
         if (conductWeighting) EntryWeightListFile.write(weightMap, weightPath);
     }
 
-    private static void writeHistogramData(Path txtPath, double interval, int[] numberOfRecords, double[] weights) throws IOException {
+    private static void writeHistogramData(Path txtPath, double interval, double domainWidth, double minimum, double maximum, int[] numberOfRecords, double[] weights) throws IOException {
+        // figure out which domain the minimum and maximum are in
+        int minLoop = (int) MathAid.floor(minimum / domainWidth);
+        int maxLoop = (int) MathAid.ceil(maximum / domainWidth) - 1;
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(txtPath))) {
-            for (int i = 0; i < numberOfRecords.length; i++) {
-                pw.println(String.format("%.2f %d %.1f", i * interval, numberOfRecords[i], numberOfRecords[i] * weights[i]));
+            // output for all domains needed in the plot
+            for (int loop = minLoop; loop <= maxLoop; loop++) {
+                for (int i = 0; i < numberOfRecords.length; i++) {
+                    pw.println(String.format("%.2f %d %.1f", i * interval + loop * domainWidth, numberOfRecords[i], numberOfRecords[i] * weights[i]));
+                }
             }
         }
     }

@@ -54,9 +54,9 @@ public class SingularValueDecomposition extends InversionMethod {
     public SingularValueDecomposition(RealMatrix ata, RealVector atd) {
         this.ata = ata;
         this.atd = atd;
-        int column = ata.getColumnDimension();
-        // set up matrices
-        answer = MatrixUtils.createRealMatrix(column, column);
+        // set up answer matrix
+        int dimension = ata.getColumnDimension();
+        answer = MatrixUtils.createRealMatrix(dimension, dimension);
     }
 
     @Override
