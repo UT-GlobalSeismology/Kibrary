@@ -41,7 +41,8 @@ public class DataAligner {
     private AtomicInteger processedFolders = new AtomicInteger();
 
     /**
-     * @param args [option]
+     * Constructs the dataset from downloaded mseed or seed files.
+     * @param args Options.
      * @throws IOException
      */
     public static void main(String[] args) throws IOException {

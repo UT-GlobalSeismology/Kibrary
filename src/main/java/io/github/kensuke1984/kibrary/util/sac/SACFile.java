@@ -9,8 +9,8 @@ import io.github.kensuke1984.kibrary.filter.HighPassFilter;
 import io.github.kensuke1984.kibrary.filter.LowPassFilter;
 
 /**
- * SAC file<br>
- * (SAC: Seismic analysis code)<br>
+ * SAC file (SAC: Seismic analysis code). Binary format.
+ * <p>
  * This class is <b>immutable</b>
  *
  * @author Kensuke Konishi

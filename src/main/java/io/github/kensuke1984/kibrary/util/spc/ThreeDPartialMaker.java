@@ -22,13 +22,12 @@ import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure_old;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 
 /**
- * Create a partial derivative from one forward propagation and one
- * backward propagation
+ * Create a partial derivative waveform from one forward propagation and one backward propagation.
  * <p>
  * U<sub>j,q</sub> C<sub>jqrs</sub> &eta;<sub>ri,s</sub>
  *
  * @author Kensuke Konishi
- * @version 0.0.2.1
+ * @since version 0.0.2.1
  */
 public class ThreeDPartialMaker {
 

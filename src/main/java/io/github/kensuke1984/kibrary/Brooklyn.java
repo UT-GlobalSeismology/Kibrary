@@ -12,8 +12,6 @@ import io.github.kensuke1984.kibrary.entrance.DataAligner;
 import io.github.kensuke1984.kibrary.entrance.DataTransfer;
 import io.github.kensuke1984.kibrary.inversion.WeightingHandler;
 import io.github.kensuke1984.kibrary.perturbation.PerturbationComparison;
-import io.github.kensuke1984.kibrary.quick.LookAtBPspc;
-import io.github.kensuke1984.kibrary.quick.LookAtFPspc;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowSubtract;
 import io.github.kensuke1984.kibrary.util.data.DataEntryListFile;
@@ -23,6 +21,7 @@ import io.github.kensuke1984.kibrary.util.earth.PolynomialStructureFile;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTCatalogUpdate;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACFileAccess;
+import io.github.kensuke1984.kibrary.util.spc.SPCFileAccess;
 import io.github.kensuke1984.kibrary.visual.map.ColorBinInformationFile;
 import io.github.kensuke1984.kibrary.visual.map.VoxelMapper;
 import io.github.kensuke1984.kibrary.visual.plot.AzimuthHistogram;
@@ -61,7 +60,8 @@ enum Brooklyn {
     DataAligner(13, DataAligner.class),
     LobbyCleanup(19, LobbyCleanup.class),
     // Synthetic  20
-    SACFileAccess(21, SACFileAccess.class),
+    SPCFileAccess(21, SPCFileAccess.class),
+    SACFileAccess(22, SACFileAccess.class),
     // Filtered 30
     TimewindowDataFile(31, TimewindowDataFile.class),
     StaticCorrectionDataFile(32, StaticCorrectionDataFile.class),
@@ -82,8 +82,6 @@ enum Brooklyn {
     WeightingHandler(70, WeightingHandler.class),
     PerturbationComparison(71, PerturbationComparison.class),
     // Temporal 100
-    LookAtFPspc(101,LookAtFPspc.class),
-    LookAtBPspc(102,LookAtBPspc.class),
     ;
 
     private Class<?> c;
