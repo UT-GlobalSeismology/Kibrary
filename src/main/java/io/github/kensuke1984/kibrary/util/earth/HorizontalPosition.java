@@ -318,7 +318,7 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
      * Geocentric latitude [rad]. [-&pi;/2:&pi;/2]
      * @return (double) Geocentric latitude [rad].
      */
-    public double getGeocentricLatitude() {
+    public double getGeocentricLatitudeRad() {
         return latitude.getGeocentricLatitudeRad();
     }
 
