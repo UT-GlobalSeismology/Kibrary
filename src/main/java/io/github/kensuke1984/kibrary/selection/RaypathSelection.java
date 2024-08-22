@@ -369,7 +369,7 @@ public class RaypathSelection extends Operation {
         }
 
         System.err.println(selectedEntrySet.size() + " data entries are selected.");
-        DataEntryListFile.writeFromSet(selectedEntrySet, outputSelectedPath);
+        if (selectedEntrySet.size() > 0) DataEntryListFile.writeFromSet(selectedEntrySet, outputSelectedPath);
     }
 
 }
