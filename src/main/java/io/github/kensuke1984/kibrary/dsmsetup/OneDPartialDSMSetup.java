@@ -51,7 +51,7 @@ import io.github.kensuke1984.kibrary.voxel.LayerInformationFile;
  * SSHSH will work for the parameters PARL and PARN, and SSHPSV will work for PARA, PARC, PARF, PARL, and PARN.
  *
  * @author Kensuke Konishi
- * @since version 0.1.3
+ * @since a long time ago
  * @version 2021/12/24 renamed from SshDSMInformationFileMaker to OneDPartialDSMSetup
  */
 public class OneDPartialDSMSetup extends Operation {
@@ -70,7 +70,7 @@ public class OneDPartialDSMSetup extends Operation {
      */
     private boolean appendFolderDate;
     /**
-     * Name root of input file for DSM (header_[sh,psv].inf).
+     * Name root of input file for DSM (header_[SH,PSV].inf).
      */
     private String header;
     /**
@@ -134,7 +134,7 @@ public class OneDPartialDSMSetup extends Operation {
             pw.println("#folderTag ");
             pw.println("##(boolean) Whether to append date string at end of output folder name. (true)");
             pw.println("#appendFolderDate false");
-            pw.println("##(String) Header for names of output files (as in header_[sh,psv].inf). (PREM)");
+            pw.println("##(String) Header for names of output files (as in header_[SH,PSV].inf). (PREM)");
             pw.println("#header ");
             pw.println("##SacComponents to be used, listed using spaces. (Z R T)");
             pw.println("#components ");
@@ -198,7 +198,7 @@ public class OneDPartialDSMSetup extends Operation {
 
     @Override
     public void run() throws IOException {
-        String dateStr = GadgetAid.getTemporaryString();
+        String dateString = GadgetAid.getTemporaryString();
 
         // create set of events and observers to set up DSM for
         Map<GlobalCMTID, Set<Observer>> arcMap = DatasetAid.setupArcMapFromFileOrFolder(dataEntryPath, obsPath, components);
@@ -213,7 +213,7 @@ public class OneDPartialDSMSetup extends Operation {
         }
 
         // create output folder
-        Path outPath = DatasetAid.createOutputFolder(workPath, "oneDPartial", folderTag, appendFolderDate, dateStr);
+        Path outPath = DatasetAid.createOutputFolder(workPath, "oneDPartial", folderTag, appendFolderDate, dateString);
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         // output information files in each event folder
@@ -230,9 +230,9 @@ public class OneDPartialDSMSetup extends Operation {
                     continue;
 
                 // in the same event folder, observers with the same name should have same position
-                int numberOfObserver = (int) observers.stream().map(Observer::toString).count();
+                int numberOfObserver = (int) observers.stream().map(Observer::toString).distinct().count();
                 if (numberOfObserver != observers.size())
-                    System.err.println("!Caution there are observers with the same name and different position for " + event);
+                    System.err.println("! Caution: There are observers with the same name and different position for " + event);
 
                 OneDPartialDSMInputFile info = new OneDPartialDSMInputFile(structure, event.getEventData(), observers, header,
                         layerRadii, tlen, np);
@@ -259,13 +259,13 @@ public class OneDPartialDSMSetup extends Operation {
         Path outSHPath;
         Path outPSVPath;
         if (forTIParameters) {
-            outSHPath = DatasetAid.generateOutputFilePath(outPath, "run1dparTI_SH", null, false, dateStr, ".sh");
-            outPSVPath = DatasetAid.generateOutputFilePath(outPath, "run1dparTI_PSV", null, false, dateStr, ".sh");
+            outSHPath = DatasetAid.generateOutputFilePath(outPath, "run1dparTI_SH", null, false, dateString, ".sh");
+            outPSVPath = DatasetAid.generateOutputFilePath(outPath, "run1dparTI_PSV", null, false, dateString, ".sh");
             shell.write(DSMShellscript.DSMType.TI1D, SPCMode.SH, listFileName, outSHPath);
             shell.write(DSMShellscript.DSMType.TI1D, SPCMode.PSV, listFileName, outPSVPath);
         } else {
-            outSHPath = DatasetAid.generateOutputFilePath(outPath, "run1dparI_SH", null, false, dateStr, ".sh");
-            outPSVPath = DatasetAid.generateOutputFilePath(outPath, "run1dparI_PSV", null, false, dateStr, ".sh");
+            outSHPath = DatasetAid.generateOutputFilePath(outPath, "run1dparI_SH", null, false, dateString, ".sh");
+            outPSVPath = DatasetAid.generateOutputFilePath(outPath, "run1dparI_PSV", null, false, dateString, ".sh");
             shell.write(DSMShellscript.DSMType.I1D, SPCMode.SH, listFileName, outSHPath);
             shell.write(DSMShellscript.DSMType.I1D, SPCMode.PSV, listFileName, outPSVPath);
         }

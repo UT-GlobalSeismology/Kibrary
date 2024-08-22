@@ -3,6 +3,8 @@ package io.github.kensuke1984.kibrary.filter;
 import org.apache.commons.math3.complex.Complex;
 import org.apache.commons.math3.util.FastMath;
 
+import io.github.kensuke1984.kibrary.util.MathAid;
+
 /**
  * Masanori Saito recursive digital filter <br>
  * 斎藤正徳 漸化式ディジタルフィルタ<br>
@@ -13,7 +15,7 @@ import org.apache.commons.math3.util.FastMath;
  * true.
  *
  * @author Kensuke Konishi
- * @version 0.0.5.0.2
+ * @since a long time ago
  */
 public abstract class ButterworthFilter {
 
@@ -114,7 +116,7 @@ public abstract class ButterworthFilter {
     }
 
     void setN() {
-        n = (int) FastMath.ceil(FastMath.log(as / ap) / FastMath.log(sigmaSoverSigmaP));
+        n = (int) MathAid.ceil(FastMath.log(as / ap) / FastMath.log(sigmaSoverSigmaP));
     }
 
     abstract void setSigmaSoverSigmaP();

@@ -12,7 +12,7 @@ import io.github.kensuke1984.kibrary.util.spc.PartialType;
  * This class is <b>IMMUTABLE</b>
  *
  * @author Kensuke Konishi
- * @since version 0.0.3
+ * @since a long time ago
  */
 public class Physical1DParameter implements UnknownParameter {
     private static final ParameterType PARAMETER_TYPE = ParameterType.LAYER;

@@ -10,7 +10,7 @@ package io.github.kensuke1984.kibrary.util.sac;
  * ?sct is temporal partial derivative after <i>convolution</i>. <br>
  *
  * @author Kensuke Konishi
- * @version 0.0.4.1
+ * @since a long time ago
  * @see <a href=http://ds.iris.edu/ds/nodes/dmc/forms/sac/>SAC</a>
  */
 public enum SACExtension {

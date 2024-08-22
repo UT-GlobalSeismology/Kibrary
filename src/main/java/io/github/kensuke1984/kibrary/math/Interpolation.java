@@ -14,17 +14,19 @@ import java.util.stream.IntStream;
 import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
 import org.apache.commons.math3.util.Precision;
 
+import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 
 /**
  * Methods concerning interpolation of values on a line or surface.
  *
+ * @author ?
  * @since a long time ago
  */
 public class Interpolation {
 
-    private static final int GRID_PRECISION = 4;
+    private static final int GRID_DECIMALS = 4;
 
     public static double threePointInterpolation(double x, double[] xi, double[] yi) {
         double[] h = new double[3];
@@ -169,7 +171,7 @@ public class Interpolation {
                     .mapToDouble(trace -> trace.getMaxX()).max().getAsDouble();
             int nGridLongitudes = (int) Math.round((maxLongitude - minLongitude) / gridInterval) + 1;
             for (int i = 0; i < nGridLongitudes; i++) {
-                double longitude = Precision.round(minLongitude + i * gridInterval, GRID_PRECISION);
+                double longitude = Precision.round(minLongitude + i * gridInterval, GRID_DECIMALS);
 
                 // extract indices of latitudes with values defined on this longitude
                 int[] indicesWithValue = IntStream.range(0, latitudes.length)
@@ -266,13 +268,13 @@ public class Interpolation {
      */
     public static Trace interpolateTraceOnGrid(Trace originalTrace, double gridInterval, double margin, boolean mosaic) {
         // set the x range so that the margin is added to either end
-        double startX = Math.ceil((originalTrace.getMinX() - margin) / gridInterval) * gridInterval;
-        double endX = Math.floor((originalTrace.getMaxX() + margin) / gridInterval) * gridInterval;
+        double startX = MathAid.ceil((originalTrace.getMinX() - margin) / gridInterval) * gridInterval;
+        double endX = MathAid.floor((originalTrace.getMaxX() + margin) / gridInterval) * gridInterval;
         int nGridXs = (int) Math.round((endX - startX) / gridInterval) + 1;
         // array of sample points at which to interpolate
         double[] xs = new double[nGridXs];
         for (int i = 0; i < nGridXs; i++) {
-            xs[i] = Precision.round(startX + i * gridInterval, GRID_PRECISION);
+            xs[i] = Precision.round(startX + i * gridInterval, GRID_DECIMALS);
         }
         return interpolateTraceAtPoints(originalTrace, xs, margin, mosaic);
     }

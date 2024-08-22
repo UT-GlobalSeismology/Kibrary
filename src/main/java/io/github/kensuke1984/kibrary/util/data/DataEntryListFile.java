@@ -28,7 +28,6 @@ import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.InformationFileReader;
-import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
@@ -57,9 +56,7 @@ public class DataEntryListFile {
     }
 
     public static void writeFromSet(Set<DataEntry> entrySet, Path outputPath, OpenOption... options) throws IOException {
-        System.err.println("Outputting "
-                + MathAid.switchSingularPlural(entrySet.size(), "data entry", "data entries")
-                + " in " + outputPath);
+        DatasetAid.printNumOutput(entrySet.size(), "data entry", "data entries", outputPath);
 
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath, options))) {
             pw.println("# globalCMTID station network latitude longitude component");
@@ -96,7 +93,7 @@ public class DataEntryListFile {
                 throw new RuntimeException("There is duplication of " + entry + " in " + inputPath + ".");
         }
 
-        DatasetAid.checkNum(entrySet.size(), "data entry", "data entries");
+        DatasetAid.printNumInput(entrySet.size(), "data entry", "data entries", inputPath);
         return Collections.unmodifiableSet(entrySet);
     }
 
@@ -149,7 +146,7 @@ public class DataEntryListFile {
         options.addOption(Option.builder("T").longOpt("tag").hasArg().argName("fileTag")
                 .desc("A tag to include in output file name.").build());
         options.addOption(Option.builder("O").longOpt("omitDate")
-                .desc("Whether to omit date string in output file name.").build());
+                .desc("Omit date string in output file name.").build());
 
         return options;
     }
@@ -165,7 +162,7 @@ public class DataEntryListFile {
                 : SACComponent.componentSetOf("ZRT");
         String fileTag = cmdLine.hasOption("T") ? cmdLine.getOptionValue("T") : null;
         boolean appendFileDate = !cmdLine.hasOption("O");
-        Path outputPath = DatasetAid.generateOutputFilePath(Paths.get(""), "dataEntry", fileTag, appendFileDate, GadgetAid.getTemporaryString(), ".lst");
+        Path outputPath = DatasetAid.generateOutputFilePath(Paths.get(""), "dataEntry", fileTag, appendFileDate, null, ".lst");
 
         // read input
         Set<DataEntry> entrySet;

@@ -14,7 +14,6 @@ import java.util.Set;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
-import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.MathAid;
 
 /**
@@ -117,8 +116,7 @@ public class TimewindowMerge extends Operation {
         }
 
         // output merged file
-        String dateStr = GadgetAid.getTemporaryString();
-        Path outputPath = DatasetAid.generateOutputFilePath(workPath, "timewindow", fileTag, appendFileDate, dateStr, ".dat");
+        Path outputPath = DatasetAid.generateOutputFilePath(workPath, "timewindow", fileTag, appendFileDate, null, ".dat");
         TimewindowDataFile.write(timewindows, outputPath);
     }
 

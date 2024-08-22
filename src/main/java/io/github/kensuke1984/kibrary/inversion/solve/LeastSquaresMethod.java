@@ -28,7 +28,7 @@ import org.apache.commons.math3.linear.RealVector;
  *   (A<sup>T</sup><b>d</b> - &lambda; T<sup>T</sup><b>&eta;</b>)
  *
  * @author Kensuke Konishi
- * @since version 0.1.0
+ * @since a long time ago
  */
 public class LeastSquaresMethod extends InversionMethod {
 

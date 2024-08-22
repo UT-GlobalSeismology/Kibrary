@@ -20,6 +20,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACUtil;
  * This means that they are supposed to compose part of the same waveform.
  *
  * @author Kensuke Konishi
+ * @since a long time ago
  */
 class SegmentedSacGroup {
 

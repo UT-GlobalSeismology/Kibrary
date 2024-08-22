@@ -12,7 +12,6 @@ import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.elastic.VariableType;
 import io.github.kensuke1984.kibrary.math.LinearRange;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
-import io.github.kensuke1984.kibrary.util.GadgetAid;
 
 /**
  * Operation that adds perturbations to a {@link PolynomialStructure}.
@@ -128,7 +127,7 @@ public class PolynomialStructurePerturber extends Operation {
 
        structure = structure.withPerturbation(lowerRadius, upperRadius, variable, percent);
 
-       Path outputPath = DatasetAid.generateOutputFilePath(workPath, nameRoot, fileTag, appendFileDate, GadgetAid.getTemporaryString(), ".structure");
+       Path outputPath = DatasetAid.generateOutputFilePath(workPath, nameRoot, fileTag, appendFileDate, null, ".structure");
        PolynomialStructureFile.write(structure, outputPath);
    }
 

@@ -30,6 +30,7 @@ import io.github.kensuke1984.kibrary.util.MathAid;
  * TODO sorted
  *
  * @author Kensuke Konishi
+ * @since a long time ago
  */
 public final class Trace {
 

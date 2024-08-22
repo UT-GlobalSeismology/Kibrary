@@ -16,7 +16,7 @@ import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
  * Abstract parent class of various inversion methods to solve the problem A<sup>T</sup>A<b>m</b> = A<sup>T</sup><b>d</b>.
  *
  * @author Kensuke Konishi
- * @since version 0.0.4
+ * @since a long time ago
  */
 public abstract class InversionMethod {
 

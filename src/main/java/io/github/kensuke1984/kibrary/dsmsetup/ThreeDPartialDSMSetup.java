@@ -56,7 +56,7 @@ import io.github.kensuke1984.kibrary.voxel.VoxelInformationFile;
  * TODO check that the voxel sets are same
  *
  * @author Kensuke Konishi
- * @since version 0.2.2.1
+ * @since a long time ago
  * @version 2021/12/24 renamed from InformationFileMaker to ThreeDPartialDSMSetup
  */
 public class ThreeDPartialDSMSetup extends Operation {
@@ -91,7 +91,7 @@ public class ThreeDPartialDSMSetup extends Operation {
      */
     private Path outPath;
     /**
-     * Name root of input file for DSM (header_[sh,psv].inf).
+     * Name root of input file for DSM (header_[SH,PSV].inf).
      */
     private String header;
 
@@ -144,7 +144,7 @@ public class ThreeDPartialDSMSetup extends Operation {
      */
     private double[] voxelRadii;
 
-    private String dateStr;
+    private String dateString;
 
     /**
      * @param args  none to create a property file <br>
@@ -173,7 +173,7 @@ public class ThreeDPartialDSMSetup extends Operation {
             pw.println("#fileTag ");
             pw.println("##(boolean) Whether to append date string at end of output file names. (true)");
             pw.println("#appendFileDate false");
-            pw.println("##(String) Header for names of output files (as in header_[sh,psv].inf). (PREM)");
+            pw.println("##(String) Header for names of output files (as in header_[SH,PSV].inf). (PREM)");
             pw.println("#header ");
             pw.println("##Path of an event list file, must be set.");
             pw.println("#eventPath event.lst");
@@ -243,7 +243,7 @@ public class ThreeDPartialDSMSetup extends Operation {
 
     @Override
     public void run() throws IOException {
-        dateStr = GadgetAid.getTemporaryString();
+        dateString = GadgetAid.getTemporaryString();
 
         // read voxel information
         VoxelInformationFile vif = new VoxelInformationFile(voxelPath);
@@ -265,7 +265,7 @@ public class ThreeDPartialDSMSetup extends Operation {
             outPath = reusePath;
             System.err.println("Reusing " + reusePath);
         } else {
-            outPath = DatasetAid.createOutputFolder(workPath, "threeDPartial", folderTag, appendFolderDate, dateStr);
+            outPath = DatasetAid.createOutputFolder(workPath, "threeDPartial", folderTag, appendFolderDate, dateString);
             property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
             FileUtils.copyFileToDirectory(voxelPath.toFile(), outPath.toFile(), false);
             createPointInformationFile();
@@ -348,10 +348,10 @@ public class ThreeDPartialDSMSetup extends Operation {
         System.err.println(" " + MathAid.switchSingularPlural(nCreated, "source", "sources") + " created in " + fpPoolPath);
 
         // output list and shellscripts for execution of shfp and psvfp
-        Path fpListPath = DatasetAid.generateOutputFilePath(outPath, "fpList", fileTag, appendFileDate, dateStr, ".txt");
+        Path fpListPath = DatasetAid.generateOutputFilePath(outPath, "fpList", fileTag, appendFileDate, dateString, ".txt");
         Files.write(fpListPath, fpSourceTreeSet);
-        Path outSHPath = DatasetAid.generateOutputFilePath(outPath, "runFP_SH", fileTag, appendFileDate, dateStr, ".sh");
-        Path outPSVPath = DatasetAid.generateOutputFilePath(outPath, "runFP_PSV", fileTag, appendFileDate, dateStr, ".sh");
+        Path outSHPath = DatasetAid.generateOutputFilePath(outPath, "runFP_SH", fileTag, appendFileDate, dateString, ".sh");
+        Path outPSVPath = DatasetAid.generateOutputFilePath(outPath, "runFP_PSV", fileTag, appendFileDate, dateString, ".sh");
         DSMShellscript shellFP = new DSMShellscript(mpi, nCreated, header);
         shellFP.write(DSMShellscript.DSMType.FP, SPCMode.SH, fpListPath.getFileName().toString(), outSHPath);
         shellFP.write(DSMShellscript.DSMType.FP, SPCMode.PSV, fpListPath.getFileName().toString(), outPSVPath);
@@ -403,10 +403,10 @@ public class ThreeDPartialDSMSetup extends Operation {
         }
 
         // output list and shellscripts for execution of shbp and psvbp
-        Path bpListPath = DatasetAid.generateOutputFilePath(outPath, "bpList", fileTag, appendFileDate, dateStr, ".txt");
+        Path bpListPath = DatasetAid.generateOutputFilePath(outPath, "bpList", fileTag, appendFileDate, dateString, ".txt");
         Files.write(bpListPath, bpSourceTreeSet);
-        Path outSHPath = DatasetAid.generateOutputFilePath(outPath, "runBP_SH", fileTag, appendFileDate, dateStr, ".sh");
-        Path outPSVPath = DatasetAid.generateOutputFilePath(outPath, "runBP_PSV", fileTag, appendFileDate, dateStr, ".sh");
+        Path outSHPath = DatasetAid.generateOutputFilePath(outPath, "runBP_SH", fileTag, appendFileDate, dateString, ".sh");
+        Path outPSVPath = DatasetAid.generateOutputFilePath(outPath, "runBP_PSV", fileTag, appendFileDate, dateString, ".sh");
         DSMShellscript shellBP = new DSMShellscript(mpi, nCreated, header);
         shellBP.write(DSMShellscript.DSMType.BP, SPCMode.SH, bpListPath.getFileName().toString(), outSHPath);
         shellBP.write(DSMShellscript.DSMType.BP, SPCMode.PSV, bpListPath.getFileName().toString(), outPSVPath);

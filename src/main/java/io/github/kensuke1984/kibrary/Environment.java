@@ -16,7 +16,7 @@ import org.apache.commons.cli.Options;
  * Runtime environment
  *
  * @author Kensuke Konishi
- * @since version 0.1.5
+ * @since a long time ago
  */
 public class Environment {
     private Environment() {}

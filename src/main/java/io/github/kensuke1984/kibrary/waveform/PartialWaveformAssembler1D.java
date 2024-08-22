@@ -30,7 +30,6 @@ import io.github.kensuke1984.kibrary.source.SourceTimeFunctionType;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
-import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.SpcFileAid;
 import io.github.kensuke1984.kibrary.util.ThreadAid;
 import io.github.kensuke1984.kibrary.util.data.Observer;
@@ -72,7 +71,7 @@ import io.github.kensuke1984.kibrary.voxel.ParameterType;
  * Resulting entries can be specified by a (event, observer, component, partialType, perturbationRadius, timeframe)-pair.
  *
  * @author Kensuke Konishi
- * @since version 0.2.0.3
+ * @since a long time ago
  * @version 2021/12/24 renamed from Partial1DDatasetMaker to PartialWaveformAssembler1D
  */
 public class PartialWaveformAssembler1D extends Operation {
@@ -90,10 +89,6 @@ public class PartialWaveformAssembler1D extends Operation {
      * Whether to append date string at end of output folder name.
      */
     private boolean appendFolderDate;
-    /**
-     * Path of the output folder.
-     */
-    private Path outPath;
     /**
      * Components to use.
      */
@@ -342,7 +337,7 @@ public class PartialWaveformAssembler1D extends Operation {
         filter = designBandPassFilter();
 
         // create output folder
-        outPath = DatasetAid.createOutputFolder(workPath, "assembled", folderTag, appendFolderDate, GadgetAid.getTemporaryString());
+        Path outPath = DatasetAid.createOutputFolder(workPath, "assembled", folderTag, appendFolderDate, null);
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         ExecutorService es = ThreadAid.createFixedThreadPool();

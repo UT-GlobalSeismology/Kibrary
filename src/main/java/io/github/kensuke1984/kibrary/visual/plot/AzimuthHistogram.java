@@ -25,7 +25,7 @@ import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotFile;
 import io.github.kensuke1984.kibrary.inversion.EntryWeightListFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.FileAid;
-import io.github.kensuke1984.kibrary.util.GadgetAid;
+import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.data.DataEntry;
 import io.github.kensuke1984.kibrary.util.data.DataEntryListFile;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
@@ -42,6 +42,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
  * (ex. A record with azimuth 240 is counted as having azimuth 60.)
  * This can be suppressed by setting the "expand" option.
  *
+ * @author ?
  * @since a long time ago
  * @version 2022/8/12 renamed and moved from util.statistics.HistogramAzimuth to visual.AzimuthHistogram
  */
@@ -100,13 +101,13 @@ public class AzimuthHistogram {
                 .desc("Name of phase to use to compute turning point. (ScS)").build());
         // weighting
         options.addOption(Option.builder("w").longOpt("weight")
-                .desc("Whether to decide weights.").build());
+                .desc("Decide weights.").build());
 
         // output
         options.addOption(Option.builder("T").longOpt("tag").hasArg().argName("folderTag")
                 .desc("A tag to include in output folder name.").build());
         options.addOption(Option.builder("O").longOpt("omitDate")
-                .desc("Whether to omit date string in output folder name.").build());
+                .desc("Omit date string in output folder name.").build());
 
         return options;
     }
@@ -150,7 +151,7 @@ public class AzimuthHistogram {
         }
 
         // count number of records in each interval
-        int[] numberOfRecords = new int[(int) Math.ceil(360 / interval)];
+        int[] numberOfRecords = new int[(int) MathAid.ceil(360 / interval)];
         Map<DataEntry, Double> azimuthMap = new HashMap<>();
         for (DataEntry entry : entrySet) {
             FullPosition eventPosition = entry.getEvent().getEventData().getCmtPosition();
@@ -199,7 +200,7 @@ public class AzimuthHistogram {
             typeName = "sourceAz";
             xlabel = "Source azimuth";
         }
-        Path outPath = DatasetAid.createOutputFolder(Paths.get(""), typeName + "Histogram", folderTag, appendFolderDate, GadgetAid.getTemporaryString());
+        Path outPath = DatasetAid.createOutputFolder(Paths.get(""), typeName + "Histogram", folderTag, appendFolderDate, null);
         Path txtPath = outPath.resolve(typeName + "Histogram.txt");
         Path scriptPath = outPath.resolve(typeName + "Histogram.plt");
         Path weightPath = outPath.resolve("entryWeight_" + typeName + ".lst");
@@ -259,7 +260,7 @@ public class AzimuthHistogram {
             for (int i = 0; i < weights.length; i++) {
                 if (numberOfRecords[i] > 0) {
                     double x = numberOfRecords[i] / average;
-                    double weight = (1.0 - Math.exp(-2.0 * x)) / (1.0 - Math.exp(-2.0)) / x;
+                    double weight = (1.0 - Math.exp(-3.0 * x)) / (1.0 - Math.exp(-3.0)) / x;
                     weights[i] = Precision.round(weight, 3);
                 } else {
                     weights[i] = 0.0;

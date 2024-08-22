@@ -25,7 +25,7 @@ import io.github.kensuke1984.kibrary.math.CircularRange;
 import io.github.kensuke1984.kibrary.math.LinearRange;
 import io.github.kensuke1984.kibrary.math.Trace;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
-import io.github.kensuke1984.kibrary.util.GadgetAid;
+import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.sac.WaveformType;
@@ -53,10 +53,6 @@ import io.github.kensuke1984.kibrary.waveform.BasicIDPairUp;
  */
 public class BasicBinnedStackCreator extends Operation {
 
-    /**
-     * The interval of exporting travel times.
-     */
-    private static final double TRAVEL_TIME_INTERVAL = 1;
     /**
      * The interval of deciding graph size; should be a multiple of TRAVEL_TIME_INTERVAL.
      */
@@ -327,7 +323,7 @@ public class BasicBinnedStackCreator extends Operation {
                    .collect(Collectors.toList());
        }
 
-       Path outPath = DatasetAid.createOutputFolder(workPath, "binStack", folderTag, appendFolderDate, GadgetAid.getTemporaryString());
+       Path outPath = DatasetAid.createOutputFolder(workPath, "binStack", folderTag, appendFolderDate, null);
        property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
        try {
@@ -409,15 +405,15 @@ public class BasicBinnedStackCreator extends Operation {
             Trace[] refSynStacks1;
             Trace[] refSynStacks2;
             if (!byAzimuth) {
-                obsStacks = new Trace[(int) Math.ceil(180 / binWidth)];
-                mainSynStacks = new Trace[(int) Math.ceil(180 / binWidth)];
-                refSynStacks1 = new Trace[(int) Math.ceil(180 / binWidth)];
-                refSynStacks2 = new Trace[(int) Math.ceil(180 / binWidth)];
+                obsStacks = new Trace[(int) MathAid.ceil(180 / binWidth)];
+                mainSynStacks = new Trace[(int) MathAid.ceil(180 / binWidth)];
+                refSynStacks1 = new Trace[(int) MathAid.ceil(180 / binWidth)];
+                refSynStacks2 = new Trace[(int) MathAid.ceil(180 / binWidth)];
             } else {
-                obsStacks = new Trace[(int) Math.ceil(360 / binWidth)];
-                mainSynStacks = new Trace[(int) Math.ceil(360 / binWidth)];
-                refSynStacks1 = new Trace[(int) Math.ceil(360 / binWidth)];
-                refSynStacks2 = new Trace[(int) Math.ceil(360 / binWidth)];
+                obsStacks = new Trace[(int) MathAid.ceil(360 / binWidth)];
+                mainSynStacks = new Trace[(int) MathAid.ceil(360 / binWidth)];
+                refSynStacks1 = new Trace[(int) MathAid.ceil(360 / binWidth)];
+                refSynStacks2 = new Trace[(int) MathAid.ceil(360 / binWidth)];
             }
 
             // variables to find the minimum and maximum distance for this event
@@ -466,9 +462,9 @@ public class BasicBinnedStackCreator extends Operation {
                 // decide which bin to add waveform to
                 int k;
                 if (!byAzimuth) {
-                    k = (int) Math.floor(distance / binWidth);
+                    k = (int) MathAid.floor(distance / binWidth);
                 } else {
-                    k = (int) Math.floor(azimuth / binWidth);
+                    k = (int) MathAid.floor(azimuth / binWidth);
                 }
 
                 //~add waveform
@@ -509,8 +505,8 @@ public class BasicBinnedStackCreator extends Operation {
 
             // set ranges
             if (minDistance > maxDistance || minTime > maxTime) return;
-            int startDistance = (int) Math.floor(minDistance / GRAPH_SIZE_INTERVAL) * GRAPH_SIZE_INTERVAL - Y_AXIS_RIM;
-            int endDistance = (int) Math.ceil(maxDistance / GRAPH_SIZE_INTERVAL) * GRAPH_SIZE_INTERVAL + Y_AXIS_RIM;
+            int startDistance = (int) MathAid.floor(minDistance / GRAPH_SIZE_INTERVAL) * GRAPH_SIZE_INTERVAL - Y_AXIS_RIM;
+            int endDistance = (int) MathAid.ceil(maxDistance / GRAPH_SIZE_INTERVAL) * GRAPH_SIZE_INTERVAL + Y_AXIS_RIM;
             gnuplot.setCommonYrange(startDistance, endDistance);
             gnuplot.setCommonXrange(minTime - TIME_RIM, maxTime + TIME_RIM);
 

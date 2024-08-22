@@ -13,7 +13,6 @@ import org.apache.commons.cli.ParseException;
 
 import io.github.kensuke1984.kibrary.Summon;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
-import io.github.kensuke1984.kibrary.util.GadgetAid;
 
 /**
  * Extracts {@link DataEntry}s that exist in all input {@link DataEntryListFile}s.
@@ -45,14 +44,14 @@ public class DataEntryIntersection {
         Options options = Summon.defaultOptions();
         // input
         options.addOption(Option.builder("a").longOpt("entry1").hasArg().argName("dataEntryFile").required()
-                .desc("First data entry list file.").build());
+                .desc("Path of first data entry list file.").build());
         options.addOption(Option.builder("b").longOpt("entry2").hasArg().argName("dataEntryFile").required()
-                .desc("Second data entry list file.").build());
+                .desc("Path of second data entry list file.").build());
         // output
         options.addOption(Option.builder("T").longOpt("tag").hasArg().argName("fileTag")
                 .desc("A tag to include in output file name.").build());
         options.addOption(Option.builder("O").longOpt("omitDate")
-                .desc("Whether to omit date string in output file name.").build());
+                .desc("Omit date string in output file name.").build());
         return options;
     }
 
@@ -66,7 +65,7 @@ public class DataEntryIntersection {
         Path entryPath2 = Paths.get(cmdLine.getOptionValue("b"));
         String fileTag = cmdLine.hasOption("T") ? cmdLine.getOptionValue("T") : null;
         boolean appendFileDate = !cmdLine.hasOption("O");
-        Path outputPath = DatasetAid.generateOutputFilePath(Paths.get(""), "dataEntry", fileTag, appendFileDate, GadgetAid.getTemporaryString(), ".lst");
+        Path outputPath = DatasetAid.generateOutputFilePath(Paths.get(""), "dataEntry", fileTag, appendFileDate, null, ".lst");
 
         Set<DataEntry> entrySet1 = DataEntryListFile.readAsSet(entryPath1);
         Set<DataEntry> entrySet2 = DataEntryListFile.readAsSet(entryPath2);

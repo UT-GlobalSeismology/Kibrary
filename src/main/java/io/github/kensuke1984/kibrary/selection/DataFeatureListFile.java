@@ -34,6 +34,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
  * <li> S/N ratio </li>
  * </ul>
  *
+ * @author ?
  * @since a long time ago
  * @version 2022/8/27 renamed from selection.DataSelectionInformationFile to selection.DataFeatureListFile
  */

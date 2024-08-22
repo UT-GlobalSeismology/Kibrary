@@ -18,7 +18,7 @@ import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.external.TauPPierceWrapper;
 import io.github.kensuke1984.kibrary.math.LinearRange;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
-import io.github.kensuke1984.kibrary.util.GadgetAid;
+import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.data.DataEntry;
 import io.github.kensuke1984.kibrary.util.data.DataEntryListFile;
 import io.github.kensuke1984.kibrary.util.data.Raypath;
@@ -35,12 +35,12 @@ import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
  * <p>
  * Radii of voxel boundaries must be decided manually. Voxel radii will be set at the center of each radius range.
  * <p>
- * Use {@link VoxelFileMaker} to decide the position range of voxels manually.
+ * Use {@link VoxelManualDesigner} to decide the position range of voxels manually.
  *
  * @author otsuru
  * @since 2022/2/11
  */
-public class VoxelLayoutDesigner extends Operation {
+public class VoxelAutoDesigner extends Operation {
 
     private final Property property;
     /**
@@ -132,7 +132,7 @@ public class VoxelLayoutDesigner extends Operation {
             pw.println("#dLongitudeDeg ");
             pw.println("##(double) Offset of boundary longitude, when dLongitudeDeg is used [deg]; [0:dLongitudeDeg). (2.5)");
             pw.println("#longitudeOffset ");
-            pw.println("##(boolean) Use longitude range [0:360) instead of [-180:180)? (false)");
+            pw.println("##(boolean) Whether to use longitude range [0:360) instead of [-180:180). (false)");
             pw.println("#crossDateLine ");
             pw.println("##########Parameters for the BORDER radii of voxels to create.");
             pw.println("##(double[]) Radii of layer borders, listed using spaces [km]; [0:).");
@@ -148,7 +148,7 @@ public class VoxelLayoutDesigner extends Operation {
         System.err.println(outPath + " is created.");
     }
 
-    public VoxelLayoutDesigner(Property property) throws IOException {
+    public VoxelAutoDesigner(Property property) throws IOException {
         this.property = (Property) property.clone();
     }
 
@@ -245,7 +245,7 @@ public class VoxelLayoutDesigner extends Operation {
                 layerRadii[i] = (borderRadii[i] + borderRadii[i + 1]) / 2.0;
             }
         } else {
-            int nRadius = (int) Math.floor((upperRadius - lowerRadius) / dRadius);
+            int nRadius = (int) MathAid.floor((upperRadius - lowerRadius) / dRadius);
             layerThicknesses = new double[nRadius];
             layerRadii = new double[nRadius];
             for (int i = 0; i < nRadius; i++) {
@@ -255,7 +255,7 @@ public class VoxelLayoutDesigner extends Operation {
         }
 
         // output
-        Path outputPath = DatasetAid.generateOutputFilePath(workPath, "voxel", fileTag, appendFileDate, GadgetAid.getTemporaryString(), ".inf");
+        Path outputPath = DatasetAid.generateOutputFilePath(workPath, "voxel", fileTag, appendFileDate, null, ".inf");
         VoxelInformationFile.write(layerThicknesses, layerRadii, horizontalPixels, outputPath);
     }
 
@@ -268,7 +268,7 @@ public class VoxelLayoutDesigner extends Operation {
         // decide number of colatitude intervals
         // Colatitude is used because its range is [0:180] and is easier to decide intervals.
         // When latitudeOffset > 0, intervals for that extra part is needed.
-        int nLatitude = (int) Math.ceil((180.0 + latitudeOffset) / dLatitude);
+        int nLatitude = (int) MathAid.ceil((180.0 + latitudeOffset) / dLatitude);
         double minLongitudes[] = new double[nLatitude];
         double maxLongitudes[] = new double[nLatitude];
         for (int i = 0; i < nLatitude; i++) {
@@ -299,7 +299,7 @@ public class VoxelLayoutDesigner extends Operation {
                 // decide which colatitude interval the sample point is in
                 // latitudeOffset moves border latitudes to positive side, so moves border colatitudes to negative side.
                 // This way, sampleInterval will never become negative.
-                int colatitudeIndex = (int) Math.floor((sampleColatitude + latitudeOffset) / dLatitude);
+                int colatitudeIndex = (int) MathAid.floor((sampleColatitude + latitudeOffset) / dLatitude);
                 // reflect this sample point on longitude ranges
                 if (sampleLongitude < minLongitudes[colatitudeIndex]) minLongitudes[colatitudeIndex] = sampleLongitude;
                 if (sampleLongitude > maxLongitudes[colatitudeIndex]) maxLongitudes[colatitudeIndex] = sampleLongitude;
@@ -342,8 +342,8 @@ public class VoxelLayoutDesigner extends Operation {
             } else {
                 // all longitudes are set on ((n + 0.5) * dLongitudeDeg + longitudeOffset)
                 // the min and max borders of longitude are set so that all sample points are included
-                double minLongitude = Math.floor((minLongitudes[i] - longitudeOffset) / dLongitudeDeg) * dLongitudeDeg + longitudeOffset;
-                double maxLongitude = Math.ceil((maxLongitudes[i] - longitudeOffset) / dLongitudeDeg) * dLongitudeDeg + longitudeOffset;
+                double minLongitude = MathAid.floor((minLongitudes[i] - longitudeOffset) / dLongitudeDeg) * dLongitudeDeg + longitudeOffset;
+                double maxLongitude = MathAid.ceil((maxLongitudes[i] - longitudeOffset) / dLongitudeDeg) * dLongitudeDeg + longitudeOffset;
                 int nLongitude = (int) ((maxLongitude - minLongitude) / dLongitudeDeg);
                 for (int j = 0; j < nLongitude; j++) {
                     // center longitude of each horizontal pixel

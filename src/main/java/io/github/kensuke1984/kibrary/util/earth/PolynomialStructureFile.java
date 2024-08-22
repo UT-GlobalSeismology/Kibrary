@@ -215,15 +215,15 @@ public class PolynomialStructureFile {
         // input
         OptionGroup inputOption = new OptionGroup();
         inputOption.addOption(Option.builder("n").longOpt("name").hasArg().argName("name")
-                .desc("Specify name of structure").build());
+                .desc("Specify name of structure.").build());
         inputOption.addOption(Option.builder("i").longOpt("dsmPsv").hasArg().argName("dsmPsvInputFile")
-                .desc("Use DSM PSV input file as input").build());
+                .desc("Use DSM PSV input file as input.").build());
         inputOption.setRequired(true);
         options.addOptionGroup(inputOption);
 
         // output
         options.addOption(Option.builder("o").longOpt("output").hasArg().argName("outputFile")
-                .desc("Specify path of output file.").build());
+                .desc("Path of output file.").build());
 
         return options;
     }

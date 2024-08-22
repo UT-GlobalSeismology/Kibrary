@@ -12,7 +12,7 @@ import io.github.kensuke1984.kibrary.util.spc.PartialType;
  * The class implementing this must be <b>IMMUTABLE</b>.
  *
  * @author Kensuke Konishi
- * @since version 0.0.2.1.1
+ * @since a long time ago
  */
 public interface UnknownParameter {
 

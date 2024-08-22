@@ -38,7 +38,6 @@ import io.github.kensuke1984.kibrary.timewindow.Timewindow;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
-import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.ThreadAid;
 import io.github.kensuke1984.kibrary.util.data.DataEntry;
@@ -94,10 +93,6 @@ public class ActualWaveformCompiler extends Operation {
      * Whether to append date string at end of output folder name.
      */
     private boolean appendFolderDate;
-    /**
-     * Path of the output folder.
-     */
-    private Path outPath;
     /**
      * Components to be included in the dataset.
      */
@@ -347,7 +342,7 @@ public class ActualWaveformCompiler extends Operation {
        Set<Observer> observerSet = sourceTimewindowSet.stream().map(TimewindowData::getObserver).collect(Collectors.toSet());
        Set<DataEntry> entrySet = sourceTimewindowSet.stream().map(TimewindowData::toDataEntry).collect(Collectors.toSet());
 
-       outPath = DatasetAid.createOutputFolder(workPath, "compiled", folderTag, appendFolderDate, GadgetAid.getTemporaryString());
+       Path outPath = DatasetAid.createOutputFolder(workPath, "compiled", folderTag, appendFolderDate, null);
        property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
        EventListFile.write(eventSet, outPath.resolve("event.lst"));

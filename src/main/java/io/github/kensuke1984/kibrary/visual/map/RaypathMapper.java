@@ -19,6 +19,7 @@ import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.external.TauPPierceWrapper;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
+import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.data.DataEntry;
 import io.github.kensuke1984.kibrary.util.data.DataEntryListFile;
 import io.github.kensuke1984.kibrary.util.data.EventListFile;
@@ -47,7 +48,7 @@ import io.github.kensuke1984.kibrary.voxel.VoxelInformationFile;
  * When you want to change the raypaths that are mapped, do not reuse the output folder.
  *
  * @author Kensuke Konishi
- * @since version 0.1.2
+ * @since a long time ago
  * @version 2022/4/24 moved and renamed from external.gmt.RaypathDistribution
  */
 public class RaypathMapper extends Operation {
@@ -114,7 +115,7 @@ public class RaypathMapper extends Operation {
     private String mapRegion;
     private String legendJustification;
 
-    private String dateStr;
+    private String dateString;
     private ColorBinInformationFile colorBin;
     private ColorBinInformationFile outsideColorBin;
 
@@ -158,7 +159,7 @@ public class RaypathMapper extends Operation {
             pw.println("##########To plot perturbation points, set the following.");
             pw.println("##Path of a voxel information file.");
             pw.println("#voxelPath voxel.inf");
-            pw.println("##########Overall settings");
+            pw.println("##########Overall settings.");
             pw.println("##(String) A tag to include in output file names. If no tag is needed, leave this unset.");
             pw.println("#fileTag ");
             pw.println("##(boolean) Whether to append date string at end of output file names. (true)");
@@ -177,8 +178,8 @@ public class RaypathMapper extends Operation {
             pw.println("##(String) Name of structure to use for calculating pierce points. (prem)");
             pw.println("#structureName ");
             pw.println("##########Settings for mapping");
-            pw.println("##Mode of coloring of raypaths {0: single color, 1: color by phase, 2: bin by distance, 3: bin by azimuth,");
-            pw.println("##  4: bin by back azimuth, 5: bin by turning-point-azimuth}. (0)");
+            pw.println("##Mode of coloring of raypaths, from {0: single color, 1: color by phase, 2: bin by distance,");
+            pw.println("##  3: bin by source azimuth, 4: bin by back azimuth, 5: bin by turning point azimuth}. (0)");
             pw.println("#colorMode ");
             pw.println("##Path of color bin file, must be set if colorMode is not 0.");
             pw.println("#colorBinPath ");
@@ -249,7 +250,7 @@ public class RaypathMapper extends Operation {
     }
 
     private void setName() {
-        dateStr = GadgetAid.getTemporaryString();
+        dateString = GadgetAid.getTemporaryString();
         eventFileName = "event.lst";
         observerFileName = "observer.lst";
         raypathFileName = "raypath.lst";
@@ -280,7 +281,7 @@ public class RaypathMapper extends Operation {
         if (colorBinPath != null) colorBin = new ColorBinInformationFile(colorBinPath);
         if (outsideColorBinPath != null) outsideColorBin = new ColorBinInformationFile(outsideColorBinPath);
 
-        gmtPath = DatasetAid.generateOutputFilePath(outPath, "raypathMap", fileTag, appendFileDate, dateStr, ".sh");
+        gmtPath = DatasetAid.generateOutputFilePath(outPath, "raypathMap", fileTag, appendFileDate, dateString, ".sh");
         outputGMT();
         System.err.println("After this finishes, please run " + gmtPath);
     }
@@ -312,7 +313,7 @@ public class RaypathMapper extends Operation {
         Set<GlobalCMTID> events = validEntrySet.stream().map(entry -> entry.getEvent()).collect(Collectors.toSet());
         Set<Observer> observers = validEntrySet.stream().map(entry -> entry.getObserver()).collect(Collectors.toSet());
 
-        outPath = DatasetAid.createOutputFolder(workPath, "raypathMap", folderTag, appendFolderDate, dateStr);
+        outPath = DatasetAid.createOutputFolder(workPath, "raypathMap", folderTag, appendFolderDate, dateString);
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         EventListFile.write(events, outPath.resolve(eventFileName));
@@ -387,13 +388,13 @@ public class RaypathMapper extends Operation {
         String line = raypathSegment.getSource().toHorizontalPosition() + " "
                 + raypathSegment.getReceiver().toHorizontalPosition() + " "
                 + Arrays.asList(piercePhases).indexOf(raypathSegment.getPhaseName()) + " "
-                + (int) Math.floor(raypath.getEpicentralDistanceDeg()) + " "
-                + (int) Math.floor(raypath.getAzimuthDeg()) + " "
-                + (int) Math.floor(raypath.getBackAzimuthDeg());
+                + (int) MathAid.floor(raypath.getEpicentralDistanceDeg()) + " "
+                + (int) MathAid.floor(raypath.getAzimuthDeg()) + " "
+                + (int) MathAid.floor(raypath.getBackAzimuthDeg());
         // Turning point azimuth can be obtained only when turning point has been computed for.
         // The first turning point on the raypath is used.
         if (raypath.findTurningPoint(0) != null) {
-            line = line + " " + (int) Math.floor(raypath.computeTurningAzimuthDeg(0));
+            line = line + " " + (int) MathAid.floor(raypath.computeTurningAzimuthDeg(0));
         }
         return line;
     }

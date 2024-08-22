@@ -10,7 +10,7 @@ import org.apache.commons.math3.util.FastMath;
  * Geller &amp; Hara (1993)
  *
  * @author Kensuke Konishi
- * @version 0.0.2.1
+ * @since a long time ago
  */
 class TensorCalculationUCE {
 

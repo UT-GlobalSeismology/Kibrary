@@ -18,7 +18,6 @@ import org.apache.commons.lang3.StringUtils;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
-import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.data.DataEntry;
 import io.github.kensuke1984.kibrary.util.data.DataEntryListFile;
@@ -142,13 +141,12 @@ public class NetworkLookup extends Operation {
 
            nEventsDone++;
            if (nEventsDone % 100 == 0)
-               System.err.print("\r " + Math.ceil(100.0 * nEventsDone / eventSet.size()) + "% of events done");
+               System.err.print("\r " + MathAid.ceil(100.0 * nEventsDone / eventSet.size()) + "% of events done");
        }
        System.err.println("\r Finished handling all events.");
 
        // output
-       String dateStr = GadgetAid.getTemporaryString();
-       Path outputPath = DatasetAid.generateOutputFilePath(workPath, "network", fileTag, appendFileDate, dateStr, ".txt");
+       Path outputPath = DatasetAid.generateOutputFilePath(workPath, "network", fileTag, appendFileDate, null, ".txt");
        System.err.println("Outputting in " + outputPath);
        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath))) {
            pw.println("# network|description");

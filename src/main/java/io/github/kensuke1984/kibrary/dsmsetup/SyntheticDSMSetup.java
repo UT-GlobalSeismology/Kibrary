@@ -44,6 +44,7 @@ import io.github.kensuke1984.kibrary.util.spc.SPCMode;
  * </ul>
  * Then, the DSM input files will be created for the (event, observer) pairs that have been chosen.
  *
+ * @author ?
  * @since a long time ago
  * @version 2021/11/2 renamed from SyntheticDSMInformationFileMaker
  */
@@ -63,7 +64,7 @@ public class SyntheticDSMSetup extends Operation {
      */
     private boolean appendFolderDate;
     /**
-     * Name root of input file for DSM (header_[sh,psv].inf).
+     * Name root of input file for DSM (header_[SH,PSV].inf).
      */
     private String header;
     /**
@@ -122,7 +123,7 @@ public class SyntheticDSMSetup extends Operation {
             pw.println("#folderTag ");
             pw.println("##(boolean) Whether to append date string at end of output folder name. (true)");
             pw.println("#appendFolderDate false");
-            pw.println("##(String) Header for names of output files (as in header_[sh,psv].inf). (PREM)");
+            pw.println("##(String) Header for names of output files (as in header_[SH,PSV].inf). (PREM)");
             pw.println("#header ");
             pw.println("##SacComponents to be used, listed using spaces. (Z R T)");
             pw.println("#components ");
@@ -175,7 +176,7 @@ public class SyntheticDSMSetup extends Operation {
 
     @Override
     public void run() throws IOException {
-        String dateStr = GadgetAid.getTemporaryString();
+        String dateString = GadgetAid.getTemporaryString();
 
         // create set of events and observers to set up DSM for
         Map<GlobalCMTID, Set<Observer>> arcMap = DatasetAid.setupArcMapFromFileOrFolder(dataEntryPath, obsPath, components);
@@ -184,7 +185,7 @@ public class SyntheticDSMSetup extends Operation {
         // set structure
         PolynomialStructure structure = PolynomialStructure.setupFromFileOrName(structurePath, structureName);
 
-        Path outPath = DatasetAid.createOutputFolder(workPath, "synthetic", folderTag, appendFolderDate, dateStr);
+        Path outPath = DatasetAid.createOutputFolder(workPath, "synthetic", folderTag, appendFolderDate, dateString);
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         // output information files in each event folder
@@ -201,9 +202,9 @@ public class SyntheticDSMSetup extends Operation {
                     continue;
 
                 // in the same event folder, observers with the same name should have same position
-                int numberOfObserver = (int) observers.stream().map(Observer::toString).count();
+                int numberOfObserver = (int) observers.stream().map(Observer::toString).distinct().count();
                 if (numberOfObserver != observers.size())
-                    System.err.println("!Caution there are observers with the same name and different position for " + event);
+                    System.err.println("! Caution: There are observers with the same name and different position for " + event);
 
                 SyntheticDSMInputFile info = new SyntheticDSMInputFile(structure, event.getEventData(), observers, header, tlen, np);
                 Path outEventPath = outPath.resolve(event.toString());
@@ -222,8 +223,8 @@ public class SyntheticDSMSetup extends Operation {
         String listFileName = "sourceList.txt";
         Files.write(outPath.resolve(listFileName), sourceTreeSet);
         DSMShellscript shell = new DSMShellscript(mpi, arcMap.size(), header);
-        Path outSHPath = DatasetAid.generateOutputFilePath(outPath, "runDSM_SH", null, false, dateStr, ".sh");
-        Path outPSVPath = DatasetAid.generateOutputFilePath(outPath, "runDSM_PSV", null, false, dateStr, ".sh");
+        Path outSHPath = DatasetAid.generateOutputFilePath(outPath, "runDSM_SH", null, false, dateString, ".sh");
+        Path outPSVPath = DatasetAid.generateOutputFilePath(outPath, "runDSM_PSV", null, false, dateString, ".sh");
         shell.write(DSMShellscript.DSMType.SYNTHETIC, SPCMode.SH, listFileName, outSHPath);
         shell.write(DSMShellscript.DSMType.SYNTHETIC, SPCMode.PSV, listFileName, outPSVPath);
         System.err.println("After this finishes, please enter " + outPath + "/ and run "

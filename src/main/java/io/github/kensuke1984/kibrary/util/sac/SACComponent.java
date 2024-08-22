@@ -13,7 +13,7 @@ import io.github.kensuke1984.kibrary.waveform.WaveformDataWriter;
  * CAUTION: values must be in -128~127 (range of byte)!! (The value is written into files as byte; see {@link WaveformDataWriter}.)
  *
  * @author Kensuke Konishi
- * @version 0.0.4
+ * @since a long time ago
  */
 public enum SACComponent {
     Z(1), R(2), T(3);

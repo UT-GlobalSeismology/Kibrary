@@ -12,7 +12,7 @@ package io.github.kensuke1984.kibrary.util.sac;
  * (If the name is UNUSED then that variable is not currently being used)
  *
  * @author Kensuke Konishi
- * @version 0.0.1.1.1
+ * @since a long time ago
  * @see <a href=http://ds.iris.edu/ds/nodes/dmc/forms/sac/>SAC</a>
  * @see <a href=https://ds.iris.edu/files/sac-manual/manual/file_format.html>SAC data format</a>
  */

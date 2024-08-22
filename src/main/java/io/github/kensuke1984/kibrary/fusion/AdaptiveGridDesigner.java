@@ -53,10 +53,6 @@ public class AdaptiveGridDesigner extends Operation {
      * Whether to append date string at end of output folder name.
      */
     private boolean appendFolderDate;
-    /**
-     * Path of the output folder.
-     */
-    private Path outPath;
 
     /**
      * Path of ata file.
@@ -160,7 +156,6 @@ public class AdaptiveGridDesigner extends Operation {
 
     @Override
     public void run() throws IOException {
-        String dateStr = GadgetAid.getTemporaryString();
 
         // read input and construct AtA
         List<UnknownParameter> parameterList = UnknownParameterFile.read(unknownParameterPath);
@@ -181,7 +176,7 @@ public class AdaptiveGridDesigner extends Operation {
         }
 
         // prepare output folder
-        outPath = DatasetAid.createOutputFolder(workPath, "adaptiveGrid", folderTag, appendFolderDate, dateStr);
+        Path outPath = DatasetAid.createOutputFolder(workPath, "adaptiveGrid", folderTag, appendFolderDate, null);
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         // output unknown parameter with large diagonal component and correlation

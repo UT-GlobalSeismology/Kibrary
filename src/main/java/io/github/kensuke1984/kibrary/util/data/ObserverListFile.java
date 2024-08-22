@@ -26,7 +26,6 @@ import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.InformationFileReader;
-import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
@@ -39,7 +38,7 @@ import io.github.kensuke1984.kibrary.waveform.BasicIDFile;
  * Each line: station code, network code, latitude, longitude.
  *
  * @author Kensuke Konishi
- * @since version 0.2.0.4
+ * @since a long time ago
  */
 public final class ObserverListFile {
     private ObserverListFile() {}
@@ -52,9 +51,7 @@ public final class ObserverListFile {
      * @throws IOException if an I/O error occurs
      */
     public static void write(Set<Observer> observerSet, Path outputPath, OpenOption... options) throws IOException {
-        System.err.println("Outputting "
-                + MathAid.switchSingularPlural(observerSet.size(), "observer", "observers")
-                + " in " + outputPath);
+        DatasetAid.printNumOutput(observerSet.size(), "observer", "observers", outputPath);
 
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath, options))) {
             pw.println("# station network latitude longitude");
@@ -82,7 +79,7 @@ public final class ObserverListFile {
                 throw new RuntimeException("There is duplication of " + observer + " in " + inputPath + ".");
         }
 
-        DatasetAid.checkNum(observerSet.size(), "observer", "observers");
+        DatasetAid.printNumInput(observerSet.size(), "observer", "observers", inputPath);
         return Collections.unmodifiableSet(observerSet);
     }
 
@@ -115,25 +112,25 @@ public final class ObserverListFile {
 
         // settings
         options.addOption(Option.builder("c").longOpt("components").hasArg().argName("components")
-                .desc("Components to use, listed using commas").build());
+                .desc("Components to use, listed using commas.").build());
 
         // input
         OptionGroup inputOption = new OptionGroup();
         inputOption.addOption(Option.builder("d").longOpt("dataset").hasArg().argName("datasetFolder")
-                .desc("Use dataset folder containing event folders as input").build());
+                .desc("Use dataset folder containing event folders as input.").build());
         inputOption.addOption(Option.builder("e").longOpt("entry").hasArg().argName("dataEntryFile")
-                .desc("Use data entry file as input").build());
+                .desc("Use data entry file as input.").build());
         inputOption.addOption(Option.builder("t").longOpt("timewindow").hasArg().argName("timewindowFile")
-                .desc("Use timewindow file as input").build());
+                .desc("Use timewindow file as input.").build());
         inputOption.addOption(Option.builder("b").longOpt("basic").hasArg().argName("basicFolder")
-                .desc("Use basic waveform folder as input").build());
+                .desc("Use basic waveform folder as input.").build());
         options.addOptionGroup(inputOption);
 
         // output
         options.addOption(Option.builder("T").longOpt("tag").hasArg().argName("fileTag")
                 .desc("A tag to include in output file name.").build());
         options.addOption(Option.builder("O").longOpt("omitDate")
-                .desc("Whether to omit date string in output file name.").build());
+                .desc("Omit date string in output file name.").build());
 
         return options;
     }
@@ -149,7 +146,7 @@ public final class ObserverListFile {
                 : SACComponent.componentSetOf("ZRT");
         String fileTag = cmdLine.hasOption("T") ? cmdLine.getOptionValue("T") : null;
         boolean appendFileDate = !cmdLine.hasOption("O");
-        Path outputPath = DatasetAid.generateOutputFilePath(Paths.get(""), "observer", fileTag, appendFileDate, GadgetAid.getTemporaryString(), ".lst");
+        Path outputPath = DatasetAid.generateOutputFilePath(Paths.get(""), "observer", fileTag, appendFileDate, null, ".lst");
 
         Set<Observer> observerSet;
         if (cmdLine.hasOption("d")) {

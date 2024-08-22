@@ -6,7 +6,12 @@ import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 /**
  * Within each layer Bullen law v(r) = Ar<sup>B</sup> is used.
@@ -15,7 +20,7 @@ import java.util.*;
  * Xgbm Davis and Henson, 1993
  *
  * @author Kensuke Konishi
- * @version 0.1.3
+ * @since a long time ago
  */
 public class NamedDiscontinuityStructure implements Serializable {
 

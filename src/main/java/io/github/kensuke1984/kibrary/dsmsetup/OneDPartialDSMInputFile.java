@@ -23,7 +23,7 @@ import io.github.kensuke1984.kibrary.util.spc.SPCType;
  * This class is <b>IMMUTABLE</b>
  *
  * @author Kensuke Konishi
- * @since version 0.0.6.1
+ * @since a long time ago
  * @version 2021/11/18 Renamed from dsminformation.SshDSMInformationFileMaker to dsmsetup.OneDPartialDSMInputFile.
  *
  *

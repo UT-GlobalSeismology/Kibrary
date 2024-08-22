@@ -13,11 +13,11 @@ import org.apache.commons.cli.ParseException;
 
 import io.github.kensuke1984.kibrary.Summon;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
-import io.github.kensuke1984.kibrary.util.GadgetAid;
 
 /**
  * Removes timewindows of a timewindow file from those of another.
  *
+ * @author ?
  * @since a long time ago
  * @version 2022/8/29 moved & renamed from quick.Subtractwindow to timewindow.TimewindowSubtract.
  */
@@ -45,14 +45,14 @@ public class TimewindowSubtract {
         Options options = Summon.defaultOptions();
         // input
         options.addOption(Option.builder("a").longOpt("original").hasArg().argName("originalTimewindowFile").required()
-                .desc("The original timewindow file").build());
+                .desc("Path of original timewindow file.").build());
         options.addOption(Option.builder("b").longOpt("subtract").hasArg().argName("subtractTimewindowFile").required()
-                .desc("The timewindow file to be subtracted").build());
+                .desc("Path of timewindow file to be subtracted.").build());
         // output
         options.addOption(Option.builder("T").longOpt("tag").hasArg().argName("fileTag")
                 .desc("A tag to include in output file name.").build());
         options.addOption(Option.builder("O").longOpt("omitDate")
-                .desc("Whether to omit date string in output file name.").build());
+                .desc("Omit date string in output file name.").build());
         return options;
     }
 
@@ -66,7 +66,7 @@ public class TimewindowSubtract {
         Path subtractPath = Paths.get(cmdLine.getOptionValue("b"));
         String fileTag = cmdLine.hasOption("T") ? cmdLine.getOptionValue("T") : null;
         boolean appendFileDate = !cmdLine.hasOption("O");
-        Path outputPath = DatasetAid.generateOutputFilePath(Paths.get(""), "timewindow", fileTag, appendFileDate, GadgetAid.getTemporaryString(), ".dat");
+        Path outputPath = DatasetAid.generateOutputFilePath(Paths.get(""), "timewindow", fileTag, appendFileDate, null, ".dat");
 
         Set<TimewindowData> originalWindows = TimewindowDataFile.read(originalPath);
         Set<TimewindowData> subtractWindows = TimewindowDataFile.read(subtractPath);

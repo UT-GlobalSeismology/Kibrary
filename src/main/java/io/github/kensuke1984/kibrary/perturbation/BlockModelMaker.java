@@ -14,8 +14,9 @@ import java.util.stream.Collectors;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.elastic.VariableType;
+import io.github.kensuke1984.kibrary.math.CircularRange;
+import io.github.kensuke1984.kibrary.math.LinearRange;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
-import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.earth.Earth;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
@@ -109,10 +110,10 @@ public class BlockModelMaker extends Operation {
             pw.println("##Variable types to set in model, listed using spaces. (MU)");
             pw.println("#outputVariableTypes ");
             pw.println("##########From here on, set percentages of perturbations and the borders of boxes to place them.");
-            pw.println("########## Percentages of perturbations must be listed using spaces in the order of variableTypes.");
-            pw.println("########## Defaults of borders are -90, 90, -180, 180, 0, and Double.MAX_VALUE, respectively.");
-            pw.println("########## A box is recongized if the percentage values are properly set.");
-            pw.println("########## Up to " + MAX_BOX + " boxes can be managed. Any box may be left blank.");
+            pw.println("##########  Percentages of perturbations must be listed using spaces in the order of variableTypes.");
+            pw.println("##########  Defaults of borders are -90, 90, -180, 180, 0, and Double.MAX_VALUE, respectively.");
+            pw.println("##########  A box is recongized if the percentage values are properly set.");
+            pw.println("##########  Up to " + MAX_BOX + " boxes can be managed. Any box may be left blank.");
             for (int i = 1; i <= MAX_BOX; i++) {
                 pw.println("##" + MathAid.ordinalNumber(i) + " box.");
                 pw.println("#percents" + i + " ");
@@ -204,7 +205,7 @@ public class BlockModelMaker extends Operation {
             }
         }
 
-        Path outPath = DatasetAid.createOutputFolder(workPath, "block", folderTag, appendFolderDate, GadgetAid.getTemporaryString());
+        Path outPath = DatasetAid.createOutputFolder(workPath, "block", folderTag, appendFolderDate, null);
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         System.err.println("Outputting perturbation list files.");
@@ -231,31 +232,24 @@ public class BlockModelMaker extends Operation {
     private double findPercentage(FullPosition position, int variableNum) {
         for (int i = boxes.size() - 1; i >= 0; i--) {
             Box box = boxes.get(i);
-            if (position.isInRange(box.lowerLatitude, box.upperLatitude, box.lowerLongitude, box.upperLongitude,
-                    box.lowerRadius, box.upperRadius))
+            if (position.isInRange(box.latitudeRange, box.longitudeRange, box.radiusRange))
                 return box.percents[variableNum];
         }
-        return 0;
+        return 0.0;
     }
 
     private class Box {
         private double[] percents;
-        private double lowerLatitude;
-        private double upperLatitude;
-        private double lowerLongitude;
-        private double upperLongitude;
-        private double lowerRadius;
-        private double upperRadius;
+        private LinearRange latitudeRange;
+        private CircularRange longitudeRange;
+        private LinearRange radiusRange;
 
         private Box(double percents[], double lowerLatitude, double upperLatitude, double lowerLongitude, double upperLongitude,
                 double lowerRadius, double upperRadius) {
             this.percents = percents;
-            this.lowerLatitude = lowerLatitude;
-            this.upperLatitude = upperLatitude;
-            this.lowerLongitude = lowerLongitude;
-            this.upperLongitude = upperLongitude;
-            this.lowerRadius = lowerRadius;
-            this.upperRadius = upperRadius;
+            this.latitudeRange = new LinearRange("Latitude", lowerLatitude, upperLatitude, -90.0, 90.0);
+            this.longitudeRange = new CircularRange("Longitude", lowerLongitude, upperLongitude);
+            this.radiusRange = new LinearRange("Radius", lowerRadius, upperRadius, 0.0);
         }
 
     }

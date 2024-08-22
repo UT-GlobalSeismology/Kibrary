@@ -29,14 +29,13 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
  * To identify which time window for a waveform, SYNTHETIC_TIME is also used.
  *
  * @author Kensuke Konishi
- * @version 0.1.1.2
- * @author anselme add phase information
+ * @since a long time ago
  *
  * TODO shouldn't this hold TimewindowData as a field, instead of obs/ev/comp/phases/start ? (2022/12/14 otsuru)
  */
 public class StaticCorrectionData implements Comparable<StaticCorrectionData> {
 
-    private static final int AMPLITUDE_PRECISION = 2;
+    private static final int AMPLITUDE_DECIMALS = 2;
 
     private final Observer observer;
     private final GlobalCMTID eventID;
@@ -84,9 +83,9 @@ public class StaticCorrectionData implements Comparable<StaticCorrectionData> {
         this.observer = observer;
         this.eventID = eventID;
         this.component = component;
-        this.synStartTime = Precision.round(synStartTime, Timewindow.PRECISION);
-        this.timeShift = Precision.round(timeShift, Timewindow.PRECISION);
-        this.amplitudeRatio = Precision.round(amplitudeRatio, AMPLITUDE_PRECISION);
+        this.synStartTime = Precision.round(synStartTime, Timewindow.DECIMALS);
+        this.timeShift = Precision.round(timeShift, Timewindow.DECIMALS);
+        this.amplitudeRatio = Precision.round(amplitudeRatio, AMPLITUDE_DECIMALS);
         this.phases = phases;
     }
 
@@ -155,7 +154,7 @@ public class StaticCorrectionData implements Comparable<StaticCorrectionData> {
     @Override
     public String toString() {
         return observer.toPaddedInfoString() + " " + eventID.toPaddedString() + " " + component + " "
-                + MathAid.padToString(synStartTime, Timewindow.TYPICAL_MAX_INTEGER_DIGITS, Timewindow.PRECISION, false) + " "
+                + MathAid.padToString(synStartTime, Timewindow.TYPICAL_MAX_INTEGER_DIGITS, Timewindow.DECIMALS, false) + " "
                 + TimewindowData.phasesAsString(phases) + " " + timeShift + " " + amplitudeRatio;
     }
 

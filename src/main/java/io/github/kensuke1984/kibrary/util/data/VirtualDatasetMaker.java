@@ -14,7 +14,6 @@ import java.util.stream.Collectors;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
-import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
@@ -85,9 +84,9 @@ public class VirtualDatasetMaker extends Operation {
             pw.println("#lowerLongitude ");
             pw.println("##(int) Upper limit of longitude [deg]; (lowerLongitude:360]. (170)");
             pw.println("#upperLongitude ");
-            pw.println("##(int) Latitude spacing [deg], (0:). (5)");
+            pw.println("##(int) Latitude spacing [deg]; (0:). (5)");
             pw.println("#dLatitudeDeg ");
-            pw.println("##(int) Longitude spacing [deg], (0:). (5)");
+            pw.println("##(int) Longitude spacing [deg]; (0:). (5)");
             pw.println("#dLongitudeDeg ");
         }
         System.err.println(outPath + " is created.");
@@ -154,7 +153,7 @@ public class VirtualDatasetMaker extends Operation {
         }
 
         // output
-        Path outputPath = DatasetAid.generateOutputFilePath(workPath, "dataEntry", fileTag, appendFileDate, GadgetAid.getTemporaryString(), ".lst");
+        Path outputPath = DatasetAid.generateOutputFilePath(workPath, "dataEntry", fileTag, appendFileDate, null, ".lst");
         DataEntryListFile.writeFromSet(entrySet, outputPath);
     }
 

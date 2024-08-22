@@ -19,8 +19,8 @@ import java.time.format.DateTimeFormatter;
  * Class for downloading and reading Station Information files.
  * @see <a href=http://service.iris.edu/fdsnws/station/1/>IRIS DMC FDSNWS station Web Service</a>
  *
- * @since 2021/08/25
  * @author Kenji Kawai
+ * @since 2021/08/25
  * @deprecated Use {@link StationXmlFile}
  */
 class StationInformationFile {

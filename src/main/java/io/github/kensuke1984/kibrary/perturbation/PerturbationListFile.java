@@ -10,11 +10,16 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.math3.util.Precision;
+
 import io.github.kensuke1984.kibrary.elastic.VariableType;
 import io.github.kensuke1984.kibrary.util.InformationFileReader;
+import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 
 /**
+ * File with perturbation values for each voxel position.
+ *
  * @author otsuru
  * @since 2022/4/9
  */
@@ -27,7 +32,7 @@ public class PerturbationListFile {
 
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath, options))) {
             for (PerturbationVoxel voxel : voxels) {
-                pw.println(voxel.getPosition() + " " + voxel.getAbsolute(type));
+                pw.println(voxel.getPosition() + " " + Precision.round(voxel.getAbsolute(type), MathAid.PRECISION_DECIMALS));
             }
         }
     }
@@ -39,7 +44,7 @@ public class PerturbationListFile {
 
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath, options))) {
             for (PerturbationVoxel voxel : voxels) {
-                pw.println(voxel.getPosition() + " " + voxel.getPercent(type));
+                pw.println(voxel.getPosition() + " " + Precision.round(voxel.getPercent(type), MathAid.PRECISION_DECIMALS));
             }
         }
     }
@@ -66,7 +71,7 @@ public class PerturbationListFile {
     public static void write(Map<FullPosition, Double> perturbationMap, boolean crossDateLine, Path outputPath, OpenOption... options) throws IOException {
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath, options))) {
             // Do not sort here, because the input may be already sorted. (LinkedHashMap can be sorted.)
-            perturbationMap.forEach((key, value) -> pw.println(key.toString(crossDateLine) + " " + value));
+            perturbationMap.forEach((key, value) -> pw.println(key.toString(crossDateLine) + " " + Precision.round(value, MathAid.PRECISION_DECIMALS)));
         }
     }
 

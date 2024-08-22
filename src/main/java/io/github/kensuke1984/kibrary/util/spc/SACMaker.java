@@ -41,7 +41,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  * If the eventID is included in Global CMT catalog, the information for the event is written in SAC.
  *
  * @author Kensuke Konishi
- * @version 0.1.9.1
+ * @since a long time ago
  * @see <a href=http://ds.iris.edu/ds/nodes/dmc/forms/sac/>SAC</a>
  */
 public class SACMaker implements Runnable {

@@ -114,12 +114,12 @@ enum Brooklyn {
     }
 
     /**
-     * Returns a Brooklyn given its corresponding number.
-     * Note that {@link #valueOf(String)}, which returns a Brooklyn given a String of its name,
+     * Returns a {@link Brooklyn} given its corresponding number.
+     * Note that {@link #valueOf(String)}, which returns a {@link Brooklyn} given a String of its name,
      * is already defined automatically.
      *
-     * @param n (int)
-     * @return
+     * @param n (int)The value to get a {@link Brooklyn} for.
+     * @return ({@link Brooklyn}) The {@link Brooklyn} corresponding to the value.
      */
     static Brooklyn valueOf(int n) {
         return Arrays.stream(values()).filter(m -> m.value == n).findAny().get();

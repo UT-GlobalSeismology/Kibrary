@@ -264,7 +264,7 @@ public class PerturbationMapShellscript {
      */
     static double decideGridSampling(Set<? extends HorizontalPosition> positions) {
         double positionInterval = HorizontalPosition.findLatitudeInterval(positions);
-        int power = (int) Math.floor(Math.log10(positionInterval));
+        int power = (int) MathAid.floor(Math.log10(positionInterval));
         double coef = positionInterval / Math.pow(10, power);
         if (coef < 1) throw new IllegalStateException("Grid interval decision went wrong");
         else if (coef < 2) return 1.0 * Math.pow(10, power) / SMOOTHING_FACTOR;
@@ -291,10 +291,10 @@ public class PerturbationMapShellscript {
         double lonMin = Arrays.stream(longitudes).min().getAsDouble();
         double lonMax = Arrays.stream(longitudes).max().getAsDouble();
         // expand the region a bit more
-        latMin = Math.floor(latMin / MAP_SIZE_INTERVAL) * MAP_SIZE_INTERVAL - MAP_RIM;
-        latMax = Math.ceil(latMax / MAP_SIZE_INTERVAL) * MAP_SIZE_INTERVAL + MAP_RIM;
-        lonMin = Math.floor(lonMin / MAP_SIZE_INTERVAL) * MAP_SIZE_INTERVAL - MAP_RIM;
-        lonMax = Math.ceil(lonMax / MAP_SIZE_INTERVAL) * MAP_SIZE_INTERVAL + MAP_RIM;
+        latMin = MathAid.floor(latMin / MAP_SIZE_INTERVAL) * MAP_SIZE_INTERVAL - MAP_RIM;
+        latMax = MathAid.ceil(latMax / MAP_SIZE_INTERVAL) * MAP_SIZE_INTERVAL + MAP_RIM;
+        lonMin = MathAid.floor(lonMin / MAP_SIZE_INTERVAL) * MAP_SIZE_INTERVAL - MAP_RIM;
+        lonMax = MathAid.ceil(lonMax / MAP_SIZE_INTERVAL) * MAP_SIZE_INTERVAL + MAP_RIM;
         if (latMin < -90) latMin = -90;
         if (latMax > 90) latMax = 90;
         // return as String

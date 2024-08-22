@@ -25,7 +25,7 @@ import io.github.kensuke1984.kibrary.selection.DataFeatureListFile;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
-import io.github.kensuke1984.kibrary.util.GadgetAid;
+import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.data.DataEntry;
 import io.github.kensuke1984.kibrary.util.data.DataEntryListFile;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
@@ -217,7 +217,7 @@ public class DataFeatureHistogram extends Operation {
             pw.println("##Path of a timewindow data file of improvement windows, if you want to use those windows.");
             pw.println("##  This is only used when basic ID and waveform files are used, not a data feature file.");
             pw.println("#improvementWindowPath timewindow.dat");
-            pw.println("##########Common settings");
+            pw.println("##########Common settings.");
             pw.println("##Path of a data entry list file, if you want to select raypaths.");
             pw.println("#dataEntryPath selectedEntry.lst");
             pw.println("##Color of histograms to create, from {red, green, blue}. (red)");
@@ -366,7 +366,7 @@ public class DataFeatureHistogram extends Operation {
            }
        }
 
-       outPath = DatasetAid.createOutputFolder(workPath, "featureHistogram", folderTag, appendFolderDate, GadgetAid.getTemporaryString());
+       outPath = DatasetAid.createOutputFolder(workPath, "featureHistogram", folderTag, appendFolderDate, null);
        property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
        // if input is in BasicID, export their features (for reference)
@@ -441,10 +441,10 @@ public class DataFeatureHistogram extends Operation {
      * @throws IOException
      */
     private void createHistograms(Set<DataFeature> featureList, Set<DataFeature> extraFeatureList) throws IOException {
-       int nCorr = (int) Math.ceil((correlationUpperBound - correlationLowerBound) / dCorrelation);
-       int nVar = (int) Math.ceil(varianceUpperBound / dVariance);
-       int nRatio = (int) Math.ceil(ratioUpperBound / dRatio);
-       int nSNRatio = (int) Math.ceil(snRatioUpperBound / dSNRatio);
+       int nCorr = (int) MathAid.ceil((correlationUpperBound - correlationLowerBound) / dCorrelation);
+       int nVar = (int) MathAid.ceil(varianceUpperBound / dVariance);
+       int nRatio = (int) MathAid.ceil(ratioUpperBound / dRatio);
+       int nSNRatio = (int) MathAid.ceil(snRatioUpperBound / dSNRatio);
        int[] corrs = new int[nCorr];
        int[] vars = new int[nVar];
        int[] ratios = new int[nRatio];
@@ -514,16 +514,16 @@ public class DataFeatureHistogram extends Operation {
        // output txt files
        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(corrPath))) {
            for (int i = 0; i < nCorr; i++)
-               pw.println(Precision.round(correlationLowerBound + i * dCorrelation, DataFeature.PRECISION)
+               pw.println(Precision.round(correlationLowerBound + i * dCorrelation, DataFeature.DECIMALS)
                        + " " + corrs[i] + " " + extraCorrs[i]);
        }
        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(varPath))) {
            for (int i = 0; i < nVar; i++)
-               pw.println(Precision.round(i * dVariance, DataFeature.PRECISION) + " " + vars[i] + " " + extraVars[i]);
+               pw.println(Precision.round(i * dVariance, DataFeature.DECIMALS) + " " + vars[i] + " " + extraVars[i]);
        }
        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(ratioPath))) {
            for (int i = 0; i < nRatio; i++)
-               pw.println(Precision.round(i * dRatio, DataFeature.PRECISION) + " " + ratios[i] + " " + extraRatios[i]);
+               pw.println(Precision.round(i * dRatio, DataFeature.DECIMALS) + " " + ratios[i] + " " + extraRatios[i]);
        }
 
        // plot histograms
@@ -537,7 +537,7 @@ public class DataFeatureHistogram extends Operation {
        if (dataFeaturePath != null) {
            try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(snRatioPath))) {
                for (int i = 0; i < nSNRatio; i++)
-                   pw.println(Precision.round(i * dSNRatio, DataFeature.PRECISION)
+                   pw.println(Precision.round(i * dSNRatio, DataFeature.DECIMALS)
                            + " " + snRatios[i] + " " + extraSnRatios[i]);
            }
            createPlot(snRatioFileNameRoot, "Signal/Noise ratio", dSNRatio, 0, snRatioUpperBound,

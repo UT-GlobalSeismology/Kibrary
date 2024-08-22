@@ -12,7 +12,7 @@ import java.nio.file.Path;
  * Input stream for a SAC file
  *
  * @author Kensuke Konishi
- * @version 0.1.0.2
+ * @since a long time ago
  * @see <a href=http://ds.iris.edu/ds/nodes/dmc/forms/sac/>SAC</a>
  * @see <a href=https://ds.iris.edu/files/sac-manual/manual/file_format.html>SAC
  * data format</a>

@@ -13,8 +13,8 @@ import java.util.stream.Collectors;
 
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
+import io.github.kensuke1984.kibrary.math.LinearRange;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
-import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 
@@ -44,8 +44,7 @@ public class ModelSmoothener extends Operation {
      * Path of perturbation file.
      */
     private Path perturbationPath;
-    private double lowerRadius;
-    private double upperRadius;
+    private LinearRange radiusRange;
 
     /**
      * @param args  none to create a property file <br>
@@ -90,10 +89,9 @@ public class ModelSmoothener extends Operation {
 
         perturbationPath = property.parsePath("perturbationPath", null, true, workPath);
 
-        lowerRadius = property.parseDouble("lowerRadius", "0");
-        upperRadius = property.parseDouble("upperRadius", "6371");
-        if (lowerRadius < 0 || lowerRadius > upperRadius)
-            throw new IllegalArgumentException("Radius range " + lowerRadius + " , " + upperRadius + " is invalid.");
+        double lowerRadius = property.parseDouble("lowerRadius", "0");
+        double upperRadius = property.parseDouble("upperRadius", "6371");
+        radiusRange = new LinearRange("Radius", lowerRadius, upperRadius, 0.0);
     }
 
     @Override
@@ -106,19 +104,19 @@ public class ModelSmoothener extends Operation {
         List<HorizontalPosition> horizontalPositions = perturbationMap.keySet().stream()
                 .map(pos -> pos.toHorizontalPosition()).distinct().collect(Collectors.toList());
         double averagedRadius = perturbationMap.keySet().stream().mapToDouble(pos -> pos.getR()).distinct()
-                .filter(r -> lowerRadius < r && r < upperRadius).average().getAsDouble();
+                .filter(r -> radiusRange.check(r)).average().getAsDouble();
 
         // This is created as LinkedHashMap to preserve the order of voxels
         Map<FullPosition, Double> smoothedMap = new LinkedHashMap<>();
         for (HorizontalPosition horizontalPosition : horizontalPositions) {
             double average = perturbationMap.entrySet().stream()
                     .filter(entry -> entry.getKey().toHorizontalPosition().equals(horizontalPosition))
-                    .filter(entry -> lowerRadius < entry.getKey().getR() && entry.getKey().getR() < upperRadius)
+                    .filter(entry -> radiusRange.check(entry.getKey().getR()))
                     .mapToDouble(entry -> entry.getValue()).average().getAsDouble();
             smoothedMap.put(horizontalPosition.toFullPosition(averagedRadius), average);
         }
 
-        Path outPath = DatasetAid.createOutputFolder(workPath, "smoothed", folderTag, appendFolderDate, GadgetAid.getTemporaryString());
+        Path outPath = DatasetAid.createOutputFolder(workPath, "smoothed", folderTag, appendFolderDate, null);
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         Path outputPerturbationFile = outPath.resolve(perturbationPath.getFileName());

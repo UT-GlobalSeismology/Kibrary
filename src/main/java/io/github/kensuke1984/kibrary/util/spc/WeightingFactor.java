@@ -3,11 +3,10 @@ package io.github.kensuke1984.kibrary.util.spc;
 import io.github.kensuke1984.kibrary.elastic.ElasticModuli;
 
 /**
- * Weighting factor in Geller &amp; Hara (1993) to compute 3-D partial
- * derivatives
+ * Weighting factor in Geller &amp; Hara (1993) to compute 3-D partial derivatives
  *
  * @author Kensuke Konishi
- * @version 0.1.0.1
+ * @since a long time ago
  */
 interface WeightingFactor {
 

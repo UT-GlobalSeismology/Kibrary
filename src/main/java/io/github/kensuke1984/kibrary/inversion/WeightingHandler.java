@@ -23,7 +23,6 @@ import io.github.kensuke1984.kibrary.Summon;
 import io.github.kensuke1984.kibrary.inversion.setup.DVectorBuilder;
 import io.github.kensuke1984.kibrary.selection.DataFeature;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
-import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.data.DataEntry;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
@@ -89,7 +88,7 @@ public class WeightingHandler {
         options.addOption(Option.builder("T").longOpt("tag").hasArg().argName("fileTag")
                 .desc("A tag to include in output file name.").build());
         options.addOption(Option.builder("O").longOpt("omitDate")
-                .desc("Whether to omit date string in output file name.").build());
+                .desc("Omit date string in output file name.").build());
         return options;
     }
 
@@ -101,8 +100,7 @@ public class WeightingHandler {
     public static void run(CommandLine cmdLine) throws IOException {
         String fileTag = cmdLine.hasOption("T") ? cmdLine.getOptionValue("T") : null;
         boolean appendFileDate = !cmdLine.hasOption("O");
-        Path outputPath = DatasetAid.generateOutputFilePath(Paths.get(""), "weighting", fileTag,
-                appendFileDate, GadgetAid.getTemporaryString(), ".properties");
+        Path outputPath = DatasetAid.generateOutputFilePath(Paths.get(""), "weighting", fileTag, appendFileDate, null, ".properties");
         writeDefaultPropertiesFile(outputPath);
     }
 
@@ -195,7 +193,7 @@ public class WeightingHandler {
      * @param dVector
      * @return
      */
-    public RealVector[] weighWaveforms(DVectorBuilder dVector) {
+    public RealVector[] weightWaveforms(DVectorBuilder dVector) {
         RealVector[] weightingVectors = new ArrayRealVector[dVector.getNTimeWindow()];
 
         // count number of timewindows for each component
@@ -246,18 +244,12 @@ public class WeightingHandler {
                 weighting *= Math.sqrt(weightMaps.get(k).get(entry));
             }
 
-            //TODO
-//            if (i % 500 == 0) {
-//                System.err.println(dVector.getObsID(i));
-//                System.err.println(" " + weighting);
-//            }
-
             //~create vector with the value 'weighting' for the whole timewindow
-            double[] ws = new double[dVector.getObsVec(i).getDimension()];
-            for (int j = 0; j < ws.length; j++) {
-                ws[j] = weighting;
+            double[] weightingArray = new double[dVector.getObsVec(i).getDimension()];
+            for (int j = 0; j < weightingArray.length; j++) {
+                weightingArray[j] = weighting;
             }
-            weightingVectors[i] = new ArrayRealVector(ws);
+            weightingVectors[i] = new ArrayRealVector(weightingArray);
         }
 
         return weightingVectors;

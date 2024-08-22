@@ -2,12 +2,9 @@ package io.github.kensuke1984.kibrary.util;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.CopyOption;
-import java.nio.file.DirectoryNotEmptyException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Set;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -16,13 +13,12 @@ import io.github.kensuke1984.kibrary.util.sac.SACFileName;
 
 /**
  * Utility for an event folder.
- *
  * <p>
  * Class File is Comparable, so this class is also Comparable.
  *
  * @author Kensuke Konishi
+ * @since a long time ago
  */
-
 public class EventFolder extends File {
 
     private static final long serialVersionUID = 8698976273645876402L;
@@ -61,36 +57,9 @@ public class EventFolder extends File {
     }
 
     /**
-     * Move sacfiles which satisfies an input sacPredicate. For example, if you
-     * want to move all synthetic sac files,
-     * <p>
-     * predicate is sfn &rarr; sfn.isSYN()
-     *
-     * @param predicate Sac files satisfying the sacPredicate will be moved.
-     * @param movePath  Path of a trash
-     * @param options   for copying
-     * @throws IOException if an I/O error occurs
-     */
-    public void moveSacFile(Predicate<SACFileName> predicate, Path movePath, CopyOption... options) throws IOException {
-        Files.createDirectories(movePath);
-        sacFileSet().parallelStream().filter(predicate).map(SACFileName::toPath).forEach(path -> {
-            try {
-                Files.move(path, movePath.resolve(path.getFileName()), options);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        });
-        try {
-            Files.delete(movePath);
-        } catch (DirectoryNotEmptyException e) {
-            e.printStackTrace();
-        }
-    }
-
-    /**
-     * @return <b>unmodifiable</b> Set of all SAC files in this including
-     * observed, synthetic and partial derivatives.
-     * @throws IOException if an I/O error occurs
+     * Collect SAC files in this folder.
+     * @return (Set of {@link SACFileName}) All SAC file names in this folder, including observed, synthetic, and partial derivatives.
+     * @throws IOException
      */
     public Set<SACFileName> sacFileSet() throws IOException {
         // CAUTION: Files.list() must be in try-with-resources.

@@ -23,7 +23,7 @@ import io.github.kensuke1984.kibrary.source.SourceTimeFunctionHandler;
 import io.github.kensuke1984.kibrary.source.SourceTimeFunctionType;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.EventFolder;
-import io.github.kensuke1984.kibrary.util.GadgetAid;
+import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.SpcFileAid;
 import io.github.kensuke1984.kibrary.util.ThreadAid;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
@@ -52,6 +52,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACFileAccess;
  * so the number of data points will become [time length x samplingHz].
  *
  * @author Kensuke Konishi
+ * @since a long time ago
  * @see <a href=http://ds.iris.edu/ds/nodes/dmc/forms/sac/>SAC</a>
  */
 public final class SPC_SAC extends Operation {
@@ -247,7 +248,7 @@ public final class SPC_SAC extends Operation {
             throw new IllegalStateException("Number of PSV files and SH files does not match.");
         }
 
-        outPath = DatasetAid.createOutputFolder(workPath, "spcsac", folderTag, appendFolderDate, GadgetAid.getTemporaryString());
+        outPath = DatasetAid.createOutputFolder(workPath, "spcsac", folderTag, appendFolderDate, null);
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         ExecutorService es = ThreadAid.createFixedThreadPool();
@@ -267,26 +268,28 @@ public final class SPC_SAC extends Operation {
             }
         }
         // both
-        else for (SPCFileName shSPC : shSPCs) {
-            SPCFileName psvSPC = pairPSVFile(shSPC);
-            if (psvSPC == null || !psvSPC.exists()) {
-                throw new NoSuchFileException(psvSPC + " does not exist");
+        else {
+            for (SPCFileName shSPC : shSPCs) {
+                SPCFileName psvSPC = pairPSVFile(shSPC);
+                if (psvSPC == null || !psvSPC.exists()) {
+                    throw new NoSuchFileException(psvSPC + " does not exist");
+                }
+                SPCFile shFile = SPCFile.getInstance(shSPC);
+                SPCFile psvFile = SPCFile.getInstance(psvSPC);
+                // create event folder under outPath
+                Files.createDirectories(outPath.resolve(shSPC.getSourceID()));
+                // operate method createSACMaker() -> instance of an anonymous inner class is returned
+                // -> executes the run() of that class defined in createSACMaker()
+                es.execute(createSACMaker(shFile, psvFile));
+                nSAC++;
+                if (nSAC % 5 == 0) System.err.print("\rReading SPC files ... " + nSAC + " pairs");
             }
-            SPCFile shFile = SPCFile.getInstance(shSPC);
-            SPCFile psvFile = SPCFile.getInstance(psvSPC);
-            // create event folder under outPath
-            Files.createDirectories(outPath.resolve(shSPC.getSourceID()));
-            // operate method createSACMaker() -> instance of an anonymous inner class is returned
-            // -> executes the run() of that class defined in createSACMaker()
-            es.execute(createSACMaker(shFile, psvFile));
-            nSAC++;
-            if (nSAC % 5 == 0) System.err.print("\rReading SPC files ... " + nSAC + " pairs");
         }
         System.err.println("\rReading SPC files finished. " + nSAC + " total.");
 
         es.shutdown();
         while (!es.isTerminated()) {
-            System.err.print("\rConverting " + Math.ceil(100.0 * numberOfCreatedSAC.get() / nSAC) + "%");
+            System.err.print("\rConverting " + MathAid.ceil(100.0 * numberOfCreatedSAC.get() / nSAC) + "%");
             ThreadAid.sleep(100);
         }
         System.err.println("\rConverting finished.");
@@ -307,8 +310,14 @@ public final class SPC_SAC extends Operation {
             @Override
             public void run() {
                 // execute run() in SACMaker
-                super.run();
-                numberOfCreatedSAC.incrementAndGet();
+                try {
+                    super.run();
+                    numberOfCreatedSAC.incrementAndGet();
+                } catch (Exception e) {
+                    System.err.println();
+                    System.err.println("!! " + primarySPC.getSpcFileName().toString() + " failed:");
+                    throw e;
+                }
             }
         };
         sm.setComponents(components);

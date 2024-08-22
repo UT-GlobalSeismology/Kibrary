@@ -19,7 +19,7 @@ import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.external.SAC;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.EventFolder;
-import io.github.kensuke1984.kibrary.util.GadgetAid;
+import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.ThreadAid;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.sac.SACFileAccess;
@@ -200,7 +200,7 @@ public class FilterDivider extends Operation {
             return;
         }
 
-        outPath = DatasetAid.createOutputFolder(workPath, "filtered", folderTag, appendFolderDate, GadgetAid.getTemporaryString());
+        outPath = DatasetAid.createOutputFolder(workPath, "filtered", folderTag, appendFolderDate, null);
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         ExecutorService es = ThreadAid.createFixedThreadPool();
@@ -208,7 +208,7 @@ public class FilterDivider extends Operation {
         es.shutdown();
         System.err.println("Filtering SAC files ...");
         while (!es.isTerminated()) {
-            System.err.print("\r " + Math.ceil(100.0 * processedFolders.get() / eventDirs.size()) + "% of events done");
+            System.err.print("\r " + MathAid.ceil(100.0 * processedFolders.get() / eventDirs.size()) + "% of events done");
             ThreadAid.sleep(100);
         }
         System.err.println("\r Finished handling all events.");

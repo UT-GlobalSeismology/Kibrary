@@ -22,7 +22,6 @@ import io.github.kensuke1984.kibrary.math.Interpolation;
 import io.github.kensuke1984.kibrary.perturbation.PerturbationListFile;
 import io.github.kensuke1984.kibrary.perturbation.PerturbationModel;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
-import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
@@ -139,7 +138,7 @@ public class ModelSetMapper extends Operation {
             pw.println("#fusionPath fusion.inf");
             pw.println("##Variable types to map, listed using spaces. (Vs)");
             pw.println("#variableTypes ");
-            pw.println("##Names of inverse methods, listed using spaces, from {CG,SVD,LSM,NNLS,BCGS,FCG,FCGD,NCG,CCG}. (CG)");
+            pw.println("##Names of inverse methods, listed using spaces, from {CG,SVD,LS,NNLS,BCGS,FCG,FCGD,NCG,CCG}. (CG)");
             pw.println("#inverseMethods ");
             pw.println("##(int) Maximum number of basis vectors to map. (10)");
             pw.println("#maxNum ");
@@ -161,7 +160,7 @@ public class ModelSetMapper extends Operation {
             pw.println("#marginLongitudeKm ");
             pw.println("##(double) Longitude margin at both ends [deg]. (2.5)");
             pw.println("#marginLongitudeDeg ");
-            pw.println("##########Parameters for perturbation values");
+            pw.println("##########Parameters for perturbation values.");
             pw.println("##(double) Range of percent scale. (3)");
             pw.println("#scale ");
             pw.println("##(boolean) Whether to display map as mosaic without smoothing. (false)");
@@ -254,7 +253,7 @@ public class ModelSetMapper extends Operation {
         double gridInterval = PerturbationMapShellscript.decideGridSampling(positions);
 
         // create output folder
-        Path outPath = DatasetAid.createOutputFolder(workPath, "modelMaps", folderTag, appendFolderDate, GadgetAid.getTemporaryString());
+        Path outPath = DatasetAid.createOutputFolder(workPath, "modelMaps", folderTag, appendFolderDate, null);
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         // write list files

@@ -50,11 +50,11 @@ public class LobbyCleanup {
         Options options = Summon.defaultOptions();
 
         options.addOption(Option.builder("d").longOpt("delete")//TODO required
-                .desc("Delete sacs and resps").build());
+                .desc("Delete sacs and resps.").build());
         options.addOption(Option.builder("t")
-                .desc("Old file structure to new").build());//TODO erase
+                .desc("Old file structure to new.").build());//TODO erase
         options.addOption(Option.builder("c").hasArg().argName("outPath")
-                .desc("Copy mseeds into new dataset folder").build());//TODO erase
+                .desc("Copy mseeds into new dataset folder.").build());//TODO erase
 
         return options;
     }

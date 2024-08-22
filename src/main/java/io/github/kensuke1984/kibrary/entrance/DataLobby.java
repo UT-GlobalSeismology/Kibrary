@@ -40,8 +40,8 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTSearch;
  * <p>
  * See also {@link EventDataPreparer}.
  *
- * @since 2021/09/13
  * @author otsuru
+ * @since 2021/09/13
  */
 public class DataLobby extends Operation {
 
@@ -191,7 +191,7 @@ public class DataLobby extends Operation {
             return;
         }
 
-        Path outPath = DatasetAid.createOutputFolder(workPath, "dl", folderTag, appendFolderDate, GadgetAid.getTemporaryString());
+        Path outPath = DatasetAid.createOutputFolder(workPath, "dl", folderTag, appendFolderDate, null);
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         final AtomicInteger n = new AtomicInteger();

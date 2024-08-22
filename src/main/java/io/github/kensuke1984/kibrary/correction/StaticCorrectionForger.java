@@ -17,7 +17,6 @@ import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
-import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 
 /**
@@ -147,8 +146,7 @@ public class StaticCorrectionForger extends Operation {
             forgedStaticCorrectionSet.add(forgedStaticCorrection);
         }
 
-        String dateStr = GadgetAid.getTemporaryString();
-        Path outputPath = DatasetAid.generateOutputFilePath(workPath, "staticCorrection", fileTag, appendFileDate, dateStr, ".dat");
+        Path outputPath = DatasetAid.generateOutputFilePath(workPath, "staticCorrection", fileTag, appendFileDate, null, ".dat");
 
         StaticCorrectionDataFile.write(forgedStaticCorrectionSet, outputPath);
     }

@@ -15,9 +15,10 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
 import io.github.kensuke1984.kibrary.util.sac.SACUtil;
 
 /**
- * Modification of SAC when running {@link EventProcessor}
+ * Modification of SAC when running {@link EventProcessor}.
  *
  * @author Kensuke Konishi
+ * @since a long time ago
  */
 class SacModifier {
 

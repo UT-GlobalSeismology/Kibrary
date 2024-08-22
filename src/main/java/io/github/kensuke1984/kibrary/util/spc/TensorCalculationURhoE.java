@@ -10,7 +10,7 @@ import org.apache.commons.math3.util.FastMath;
  * Geller &amp; Hara (1993)
  *
  * @author Rei Sato
- * @version 2022/01/10
+ * @since 2022/01/10
  */
 public class TensorCalculationURhoE {
 

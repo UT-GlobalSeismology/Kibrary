@@ -15,7 +15,7 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
  * <A href=https://ds.iris.edu/files/sac-manual/manual/file_format.html>here</a>
  *
  * @author Kensuke Konishi
- * @since version 0.0.2
+ * @since a long time ago
  * @see <a href=http://ds.iris.edu/ds/nodes/dmc/forms/sac/>SAC</a>
  */
 public interface SACHeaderAccess {

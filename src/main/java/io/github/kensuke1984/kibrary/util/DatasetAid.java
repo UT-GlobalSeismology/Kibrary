@@ -6,12 +6,10 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -26,8 +24,9 @@ import io.github.kensuke1984.kibrary.util.sac.SACFileAccess;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
 
 /**
- * Utilities for handling a dataset folder that includes event folders.
+ * Utilities for handling datasets and their corresponding folders and files.
  *
+ * @author otsuru
  * @since 2021/11/21 - created when Utilities.java was split up.
  */
 public final class DatasetAid {
@@ -40,14 +39,15 @@ public final class DatasetAid {
      * @param tag (String) Additional comment to include in folder name. If null, this part will be excluded.
      * @param appendDate (boolean) Whether to append the date string in output folder name.
      *    Even if this is false, the date string will be appended if a folder with same name already exists.
-     * @param dateString (String) The date string part of output folder name, must be set even when it will not be appended.
+     * @param inputDateString (String) The date string part of output folder name. When null, a new one will be generated.
      * @return (Path) Path of created output folder.
      * @throws IOException
      *
      * @author otsuru
      * @since 2022/4/13
      */
-    public static Path createOutputFolder(Path workPath, String nameRoot, String tag, boolean appendDate, String dateString) throws IOException {
+    public static Path createOutputFolder(Path workPath, String nameRoot, String tag, boolean appendDate, String inputDateString) throws IOException {
+        String dateString = (inputDateString != null) ? inputDateString : GadgetAid.getTemporaryString();
         String nondatedName = (tag == null) ? nameRoot : nameRoot + "_" + tag;
         String datedName = (tag == null) ? nameRoot + dateString : nameRoot + "_" + tag + "_" + dateString;
 
@@ -81,14 +81,15 @@ public final class DatasetAid {
      * @param tag (String) Additional comment to include in file name. If null, this part will be excluded.
      * @param appendDate (boolean) Whether to append the date string in output file name.
      *    Even if this is false, the date string will be appended if a file with same name already exists.
-     * @param dateString (String) The date string part of output file name.
+     * @param inputDateString (String) The date string part of output file name. When null, a new one will be generated.
      * @param extension (String) File extension.
      * @return (Path) Generated path of file.
      *
      * @author otsuru
      * @since 2022/4/13
      */
-    public static Path generateOutputFilePath(Path workPath, String nameRoot, String tag, boolean appendDate, String dateString, String extension) {
+    public static Path generateOutputFilePath(Path workPath, String nameRoot, String tag, boolean appendDate, String inputDateString, String extension) {
+        String dateString = (inputDateString != null) ? inputDateString : GadgetAid.getTemporaryString();
         String nondatedName = ((tag == null) ? nameRoot : nameRoot + "_" + tag) + extension;
         String datedName = ((tag == null) ? nameRoot + dateString : nameRoot + "_" + tag + "_" + dateString) + extension;
 
@@ -112,10 +113,10 @@ public final class DatasetAid {
     }
 
     /**
-     * Collect GlobalCMTIDs of event folders that exist under a given folder.
-     * @param path {@link Path} for search of {@link GlobalCMTID}
-     * @return <b>unmodifiable</b> Set of Global CMT IDs in the path
-     * @throws IOException if an I/O error occurs
+     * Collect {@link GlobalCMTID}s of event folders that exist under a given folder.
+     * @param path (Path) Folder in which to search {@link GlobalCMTID}s.
+     * @return (Set of {@link GlobalCMTID}) IDs of event folders.
+     * @throws IOException
      */
     public static Set<GlobalCMTID> globalCMTIDSet(Path path) throws IOException {
         // CAUTION: Files.list() must be in try-with-resources.
@@ -127,10 +128,10 @@ public final class DatasetAid {
     }
 
     /**
-     * Collect EventFolders that exist under a given folder.
-     * @param path Path of a folder containing event folders.
-     * @return Set of {@link EventFolder} in the workPath
-     * @throws IOException if an I/O error occurs
+     * Collect {@link EventFolder}s that exist under a given folder.
+     * @param path (Path) Folder containing event folders.
+     * @return (Set of {@link EventFolder}) Found folders.
+     * @throws IOException
      */
     public static Set<EventFolder> eventFolderSet(Path path) throws IOException {
         // CAUTION: Files.list() must be in try-with-resources.
@@ -142,10 +143,10 @@ public final class DatasetAid {
 
     /**
      * Checks whether a given number of some object is non-zero, and displays the number.
-     * @param num (int) Number of some object
-     * @param singular (String) Singular form of name of object
-     * @param plural (String) Plural form of name of object
-     * @return  (boolean) true of the number is non-zero
+     * @param num (int) Number of some object.
+     * @param singular (String) Singular form of name of object.
+     * @param plural (String) Plural form of name of object.
+     * @return (boolean) Whether the number is non-zero.
      *
      * @author otsuru
      * @since 2021/11/25
@@ -162,11 +163,10 @@ public final class DatasetAid {
 
     /**
      * Displays the number of some object read from an input file.
-     * @param num (int) Number of some object
-     * @param singular (String) Singular form of name of object
-     * @param plural (String) Plural form of name of object
+     * @param num (int) Number of some object.
+     * @param singular (String) Singular form of name of object.
+     * @param plural (String) Plural form of name of object.
      * @param inputPath (Path) Input file.
-     * @return  (boolean) true of the number is non-zero
      *
      * @author otsuru
      * @since 2023/3/24
@@ -180,12 +180,11 @@ public final class DatasetAid {
     }
 
     /**
-     * Checks whether a given number of some object read from an input file is non-zero, and displays the number.
-     * @param num (int) Number of some object
-     * @param singular (String) Singular form of name of object
-     * @param plural (String) Plural form of name of object
+     * Displays the number of some object that is to be written in an output file.
+     * @param num (int) Number of some object.
+     * @param singular (String) Singular form of name of object.
+     * @param plural (String) Plural form of name of object.
      * @param outputPath (Path) Output file.
-     * @return  (boolean) true of the number is non-zero
      *
      * @author otsuru
      * @since 2023/3/24
@@ -198,9 +197,9 @@ public final class DatasetAid {
      * Collect all SAC files inside event folders under a given folder.
      * Errors in reading each event folder is just noticed. Such event folders will be ignored.
      *
-     * @param path of a folder containing event folders which have SAC files.
-     * @return <b>Unmodifiable</b> Set of sac file names in event folders under the path
-     * @throws IOException if an I/O error occurs.
+     * @param path (Path) Folder containing event folders which have SAC files.
+     * @return (Set of {@link SACFileName}) Sac file names in event folders under the path.
+     * @throws IOException
      */
     public static Set<SACFileName> sacFileNameSet(Path path) throws IOException {
         Set<SACFileName> sacNameSet = Collections.unmodifiableSet(eventFolderSet(path).stream().flatMap(eDir -> {
@@ -214,30 +213,6 @@ public final class DatasetAid {
 
         checkNum(sacNameSet.size(), "sac file", "sac files");
         return sacNameSet;
-    }
-
-    /**
-     * Move SAC files that satisfies sacPredicate in event folders under the
-     * path
-     *
-     * @param path      working path
-     * @param predicate if true with a sacfile in event folders, the file is moved to
-     *                  the directory.
-     * @throws InterruptedException if the process takes over 30 minutes
-     * @throws IOException          if an I/O error occurs
-     */
-    public static void moveSacfile(Path path, Predicate<SACFileName> predicate)
-            throws IOException, InterruptedException {
-        String directoryName = "movedSacfiles" + GadgetAid.getTemporaryString();
-        // System.out.println(directoryName);
-        Consumer<EventFolder> moveProcess = eventDirectory -> {
-            try {
-                eventDirectory.moveSacFile(predicate, eventDirectory.toPath().resolve(directoryName));
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        };
-        ThreadAid.runEventProcess(path, moveProcess, 30, TimeUnit.MINUTES);
     }
 
     /**
@@ -264,6 +239,7 @@ public final class DatasetAid {
                 Set<Observer> observers = entryMap.get(event).stream()
                         .filter(entry -> components.contains(entry.getComponent()))
                         .map(DataEntry::getObserver).collect(Collectors.toSet());
+                observers = removeObserversWithSameName(event, observers);
                 arcMap.put(event, observers);
             }
         } else if (obsPath != null){
@@ -274,12 +250,38 @@ public final class DatasetAid {
                         .filter(name -> name.isOBS() && components.contains(name.getComponent()))
                         .map(name -> name.readHeaderWithNullOnFailure()).filter(Objects::nonNull)
                         .map(Observer::of).collect(Collectors.toSet());
+                observers = removeObserversWithSameName(eventDir.getGlobalCMTID(), observers);
                 arcMap.put(eventDir.getGlobalCMTID(), observers);
             }
         } else {
             throw new IllegalStateException("Either entryPath or obsPath must be specified.");
         }
         return arcMap;
+    }
+
+    /**
+     * For a single event, there should not be multiple observers with same name and different position;
+     * so remove any duplications.
+     * @param event
+     * @param observers
+     * @return
+     *
+     * @author otsuru
+     * @since 2024/3/27
+     */
+    private static Set<Observer> removeObserversWithSameName(GlobalCMTID event, Set<Observer> observers) {
+        Set<String> observerNames = new HashSet<>();
+        Set<String> duplicateNames = new HashSet<>();
+        // For each observer, add its name to Set; if it cannot be added, that name is duplicated.
+        for (Observer observer : observers) {
+            String observerName = observer.toString();
+            if (observerNames.add(observerName) == false) {
+                System.err.println("!! Duplication of " + observerName + " in " + event + ", ignoring.");
+                duplicateNames.add(observerName);
+            }
+        }
+        // remove observers that have duplicated name
+        return observers.stream().filter(observer -> !duplicateNames.contains(observer.toString())).collect(Collectors.toSet());
     }
 
     /**
@@ -303,7 +305,7 @@ public final class DatasetAid {
         }
 
         /**
-         * A class to implement the actual work that needs to be done to each timewindow
+         * A class to implement the actual work that needs to be done to each timewindow.
          * @param timewindow
          * @param obsSac
          * @param synSac

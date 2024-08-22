@@ -19,7 +19,7 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTAccess;
  * This class is <b>immutable</b>
  *
  * @author Kensuke Konishi
- * @since version 0.0.6.2
+ * @since a long time ago
  */
 public class FPInputFile extends DSMInputHeader {
 

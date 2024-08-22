@@ -12,6 +12,7 @@ import io.github.kensuke1984.kibrary.util.MathAid;
  * Earth utility.
  *
  * @author Kensuke Konishi
+ * @since a long time ago
  */
 public final class Earth {
     private Earth() {}

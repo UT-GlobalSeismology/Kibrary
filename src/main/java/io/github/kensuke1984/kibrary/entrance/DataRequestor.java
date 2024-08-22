@@ -27,6 +27,7 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTSearch;
  * A gmail account is needed. The address must be set in the .property file in KIBRARY_HOME.
  *
  * @author Kensuke Konishi
+ * @since a long time ago
  */
 public class DataRequestor extends Operation {
 
@@ -75,7 +76,7 @@ public class DataRequestor extends Operation {
     private boolean send;
 
     private Set<GlobalCMTID> requestedEvents;
-    private String dateStr = GadgetAid.getTemporaryString();
+    private String dateString = GadgetAid.getTemporaryString();
 
     /**
      * @param args  none to create a property file <br>
@@ -177,9 +178,9 @@ public class DataRequestor extends Operation {
         if (!DatasetAid.checkNum(requestedEvents.size(), "event", "events")) {
             return;
         }
-        System.out.println("Label contains \"" + dateStr + "\"");
+        System.out.println("Label contains \"" + dateString + "\"");
 
-        outPath = DatasetAid.createOutputFolder(workPath, "request", folderTag, appendFolderDate, dateStr);
+        outPath = DatasetAid.createOutputFolder(workPath, "request", folderTag, appendFolderDate, dateString);
 
         requestedEvents.forEach(event -> output(createBreakFastMail(event)));
 
@@ -226,7 +227,7 @@ public class DataRequestor extends Operation {
     public BreakFastMail createBreakFastMail(GlobalCMTID event) {
         Channel[] channels = Channel.listChannels(networks, event, ChronoUnit.MINUTES, headAdjustment, ChronoUnit.MINUTES,
                 footAdjustment);
-        return new BreakFastMail(event + "." + dateStr, channels);
+        return new BreakFastMail(event + "." + dateString, channels);
     }
 
     private Set<GlobalCMTID> listEvents() {

@@ -11,7 +11,6 @@ import java.util.List;
 
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.InformationFileReader;
-import io.github.kensuke1984.kibrary.util.MathAid;
 
 /**
  * File of parameters with known values. See {@link KnownParameter}.
@@ -49,9 +48,7 @@ public class KnownParameterFile {
      */
     public static void write(List<KnownParameter> parameterList, Path outputPath, OpenOption... options)
             throws IOException {
-        System.err.println("Outputting "
-                + MathAid.switchSingularPlural(parameterList.size(), "known parameter", "known parameters")
-                + " in " + outputPath);
+        DatasetAid.printNumOutput(parameterList.size(), "known parameter", "known parameters", outputPath);
 
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath, options))) {
             parameterList.forEach(pw::println);
@@ -93,7 +90,7 @@ public class KnownParameterFile {
                 if (parameters.get(i).equals(parameters.get(j)))
                     System.err.println("!Caution there is duplication in " + inputPath);
 
-        DatasetAid.checkNum(parameters.size(), "known parameter", "known parameters");
+        DatasetAid.printNumInput(parameters.size(), "known parameter", "known parameters", inputPath);
         return Collections.unmodifiableList(parameters);
     }
 

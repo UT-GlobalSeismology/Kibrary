@@ -22,9 +22,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
  * (2010)
  *
  * @author Kensuke Konishi
- *
- * @version 0.0.1.3
- *
+ * @since a long time ago
  */
 public final class VSConversion {
 

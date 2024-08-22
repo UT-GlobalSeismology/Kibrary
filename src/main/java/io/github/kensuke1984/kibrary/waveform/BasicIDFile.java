@@ -31,27 +31,40 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.sac.WaveformType;
 
 /**
- * Utilities for reading a pair of an ID file and a waveform file created using {@link WaveformDataWriter}.
- * The files are for observed and synthetic waveforms (NOT partial).
+ * Utilities for reading a pair of an ID file and a waveform file created using {@link WaveformDataWriter}
+ * for observed and synthetic waveforms (NOT partial).
  * <p>
- * The file contains
- * <p>(File information)</p>
- * <dl><dd>Numbers of observers, events and period ranges</dd>
- * </dl>
- * <p>(All waveforms information)</p>
- * <dl>
- * <dt>Each observer information</dt>
- * <dd>station, network, position</dd>
- * <dt>Each event</dt>
- * <dd>Global CMT ID</dd>
- * <dt>Each period range</dt>
- * <dd>min period, max period</dd>
- * </dl>
- * <p>(Each waveform information)</p>
- * <dl>
- * <dt>Each BasicID information</dt>
- * <dt>See in {@link #createID(byte[], Observer[], GlobalCMTID[], double[][], Phase[])}</dt>
- * </dl>
+ * The file contains:
+ * <ul>
+ * <li> (file information)
+ *   <ul>
+ *   <li> numbers of observers, events, period ranges, and phases
+ *   </ul>
+ * <li> (all waveforms information)
+ *   <ul>
+ *   <li> each observer information: station, network, position
+ *   <li> each event information: Global CMT ID
+ *   <li> each period range: min, max
+ *   <li> each phase information: phase name
+ *   </ul>
+ * <li> (each waveform information)
+ *   <ul>
+ *   <li> (48 bytes) each BasicID information
+ *     <ul>
+ *     <li> (1 byte) waveform type (observed or synthetic) </li>
+ *     <li> (2 bytes) observer # </li>
+ *     <li> (2 bytes) event # </li>
+ *     <li> (1 byte) component (Z, R, or T) </li>
+ *     <li> (1 byte) period range # </li>
+ *     <li> (2*10 bytes) phase #s </li>
+ *     <li> (4 bytes) start time </li>
+ *     <li> (4 bytes) number of points </li>
+ *     <li> (4 bytes) sampling Hz </li>
+ *     <li> (1 byte) whether waveform is either convolved or observed </li>
+ *     <li> (8 bytes) address of starting byte </li>
+ *     </ul>
+ *   </ul>
+ * </ul>
  *
  * <p>
  * This class also contains methods for exporting waveform data in ascii-format text files.
@@ -59,6 +72,7 @@ import io.github.kensuke1984.kibrary.util.sac.WaveformType;
  * the input binary-format files can be exported in ascii format.
  * If desired, waveform data can be exported in txt files under the basic waveform folder.
  *
+ * @author Kensuke Konishi
  * @since a long time ago
  * @version 2021/11/3 moved from waveformdata to waveform
  */
@@ -127,9 +141,9 @@ public final class BasicIDFile {
 
     /**
      * Reads basicIDs from a basic folder.
-     * @param inPath (Path) The directory containing basic ID and data files
-     * @param withData (boolean) Whether to read waveform data
-     * @return (List of BasicID) The basicIDs read in. Not sorted.
+     * @param inPath (Path) The directory containing basic ID and data files.
+     * @param withData (boolean) Whether to read waveform data.
+     * @return (List of {@link BasicID}) The basicIDs read in. Not sorted.
      * @throws IOException
      *
      * @author otsuru
@@ -143,10 +157,10 @@ public final class BasicIDFile {
 
     /**
      * Reads both the ID file and the data file.
-     * @param idPath (Path) ID file
-     * @param dataPath (Path) Data file
-     * @return ({@link BasicID}[]) BasicIDs containing waveform data
-     * @throws IOException if an I/O error occurs
+     * @param idPath (Path) ID file.
+     * @param dataPath (Path) Data file.
+     * @return ({@link BasicID}[]) BasicIDs containing waveform data.
+     * @throws IOException
      * @deprecated (make this method private)
      */
     public static BasicID[] read(Path idPath, Path dataPath) throws IOException {
@@ -181,9 +195,9 @@ public final class BasicIDFile {
 
     /**
      * Reads only the ID file (and not the data file).
-     * @param idPath (Path) ID file
-     * @return ({@link BasicID}[]) BasicIDs without waveform data
-     * @throws IOException if an I/O error occurs
+     * @param idPath (Path) ID file.
+     * @return ({@link BasicID}[]) BasicIDs without waveform data.
+     * @throws IOException
      * @deprecated (make this method private)
      */
     public static BasicID[] read(Path idPath) throws IOException {
@@ -242,31 +256,18 @@ public final class BasicIDFile {
 
     /**
      * Method for reading the actual ID part.
-     * <p>
-     * An ID information contains<br>
-     * obs or syn(1)<br>
-     * observer number(2)<br>
-     * event number(2)<br>
-     * component(1)<br>
-     * period range(1) <br>
-     * phases numbers(10*2)<br>
-     * start time(4)<br>
-     * number of points(4)<br>
-     * sampling hz(4) <br>
-     * convolved (or observed) or not(1)<br>
-     * position of a waveform for the ID in the data file(8)
      *
-     * @param bytes (byte[]) Input data for one ID
-     * @param observers ({@link Observer}[]) Set of observers contained in dataset
-     * @param events ({@link GlobalCMTID}[]) Set of events contained in dataset
-     * @param periodRanges (double[][]) Set of period ranges contained in dataset
-     * @param phases ({@link Phase}[]) Set of phases contained in dataset
-     * @return ({@link BasicID}) Created ID
+     * @param bytes (byte[]) Input data for one ID.
+     * @param observers ({@link Observer}[]) Set of observers contained in dataset.
+     * @param events ({@link GlobalCMTID}[]) Set of events contained in dataset.
+     * @param periodRanges (double[][]) Set of period ranges contained in dataset.
+     * @param phases ({@link Phase}[]) Set of phases contained in dataset.
+     * @return ({@link BasicID}) Created ID.
      */
     private static BasicID createID(byte[] bytes, Observer[] observers, GlobalCMTID[] events, double[][] periodRanges, Phase[] phases) {
         ByteBuffer bb = ByteBuffer.wrap(bytes);
         WaveformType type = 0 < bb.get() ? WaveformType.OBS : WaveformType.SYN;
-        Observer station = observers[bb.getShort()];
+        Observer observer = observers[bb.getShort()];
         GlobalCMTID event = events[bb.getShort()];
         SACComponent component = SACComponent.getComponent(bb.get());
         double[] period = periodRanges[bb.get()];
@@ -284,8 +285,7 @@ public final class BasicIDFile {
         boolean isConvolved = 0 < bb.get();
         // startByte is read, but not used
         long startByte = bb.getLong();
-        return new BasicID(type, samplingHz, startTime, npts, station, event, component, period[0], period[1],
-                usablephases, isConvolved);
+        return new BasicID(type, samplingHz, startTime, npts, observer, event, component, period[0], period[1], usablephases, isConvolved);
     }
 
 
@@ -313,14 +313,14 @@ public final class BasicIDFile {
         Options options = Summon.defaultOptions();
         //input
         options.addOption(Option.builder("b").longOpt("basic").hasArg().argName("basicFolder")
-                .desc("The input basic waveform folder (.)").build());
+                .desc("Path of basic waveform folder. (.)").build());
         options.addOption(Option.builder("w").longOpt("waveform")
-                .desc("Export waveforms in event directories under the input basic waveform folder").build());
+                .desc("Export waveforms in event directories under the input basic waveform folder.").build());
         // output
         options.addOption(Option.builder("n").longOpt("number")
-                .desc("Just count number without creating output files").build());
+                .desc("Just count number without creating output files.").build());
         options.addOption(Option.builder("o").longOpt("output").hasArg().argName("outputFile")
-                .desc("Specify path of output file. If not set, 'basicID.txt'.").build());
+                .desc("Path of output file. If not set, 'basicID.txt'.").build());
         return options;
     }
 

@@ -1,13 +1,17 @@
 package io.github.kensuke1984.kibrary.math;
 
 import org.apache.commons.math3.exception.DimensionMismatchException;
-import org.apache.commons.math3.linear.*;
+import org.apache.commons.math3.linear.Array2DRowRealMatrix;
+import org.apache.commons.math3.linear.DefaultRealMatrixPreservingVisitor;
+import org.apache.commons.math3.linear.MatrixUtils;
+import org.apache.commons.math3.linear.RealMatrix;
+import org.apache.commons.math3.linear.RealVector;
 
 /**
  * 行列計算 parallelized Matrix
  *
  * @author Kensuke Konishi
- * @version 0.1.0.1
+ * @since a long time ago
  */
 public class ParallelizedMatrix extends Array2DRowRealMatrix {
 

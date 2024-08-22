@@ -14,7 +14,7 @@ import io.github.kensuke1984.kibrary.filter.LowPassFilter;
  * This class is <b>immutable</b>
  *
  * @author Kensuke Konishi
- * @since version 1.0.0.1
+ * @since a long time ago
  * @see <a href=http://ds.iris.edu/ds/nodes/dmc/forms/sac/>SAC</a>
  */
 class SACFile extends SACHeader implements SACFileAccess {

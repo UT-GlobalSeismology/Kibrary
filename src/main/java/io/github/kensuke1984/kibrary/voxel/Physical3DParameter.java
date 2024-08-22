@@ -17,7 +17,7 @@ import io.github.kensuke1984.kibrary.util.spc.PartialType;
  * This class is <b>IMMUTABLE</b>
  *
  * @author Kensuke Konishi
- * @since version 0.0.3.1
+ * @since a long time ago
  */
 public class Physical3DParameter implements UnknownParameter {
     public static final int oneUnknownByte = 42;

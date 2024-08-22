@@ -1,10 +1,10 @@
 package io.github.kensuke1984.kibrary.math;
 
-import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
-import org.apache.commons.math3.complex.Complex;
-
 import java.util.Arrays;
 import java.util.Comparator;
+
+import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
+import org.apache.commons.math3.complex.Complex;
 
 /**
  * Solver for cubic equations with coefficients of real numbers.
@@ -12,9 +12,8 @@ import java.util.Comparator;
  * This class is <b>immutable</b>
  *
  * @author Kensuke Konishi
- * @version 0.1.3
+ * @since a long time ago
  */
-
 public class LinearEquation {
 
     private final PolynomialFunction PF;

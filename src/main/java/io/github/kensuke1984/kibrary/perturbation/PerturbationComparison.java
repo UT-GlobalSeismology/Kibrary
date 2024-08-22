@@ -20,7 +20,6 @@ import org.apache.commons.math3.linear.RealVector;
 import io.github.kensuke1984.kibrary.Summon;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.FileAid;
-import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 
 /**
@@ -55,15 +54,15 @@ public class PerturbationComparison {
         Options options = Summon.defaultOptions();
 
         options.addOption(Option.builder("n").longOpt("numerator").hasArg().argName("perturbationFile").required()
-                .desc("Path of perturbation file to compare").build());
+                .desc("Path of perturbation file to compare.").build());
         options.addOption(Option.builder("d").longOpt("denominator").hasArg().argName("perturbationFile").required()
-                .desc("Path of perturbation file to compare to").build());
+                .desc("Path of perturbation file to compare to.").build());
 
         // output
         options.addOption(Option.builder("T").longOpt("tag").hasArg().argName("folderTag")
                 .desc("A tag to include in output folder name.").build());
         options.addOption(Option.builder("O").longOpt("omitDate")
-                .desc("Whether to omit date string in output folder name.").build());
+                .desc("Omit date string in output folder name.").build());
 
         return options;
     }
@@ -105,7 +104,7 @@ public class PerturbationComparison {
         // create output folder
         String folderTag = cmdLine.hasOption("T") ? cmdLine.getOptionValue("T") : null;
         boolean appendFolderDate = !cmdLine.hasOption("O");
-        Path outPath = DatasetAid.createOutputFolder(Paths.get(""), "comparison", folderTag, appendFolderDate, GadgetAid.getTemporaryString());
+        Path outPath = DatasetAid.createOutputFolder(Paths.get(""), "comparison", folderTag, appendFolderDate, null);
 
         // output ratio and difference maps as perturbation list files
         String fileNameRoot = FileAid.extractNameRoot(numeratorPath);

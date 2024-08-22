@@ -48,8 +48,8 @@ import io.github.kensuke1984.kibrary.visual.plot.DataFeatureHistogram;
 import io.github.kensuke1984.kibrary.visual.plot.ModelStructurePlotter;
 import io.github.kensuke1984.kibrary.visual.plot.PartialWaveformPlotter;
 import io.github.kensuke1984.kibrary.visual.plot.PolynomialStructurePlotter;
-import io.github.kensuke1984.kibrary.voxel.VoxelFileMaker;
-import io.github.kensuke1984.kibrary.voxel.VoxelLayoutDesigner;
+import io.github.kensuke1984.kibrary.voxel.VoxelAutoDesigner;
+import io.github.kensuke1984.kibrary.voxel.VoxelManualDesigner;
 import io.github.kensuke1984.kibrary.waveform.ActualWaveformCompiler;
 import io.github.kensuke1984.kibrary.waveform.BasicIDMerge;
 import io.github.kensuke1984.kibrary.waveform.BasicIDRebuilder;
@@ -65,7 +65,7 @@ import io.github.kensuke1984.kibrary.waveform.PseudoWaveformGenerator;
  * The value name set to this enum must be the same as its corresponding class name.
  *
  * @author Kensuke Konishi
- * @since version 0.0.5.3
+ * @since a long time ago
  * @version 2022/1/7 Recreated based on the original Manhattan.
  */
 enum Manhattan {
@@ -102,8 +102,8 @@ enum Manhattan {
     BasicBinnedStackCreator(44, BasicBinnedStackCreator.class),
     DataFeatureHistogram(48, DataFeatureHistogram.class),
     // Voxel 50
-    VoxelLayoutDesigner(50, VoxelLayoutDesigner.class),
-    VoxelFileMaker(51,VoxelFileMaker.class),
+    VoxelAutoDesigner(50, VoxelAutoDesigner.class),
+    VoxelManualDesigner(51,VoxelManualDesigner.class),
     CoarseGridDesigner(52, CoarseGridDesigner.class),
     AdaptiveGridDesigner(53, AdaptiveGridDesigner.class),
     // Partial 60
@@ -157,12 +157,12 @@ enum Manhattan {
     }
 
     /**
-     * Returns a Manhattan given its corresponding number.
-     * Note that {@link #valueOf(String)}, which returns a Manhattan given a String of its name,
+     * Returns a {@link Manhattan} given its corresponding number.
+     * Note that {@link #valueOf(String)}, which returns a {@link Manhattan} given a String of its name,
      * is already defined automatically.
      *
-     * @param n (int)
-     * @return
+     * @param n (int) The value to get a {@link Manhattan} for.
+     * @return ({@link Manhattan}) The {@link Manhattan} corresponding to the value.
      */
     static Manhattan valueOf(int n) {
         return Arrays.stream(values()).filter(m -> m.value == n).findAny().get();

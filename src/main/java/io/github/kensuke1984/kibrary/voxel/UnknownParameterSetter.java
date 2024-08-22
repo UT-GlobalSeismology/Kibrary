@@ -22,7 +22,6 @@ import org.apache.commons.cli.ParseException;
 import io.github.kensuke1984.kibrary.Summon;
 import io.github.kensuke1984.kibrary.elastic.VariableType;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
-import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.earth.Earth;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
@@ -30,6 +29,7 @@ import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 /**
  * Class to create an {@link UnknownParameterFile}.
  *
+ * @author ?
  * @since a long time ago
  * @version 2022/2/12 moved & renamed from inversion.addons.MakeUnknownParameterFile to voxel.UnknownParameterSetter.
  */
@@ -72,7 +72,7 @@ public class UnknownParameterSetter {
         options.addOption(Option.builder("T").longOpt("tag").hasArg().argName("fileTag")
                 .desc("A tag to include in output file name.").build());
         options.addOption(Option.builder("O").longOpt("omitDate")
-                .desc("Whether to omit date string in output file name.").build());
+                .desc("Omit date string in output file name.").build());
 
         return options;
     }
@@ -85,7 +85,7 @@ public class UnknownParameterSetter {
     public static void run(CommandLine cmdLine) throws IOException {
         String fileTag = cmdLine.hasOption("T") ? cmdLine.getOptionValue("T") : null;
         boolean appendFileDate = !cmdLine.hasOption("O");
-        Path outputPath = DatasetAid.generateOutputFilePath(Paths.get(""), "unknowns", fileTag, appendFileDate, GadgetAid.getTemporaryString(), ".lst");
+        Path outputPath = DatasetAid.generateOutputFilePath(Paths.get(""), "unknowns", fileTag, appendFileDate, null, ".lst");
 
         // partial types
         System.err.print("Working for:");

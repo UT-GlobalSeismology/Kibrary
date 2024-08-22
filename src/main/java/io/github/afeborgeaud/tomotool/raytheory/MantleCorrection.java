@@ -183,14 +183,15 @@ public class MantleCorrection {
      * Set path to output file and bounce point file
      */
     private void setOutput() {
+        String dateString = GadgetAid.getTemporaryString();
         switch (phaseName) {
         case "ScS":
-            bouncepointPath = DatasetAid.generateOutputFilePath(Paths.get(""), "bouncepoint_ScS", threeDmodel, true, GadgetAid.getTemporaryString(), ".lst");
-            outPath = DatasetAid.generateOutputFilePath(Paths.get(""), "mantleCorrection_S-ScS", threeDmodel, true, GadgetAid.getTemporaryString(), ".dat");
+            bouncepointPath = DatasetAid.generateOutputFilePath(Paths.get(""), "bouncepoint_ScS", threeDmodel, true, dateString, ".lst");
+            outPath = DatasetAid.generateOutputFilePath(Paths.get(""), "mantleCorrection_S-ScS", threeDmodel, true, dateString, ".dat");
             break;
         case "PcP":
-            bouncepointPath = DatasetAid.generateOutputFilePath(Paths.get(""), "bouncepoint_PcP", threeDmodel, true, GadgetAid.getTemporaryString(), ".lst");
-            outPath = DatasetAid.generateOutputFilePath(Paths.get(""), "mantleCorrection_P-PcP", threeDmodel, true, GadgetAid.getTemporaryString(), ".dat");
+            bouncepointPath = DatasetAid.generateOutputFilePath(Paths.get(""), "bouncepoint_PcP", threeDmodel, true, dateString, ".lst");
+            outPath = DatasetAid.generateOutputFilePath(Paths.get(""), "mantleCorrection_P-PcP", threeDmodel, true, dateString, ".dat");
             break;
         default:
             throw new RuntimeException("Error: phase " + phaseName + " not implemented yet");

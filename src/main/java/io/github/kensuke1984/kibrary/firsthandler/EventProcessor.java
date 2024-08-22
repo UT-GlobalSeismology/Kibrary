@@ -24,6 +24,7 @@ import io.github.kensuke1984.kibrary.math.LinearRange;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.FileAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
+import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTAccess;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
@@ -45,8 +46,8 @@ import io.github.kensuke1984.kibrary.util.sac.SACUtil;
  * <p>
  * TODO: The sac "cut b n" command in SacModifier fails if the sac version is too new (102.0 and later?).
  *
- * @since 2021/09/14
  * @author otsuru
+ * @since 2021/09/14
  */
 class EventProcessor implements Runnable {
 
@@ -450,7 +451,7 @@ class EventProcessor implements Runnable {
                 sm.zeroPad();
 
                 // SAC start time is set to the event time, and the SAC file is cut so that npts = 2^n
-                sm.trim((int) Math.ceil(maxTlen * SAMPLING_HZ));
+                sm.trim((int) MathAid.ceil(maxTlen * SAMPLING_HZ));
 
                 // move SAC files after treatment into the merged folder
                 FileAid.moveToDirectory(sacPath, doneModifyPath, true);
@@ -647,8 +648,9 @@ class EventProcessor implements Runnable {
     /**
      * Eliminates duplication in the data.
      * If there are multiple files with the same network and station for a given component,
-     * or the there are files for several stations that are positioned very close to each other with the same component,
+     * or there are files for several stations that are positioned very close to each other with the same component,
      * one is selected and the others are discarded.
+     * Also, observers that have different positions among components will be discarded.
      * If there are invalid triplets, they will be put in "invalidTriplet".
      * Eliminated SAC files will be put in "duplicateInstrument".
      * @throws IOException
@@ -673,10 +675,16 @@ class EventProcessor implements Runnable {
             }
         }
 
-        // triplets should consist of either {RTZ}, {RT}, or {Z}
         for (SacTriplet oneTriplet : sacTripletSet) {
+            // triplets should consist of either {RTZ}, {RT}, or {Z}
             if (!oneTriplet.checkValidity()) {
                 throw new IllegalStateException("!!! incomplete triplet : " + event.getGlobalCMTID() + " - " + oneTriplet.getName());
+            }
+            // check that all files in each triplet have the same observer position
+            if (!oneTriplet.checkPositionConsistency()) {
+                GadgetAid.dualPrintln(eliminatedWriter, "!! unmatching observer positions : " + event.getGlobalCMTID() + " - " + oneTriplet.getName());
+                oneTriplet.dismiss();
+                oneTriplet.move(duplicateInstrumentPath);
             }
         }
 

@@ -14,19 +14,18 @@ import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.math.LinearRange;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
-import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 
 /**
  * Operation to create a {@link VoxelInformationFile} by deciding the position range of voxels manually.
  * <p>
- * Use {@link VoxelLayoutDesigner} to decide the positions of voxels based on a dataset.
+ * Use {@link VoxelAutoDesigner} to decide the positions of voxels based on a dataset.
  *
  * @author otsuru
  * @since 2023/6/5
  */
-public class VoxelFileMaker extends Operation {
+public class VoxelManualDesigner extends Operation {
 
     private final Property property;
     /**
@@ -125,7 +124,7 @@ public class VoxelFileMaker extends Operation {
         System.err.println(outPath + " is created.");
     }
 
-    public VoxelFileMaker(Property property) throws IOException {
+    public VoxelManualDesigner(Property property) throws IOException {
         this.property = (Property) property.clone();
     }
 
@@ -206,7 +205,7 @@ public class VoxelFileMaker extends Operation {
                 layerRadii[i] = (borderRadii[i] + borderRadii[i + 1]) / 2.0;
             }
         } else {
-            int nRadius = (int) Math.floor((upperRadius - lowerRadius) / dRadius);
+            int nRadius = (int) MathAid.floor((upperRadius - lowerRadius) / dRadius);
             layerThicknesses = new double[nRadius];
             layerRadii = new double[nRadius];
             for (int i = 0; i < nRadius; i++) {
@@ -216,7 +215,7 @@ public class VoxelFileMaker extends Operation {
         }
 
         // output
-        Path outputPath = DatasetAid.generateOutputFilePath(workPath, "voxel", fileTag, appendFileDate, GadgetAid.getTemporaryString(), ".inf");
+        Path outputPath = DatasetAid.generateOutputFilePath(workPath, "voxel", fileTag, appendFileDate, null, ".inf");
         VoxelInformationFile.write(layerThicknesses, layerRadii, horizontalPixels, outputPath);
     }
 
