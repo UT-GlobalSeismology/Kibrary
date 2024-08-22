@@ -259,8 +259,8 @@ public class PerturbationMapShellscript {
     /**
      * Decides the interval in which to sample the grid in a map.
      * This method sets the interval at roughly a tenth of the input position spacing.
-     * @param positions (Set of {@link HorizontalPosition}) Input position set
-     * @return (double) Suggested value of grid spacing
+     * @param positions (Set of {@link HorizontalPosition}) Input position set.
+     * @return (double) Suggested value of grid spacing.
      */
     static double decideGridSampling(Set<? extends HorizontalPosition> positions) {
         double positionInterval = HorizontalPosition.findLatitudeInterval(positions);
@@ -274,9 +274,9 @@ public class PerturbationMapShellscript {
     }
 
     /**
-     * Decides a rectangular region of a map that is sufficient to plot all parameter points.
-     * @param positions (Set of {@link HorizontalPosition}) Positions that need to be included in map region
-     * @return (String) "lonMin/lonMax/latMin/latMax"
+     * Decides a rectangular region of a map that is sufficient to map all given positions.
+     * @param positions (Set of {@link HorizontalPosition}) Positions that need to be included in map region.
+     * @return (String) Rectangular region in form "lonMin/lonMax/latMin/latMax".
      */
     static String decideMapRegion(Set<? extends HorizontalPosition> positions) {
         if (positions.size() == 0) throw new IllegalArgumentException("No positions are given");
@@ -300,4 +300,29 @@ public class PerturbationMapShellscript {
         // return as String
         return (int) lonMin + "/" + (int) lonMax + "/" + (int) latMin + "/" + (int) latMax;
     }
+
+    /**
+     * Decides the center point of the region when mapping all given positions.
+     * @param positions (Set of {@link HorizontalPosition}) Positions that need to be included in map region.
+     * @return (String) Center point in form "lon/lat".
+     */
+    static String decideMapCenter(Set<? extends HorizontalPosition> positions) {
+        if (positions.size() == 0) throw new IllegalArgumentException("No positions are given");
+        // whether to use [0:360) instead of [-180:180)
+        boolean crossDateLine = HorizontalPosition.crossesDateLine(positions);
+        // map to latitude and longitude values
+        double[] latitudes = positions.stream().mapToDouble(HorizontalPosition::getLatitude).toArray();
+        double[] longitudes = positions.stream().mapToDouble(pos -> pos.getLongitude(crossDateLine)).toArray();
+        // find min and max latitude and longitude
+        double latMin = Arrays.stream(latitudes).min().getAsDouble();
+        double latMax = Arrays.stream(latitudes).max().getAsDouble();
+        double lonMin = Arrays.stream(longitudes).min().getAsDouble();
+        double lonMax = Arrays.stream(longitudes).max().getAsDouble();
+        // decide center point
+        double latCenter = (latMin + latMax) / 2;
+        double lonCenter = (lonMin + lonMax) / 2;
+        // return as String
+        return (int) lonCenter + "/" + (int) latCenter;
+    }
+
 }

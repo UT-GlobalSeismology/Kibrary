@@ -120,7 +120,7 @@ public class ModelSetMapper extends Operation {
             pw.println("manhattan " + thisClass.getSimpleName());
             pw.println("##Path of work folder. (.)");
             pw.println("#workPath ");
-            pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this blank.");
+            pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this unset.");
             pw.println("#folderTag ");
             pw.println("##(boolean) Whether to append date string at end of output folder name. (true)");
             pw.println("#appendFolderDate false");
@@ -149,7 +149,7 @@ public class ModelSetMapper extends Operation {
             pw.println("#displayLayers ");
             pw.println("##(int) Number of panels to display in each row. (4)");
             pw.println("#nPanelsPerRow ");
-            pw.println("##To specify the map region, set it in the form lonMin/lonMax/latMin/latMax, range lon:[-180,360] lat:[-90,90].");
+            pw.println("##To specify the map region, set it in the form lonMin/lonMax/latMin/latMax.");
             pw.println("#mapRegion -180/180/-90/90");
             pw.println("##########The following should be set to half of dLatitude and dLongitude used to design voxels (or smaller).");
             pw.println("##(double) Latitude margin at both ends [km]. If this is unset, the following marginLatitudeDeg will be used.");

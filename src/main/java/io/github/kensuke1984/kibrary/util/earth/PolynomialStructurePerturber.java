@@ -75,7 +75,7 @@ public class PolynomialStructurePerturber extends Operation {
             pw.println("#workPath ");
             pw.println("##(String) The first part of the name of output structure file. (PREM)");
             pw.println("#nameRoot ");
-            pw.println("##(String) A tag to include in output file names. If no tag is needed, set this blank.");
+            pw.println("##(String) A tag to include in output file names. If no tag is needed, leave this unset.");
             pw.println("#fileTag ");
             pw.println("##(boolean) Whether to append date string at end of output file names. (true)");
             pw.println("#appendFileDate false");

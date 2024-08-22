@@ -87,7 +87,6 @@ public class ModelStructurePlotter extends Operation {
      */
     private Set<InverseMethodEnum> inverseMethods;
     private List<String> indexStrings;
-    private int maxNum;
 
     private boolean colorByStructure;
     private boolean colorByVariable;
@@ -120,7 +119,7 @@ public class ModelStructurePlotter extends Operation {
             pw.println("manhattan " + thisClass.getSimpleName());
             pw.println("##Path of work folder. (.)");
             pw.println("#workPath ");
-            pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this blank.");
+            pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this unset.");
             pw.println("#folderTag ");
             pw.println("##(boolean) Whether to append date string at end of output folder name. (true)");
             pw.println("#appendFolderDate false");
