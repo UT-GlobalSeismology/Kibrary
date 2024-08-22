@@ -405,7 +405,7 @@ public class PartialsAssembler3D extends Operation {
 
         // design bandpass filter
         filter = designBandPassFilter();
-        // to stablize bandpass filtering, extend window at both ends for ext = max period(s) each
+        // to stablize bandpass filtering, extend window at both ends for max period (s) each
         ext = (int) (1 / lowFreq * partialSamplingHz);
 
         // set source time functions

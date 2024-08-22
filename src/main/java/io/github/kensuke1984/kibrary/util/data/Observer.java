@@ -40,10 +40,6 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
 public final class Observer implements Comparable<Observer> {
 
     /**
-     * network code for stations in synthetic datasets TODO delete?
-     */
-    public static final String SYN = "DSM";
-    /**
      * maximum length to allow for an observer ID
      */
     public static final int MAX_LENGTH = 16;
@@ -106,15 +102,8 @@ public final class Observer implements Comparable<Observer> {
      * @return Station of the input sacHeaderData
      */
     public static Observer of(SACHeaderAccess sacHeaderData) {
-        return sacHeaderData.getSACString(SACHeaderEnum.KNETWK) == "-12345"
-                ? new Observer(sacHeaderData.getSACString(SACHeaderEnum.KSTNM).trim(),
-                        SYN,
-                        new HorizontalPosition(sacHeaderData.getValue(SACHeaderEnum.STLA),
-                                sacHeaderData.getValue(SACHeaderEnum.STLO)))
-                : new Observer(sacHeaderData.getSACString(SACHeaderEnum.KSTNM).trim(),
-                        sacHeaderData.getSACString(SACHeaderEnum.KNETWK).trim(),
-                        new HorizontalPosition(sacHeaderData.getValue(SACHeaderEnum.STLA),
-                                sacHeaderData.getValue(SACHeaderEnum.STLO)));
+        return new Observer(sacHeaderData.getSACString(SACHeaderEnum.KSTNM).trim(), sacHeaderData.getSACString(SACHeaderEnum.KNETWK).trim(),
+                new HorizontalPosition(sacHeaderData.getValue(SACHeaderEnum.STLA), sacHeaderData.getValue(SACHeaderEnum.STLO)));
     }
 
     /**

@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
+import io.github.kensuke1984.kibrary.math.LinearRange;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
@@ -121,20 +122,18 @@ public class VirtualDatasetMaker extends Operation {
 
         lowerLatitude = property.parseInt("lowerLatitude", "0");
         upperLatitude = property.parseInt("upperLatitude", "0");
-        if (lowerLatitude < -90 || lowerLatitude > upperLatitude || 90 < upperLatitude)
-            throw new IllegalArgumentException("Latitude range " + lowerLatitude + " , " + upperLatitude + " is invalid.");
+        LinearRange.checkValidity("Latitude", lowerLatitude, upperLatitude, -90.0, 90.0);
 
         lowerLongitude = property.parseInt("lowerLongitude", "10");
         upperLongitude = property.parseInt("upperLongitude", "170");
-        if (lowerLongitude < -180 || lowerLongitude > upperLongitude || 360 < upperLongitude)
-            throw new IllegalArgumentException("Longitude range " + lowerLongitude + " , " + upperLongitude + " is invalid.");
+        LinearRange.checkValidity("Longitude", lowerLongitude, upperLongitude, -180.0, 360.0);
 
         dLatitudeDeg = property.parseInt("dLatitudeDeg", "5");
         if (dLatitudeDeg <= 0)
-            throw new IllegalArgumentException("dLatitudeDeg must be positive");
+            throw new IllegalArgumentException("dLatitudeDeg must be positive.");
         dLongitudeDeg = property.parseInt("dLongitudeDeg", "5");
         if (dLongitudeDeg <= 0)
-            throw new IllegalArgumentException("dLongitudeDeg must be positive");
+            throw new IllegalArgumentException("dLongitudeDeg must be positive.");
     }
 
     @Override

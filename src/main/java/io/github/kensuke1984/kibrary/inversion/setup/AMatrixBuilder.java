@@ -2,6 +2,7 @@ package io.github.kensuke1984.kibrary.inversion.setup;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.IntStream;
 
 import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.RealVector;
@@ -52,6 +53,7 @@ public final class AMatrixBuilder {
         long t = System.nanoTime();
         AtomicInteger count = new AtomicInteger();
         int nUnknowns = parameterList.size();
+        boolean[] flags = new boolean[dVector.getNTimeWindow()];
 
         partialIDs.stream().parallel().forEach(id -> {
             if (count.get() == dVector.getNTimeWindow() * nUnknowns)
@@ -69,6 +71,7 @@ public final class AMatrixBuilder {
                 return;
             }
             int row = dVector.getStartPoint(k);
+            flags[k] = true;
 
             // read partial data
             double[] partial = id.getData();
@@ -101,18 +104,10 @@ public final class AMatrixBuilder {
                 System.err.println("Fill 0 to empty partials : The number of empty partial is " + dVector.getNTimeWindow()
                         + " * " + nUnknowns + " - " + count.get() + " = " + (dVector.getNTimeWindow() * nUnknowns - count.get()));
             } else {
-                System.err.println("Printing BasicIDs that are not in the partialID set...");
-                //TODO
-//                Set<id_station> idStationSet
-//                    = Stream.of(ids).map(id -> new id_station(id.getGlobalCMTID(), id.getObserver()))
-//                        .distinct().collect(Collectors.toSet());
-//                Stream.of(DVECTOR.getObsIDs()).forEach(id -> {
-//                    id_station idStation = new id_station(id.getGlobalCMTID(), id.getObserver());
-//                    if (!idStationSet.contains(idStation)) {
-//                        System.out.println(id);
-//                    }
-//                });
-                throw new RuntimeException("Input partials are not enough: " + " " + count.get() + " != " +
+                System.err.println("!!! Printing BasicIDs that are not in the partialID set...");
+                IntStream.range(0, dVector.getNTimeWindow()).filter(i -> flags[i] == false).mapToObj(i -> dVector.getObsID(i))
+                        .forEach(id -> System.err.println(" " + id.toString()));
+                throw new IllegalStateException("Input partials are not enough: " + " " + count.get() + " != " +
                         dVector.getNTimeWindow() + " * (" + nUnknowns + ")");
             }
         }

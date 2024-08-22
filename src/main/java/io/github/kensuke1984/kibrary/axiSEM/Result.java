@@ -23,7 +23,6 @@ import org.apache.commons.math3.transform.TransformType;
 import org.apache.http.annotation.Experimental;
 
 import io.github.kensuke1984.anisotime.Phase;
-import io.github.kensuke1984.kibrary.Operation_old;
 import io.github.kensuke1984.kibrary.dsmsetup.OneDPartialDSMSetup;
 import io.github.kensuke1984.kibrary.filter.BandPassFilter;
 import io.github.kensuke1984.kibrary.filter.ButterworthFilter;
@@ -41,7 +40,7 @@ import io.github.kensuke1984.kibrary.waveform.BasicID;
  * @author anpan
  * @version 0.1
  */
-public class Result implements Operation_old {
+public class Result {
     private String meshName;
     private List<BasicID> basicIDs;
     private double highFreq;
@@ -53,9 +52,7 @@ public class Result implements Operation_old {
 
     public static void main(String[] args) throws IOException {
         Properties property = new Properties();
-        if (args.length == 0)
-            property.load(Files.newBufferedReader(Operation_old.findPath()));
-        else if (args.length == 1)
+        if (args.length == 1)
             property.load(Files.newBufferedReader(Paths.get(args[0])));
         else
             throw new IllegalArgumentException("too many arguments. It should be 0 or 1 (property file name)");
@@ -139,7 +136,6 @@ public class Result implements Operation_old {
         System.err.println(outPath + " is created.");
     }
 
-    @Override
     public void run() {
         for (BasicID id : basicIDs) {
             System.out.println(id);
@@ -150,16 +146,6 @@ public class Result implements Operation_old {
                             , data[i]);
             }
         }
-    }
-
-    @Override
-    public Properties getProperties() {
-        return (Properties) property.clone();
-    }
-
-    @Override
-    public Path getWorkPath() {
-        return workPath;
     }
 
     public Result(Properties property) {
