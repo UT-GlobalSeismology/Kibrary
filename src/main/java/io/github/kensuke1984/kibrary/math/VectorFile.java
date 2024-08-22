@@ -15,6 +15,7 @@ import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.RealVector;
 
 import io.github.kensuke1984.kibrary.Summon;
+import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.InformationFileReader;
 
@@ -87,8 +88,10 @@ public class VectorFile {
                 .desc("Value to add to all components.").build());
 
         // output
-        options.addOption(Option.builder("o").longOpt("output").hasArg().argName("outputFile")
-                .desc("Specify path of output file.").build());
+        options.addOption(Option.builder("T").longOpt("tag").hasArg().argName("fileTag")
+                .desc("A tag to include in output file name.").build());
+        options.addOption(Option.builder("O").longOpt("omitDate")
+                .desc("Whether to omit date string in output file name.").build());
 
         return options;
     }
@@ -99,6 +102,9 @@ public class VectorFile {
      * @throws IOException
      */
     public static void run(CommandLine cmdLine) throws IOException {
+        String fileTag = cmdLine.hasOption("T") ? cmdLine.getOptionValue("T") : null;
+        boolean appendFileDate = !cmdLine.hasOption("O");
+        Path outputPath = DatasetAid.generateOutputFilePath(Paths.get(""), "vector", fileTag, appendFileDate, GadgetAid.getTemporaryString(), ".lst");
 
         // construct zero-vector
         int size = Integer.parseInt(cmdLine.getOptionValue("s"));
@@ -113,8 +119,6 @@ public class VectorFile {
         }
 
         // output
-        Path outputPath = cmdLine.hasOption("o") ? Paths.get(cmdLine.getOptionValue("o"))
-                : Paths.get("vector" + GadgetAid.getTemporaryString() + ".lst");
         write(vector, outputPath);
     }
 

@@ -12,6 +12,7 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
 import io.github.kensuke1984.kibrary.Summon;
+import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 
 /**
@@ -48,8 +49,10 @@ public class TimewindowSubtract {
         options.addOption(Option.builder("b").longOpt("subtract").hasArg().argName("subtractTimewindowFile").required()
                 .desc("The timewindow file to be subtracted").build());
         // output
-        options.addOption(Option.builder("o").longOpt("output").hasArg().argName("outputFile")
-                .desc("Set path of output file").build());
+        options.addOption(Option.builder("T").longOpt("tag").hasArg().argName("fileTag")
+                .desc("A tag to include in output file name.").build());
+        options.addOption(Option.builder("O").longOpt("omitDate")
+                .desc("Whether to omit date string in output file name.").build());
         return options;
     }
 
@@ -61,9 +64,9 @@ public class TimewindowSubtract {
     public static void run(CommandLine cmdLine) throws IOException {
         Path originalPath = Paths.get(cmdLine.getOptionValue("a"));
         Path subtractPath = Paths.get(cmdLine.getOptionValue("b"));
-
-        Path outputPath = cmdLine.hasOption("o") ? Paths.get(cmdLine.getOptionValue("o"))
-                : Paths.get("timewindow" + GadgetAid.getTemporaryString() + ".dat");
+        String fileTag = cmdLine.hasOption("T") ? cmdLine.getOptionValue("T") : null;
+        boolean appendFileDate = !cmdLine.hasOption("O");
+        Path outputPath = DatasetAid.generateOutputFilePath(Paths.get(""), "timewindow", fileTag, appendFileDate, GadgetAid.getTemporaryString(), ".dat");
 
         Set<TimewindowData> originalWindows = TimewindowDataFile.read(originalPath);
         Set<TimewindowData> subtractWindows = TimewindowDataFile.read(subtractPath);

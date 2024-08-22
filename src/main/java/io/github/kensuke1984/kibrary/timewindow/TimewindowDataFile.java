@@ -83,8 +83,7 @@ public final class TimewindowDataFile {
     private TimewindowDataFile() {}
 
     /**
-     * bytes for one time window information
-     * @author anselme increased the byte size of a time window to add phase information
+     * Number of bytes used for information of one time window.
      */
     public static final int ONE_WINDOW_BYTE = 33;
 
@@ -300,7 +299,7 @@ public final class TimewindowDataFile {
         options.addOption(Option.builder("n").longOpt("number")
                 .desc("Just count number without creating output files").build());
         options.addOption(Option.builder("o").longOpt("output").hasArg().argName("outputFile")
-                .desc("Specify path of output file.").build());
+                .desc("Specify path of output file. When not set, output is same as input with extension changed to '.txt'.").build());
         return options;
     }
 

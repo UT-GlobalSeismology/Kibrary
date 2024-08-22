@@ -44,7 +44,7 @@ public class DataKitchen extends Operation {
 
     private final Property property;
     /**
-     * Path of the work folder
+     * Path of the work folder.
      */
     private Path workPath;
     /**
@@ -52,12 +52,16 @@ public class DataKitchen extends Operation {
      */
     private String folderTag;
     /**
-     * Path of the output folder
+     * Whether to append date string at end of output folder name.
+     */
+    private boolean appendFolderDate;
+    /**
+     * Path of the output folder.
      */
     private Path outPath;
 
     /**
-     * which catalog to use 0:CMT 1: PDE
+     * Which catalog to use. {0: CMT, 1: PDE}
      */
     private int catalog;
     private double samplingHz;
@@ -67,15 +71,15 @@ public class DataKitchen extends Operation {
     private CircularRange longitudeRange;
 
     /**
-     * threshold to judge which stations are in the same position [deg]
+     * Threshold to judge which stations are in the same position [deg].
      */
     private double coordinateGrid;
     /**
-     * The maximum length of output time series
+     * The maximum length of output time series.
      */
     private double maxTlen;
     /**
-     * if remove intermediate file
+     * Whether to remove intermediate files.
      */
     private boolean removeIntermediateFile;
 
@@ -98,6 +102,8 @@ public class DataKitchen extends Operation {
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this unset.");
             pw.println("#folderTag ");
+            pw.println("##(boolean) Whether to append date string at end of output folder name. (true)");
+            pw.println("#appendFolderDate false");
             pw.println("##The name of catalog to use from {cmt, pde}. (cmt)");
             pw.println("#catalog  CANT CHANGE NOW"); // TODO
             pw.println("##(double) Sampling frequency [Hz]. can not be changed now. (20)");
@@ -135,6 +141,7 @@ public class DataKitchen extends Operation {
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
         if (property.containsKey("folderTag")) folderTag = property.parseStringSingle("folderTag", null);
+        appendFolderDate = property.parseBoolean("appendFolderDate", "true");
 
         switch (property.parseString("catalog", "cmt")) { // TODO
             case "cmt":
@@ -177,7 +184,7 @@ public class DataKitchen extends Operation {
             return;
         }
 
-        outPath = DatasetAid.createOutputFolder(workPath, "processed", folderTag, GadgetAid.getTemporaryString());
+        outPath = DatasetAid.createOutputFolder(workPath, "processed", folderTag, appendFolderDate, GadgetAid.getTemporaryString());
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         // create processors for each event

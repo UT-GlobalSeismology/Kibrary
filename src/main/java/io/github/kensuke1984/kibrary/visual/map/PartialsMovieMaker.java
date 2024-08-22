@@ -40,17 +40,17 @@ import io.github.kensuke1984.kibrary.waveform.PartialIDFile;
 public class PartialsMovieMaker extends Operation {
 
     /**
-     * How much finer to make the grid
+     * How much finer to make the grid.
      */
     public static final int GRID_SMOOTHING_FACTOR = 5;
     /**
-     * Size of vertical grid with respect to horizontal grid
+     * Size of vertical grid with respect to horizontal grid.
      */
     public static final int VERTICAL_ENLARGE_FACTOR = 2;
 
     private final Property property;
     /**
-     * Path of the work folder
+     * Path of the work folder.
      */
     private Path workPath;
     /**
@@ -58,11 +58,15 @@ public class PartialsMovieMaker extends Operation {
      */
     private String folderTag;
     /**
-     * components to make maps for
+     * Whether to append date string at end of output folder name.
+     */
+    private boolean appendFolderDate;
+    /**
+     * Components to use.
      */
     private Set<SACComponent> components;
     /**
-     * variable types to make maps for
+     * Variable types to use.
      */
     private Set<VariableType> variableTypes;
     /**
@@ -75,7 +79,7 @@ public class PartialsMovieMaker extends Operation {
     private Set<String> tendObservers = new HashSet<>();
 
     /**
-     * partial waveform folder
+     * Partial waveform folder.
      */
     private Path partialPath;
 
@@ -132,7 +136,7 @@ public class PartialsMovieMaker extends Operation {
 
     private double scale;
     /**
-     * Whether to display map as mosaic without smoothing
+     * Whether to display map as mosaic without smoothing.
      */
     private boolean mosaic;
 
@@ -155,6 +159,8 @@ public class PartialsMovieMaker extends Operation {
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this unset.");
             pw.println("#folderTag ");
+            pw.println("##(boolean) Whether to append date string at end of output folder name. (true)");
+            pw.println("#appendFolderDate false");
             pw.println("##SacComponents to be used, listed using spaces. (Z R T)");
             pw.println("#components ");
             pw.println("##Path of a partial waveform folder, must be set.");
@@ -215,6 +221,7 @@ public class PartialsMovieMaker extends Operation {
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
         if (property.containsKey("folderTag")) folderTag = property.parseStringSingle("folderTag", null);
+        appendFolderDate = property.parseBoolean("appendFolderDate", "true");
         components = Arrays.stream(property.parseStringArray("components", "Z R T"))
                 .map(SACComponent::valueOf).collect(Collectors.toSet());
 
@@ -281,7 +288,7 @@ public class PartialsMovieMaker extends Operation {
         Set<FullPosition> discretePositions = partialIDs.stream().map(partialID -> partialID.getVoxelPosition()).collect(Collectors.toSet());
 
         // create output folder
-        Path outPath = DatasetAid.createOutputFolder(workPath, "movie", folderTag, GadgetAid.getTemporaryString());
+        Path outPath = DatasetAid.createOutputFolder(workPath, "movie", folderTag, appendFolderDate, GadgetAid.getTemporaryString());
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         for (SACComponent component : components) {

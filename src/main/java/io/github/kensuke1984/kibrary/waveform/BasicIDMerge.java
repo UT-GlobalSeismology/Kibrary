@@ -33,17 +33,21 @@ public class BasicIDMerge extends Operation {
 
     private final Property property;
     /**
-     * Path of the work folder
+     * Path of the work folder.
      */
     private Path workPath;
     /**
-     * The first part of the name of output basic folder
+     * The first part of the name of output basic folder.
      */
     private String nameRoot;
     /**
      * A tag to include in output folder name. When this is empty, no tag is used.
      */
     private String folderTag;
+    /**
+     * Whether to append date string at end of output folder name.
+     */
+    private boolean appendFolderDate;
 
     private List<Path> basicPaths = new ArrayList<>();
 
@@ -69,6 +73,8 @@ public class BasicIDMerge extends Operation {
             pw.println("#nameRoot ");
             pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this unset.");
             pw.println("#folderTag ");
+            pw.println("##(boolean) Whether to append date string at end of output folder name. (true)");
+            pw.println("#appendFolderDate false");
             pw.println("##########From here on, list up paths of basic waveform folders to merge.");
             pw.println("########## Up to " + MAX_INPUT + " folders can be managed. Any entry may be left unset.");
             for (int i = 1; i <= MAX_INPUT; i++) {
@@ -88,6 +94,7 @@ public class BasicIDMerge extends Operation {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
         nameRoot = property.parseStringSingle("nameRoot", "actual");
         if (property.containsKey("folderTag")) folderTag = property.parseStringSingle("folderTag", null);
+        appendFolderDate = property.parseBoolean("appendFolderDate", "true");
 
         for (int i = 1; i <= MAX_INPUT; i++) {
             String basicKey = "basicPath" + i;
@@ -123,7 +130,7 @@ public class BasicIDMerge extends Operation {
             eventSet.add(id.getGlobalCMTID());
         });
 
-        Path outPath = DatasetAid.createOutputFolder(workPath, nameRoot, folderTag, GadgetAid.getTemporaryString());
+        Path outPath = DatasetAid.createOutputFolder(workPath, nameRoot, folderTag, appendFolderDate, GadgetAid.getTemporaryString());
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         // output merged files

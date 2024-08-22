@@ -34,11 +34,11 @@ import io.github.kensuke1984.kibrary.util.MathAid;
 public class LayerInformationFile {
 
     /**
-     * thickness of each layer
+     * Thickness of each layer.
      */
     private final double[] layerThicknesses;
     /**
-     * Radii of layer center points, sorted, no duplication
+     * Radii of layer center points, sorted, no duplication.
      */
     private final double[] layerRadii;
 
@@ -172,8 +172,10 @@ public class LayerInformationFile {
                 .desc("(double) Radius spacing [km]; (0:).").build());
 
         // output
-        options.addOption(Option.builder("t").longOpt("tag").hasArg().argName("tag")
+        options.addOption(Option.builder("T").longOpt("tag").hasArg().argName("fileTag")
                 .desc("A tag to include in output file name.").build());
+        options.addOption(Option.builder("O").longOpt("omitDate")
+                .desc("Whether to omit date string in output file name.").build());
 
         return options;
     }
@@ -184,8 +186,12 @@ public class LayerInformationFile {
      * @throws IOException
      */
     public static void run(CommandLine cmdLine) throws IOException {
-        LayerInformationFile layerFile;
+        String fileTag = cmdLine.hasOption("T") ? cmdLine.getOptionValue("T") : null;
+        boolean appendFileDate = !cmdLine.hasOption("O");
+        Path outputPath = DatasetAid.generateOutputFilePath(Paths.get(""), "layer", fileTag, appendFileDate, GadgetAid.getTemporaryString(), ".inf");
 
+        // create layer information
+        LayerInformationFile layerFile;
         if (cmdLine.hasOption("r")) {
             double[] borderRadii = Arrays.stream(cmdLine.getOptionValue("r").split(",")).mapToDouble(Double::parseDouble)
                     .sorted().toArray();
@@ -204,10 +210,7 @@ public class LayerInformationFile {
             throw new IllegalArgumentException("Either '-r' or '-l & -u & -d' must be set.");
         }
 
-        String tag = cmdLine.hasOption("t") ? cmdLine.getOptionValue("t") : null;
-
-        Path outputPath = Paths.get(DatasetAid.generateOutputFileName("layer", tag, GadgetAid.getTemporaryString(), ".inf"));
-        System.err.println("Outputting in "+ outputPath);
+        // output
         layerFile.write(outputPath);
     }
 

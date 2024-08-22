@@ -33,7 +33,7 @@ public class VirtualDatasetMaker extends Operation {
 
     private final Property property;
     /**
-     * Path of the work folder
+     * Path of the work folder.
      */
     private Path workPath;
     /**
@@ -41,7 +41,11 @@ public class VirtualDatasetMaker extends Operation {
      */
     private String fileTag;
     /**
-     * components to be used
+     * Whether to append date string at end of output file names.
+     */
+    private boolean appendFileDate;
+    /**
+     * Components to use.
      */
     private Set<SACComponent> components;
 
@@ -66,6 +70,8 @@ public class VirtualDatasetMaker extends Operation {
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output file names. If no tag is needed, leave this unset.");
             pw.println("#fileTag ");
+            pw.println("##(boolean) Whether to append date string at end of output file names. (true)");
+            pw.println("#appendFileDate false");
             pw.println("##SacComponents to be used, listed using spaces. (Z R T)");
             pw.println("#components ");
             pw.println("##GlobalCMTIDs of events to work for, listed using spaces. (000000A)");
@@ -95,6 +101,7 @@ public class VirtualDatasetMaker extends Operation {
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
         if (property.containsKey("fileTag")) fileTag = property.parseStringSingle("fileTag", null);
+        appendFileDate = property.parseBoolean("appendFileDate", "true");
         components = Arrays.stream(property.parseStringArray("components", "Z R T"))
                 .map(SACComponent::valueOf).collect(Collectors.toSet());
 
@@ -147,7 +154,7 @@ public class VirtualDatasetMaker extends Operation {
         }
 
         // output
-        Path outputPath = workPath.resolve(DatasetAid.generateOutputFileName("dataEntry", fileTag, GadgetAid.getTemporaryString(), ".lst"));
+        Path outputPath = DatasetAid.generateOutputFilePath(workPath, "dataEntry", fileTag, appendFileDate, GadgetAid.getTemporaryString(), ".lst");
         DataEntryListFile.writeFromSet(entrySet, outputPath);
     }
 

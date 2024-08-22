@@ -42,41 +42,45 @@ public class ModelSetMapper extends Operation {
 
     private final Property property;
     /**
-     * Path of the work folder
+     * Path of the work folder.
      */
     private Path workPath;
     /**
      * A tag to include in output folder name. When this is empty, no tag is used.
      */
     private String folderTag;
+    /**
+     * Whether to append date string at end of output folder name.
+     */
+    private boolean appendFolderDate;
 
     /**
-     * The root folder containing results of inversion
+     * The root folder containing results of inversion.
      */
     private Path resultPath;
     /**
-     * file of 1D structure used in inversion
+     * File of 1D structure used in inversion.
      */
     private Path initialStructurePath;
     /**
-     * name of 1D structure used in inversion
+     * Name of 1D structure used in inversion.
      */
     private String initialStructureName;
     /**
-     * file of 1D structure to map perturbations against
+     * File of 1D structure to map perturbations against.
      */
     private Path referenceStructurePath;
     /**
-     * name of 1D structure to map perturbations against
+     * Name of 1D structure to map perturbations against.
      */
     private String referenceStructureName;
     /**
-     * Path of a {@link FusionInformationFile}
+     * Path of a {@link FusionInformationFile}.
      */
     private Path fusionPath;
     private Set<VariableType> variableTypes;
     /**
-     * Solvers for equation
+     * Solvers for equation.
      */
     private Set<InverseMethodEnum> inverseMethods;
     private int maxNum;
@@ -96,7 +100,7 @@ public class ModelSetMapper extends Operation {
     private boolean setMarginLongitudeByKm;
     private double scale;
     /**
-     * Whether to display map as mosaic without smoothing
+     * Whether to display map as mosaic without smoothing.
      */
     private boolean mosaic;
 
@@ -119,6 +123,8 @@ public class ModelSetMapper extends Operation {
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this blank.");
             pw.println("#folderTag ");
+            pw.println("##(boolean) Whether to append date string at end of output folder name. (true)");
+            pw.println("#appendFolderDate false");
             pw.println("##Path of a root folder containing results of inversion. (.)");
             pw.println("#resultPath ");
             pw.println("##Path of an initial structure file used in inversion. If this is unset, the following initialStructureName will be referenced.");
@@ -172,6 +178,7 @@ public class ModelSetMapper extends Operation {
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
         if (property.containsKey("folderTag")) folderTag = property.parseStringSingle("folderTag", null);
+        appendFolderDate = property.parseBoolean("appendFolderDate", "true");
 
         resultPath = property.parsePath("resultPath", ".", true, workPath);
         if (property.containsKey("initialStructurePath")) {
@@ -247,7 +254,7 @@ public class ModelSetMapper extends Operation {
         double gridInterval = PerturbationMapShellscript.decideGridSampling(positions);
 
         // create output folder
-        Path outPath = DatasetAid.createOutputFolder(workPath, "modelMaps", folderTag, GadgetAid.getTemporaryString());
+        Path outPath = DatasetAid.createOutputFolder(workPath, "modelMaps", folderTag, appendFolderDate, GadgetAid.getTemporaryString());
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         // write list files

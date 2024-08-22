@@ -18,13 +18,13 @@ import org.apache.commons.math3.util.Precision;
 
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
+import io.github.kensuke1984.kibrary.elastic.VariableType;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
-import io.github.kensuke1984.kibrary.util.spc.PartialType;
 import io.github.kensuke1984.kibrary.waveform.PartialID;
 import io.github.kensuke1984.kibrary.waveform.PartialIDFile;
 
@@ -39,21 +39,25 @@ public class CatalogueErrorCalculator extends Operation {
 
     private final Property property;
     /**
-     * Path of the work folder
+     * Path of the work folder.
      */
     private Path workPath;
     /**
      * A tag to include in output folder name. When this is empty, no tag is used.
      */
-    private String tag;
+    private String folderTag;
     /**
-     * components to make maps for
+     * Whether to append date string at end of output folder name.
+     */
+    private boolean appendFolderDate;
+    /**
+     * Components to use.
      */
     private Set<SACComponent> components;
     /**
-     * partial types to make maps for
+     * Variable types to use.
      */
-    private Set<PartialType> partialTypes;
+    private Set<VariableType> variableTypes;
     /**
      * Events to work for. If this is empty, work for all events in workPath.
      */
@@ -69,24 +73,16 @@ public class CatalogueErrorCalculator extends Operation {
     private double[] voxelPosition = new double[3];
 
     /**
-     * path of partial ID file without epicentral distance catalogue
-     */
-    private Path exactPartialIDPath;
-    /**
-     * path of partial data without epicentral distance catalogue
+     * Path of partial data without epicentral distance catalog.
      */
     private Path exactPartialPath;
 
     /**
-     * Theta range for the BP catalog
+     * Theta range for the BP catalog.
      */
     private List<String> dthetas = new ArrayList<>();
     /**
-     * path of catalogue partial ID file
-     */
-    private List<Path> catPartialIDPaths = new ArrayList<>();
-    /**
-     * path of catalogue partial data
+     * Path of catalog partial data.
      */
     private List<Path> catPartialPaths = new ArrayList<>();
 
@@ -102,36 +98,29 @@ public class CatalogueErrorCalculator extends Operation {
             pw.println("manhattan " + thisClass.getSimpleName());
             pw.println("##Path of a working directory. (.)");
             pw.println("#workPath ");
-            pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this blank.");
-            pw.println("#tag ");
+            pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this unset.");
+            pw.println("#folderTag ");
+            pw.println("##(boolean) Whether to append date string at end of output folder name. (true)");
+            pw.println("#appendFolderDate false");
             pw.println("##SacComponents to be used, listed using spaces. (Z R T)");
             pw.println("#components ");
-            pw.println("##PartialTypes to be used, listed using spaces. (MU)");
-            pw.println("#partialTypes ");
+            pw.println("##Variable types to be used, listed using spaces. (MU)");
+            pw.println("#variableTypes ");
             pw.println("##GlobalCMTIDs of events to work for, listed using spaces. To use all events, leave this unset.");
             pw.println("#tendEvents ");
             pw.println("##Observers to work for, in the form STA_NET, listed using spaces. To use all observers, leave this unset.");
             pw.println("#tendObservers ");
             pw.println("#Voxel to work for, in the form LAT LONG R, listed using spaces, must be set.");
             pw.println("#tendVoxelPosition ");
-            pw.println("##Path of an exact (without ericentral distance catalogue) partial ID file, must be set.");
-            pw.println("#exactPartialIDPath partialID.dat");
-            pw.println("##Path of an exact partial waveform file, must be set.");
-            pw.println("#exactPartialPath partial.dat");
-            pw.println("##########From here on, list up sets of theta range for the BP catalogthe, paths of a catalogue partial ID file, a catalogue partial waveform file.");
+            pw.println("##Path of an exact (without epicentral distance catalog) partial waveform folder, must be set.");
+            pw.println("#exactPartialPath partial");
+            pw.println("##########From here on, list up sets of theta range for the BP catalog and paths of catalog partial waveform folders.");
             pw.println("########## Up to " + MAX_PAIR + " pairs can be managed. Any pair may be left blank.");
             for (int i = 1; i <= MAX_PAIR; i++) {
                 pw.println("##" + MathAid.ordinalNumber(i) + " set.");
                  pw.println("#dtheta" + i + " ");
-                 pw.println("#catPartialIDPath" + i + " partialID" + i + ".dat");
-                 pw.println("#catPartialPath" + i + " partial" + i + ".dat");
+                 pw.println("#catPartialPath" + i + " partial");
             }
-            pw.println("##Theta range for the BP catalog. (0.01)");
-            pw.println("#dtheta ");
-            pw.println("##Path of a catalogue partial ID file, must be set.");
-            pw.println("#catPartialIDPath partialID.dat");
-            pw.println("##Path of a catalogue partial waveform file, must be set.");
-            pw.println("#catPartialPath partial.dat");
         }
         System.err.println(outPath + " is created.");
     }
@@ -143,11 +132,12 @@ public class CatalogueErrorCalculator extends Operation {
     @Override
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
-        if (property.containsKey("tag")) tag = property.parseStringSingle("tag", null);
+        if (property.containsKey("folderTag")) folderTag = property.parseStringSingle("folderTag", null);
+        appendFolderDate = property.parseBoolean("appendFolderDate", "true");
         components = Arrays.stream(property.parseStringArray("components", "Z R T"))
                 .map(SACComponent::valueOf).collect(Collectors.toSet());
-        partialTypes = Arrays.stream(property.parseStringArray("partialTypes", "MU"))
-                .map(PartialType::valueOf).collect(Collectors.toSet());
+        variableTypes = Arrays.stream(property.parseStringArray("variableTypes", "MU")).map(VariableType::valueOf)
+                .collect(Collectors.toSet());
 
         tendEvents = Arrays.stream(property.parseStringArray("tendEvents", null)).map(GlobalCMTID::new)
                     .collect(Collectors.toSet());
@@ -155,32 +145,29 @@ public class CatalogueErrorCalculator extends Operation {
 
         voxelPosition = property.parseDoubleArray("tendVoxelPosition", null);
 
-        exactPartialIDPath = property.parsePath("exactPartialIDPath", null, true, workPath);
         exactPartialPath = property.parsePath("exactPartialPath", null, true, workPath);
 
         for (int i = 1; i <= MAX_PAIR; i++) {
             String dthetaKey = "dtheta" + i;
-            String partialIDKey = "catPartialIDPath" + i;
             String partialKey = "catPartialPath" + i;
-            if (!property.containsKey(partialIDKey) && !property.containsKey(partialKey) && !property.containsKey(dthetaKey)) {
+            if (!property.containsKey(partialKey) && !property.containsKey(dthetaKey)) {
                 continue;
-            } else if (!property.containsKey(partialIDKey) || !property.containsKey(partialKey) || !property.containsKey(dthetaKey)) {
-                throw new IllegalArgumentException("Theta range, catalogue partial ID file and catalogue partial waveform file must be set in sets.");
+            } else if (!property.containsKey(partialKey) || !property.containsKey(dthetaKey)) {
+                throw new IllegalArgumentException("Theta range and catalog partial waveform folder must be set in pairs.");
             }
             dthetas.add(property.parseString(dthetaKey, null));
-            catPartialIDPaths.add(property.parsePath(partialIDKey, null, true, workPath));
             catPartialPaths.add(property.parsePath(partialKey, null, true, workPath));
         }
     }
 
     @Override
     public void run() throws IOException {
-        Path outPath = DatasetAid.createOutputFolder(workPath, "relativeError", tag, GadgetAid.getTemporaryString());
+        Path outPath = DatasetAid.createOutputFolder(workPath, "relativeError", folderTag, appendFolderDate, GadgetAid.getTemporaryString());
 
         // check the number of catalogue partials
         int setNum = dthetas.size();
-        if (catPartialIDPaths.size() != setNum || catPartialPaths.size() != setNum) {
-            throw new IllegalStateException("The number of theta ranges, cat partial ID files and cat partial waveform files is different.");
+        if (catPartialPaths.size() != setNum) {
+            throw new IllegalStateException("The number of theta ranges and catalog partial waveform folders are different.");
         }
         if (setNum == 0) {
             System.err.println("No input files found.");
@@ -188,15 +175,15 @@ public class CatalogueErrorCalculator extends Operation {
         }
 
         // read partials
-        PartialID[] exactPartials = PartialIDFile.read(exactPartialIDPath, exactPartialPath);
-        List<PartialID[]> catPartials = new ArrayList<>();
+        List<PartialID> exactPartials = PartialIDFile.read(exactPartialPath, true);
+        List<List<PartialID>> catPartials = new ArrayList<>();
         for (int i = 0; i < setNum; i++) {
-            catPartials.add(PartialIDFile.read(catPartialIDPaths.get(i), catPartialPaths.get(i)));
+            catPartials.add(PartialIDFile.read(catPartialPaths.get(i), true));
         }
 
         for (PartialID exactPartial : exactPartials) {
             if (!components.contains(exactPartial.getSacComponent())) continue;
-            if (!partialTypes.contains(exactPartial.getPartialType())) continue;
+            if (!variableTypes.contains(exactPartial.getVariableType())) continue;
             if (!tendEvents.contains(exactPartial.getGlobalCMTID())) continue;
             if (!tendObservers.contains(exactPartial.getObserver().toString())) continue;
             if (!Precision.equals(voxelPosition[0], exactPartial.getVoxelPosition().getLatitude(), FullPosition.LATITUDE_EPSILON)) continue;
@@ -209,7 +196,7 @@ public class CatalogueErrorCalculator extends Operation {
             for (int i = 0; i < setNum; i++) {
                 for (PartialID catPartial : catPartials.get(i)) {
                     if (!components.contains(catPartial.getSacComponent())) continue;
-                    if (!partialTypes.contains(catPartial.getPartialType())) continue;
+                    if (!variableTypes.contains(catPartial.getVariableType())) continue;
                     if (!tendEvents.contains(catPartial.getGlobalCMTID())) continue;
                     if (!tendObservers.contains(catPartial.getObserver().toString())) continue;
                     if (exactPartial.getVoxelPosition().equals(catPartial.getVoxelPosition())) {
@@ -277,7 +264,7 @@ public class CatalogueErrorCalculator extends Operation {
         Files.createDirectories(observerPath);
 
         // make data file
-        Path filePath = observerPath.resolve("relativeError_" + exactPartial.getSacComponent() + "_" + exactPartial.getPartialType() + ".lst");
+        Path filePath = observerPath.resolve("relativeError_" + exactPartial.getSacComponent() + "_" + exactPartial.getVariableType() + ".lst");
         if (!Files.exists(filePath))
             Files.createFile(filePath);
         PrintWriter pw = new PrintWriter(new FileWriter(filePath.toString(), true));
@@ -286,7 +273,7 @@ public class CatalogueErrorCalculator extends Operation {
         pw.close();
 
         // make plot file
-        Path plotPath = observerPath.resolve("plot_" + exactPartial.getSacComponent() + "_" + exactPartial.getPartialType() + ".plt");
+        Path plotPath = observerPath.resolve("plot_" + exactPartial.getSacComponent() + "_" + exactPartial.getVariableType() + ".plt");
 //      GnuplotFile gnuplot = new GnuplotFile(observerPath.resolve("plot_" + fileNameRoot + ".plt"));
 //      gnuplot.setOutput("pdf", "relativeError_" + fileNameRoot + ".pdf", 21, 29.7, true);
 //      gnuplot.setXlabel("d{/Symbol q}");

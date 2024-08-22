@@ -45,7 +45,7 @@ public class LetMeInvert extends Operation {
 
     private final Property property;
     /**
-     * Path of the work folder
+     * Path of the work folder.
      */
     private Path workPath;
     /**
@@ -53,34 +53,38 @@ public class LetMeInvert extends Operation {
      */
     private String folderTag;
     /**
-     * Path of the output folder
+     * Whether to append date string at end of output folder name.
+     */
+    private boolean appendFolderDate;
+    /**
+     * Path of the output folder.
      */
     private Path outPath;
 
     /**
-     * basic waveform folder
+     * Basic waveform folder.
      */
     private Path basicPath;
     /**
-     * partial waveform folder
+     * Partial waveform folder.
      */
     private Path partialPath;
     /**
-     * unknown parameter file
+     * Unknown parameter file.
      */
     private Path unknownParameterPath;
 
     private Path weightingPropertiesPath;
     /**
-     * Solvers for equation
+     * Solvers for equation.
      */
     private Set<InverseMethodEnum> inverseMethods;
     /**
-    * α for AIC 独立データ数:n/α
-    */
+     * &alpha; for AIC. The number of independent data is n/&alpha;.
+     */
     private double[] alpha;
     /**
-     * Maximum number of basis vectors to evaluate variance and AIC
+     * Maximum number of basis vectors to evaluate variance and AIC.
      */
     private int evaluateNum;
     /**
@@ -112,6 +116,8 @@ public class LetMeInvert extends Operation {
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this unset.");
             pw.println("#folderTag ");
+            pw.println("##(boolean) Whether to append date string at end of output folder name. (true)");
+            pw.println("#appendFolderDate false");
             pw.println("##Path of a basic waveform folder, must be set.");
             pw.println("#basicPath actual");
             pw.println("##Path of a partial waveform folder, must be set.");
@@ -150,6 +156,7 @@ public class LetMeInvert extends Operation {
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
         if (property.containsKey("folderTag")) folderTag = property.parseStringSingle("folderTag", null);
+        appendFolderDate = property.parseBoolean("appendFolderDate", "true");
 
         basicPath = property.parsePath("basicPath", null, true, workPath);
         partialPath = property.parsePath("partialPath", null, true, workPath);
@@ -195,7 +202,7 @@ public class LetMeInvert extends Operation {
         System.err.println("Normalized variance of input waveforms is " + assembler.getNormalizedVariance());
 
         // prepare output folder
-        outPath = DatasetAid.createOutputFolder(workPath, "inversion", folderTag, GadgetAid.getTemporaryString());
+        outPath = DatasetAid.createOutputFolder(workPath, "inversion", folderTag, appendFolderDate, GadgetAid.getTemporaryString());
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         // output matrices

@@ -51,7 +51,7 @@ public class SyntheticDSMSetup extends Operation {
 
     private final Property property;
     /**
-     * Path of the work folder
+     * Path of the work folder.
      */
     private Path workPath;
     /**
@@ -59,39 +59,41 @@ public class SyntheticDSMSetup extends Operation {
      */
     private String folderTag;
     /**
-     * Information file name is header_[sh,psv].inf (default:PREM)
+     * Whether to append date string at end of output folder name.
+     */
+    private boolean appendFolderDate;
+    /**
+     * Name root of input file for DSM (header_[sh,psv].inf).
      */
     private String header;
     /**
-     * components to be used
+     * Components to use.
      */
     private Set<SACComponent> components;
 
     /**
-     * Path of a data entry list file
+     * Path of a data entry list file.
      */
     private Path dataEntryPath;
     /**
-     * The root folder containing event folders which have observed SAC files
+     * The root folder containing event folders which have observed SAC files.
      */
     private Path obsPath;
     /**
-     * Path of structure file to use instead of PREM
+     * Path of structure file to use instead of PREM.
      */
     private Path structurePath;
     /**
-     * Structure to use
+     * Structure to use.
      */
     private String structureName;
 
     /**
-     * Time length [s].
-     * It must be a power of 2 divided by 10. (2<sup>n</sup>/10)
+     * Time length [s], must be a power of 2 divided by 10. (2<sup>n</sup>/10)
      */
     private double tlen;
     /**
-     * Number of steps in frequency domain.
-     * It must be a power of 2.
+     * Number of steps in frequency domain, must be a power of 2.
      */
     private int np;
     /**
@@ -118,6 +120,8 @@ public class SyntheticDSMSetup extends Operation {
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this unset.");
             pw.println("#folderTag ");
+            pw.println("##(boolean) Whether to append date string at end of output folder name. (true)");
+            pw.println("#appendFolderDate false");
             pw.println("##(String) Header for names of output files (as in header_[sh,psv].inf). (PREM)");
             pw.println("#header ");
             pw.println("##SacComponents to be used, listed using spaces. (Z R T)");
@@ -148,6 +152,7 @@ public class SyntheticDSMSetup extends Operation {
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
         if (property.containsKey("folderTag")) folderTag = property.parseStringSingle("folderTag", null);
+        appendFolderDate = property.parseBoolean("appendFolderDate", "true");
         header = property.parseStringSingle("header", "PREM");
         components = Arrays.stream(property.parseStringArray("components", "Z R T"))
                 .map(SACComponent::valueOf).collect(Collectors.toSet());
@@ -179,7 +184,7 @@ public class SyntheticDSMSetup extends Operation {
         // set structure
         PolynomialStructure structure = PolynomialStructure.setupFromFileOrName(structurePath, structureName);
 
-        Path outPath = DatasetAid.createOutputFolder(workPath, "synthetic", folderTag, dateStr);
+        Path outPath = DatasetAid.createOutputFolder(workPath, "synthetic", folderTag, appendFolderDate, dateStr);
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         // output information files in each event folder
@@ -217,8 +222,8 @@ public class SyntheticDSMSetup extends Operation {
         String listFileName = "sourceList.txt";
         Files.write(outPath.resolve(listFileName), sourceTreeSet);
         DSMShellscript shell = new DSMShellscript(mpi, arcMap.size(), header);
-        Path outSHPath = outPath.resolve(DatasetAid.generateOutputFileName("runDSM_SH", null, dateStr, ".sh"));
-        Path outPSVPath = outPath.resolve(DatasetAid.generateOutputFileName("runDSM_PSV", null, dateStr, ".sh"));
+        Path outSHPath = DatasetAid.generateOutputFilePath(outPath, "runDSM_SH", null, false, dateStr, ".sh");
+        Path outPSVPath = DatasetAid.generateOutputFilePath(outPath, "runDSM_PSV", null, false, dateStr, ".sh");
         shell.write(DSMShellscript.DSMType.SYNTHETIC, SPCMode.SH, listFileName, outSHPath);
         shell.write(DSMShellscript.DSMType.SYNTHETIC, SPCMode.PSV, listFileName, outPSVPath);
         System.err.println("After this finishes, please enter " + outPath + "/ and run "

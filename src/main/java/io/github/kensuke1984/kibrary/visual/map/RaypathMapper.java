@@ -61,11 +61,11 @@ public class RaypathMapper extends Operation {
 
     private final Property property;
     /**
-     * Path of the work folder
+     * Path of the work folder.
      */
     private Path workPath;
     /**
-     * Path of an output foler to reuse, if reusing any
+     * Path of an output foler to reuse, if reusing any.
      */
     private Path reusePath;
     /**
@@ -73,15 +73,23 @@ public class RaypathMapper extends Operation {
      */
     private String folderTag;
     /**
+     * Whether to append date string at end of output folder name.
+     */
+    private boolean appendFolderDate;
+    /**
      * A tag to include in output file names. When this is empty, no tag is used.
      */
     private String fileTag;
     /**
-     * components for path
+     * Whether to append date string at end of output file names.
+     */
+    private boolean appendFileDate;
+    /**
+     * Components to use.
      */
     private Set<SACComponent> components;
     /**
-     * Path of the output folder
+     * Path of the output folder.
      */
     private Path outPath;
 
@@ -117,8 +125,7 @@ public class RaypathMapper extends Operation {
     private String outsideFileName;
     private String turningPointFileName;
     private String pixelFileName;
-    private String gmtFileName;
-    private String psFileName;
+    private Path gmtPath;
 
     /**
      * @param args  none to create a property file <br>
@@ -142,6 +149,8 @@ public class RaypathMapper extends Operation {
             pw.println("##########The following is valid when reusePath is not set.");
             pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this unset.");
             pw.println("#folderTag ");
+            pw.println("##(boolean) Whether to append date string at end of output folder name. (true)");
+            pw.println("#appendFolderDate false");
             pw.println("##SacComponents of data to be used, listed using spaces. (Z R T)");
             pw.println("#components ");
             pw.println("##Path of a data entry file, must be set if reusePath is not set.");
@@ -152,6 +161,8 @@ public class RaypathMapper extends Operation {
             pw.println("##########Overall settings");
             pw.println("##(String) A tag to include in output file names. If no tag is needed, leave this unset.");
             pw.println("#fileTag ");
+            pw.println("##(boolean) Whether to append date string at end of output file names. (true)");
+            pw.println("#appendFileDate false");
             pw.println("##(boolean) Whether to enlarge labels in the figure to use for slides. (true)");
             pw.println("#forSlides ");
             pw.println("##(boolean) Whether to cut raypaths at piercing points. (true)");
@@ -193,6 +204,7 @@ public class RaypathMapper extends Operation {
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
         if (property.containsKey("folderTag")) folderTag = property.parseStringSingle("folderTag", null);
+        appendFolderDate = property.parseBoolean("appendFolderDate", "true");
         components = Arrays.stream(property.parseStringArray("components", "Z R T"))
                 .map(SACComponent::valueOf).collect(Collectors.toSet());
 
@@ -208,6 +220,7 @@ public class RaypathMapper extends Operation {
             voxelPath = property.parsePath("voxelPath", null, true, workPath);
         }
         if (property.containsKey("fileTag")) fileTag = property.parseStringSingle("fileTag", null);
+        appendFileDate = property.parseBoolean("appendFileDate", "true");
 
         forSlides = property.parseBoolean("forSlides", "true");
         cutAtPiercePoint = property.parseBoolean("cutAtPiercePoint", "true");
@@ -244,8 +257,6 @@ public class RaypathMapper extends Operation {
         outsideFileName = "raypathOutside.lst";
         turningPointFileName = "turningPoint.lst";
         pixelFileName = "pixel.lst";
-        gmtFileName = DatasetAid.generateOutputFileName("raypathMap", fileTag, dateStr, ".sh");
-        psFileName = DatasetAid.generateOutputFileName("raypathMap", fileTag, dateStr, ".eps");
     }
 
     @Override
@@ -269,8 +280,9 @@ public class RaypathMapper extends Operation {
         if (colorBinPath != null) colorBin = new ColorBinInformationFile(colorBinPath);
         if (outsideColorBinPath != null) outsideColorBin = new ColorBinInformationFile(outsideColorBinPath);
 
+        gmtPath = DatasetAid.generateOutputFilePath(outPath, "raypathMap", fileTag, appendFileDate, dateStr, ".sh");
         outputGMT();
-        System.err.println("After this finishes, please run " + outPath.resolve(gmtFileName));
+        System.err.println("After this finishes, please run " + gmtPath);
     }
 
     private void checkReusePath() {
@@ -300,7 +312,7 @@ public class RaypathMapper extends Operation {
         Set<GlobalCMTID> events = validEntrySet.stream().map(entry -> entry.getEvent()).collect(Collectors.toSet());
         Set<Observer> observers = validEntrySet.stream().map(entry -> entry.getObserver()).collect(Collectors.toSet());
 
-        outPath = DatasetAid.createOutputFolder(workPath, "raypathMap", folderTag, dateStr);
+        outPath = DatasetAid.createOutputFolder(workPath, "raypathMap", folderTag, appendFolderDate, dateStr);
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         EventListFile.write(events, outPath.resolve(eventFileName));
@@ -387,7 +399,6 @@ public class RaypathMapper extends Operation {
     }
 
     private void outputGMT() throws IOException {
-        Path gmtPath = outPath.resolve(gmtFileName);
         String fontSize = forSlides ? "25p" : "15p";
         String legendWidth = forSlides ? "6c" : "4.5cm";
         String rayTransparencyOption = (rayTransparency > 0) ? (" -t" + rayTransparency) : "";
@@ -395,7 +406,7 @@ public class RaypathMapper extends Operation {
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(gmtPath))) {
             pw.println("#!/bin/sh");
             pw.println("");
-            pw.println("outputps=\"" + psFileName + "\"");
+            pw.println("outputps=\"" + gmtPath.getFileName().toString().replace(".sh", ".eps") + "\"");
             pw.println("");
             pw.println("# GMT options");
             pw.println("gmt set COLOR_MODEL RGB");

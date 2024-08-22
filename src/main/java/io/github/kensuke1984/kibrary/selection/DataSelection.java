@@ -68,7 +68,7 @@ public class DataSelection extends Operation {
 
     private final Property property;
     /**
-     * Path of the work folder
+     * Path of the work folder.
      */
     private Path workPath;
     /**
@@ -76,28 +76,32 @@ public class DataSelection extends Operation {
      */
     private String fileTag;
     /**
-     * Path of the output information file
+     * Whether to append date string at end of output file names.
+     */
+    private boolean appendFileDate;
+    /**
+     * Path of the output information file.
      */
     private Path outputFeaturePath;
     /**
-     * Path of the output timewindow file
+     * Path of the output timewindow file.
      */
     private Path outputSelectedPath;
     /**
-     * components for computation
+     * Components to use.
      */
     private Set<SACComponent> components;
     /**
-     * sampling Hz [Hz] in sac files
+     * Sampling Hz [Hz] in sac files.
      */
     private double sacSamplingHz;
 
     /**
-     * the directory of observed data
+     * Folder containing observed data.
      */
     private Path obsPath;
     /**
-     * the directory of synthetic data
+     * Folder containing synthetic data.
      */
     private Path synPath;
     /**
@@ -105,7 +109,7 @@ public class DataSelection extends Operation {
      */
     private boolean convolved;
     /**
-     * Path of the input timewindow file
+     * Path of the input timewindow file.
      */
     private Path timewindowPath;
     private Path staticCorrectionPath;
@@ -158,6 +162,8 @@ public class DataSelection extends Operation {
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output file names. If no tag is needed, leave this unset.");
             pw.println("#fileTag ");
+            pw.println("##(boolean) Whether to append date string at end of output file names. (true)");
+            pw.println("#appendFileDate false");
             pw.println("##Sac components to be used, listed using spaces. (Z R T)");
             pw.println("#components ");
             pw.println("##(double) SAC sampling frequency [Hz]. (20)");
@@ -204,6 +210,7 @@ public class DataSelection extends Operation {
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
         if (property.containsKey("fileTag")) fileTag = property.parseStringSingle("fileTag", null);
+        appendFileDate = property.parseBoolean("appendFileDate", "true");
         components = Arrays.stream(property.parseStringArray("components", "Z R T"))
                 .map(SACComponent::valueOf).collect(Collectors.toSet());
         sacSamplingHz = 20; // TODO property.parseDouble("sacSamplingHz", "20");
@@ -235,8 +242,8 @@ public class DataSelection extends Operation {
         excludeSurfaceWave = property.parseBoolean("excludeSurfaceWave", "false");
 
         String dateStr = GadgetAid.getTemporaryString();
-        outputFeaturePath = workPath.resolve(DatasetAid.generateOutputFileName("dataFeature", fileTag, dateStr, ".lst"));
-        outputSelectedPath = workPath.resolve(DatasetAid.generateOutputFileName("selectedTimewindow", fileTag, dateStr, ".dat"));
+        outputFeaturePath = DatasetAid.generateOutputFilePath(workPath, "dataFeature", fileTag, appendFileDate, dateStr, ".lst");
+        outputSelectedPath = DatasetAid.generateOutputFilePath(workPath, "selectedTimewindow", fileTag, appendFileDate, dateStr, ".dat");
         dataFeatureSet = Collections.synchronizedSet(new HashSet<>());
         goodTimewindowSet = Collections.synchronizedSet(new HashSet<>());
     }

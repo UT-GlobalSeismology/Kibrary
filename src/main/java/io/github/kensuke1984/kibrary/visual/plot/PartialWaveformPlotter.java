@@ -43,7 +43,7 @@ import io.github.kensuke1984.kibrary.waveform.PartialIDFile;
 public class PartialWaveformPlotter extends Operation {
 
     /**
-     * Number of fields per page on output pdf file
+     * Number of fields per page on output pdf file.
      */
     private static final int NUM_PER_PAGE = 12;
     /**
@@ -53,7 +53,7 @@ public class PartialWaveformPlotter extends Operation {
 
     private final Property property;
     /**
-     * Path of the work folder
+     * Path of the work folder.
      */
     private Path workPath;
     /**
@@ -61,20 +61,24 @@ public class PartialWaveformPlotter extends Operation {
      */
     private String folderTag;
     /**
-     * components to be included in the dataset
+     * Whether to append date string at end of output folder name.
+     */
+    private boolean appendFolderDate;
+    /**
+     * Components to use.
      */
     private Set<SACComponent> components;
 
     /**
-     * partial waveform folder
+     * Partial waveform folder.
      */
     private Path partialPath;
     /**
-     * basic waveform folder
+     * Basic waveform folder.
      */
     private Path basicPath;
     /**
-     * Path of a travel time information file
+     * Path of a travel time information file.
      */
     private Path travelTimePath;
 
@@ -90,16 +94,16 @@ public class PartialWaveformPlotter extends Operation {
     private double[] tendVoxelLongitudes;
     private double[] tendVoxelRadii;
     /**
-     * The time length to plot
+     * The time length to plot.
      */
     private double timeLength;
     /**
-     * How much to scale down the residual waveform
+     * How much to scale down the residual waveform.
      */
     private double residualScale;
 
     /**
-     * Set of information of travel times
+     * Set of information of travel times.
      */
     private Set<TravelTimeInformation> travelTimeInfoSet;
     private List<BasicID> basicIDs;
@@ -124,6 +128,8 @@ public class PartialWaveformPlotter extends Operation {
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this unset.");
             pw.println("#folderTag ");
+            pw.println("##(boolean) Whether to append date string at end of output folder name. (true)");
+            pw.println("#appendFolderDate false");
             pw.println("##SacComponents to be used, listed using spaces. (Z R T)");
             pw.println("#components ");
             pw.println("##Path of a partial waveform folder, must be set.");
@@ -158,6 +164,7 @@ public class PartialWaveformPlotter extends Operation {
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
         if (property.containsKey("folderTag")) folderTag = property.parseStringSingle("folderTag", null);
+        appendFolderDate = property.parseBoolean("appendFolderDate", "true");
         components = Arrays.stream(property.parseStringArray("components", "Z R T"))
                 .map(SACComponent::valueOf).collect(Collectors.toSet());
 
@@ -199,7 +206,7 @@ public class PartialWaveformPlotter extends Operation {
        }
 
        // prepare output folder
-       Path outPath = DatasetAid.createOutputFolder(workPath, "partialPlot", folderTag, GadgetAid.getTemporaryString());
+       Path outPath = DatasetAid.createOutputFolder(workPath, "partialPlot", folderTag, appendFolderDate, GadgetAid.getTemporaryString());
        property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
        for (GlobalCMTID event : tendEvents) {

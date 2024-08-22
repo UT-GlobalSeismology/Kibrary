@@ -79,7 +79,7 @@ public class PartialWaveformAssembler1D extends Operation {
 
     private final Property property;
     /**
-     * Path of the work folder
+     * Path of the work folder.
      */
     private Path workPath;
     /**
@@ -87,11 +87,15 @@ public class PartialWaveformAssembler1D extends Operation {
      */
     private String folderTag;
     /**
-     * output directory Path
+     * Whether to append date string at end of output folder name.
+     */
+    private boolean appendFolderDate;
+    /**
+     * Path of the output folder.
      */
     private Path outPath;
     /**
-     * components to be used
+     * Components to use.
      */
     private Set<SACComponent> components;
     /**
@@ -104,15 +108,15 @@ public class PartialWaveformAssembler1D extends Operation {
     private double finalSamplingHz;
 
     /**
-     * Path of a timewindow information file
+     * Path of a timewindow file.
      */
     private Path timewindowPath;
     /**
-     * Path of a data entry list file
+     * Path of a data entry list file.
      */
     private Path dataEntryPath;
     /**
-     * set of variable types for computation
+     * Variable types for compute for.
      */
     private Set<VariableType> variableTypes;
     /**
@@ -122,41 +126,41 @@ public class PartialWaveformAssembler1D extends Operation {
     private Path shPath;
     private Path psvPath;
     /**
-     * The SPC modes that shall be used: SH, PSV, or BOTH
+     * The SPC modes that shall be used, from {SH, PSV, BOTH}.
      */
     private SpcFileAid.UsableSPCMode usableSPCMode;
     /**
-     * the name of a folder containing SPC files (e.g. PREM)（""）
+     * Name of folder containing SPC files (e.g. PREM).
      */
     private String modelName;
 
     /**
-     * source time function. 0: none, 1: boxcar, 2: triangle, 3: asymmetric triangle, 4: auto
+     * Source time function. {0: none, 1: boxcar, 2: triangle, 3: asymmetric triangle, 4: auto}
      */
     private SourceTimeFunctionType sourceTimeFunctionType;
     /**
-     * Folder containing user-defined source time functions
+     * Folder containing user-defined source time functions.
      */
     private Path userSourceTimeFunctionPath;
     /**
-     * Catalog containing source time function durations
+     * Catalog containing source time function durations.
      */
     private Path sourceTimeFunctionCatalogPath;
 
     /**
-     * time length (DSM parameter)
+     * Time length (DSM parameter).
      */
     private double tlen;
     /**
-     * step of frequency domain (DSM parameter)
+     * Number of steps in frequency domain (DSM parameter).
      */
     private int np;
     /**
-     * lower frequency of bandpass [Hz]
+     * Lower frequency of bandpass [Hz].
      */
     private double lowFreq;
     /**
-     * upper frequency of bandpass [Hz]
+     * Upper frequency of bandpass [Hz].
      */
     private double highFreq;
     /**
@@ -164,7 +168,7 @@ public class PartialWaveformAssembler1D extends Operation {
      */
     private int filterNp;
     /**
-     * Whether to apply causal filter. true: causal, false: zero-phase
+     * Whether to apply causal filter. {true: causal, false: zero-phase}
      */
     private boolean causal;
 
@@ -205,6 +209,8 @@ public class PartialWaveformAssembler1D extends Operation {
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this unset.");
             pw.println("#folderTag ");
+            pw.println("##(boolean) Whether to append date string at end of output folder name. (true)");
+            pw.println("#appendFolderDate false");
             pw.println("##SacComponents to be used. (Z R T)");
             pw.println("#components ");
             pw.println("##(double) SAC sampling frequency [Hz]. (20) can't be changed now");
@@ -259,6 +265,7 @@ public class PartialWaveformAssembler1D extends Operation {
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
         if (property.containsKey("folderTag")) folderTag = property.parseStringSingle("folderTag", null);
+        appendFolderDate = property.parseBoolean("appendFolderDate", "true");
         components = Arrays.stream(property.parseStringArray("components", "Z R T"))
                 .map(SACComponent::valueOf).collect(Collectors.toSet());
         partialSamplingHz = 20;  // TODO property.parseDouble("sacSamplingHz", "20");
@@ -335,7 +342,7 @@ public class PartialWaveformAssembler1D extends Operation {
         filter = designBandPassFilter();
 
         // create output folder
-        outPath = DatasetAid.createOutputFolder(workPath, "assembled", folderTag, GadgetAid.getTemporaryString());
+        outPath = DatasetAid.createOutputFolder(workPath, "assembled", folderTag, appendFolderDate, GadgetAid.getTemporaryString());
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         ExecutorService es = ThreadAid.createFixedThreadPool();

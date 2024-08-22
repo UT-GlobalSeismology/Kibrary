@@ -47,13 +47,17 @@ public class DataLobby extends Operation {
 
     private final Property property;
     /**
-     * Path for the work folder
+     * Path for the work folder.
      */
     private Path workPath;
     /**
      * A tag to include in output folder name. When this is empty, no tag is used.
      */
     private String folderTag;
+    /**
+     * Whether to append date string at end of output folder name.
+     */
+    private boolean appendFolderDate;
 
     private String datacenter;
     private String networks;
@@ -103,6 +107,8 @@ public class DataLobby extends Operation {
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this unset.");
             pw.println("#folderTag ");
+            pw.println("##(boolean) Whether to append date string at end of output folder name. (true)");
+            pw.println("#appendFolderDate false");
             pw.println("##Datacenter to send request, from {IRIS, ORFEUS}. (IRIS)");
             pw.println("#datacenter ");
             pw.println("##Network names for request, listed using commas, must be set.");
@@ -148,6 +154,7 @@ public class DataLobby extends Operation {
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
         if (property.containsKey("folderTag")) folderTag = property.parseStringSingle("folderTag", null);
+        appendFolderDate = property.parseBoolean("appendFolderDate", "true");
 
         datacenter = property.parseStringSingle("datacenter", "IRIS");
         networks = property.parseStringSingle("networks", null);
@@ -184,7 +191,7 @@ public class DataLobby extends Operation {
             return;
         }
 
-        Path outPath = DatasetAid.createOutputFolder(workPath, "dl", folderTag, GadgetAid.getTemporaryString());
+        Path outPath = DatasetAid.createOutputFolder(workPath, "dl", folderTag, appendFolderDate, GadgetAid.getTemporaryString());
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         final AtomicInteger n = new AtomicInteger();

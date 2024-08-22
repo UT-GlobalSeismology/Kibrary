@@ -39,7 +39,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 public class AzimuthHistogram {
 
     /**
-     * Creates histogram of azimuth based on a dataEntryFile.
+     * Creates histogram of azimuth based on a {@link DataEntryListFile}.
      * @param args Options.
      * @throws IOException if an I/O error occurs
      */
@@ -60,7 +60,7 @@ public class AzimuthHistogram {
         Options options = Summon.defaultOptions();
 
         // input
-        options.addOption(Option.builder("d").longOpt("dataEntryFile").hasArg().argName("dataEntryFile").required()
+        options.addOption(Option.builder("e").longOpt("dataEntryFile").hasArg().argName("dataEntryFile").required()
                 .desc("Path of data entry list file").build());
 
         // settings
@@ -75,7 +75,7 @@ public class AzimuthHistogram {
                 .desc("Minimum azimuth in histogram (0)").build());
         options.addOption(Option.builder("M").longOpt("maxAzimuth").hasArg().argName("maxAzimuth")
                 .desc("Maximum azimuth in histogram (180)").build());
-        options.addOption(Option.builder("e").longOpt("expand")
+        options.addOption(Option.builder("E").longOpt("expand")
                 .desc("Expand azimuth range to [0:360), not overlapping onto [0:180) range").build());
         // type of azimuth to use
         OptionGroup azimuthOption = new OptionGroup();
@@ -90,6 +90,10 @@ public class AzimuthHistogram {
         options.addOption(Option.builder("p").longOpt("phase").hasArg().argName("phase")
                 .desc("Name of phase to use to compute turning point (ScS)").build());
 
+        // output
+        options.addOption(Option.builder("T").longOpt("tag").hasArg().argName("fileTag")
+                .desc("A tag to include in output file name.").build());
+
         return options;
     }
 
@@ -103,7 +107,7 @@ public class AzimuthHistogram {
                 ? Arrays.stream(cmdLine.getOptionValue("c").split(",")).map(SACComponent::valueOf).collect(Collectors.toSet())
                 : SACComponent.componentSetOf("ZRT");
 
-        Path dataEntryPath = Paths.get(cmdLine.getOptionValue("d"));
+        Path dataEntryPath = Paths.get(cmdLine.getOptionValue("e"));
         Set<DataEntry> entrySet = DataEntryListFile.readAsSet(dataEntryPath).stream()
                 .filter(entry -> components.contains(entry.getComponent())).collect(Collectors.toSet());
 
@@ -111,7 +115,7 @@ public class AzimuthHistogram {
         double xtics = cmdLine.hasOption("x") ? Double.parseDouble(cmdLine.getOptionValue("x")) : 30;
         double minimum = cmdLine.hasOption("m") ? Double.parseDouble(cmdLine.getOptionValue("m")) : 0;
         double maximum = cmdLine.hasOption("M") ? Double.parseDouble(cmdLine.getOptionValue("M")) : 180;
-        boolean expand = cmdLine.hasOption("e");
+        boolean expand = cmdLine.hasOption("E");
         boolean useBackAzimuth = cmdLine.hasOption("b");
         boolean useTurningAzimuth = cmdLine.hasOption("t");
         String structureName = cmdLine.hasOption("s") ? cmdLine.getOptionValue("s") : "prem";
@@ -168,10 +172,11 @@ public class AzimuthHistogram {
             fileNameRoot = "azimuthHistogram";
             xlabel = "Azimuth";
         }
+        fileNameRoot = fileNameRoot + (cmdLine.hasOption("T") ? "_" + cmdLine.getOptionValue("T") : "");
+
         Path outPath = Paths.get("");
         writeHistogramData(outPath, fileNameRoot, interval, numberOfRecords);
         createScript(outPath, fileNameRoot, xlabel, interval, minimum, maximum, xtics);
-
     }
 
     private static void writeHistogramData(Path outPath, String fileNameRoot, double interval, int[] numberOfRecords) throws IOException {

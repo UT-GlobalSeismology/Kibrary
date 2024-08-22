@@ -33,33 +33,33 @@ public class InversionSolver extends Operation {
 
     private final Property property;
     /**
-     * Path of the work folder
+     * Path of the work folder.
      */
     private Path workPath;
 
     /**
-     * path of ata file
+     * Path of ata file.
      */
     private Path ataPath;
     /**
-     * path of atd data
+     * Path of atd data.
      */
     private Path atdPath;
     /**
-     * path of d vector info file
+     * Path of d vector info file.
      */
     private Path dInfoPath;
     /**
-     * Path of unknown parameter file
+     * Path of unknown parameter file.
      */
     private Path unknownParameterPath;
     /**
-     * Solvers for equation
+     * Solvers for equation.
      */
     private Set<InverseMethodEnum> inverseMethods;
     /**
-    * α for AIC 独立データ数:n/α
-    */
+     * &alpha; for AIC. The number of independent data is n/&alpha;.
+     */
     private double[] alpha;
     private int evaluateNum;
 

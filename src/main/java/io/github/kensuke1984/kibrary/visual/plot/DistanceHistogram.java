@@ -32,7 +32,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 public class DistanceHistogram {
 
     /**
-     * Creates histogram of epicentral distance based on a dataEntryFile.
+     * Creates histogram of epicentral distance based on a {@link DataEntryListFile}.
      * @param args Options.
      * @throws IOException if an I/O error occurs
      */
@@ -53,7 +53,7 @@ public class DistanceHistogram {
         Options options = Summon.defaultOptions();
 
         // input
-        options.addOption(Option.builder("d").longOpt("dataEntryFile").hasArg().argName("dataEntryFile").required()
+        options.addOption(Option.builder("e").longOpt("dataEntryFile").hasArg().argName("dataEntryFile").required()
                 .desc("Path of data entry list file").build());
 
         // settings
@@ -67,6 +67,10 @@ public class DistanceHistogram {
                 .desc("Minimum distance in histogram (0)").build());
         options.addOption(Option.builder("M").longOpt("maxDistance").hasArg().argName("maxDistance")
                 .desc("Maximum distance in histogram (180)").build());
+
+        // output
+        options.addOption(Option.builder("T").longOpt("tag").hasArg().argName("fileTag")
+                .desc("A tag to include in output file name.").build());
 
         return options;
     }
@@ -82,7 +86,7 @@ public class DistanceHistogram {
                 ? Arrays.stream(cmdLine.getOptionValue("c").split(",")).map(SACComponent::valueOf).collect(Collectors.toSet())
                 : SACComponent.componentSetOf("ZRT");
 
-        Path dataEntryPath = Paths.get(cmdLine.getOptionValue("d"));
+        Path dataEntryPath = Paths.get(cmdLine.getOptionValue("e"));
         Set<DataEntry> entrySet = DataEntryListFile.readAsSet(dataEntryPath).stream()
                 .filter(entry -> components.contains(entry.getComponent())).collect(Collectors.toSet());
 
@@ -101,7 +105,7 @@ public class DistanceHistogram {
         }
 
         // output
-        String fileNameRoot = "epicentralDistanceHistogram";
+        String fileNameRoot = "epicentralDistanceHistogram" + (cmdLine.hasOption("T") ? "_" + cmdLine.getOptionValue("T") : "");
         Path outPath = Paths.get("");
         writeHistogramData(outPath, fileNameRoot, interval, numberOfRecords);
         createScript(outPath, fileNameRoot, interval, minimum, maximum, xtics);

@@ -83,7 +83,7 @@ public class ActualWaveformCompiler extends Operation {
 
     private final Property property;
     /**
-     * Path of the work folder
+     * Path of the work folder.
      */
     private Path workPath;
     /**
@@ -91,11 +91,15 @@ public class ActualWaveformCompiler extends Operation {
      */
     private String folderTag;
     /**
-     * Path of the output folder
+     * Whether to append date string at end of output folder name.
+     */
+    private boolean appendFolderDate;
+    /**
+     * Path of the output folder.
      */
     private Path outPath;
     /**
-     * components to be included in the dataset
+     * Components to be included in the dataset.
      */
     private Set<SACComponent> components;
     /**
@@ -108,61 +112,60 @@ public class ActualWaveformCompiler extends Operation {
     private double finalSamplingHz;
 
     /**
-     * Path of a root folder containing observed dataset
+     * Path of a root folder containing observed dataset.
      */
     private Path obsPath;
     /**
-     * Path of a root folder containing synthetic dataset
+     * Path of a root folder containing synthetic dataset.
      */
     private Path synPath;
     /**
-     * if it is true, the dataset contains synthetic waveforms after
-     * convolution
+     * Whether the synthetic waveforms are convolved.
      */
     private boolean convolved;
     /**
-     * Path of a timewindow information file
+     * Path of a timewindow information file.
      */
     private Path timewindowPath;
     /**
-     * Path of a timewindow information file for a reference phase use to correct spectral amplitude
+     * Path of a timewindow information file for a reference phase use to correct spectral amplitude.
      */
     private Path timewindowRefPath;
     /**
-     * Whether to correct time
+     * Whether to correct time.
      */
     private boolean correctTime;
     /**
-     * How to correct amplitude ratio. 0: none, 1: each trace, 2: event average
+     * How to correct amplitude ratio. {0: none, 1: each trace, 2: event average}
      */
     private int amplitudeCorrectionType;
     /**
-     * Path of a data entry file
+     * Path of a data entry file.
      */
     private Path dataEntryPath;
     /**
-     * Path of a static correction file
+     * Path of a static correction file.
      */
     private Path staticCorrectionPath;
     /**
-     * [bool] time-shift data to correct for 3-D mantle
+     * Whether to time-shift data to correct for 3-D mantle.
      */
     private boolean correctMantle;
     /**
-     * Path of time shifts due to the 3-D mantle
+     * Path of time shifts due to the 3-D mantle.
      */
     private Path mantleCorrectionPath;
 
     /**
-     * low frequency cut-off for spectrum data
+     * Low frequency cut-off for spectrum data.
      */
     double lowFreq;
     /**
-     * high frequency cut-off for spectrum data
+     * High frequency cut-off for spectrum data.
      */
     double highFreq;
     /**
-     * [bool] add white noise to synthetics data (for synthetic tests)
+     * Whether to add white noise to synthetics data (for synthetic tests).
      */
     private boolean addNoise;
     private double noisePower;
@@ -173,7 +176,7 @@ public class ActualWaveformCompiler extends Operation {
     private Set<StaticCorrectionData> mantleCorrectionSet;
     private int finalFreqSamplingHz;
     /**
-     * event-averaged amplitude corrections, used if amplitudeCorrection is False
+     * Event-averaged amplitude corrections, used if amplitudeCorrection is false.
      */
     private Map<GlobalCMTID, Double> amplitudeCorrEventMap;
 
@@ -185,7 +188,7 @@ public class ActualWaveformCompiler extends Operation {
     private List<BasicID> spcImIDs = Collections.synchronizedList(new ArrayList<>());
 
     /**
-     * number of OUTPUT pairs. (excluding ignored traces)
+     * Number of OUTPUT pairs (excluding ignored traces).
      */
     private AtomicInteger numberOfPairs = new AtomicInteger();
 
@@ -208,6 +211,8 @@ public class ActualWaveformCompiler extends Operation {
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this unset.");
             pw.println("#folderTag ");
+            pw.println("##(boolean) Whether to append date string at end of output folder name. (true)");
+            pw.println("#appendFolderDate false");
             pw.println("##SacComponents to be used, listed using spaces. (Z R T)");
             pw.println("#components ");
             pw.println("##(double) SAC sampling frequency [Hz]. (20) can't be changed now");
@@ -256,6 +261,7 @@ public class ActualWaveformCompiler extends Operation {
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
         if (property.containsKey("folderTag")) folderTag = property.parseStringSingle("folderTag", null);
+        appendFolderDate = property.parseBoolean("appendFolderDate", "true");
         components = Arrays.stream(property.parseStringArray("components", "Z R T"))
                 .map(SACComponent::valueOf).collect(Collectors.toSet());
         sacSamplingHz = 20;  // TODO property.parseDouble("sacSamplingHz", "20");
@@ -341,7 +347,7 @@ public class ActualWaveformCompiler extends Operation {
        Set<Observer> observerSet = sourceTimewindowSet.stream().map(TimewindowData::getObserver).collect(Collectors.toSet());
        Set<DataEntry> entrySet = sourceTimewindowSet.stream().map(TimewindowData::toDataEntry).collect(Collectors.toSet());
 
-       outPath = DatasetAid.createOutputFolder(workPath, "compiled", folderTag, GadgetAid.getTemporaryString());
+       outPath = DatasetAid.createOutputFolder(workPath, "compiled", folderTag, appendFolderDate, GadgetAid.getTemporaryString());
        property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
        EventListFile.write(eventSet, outPath.resolve("event.lst"));

@@ -33,41 +33,82 @@ import io.github.kensuke1984.kibrary.util.sac.SACFileName;
 public final class DatasetAid {
 
     /**
-     * @param workPath (Path) Path to create the output folder under
-     * @param nameRoot (String) First part of output folder name
+     * Create a new output folder in specified path, with specified name root, tag, and date string.
+     * Fails if a folder with the same name, including the same date string, already exists.
+     * @param workPath (Path) Path to create the output folder under.
+     * @param nameRoot (String) First part of output folder name.
      * @param tag (String) Additional comment to include in folder name. If null, this part will be excluded.
-     * @param dateStr (String) The date string part of output folder name
-     * @return (Path) Path of created output folder
+     * @param appendDate (boolean) Whether to append the date string in output folder name.
+     *    Even if this is false, the date string will be appended if a folder with same name already exists.
+     * @param dateString (String) The date string part of output folder name, must be set even when it will not be appended.
+     * @return (Path) Path of created output folder.
      * @throws IOException
      *
      * @author otsuru
      * @since 2022/4/13
      */
-    public static Path createOutputFolder(Path workPath, String nameRoot, String tag, String dateStr) throws IOException {
-        Path outPath;
-        if (tag == null) outPath = workPath.resolve(nameRoot + dateStr);
-        else outPath = workPath.resolve(nameRoot + "_" + tag + "_" + dateStr);
+    public static Path createOutputFolder(Path workPath, String nameRoot, String tag, boolean appendDate, String dateString) throws IOException {
+        String nondatedName = (tag == null) ? nameRoot : nameRoot + "_" + tag;
+        String datedName = (tag == null) ? nameRoot + dateString : nameRoot + "_" + tag + "_" + dateString;
 
+        // decide which output folder name to use
+        // Even if appendDate is false, append date string if a folder with same name already exists.
+        Path outPath;
+        if (appendDate == false) {
+            outPath = workPath.resolve(nondatedName);
+            if (Files.exists(outPath)) {
+                System.err.println("! " + outPath + " exists; appending date string.");
+                outPath = workPath.resolve(datedName);
+            }
+        } else {
+            outPath = workPath.resolve(datedName);
+        }
+
+        // check that a folder with same name does not exist
+        if (Files.exists(outPath)) throw new IllegalStateException(outPath + " already exists!");
+
+        // create folder
         Files.createDirectories(outPath);
         System.err.println("Output folder is " + outPath);
         return outPath;
     }
 
     /**
-     * @param nameRoot (String) First part of output file name
+     * Generates the name of a file with specified name root, tag, and date string.
+     * Fails if a file with the same name, including the same date string, already exists.
+     * @param workPath (Path) Path to create the output file under.
+     * @param nameRoot (String) First part of output file name.
      * @param tag (String) Additional comment to include in file name. If null, this part will be excluded.
-     * @param dateStr (String) The date string part of output file name
-     * @param extension (String)
-     * @return (String) Generated name of file
+     * @param appendDate (boolean) Whether to append the date string in output file name.
+     *    Even if this is false, the date string will be appended if a file with same name already exists.
+     * @param dateString (String) The date string part of output file name.
+     * @param extension (String) File extension.
+     * @return (Path) Generated path of file.
      *
      * @author otsuru
      * @since 2022/4/13
      */
-    public static String generateOutputFileName(String nameRoot, String tag, String dateStr, String extension) {
-        String fileName;
-        if (tag == null) fileName = nameRoot + dateStr + extension;
-        else fileName = nameRoot + "_" + tag + "_" + dateStr + extension;
-        return fileName;
+    public static Path generateOutputFilePath(Path workPath, String nameRoot, String tag, boolean appendDate, String dateString, String extension) {
+        String nondatedName = ((tag == null) ? nameRoot : nameRoot + "_" + tag) + extension;
+        String datedName = ((tag == null) ? nameRoot + dateString : nameRoot + "_" + tag + "_" + dateString) + extension;
+
+        // decide which output file name to use
+        // Even if appendDate is false, append date string if a file with same name already exists.
+        Path outPath;
+        if (appendDate == false) {
+            outPath = workPath.resolve(nondatedName);
+            if (Files.exists(outPath)) {
+                System.err.println("! " + outPath + " exists; appending date string.");
+                outPath = workPath.resolve(datedName);
+            }
+        } else {
+            outPath = workPath.resolve(datedName);
+        }
+
+        // check that a file with same name does not exist
+        if (Files.exists(outPath)) throw new IllegalStateException(outPath + " already exists!");
+
+        return outPath;
     }
 
     /**

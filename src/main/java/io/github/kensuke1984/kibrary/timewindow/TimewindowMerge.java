@@ -31,13 +31,17 @@ public class TimewindowMerge extends Operation {
 
     private final Property property;
     /**
-     * Path of the work folder
+     * Path of the work folder.
      */
     private Path workPath;
     /**
      * A tag to include in output file names. When this is empty, no tag is used.
      */
     private String fileTag;
+    /**
+     * Whether to append date string at end of output file names.
+     */
+    private boolean appendFileDate;
 
     /**
      * Paths of input timewindow files.
@@ -64,6 +68,8 @@ public class TimewindowMerge extends Operation {
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output file names. If no tag is needed, leave this unset.");
             pw.println("#fileTag ");
+            pw.println("##(boolean) Whether to append date string at end of output file names. (true)");
+            pw.println("#appendFileDate false");
             pw.println("##########From here on, list up paths of timewindow files.");
             pw.println("##########  Up to " + MAX_NUM + " files can be managed. Any index may be left blank.");
             for (int i = 1; i <= MAX_NUM; i++) {
@@ -82,6 +88,7 @@ public class TimewindowMerge extends Operation {
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
         if (property.containsKey("fileTag")) fileTag = property.parseStringSingle("fileTag", null);
+        appendFileDate = property.parseBoolean("appendFileDate", "true");
 
         for (int i = 1; i <= MAX_NUM; i++) {
             String timewindowKey = "timewindowPath" + i;
@@ -111,7 +118,7 @@ public class TimewindowMerge extends Operation {
 
         // output merged file
         String dateStr = GadgetAid.getTemporaryString();
-        Path outputPath = workPath.resolve(DatasetAid.generateOutputFileName("timewindow", fileTag, dateStr, ".dat"));
+        Path outputPath = DatasetAid.generateOutputFilePath(workPath, "timewindow", fileTag, appendFileDate, dateStr, ".dat");
         TimewindowDataFile.write(timewindows, outputPath);
     }
 

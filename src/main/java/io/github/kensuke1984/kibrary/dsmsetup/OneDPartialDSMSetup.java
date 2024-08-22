@@ -58,7 +58,7 @@ public class OneDPartialDSMSetup extends Operation {
 
     private final Property property;
     /**
-     * work folder
+     * Path of the work folder.
      */
     private Path workPath;
     /**
@@ -66,20 +66,24 @@ public class OneDPartialDSMSetup extends Operation {
      */
     private String folderTag;
     /**
-     * Information file name is header_[sh,psv].inf (default:PREM)
+     * Whether to append date string at end of output folder name.
+     */
+    private boolean appendFolderDate;
+    /**
+     * Name root of input file for DSM (header_[sh,psv].inf).
      */
     private String header;
     /**
-     * components to create an information file for
+     * Components to use.
      */
     private Set<SACComponent> components;
 
     /**
-     * Path of a data entry list file
+     * Path of a data entry list file.
      */
     private Path dataEntryPath;
     /**
-     * The root folder containing event folders which have observed SAC files
+     * The root folder containing event folders which have observed SAC files.
      */
     private Path obsPath;
     /**
@@ -87,25 +91,25 @@ public class OneDPartialDSMSetup extends Operation {
      */
     private Path layerPath;
     /**
-     * perturbation radii
+     * Center radii of layers to perturb.
      */
     private double[] layerRadii;
     private boolean forTIParameters;
     /**
-     * Path of structure file to use instead of PREM
+     * Path of structure file to use instead of PREM.
      */
     private Path structurePath;
     private String structureName;
     /**
-     * number of steps in frequency domain, must be a power of 2 (2<sup>n</sup>)
-     */
-    private int np;
-    /**
-     * [s] time length of data must be a power of 2 divided by 10 (2<sup>n</sup>/10)
+     * Time length [s], must be a power of 2 divided by 10. (2<sup>n</sup>/10)
      */
     private double tlen;
     /**
-     * Whether to use MPI-version of DSM in shellscript file
+     * Number of steps in frequency domain, must be a power of 2.
+     */
+    private int np;
+    /**
+     * Whether to use MPI-version of DSM in shellscript file.
      */
     private boolean mpi;
 
@@ -128,6 +132,8 @@ public class OneDPartialDSMSetup extends Operation {
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this unset.");
             pw.println("#folderTag ");
+            pw.println("##(boolean) Whether to append date string at end of output folder name. (true)");
+            pw.println("#appendFolderDate false");
             pw.println("##(String) Header for names of output files (as in header_[sh,psv].inf). (PREM)");
             pw.println("#header ");
             pw.println("##SacComponents to be used, listed using spaces. (Z R T)");
@@ -164,6 +170,7 @@ public class OneDPartialDSMSetup extends Operation {
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
         if (property.containsKey("folderTag")) folderTag = property.parseStringSingle("folderTag", null);
+        appendFolderDate = property.parseBoolean("appendFolderDate", "true");
         header = property.parseStringSingle("header", "PREM");
         components = Arrays.stream(property.parseStringArray("components", "Z R T"))
                 .map(SACComponent::valueOf).collect(Collectors.toSet());
@@ -206,7 +213,7 @@ public class OneDPartialDSMSetup extends Operation {
         }
 
         // create output folder
-        Path outPath = DatasetAid.createOutputFolder(workPath, "oneDPartial", folderTag, dateStr);
+        Path outPath = DatasetAid.createOutputFolder(workPath, "oneDPartial", folderTag, appendFolderDate, dateStr);
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         // output information files in each event folder
@@ -252,13 +259,13 @@ public class OneDPartialDSMSetup extends Operation {
         Path outSHPath;
         Path outPSVPath;
         if (forTIParameters) {
-            outSHPath = outPath.resolve(DatasetAid.generateOutputFileName("run1dparTI_SH", null, dateStr, ".sh"));
-            outPSVPath = outPath.resolve(DatasetAid.generateOutputFileName("run1dparTI_PSV", null, dateStr, ".sh"));
+            outSHPath = DatasetAid.generateOutputFilePath(outPath, "run1dparTI_SH", null, false, dateStr, ".sh");
+            outPSVPath = DatasetAid.generateOutputFilePath(outPath, "run1dparTI_PSV", null, false, dateStr, ".sh");
             shell.write(DSMShellscript.DSMType.TI1D, SPCMode.SH, listFileName, outSHPath);
             shell.write(DSMShellscript.DSMType.TI1D, SPCMode.PSV, listFileName, outPSVPath);
         } else {
-            outSHPath = outPath.resolve(DatasetAid.generateOutputFileName("run1dparI_SH", null, dateStr, ".sh"));
-            outPSVPath = outPath.resolve(DatasetAid.generateOutputFileName("run1dparI_PSV", null, dateStr, ".sh"));
+            outSHPath = DatasetAid.generateOutputFilePath(outPath, "run1dparI_SH", null, false, dateStr, ".sh");
+            outPSVPath = DatasetAid.generateOutputFilePath(outPath, "run1dparI_PSV", null, false, dateStr, ".sh");
             shell.write(DSMShellscript.DSMType.I1D, SPCMode.SH, listFileName, outSHPath);
             shell.write(DSMShellscript.DSMType.I1D, SPCMode.PSV, listFileName, outPSVPath);
         }

@@ -46,7 +46,7 @@ import io.github.kensuke1984.kibrary.waveform.BasicIDPairUp;
 public class BasicWaveformPlotter extends Operation {
 
     /**
-     * Number of fields per page on output pdf file
+     * Number of fields per page on output pdf file.
      */
     private static final int NUM_PER_PAGE = 12;
     /**
@@ -56,7 +56,7 @@ public class BasicWaveformPlotter extends Operation {
 
     private final Property property;
     /**
-     * Path of the work folder
+     * Path of the work folder.
      */
     private Path workPath;
     /**
@@ -64,24 +64,24 @@ public class BasicWaveformPlotter extends Operation {
      */
     private String fileTag;
     /**
-     * components to be included in the dataset
+     * Components to use.
      */
     private Set<SACComponent> components;
 
     /**
-     * Path of a basic waveform folder
+     * Path of a basic waveform folder.
      */
     private Path mainBasicPath;
     /**
-     * Path of reference waveform folder 1
+     * Path of reference waveform folder 1.
      */
     private Path refBasicPath1;
     /**
-     * Path of reference waveform folder 2
+     * Path of reference waveform folder 2.
      */
     private Path refBasicPath2;
     /**
-     * Path of a travel time information file
+     * Path of a travel time information file.
      */
     private Path travelTimePath;
 
@@ -90,11 +90,11 @@ public class BasicWaveformPlotter extends Operation {
      */
     private Set<GlobalCMTID> tendEvents = new HashSet<>();
     /**
-     * Whether to export individual files for each component
+     * Whether to export individual files for each component.
      */
     private boolean splitComponents;
     /**
-     * The time length to plot
+     * The time length to plot.
      */
     private double timeLength;
 
@@ -112,7 +112,7 @@ public class BasicWaveformPlotter extends Operation {
     private String refSynName2;
 
     /**
-     * Set of information of travel times
+     * Set of information of travel times.
      */
     private Set<TravelTimeInformation> travelTimeInfoSet;
 
@@ -274,9 +274,9 @@ public class BasicWaveformPlotter extends Operation {
                            .sorted(Comparator.comparing(BasicID::getObserver))
                            .collect(Collectors.toList());
 
-                   // Here, generateOutputFileName() is used in an irregular way, without adding the file extension but adding the component.
-                   String fileNameRoot = DatasetAid.generateOutputFileName("plot", fileTag, dateStr, "_" + component.toString());
-                   createPlot(eventPath, useIds, fileNameRoot);
+                   // Here, generateOutputFilePath() is used in an irregular way, adding the component along with the file extension.
+                   Path plotPath = DatasetAid.generateOutputFilePath(eventPath, "plot", fileTag, true, dateStr, "_" + component.toString() + ".plt");
+                   createPlot(eventPath, plotPath, useIds);
                }
            } else {
                List<BasicID> useIds = mainBasicIDs.stream()
@@ -284,21 +284,20 @@ public class BasicWaveformPlotter extends Operation {
                        .sorted(Comparator.comparing(BasicID::getObserver).thenComparing(BasicID::getSacComponent))
                        .collect(Collectors.toList());
 
-               // Here, generateOutputFileName() is used in an irregular way, without adding the file extension.
-               String fileNameRoot = DatasetAid.generateOutputFileName("plot", fileTag, dateStr, "");
-               createPlot(eventPath, useIds, fileNameRoot);
+               Path plotPath = DatasetAid.generateOutputFilePath(eventPath, "plot", fileTag, true, dateStr, ".plt");
+               createPlot(eventPath, plotPath, useIds);
            }
 
        }
    }
 
     /**
-     * @param eventDir (EventFolder)
+     * @param eventPath (Path) Path of event folder.
+     * @param plotPath (Path) Gnuplot file path.
      * @param ids (BasicID) IDs to be plotted
-     * @param fileNameRoot (String) The root of file names of output plot and graph files
      * @throws IOException
      */
-    private void createPlot(Path eventPath, List<BasicID> ids, String fileNameRoot) throws IOException {
+    private void createPlot(Path eventPath, Path plotPath, List<BasicID> ids) throws IOException {
         if (ids.size() == 0) {
             return;
         }
@@ -307,9 +306,8 @@ public class BasicWaveformPlotter extends Operation {
         List<BasicID> obsList = pairer.getObsList();
         List<BasicID> synList = pairer.getSynList();
 
-        GnuplotFile gnuplot = new GnuplotFile(eventPath.resolve(fileNameRoot + ".plt"));
-
-        gnuplot.setOutput("pdf", fileNameRoot + ".pdf", 21, 29.7, true);
+        GnuplotFile gnuplot = new GnuplotFile(plotPath);
+        gnuplot.setOutput("pdf", plotPath.getFileName().toString().replace(".plt", ".pdf"), 21, 29.7, true);
         gnuplot.setMarginH(15, 5);
         gnuplot.setFont("Arial", 10, 8, 8, 8, 8);
         gnuplot.setCommonKey(true, false, "top right");

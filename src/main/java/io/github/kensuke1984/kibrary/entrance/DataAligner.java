@@ -37,7 +37,7 @@ public class DataAligner {
     private final boolean redo;
 
     /**
-     * Number of processed event folders
+     * Number of processed event folders.
      */
     private AtomicInteger processedFolders = new AtomicInteger();
 

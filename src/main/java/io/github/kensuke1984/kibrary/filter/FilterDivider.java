@@ -48,7 +48,7 @@ public class FilterDivider extends Operation {
 
     private final Property property;
     /**
-     * Path of the work folder
+     * Path of the work folder.
      */
     private Path workPath;
     /**
@@ -56,22 +56,24 @@ public class FilterDivider extends Operation {
      */
     private String folderTag;
     /**
-     * Path of the output folder
+     * Whether to append date string at end of output folder name.
+     */
+    private boolean appendFolderDate;
+    /**
+     * Path of the output folder.
      */
     private Path outPath;
     /**
-     * components to be applied the filter
+     * Components to use.
      */
     private Set<SACComponent> components;
 
     /**
-     * The root folder containing event folders which have observed SAC files to
-     * be filtered
+     * The root folder containing event folders which have observed SAC files to be filtered.
      */
     private Path obsPath;
     /**
-     * The root folder containing event folders which have synthetic SAC files
-     * to be filtered
+     * The root folder containing event folders which have synthetic SAC files to be filtered.
      */
     private Path synPath;
 
@@ -82,15 +84,15 @@ public class FilterDivider extends Operation {
      */
     private double delta;
     /**
-     * Type of filter to apply, from {lowpass, highpass, bandpass, bandstop}
+     * Type of filter to apply, from {lowpass, highpass, bandpass, bandstop}.
      */
     private String filterType;
     /**
-     * lower cut-off frequency [Hz]
+     * Lower cut-off frequency [Hz].
      */
     private double lowFreq;
     /**
-     * upper cut-off frequency [Hz]
+     * Upper cut-off frequency [Hz].
      */
     private double highFreq;
     /**
@@ -98,7 +100,7 @@ public class FilterDivider extends Operation {
      */
     private int np;
     /**
-     * Whether to apply causal filter. true: causal, false: zero-phase
+     * Whether to apply causal filter. {true: causal, false: zero-phase}
      */
     private boolean causal;
     /**
@@ -130,6 +132,8 @@ public class FilterDivider extends Operation {
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this unset.");
             pw.println("#folderTag ");
+            pw.println("##(boolean) Whether to append date string at end of output folder name. (true)");
+            pw.println("#appendFolderDate false");
             pw.println("##SacComponents to be applied the filter, listed using spaces. (Z R T)");
             pw.println("#components ");
             pw.println("##Path of a root folder containing observed dataset. (.)");
@@ -163,6 +167,7 @@ public class FilterDivider extends Operation {
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
         if (property.containsKey("folderTag")) folderTag = property.parseStringSingle("folderTag", null);
+        appendFolderDate = property.parseBoolean("appendFolderDate", "true");
         components = Arrays.stream(property.parseStringArray("components", "Z R T"))
                 .map(SACComponent::valueOf).collect(Collectors.toSet());
 
@@ -195,7 +200,7 @@ public class FilterDivider extends Operation {
             return;
         }
 
-        outPath = DatasetAid.createOutputFolder(workPath, "filtered", folderTag, GadgetAid.getTemporaryString());
+        outPath = DatasetAid.createOutputFolder(workPath, "filtered", folderTag, appendFolderDate, GadgetAid.getTemporaryString());
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         ExecutorService es = ThreadAid.createFixedThreadPool();

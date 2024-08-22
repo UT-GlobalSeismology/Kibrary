@@ -44,43 +44,47 @@ public class ModelStructurePlotter extends Operation {
             "purple", "goldenrod", "greenyellow", "salmon", "skyblue", "gray",
             "plum", "khaki", "seagreen", "light-pink", "light-cyan", "light-gray"};
     /**
-     * Margin in radius direction (y-axis)
+     * Margin in radius direction (y-axis).
      */
     private static final double MARGIN_RAD = 50;
     /**
-     * Margin in value direction (x-axis)
+     * Margin in value direction (x-axis).
      */
     private static final double MARGIN_VAL = 0.5;
 
     private final Property property;
     /**
-     * Path of the work folder
+     * Path of the work folder.
      */
     private Path workPath;
     /**
      * A tag to include in output folder name. When this is empty, no tag is used.
      */
     private String folderTag;
+    /**
+     * Whether to append date string at end of output folder name.
+     */
+    private boolean appendFolderDate;
 
     /**
-     * The root folder containing results of inversion
+     * The root folder containing results of inversion.
      */
     private Path resultPath;
     /**
-     * File of 1D structure used in inversion
+     * File of 1D structure used in inversion.
      */
     private Path initialStructurePath;
     /**
-     * Name of 1D structure used in inversion
+     * Name of 1D structure used in inversion.
      */
     private String initialStructureName;
 
     /**
-     * Variable types to plot
+     * Variable types to plot.
      */
     private Set<VariableType> variableTypes;
     /**
-     * Solvers for equation
+     * Solvers for equation.
      */
     private Set<InverseMethodEnum> inverseMethods;
     private int maxNum;
@@ -118,6 +122,8 @@ public class ModelStructurePlotter extends Operation {
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this blank.");
             pw.println("#folderTag ");
+            pw.println("##(boolean) Whether to append date string at end of output folder name. (true)");
+            pw.println("#appendFolderDate false");
             pw.println("##Path of a root folder containing results of inversion. (.)");
             pw.println("#resultPath ");
             pw.println("##Path of an initial structure file used in inversion. If this is unset, the following initialStructureName will be referenced.");
@@ -158,6 +164,7 @@ public class ModelStructurePlotter extends Operation {
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
         if (property.containsKey("folderTag")) folderTag = property.parseStringSingle("folderTag", null);
+        appendFolderDate = property.parseBoolean("appendFolderDate", "true");
 
         resultPath = property.parsePath("resultPath", ".", true, workPath);
         if (property.containsKey("initialStructurePath")) {
@@ -208,7 +215,7 @@ public class ModelStructurePlotter extends Operation {
         PolynomialStructure initialStructure = PolynomialStructure.setupFromFileOrName(initialStructurePath, initialStructureName);
 
         // create output folder
-        Path outPath = DatasetAid.createOutputFolder(workPath, "modelPlots", folderTag, GadgetAid.getTemporaryString());
+        Path outPath = DatasetAid.createOutputFolder(workPath, "modelPlots", folderTag, appendFolderDate, GadgetAid.getTemporaryString());
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         //~write list files

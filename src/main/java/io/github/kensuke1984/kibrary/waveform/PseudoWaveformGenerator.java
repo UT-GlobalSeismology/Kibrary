@@ -43,7 +43,7 @@ public class PseudoWaveformGenerator extends Operation {
 
     private final Property property;
     /**
-     * Path of the work folder
+     * Path of the work folder.
      */
     private Path workPath;
     /**
@@ -51,31 +51,35 @@ public class PseudoWaveformGenerator extends Operation {
      */
     private String folderTag;
     /**
-     * Path of the output folder
+     * Whether to append date string at end of output folder name.
+     */
+    private boolean appendFolderDate;
+    /**
+     * Path of the output folder.
      */
     private Path outPath;
 
     /**
-     * basic waveform folder
+     * Basic waveform folder.
      */
     private Path basicPath;
     /**
-     * partial waveform folder
+     * Partial waveform folder.
      */
     private Path partialPath;
     /**
-     * Path of a {@link KnownParameterFile} file containing psudoM
+     * Path of a {@link KnownParameterFile} file containing psudoM.
      */
     private Path modelPath;
 
     /**
-     * Which to set the psuedo waveform as. true: synthetic, false: observed
+     * Whether to set the psuedo waveform as synthetic. {true: synthetic, false: observed}
      */
     private boolean setPseudoAsSyn;
     private boolean noise;
     private double noisePower;
     /**
-     * Fill 0 to empty partial waveforms or not.
+     * Whether to fill 0 to empty partial waveforms or not.
      */
     private boolean fillEmptyPartial;
 
@@ -98,6 +102,8 @@ public class PseudoWaveformGenerator extends Operation {
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this unset.");
             pw.println("#folderTag ");
+            pw.println("##(boolean) Whether to append date string at end of output folder name. (true)");
+            pw.println("#appendFolderDate false");
             pw.println("##Path of a basic waveform folder, must be set.");
             pw.println("#basicPath actual");
             pw.println("##Path of a partial waveform folder, must be set.");
@@ -124,6 +130,7 @@ public class PseudoWaveformGenerator extends Operation {
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
         if (property.containsKey("folderTag")) folderTag = property.parseStringSingle("folderTag", null);
+        appendFolderDate = property.parseBoolean("appendFolderDate", "true");
 
         basicPath = property.parsePath("basicPath", null, true, workPath);
         partialPath = property.parsePath("partialPath", null, true, workPath);
@@ -160,7 +167,7 @@ public class PseudoWaveformGenerator extends Operation {
         if (noise) pseudoWaveform = pseudoWaveform.add(createRandomNoise(dVectorBuilder));
 
         // prepare output folder
-        outPath = DatasetAid.createOutputFolder(workPath, "pseudo", folderTag, GadgetAid.getTemporaryString());
+        outPath = DatasetAid.createOutputFolder(workPath, "pseudo", folderTag, appendFolderDate, GadgetAid.getTemporaryString());
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         // output

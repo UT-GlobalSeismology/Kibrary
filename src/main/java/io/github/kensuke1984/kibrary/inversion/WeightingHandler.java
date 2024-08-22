@@ -41,7 +41,7 @@ public class WeightingHandler {
     /**
      * {@link WeightingHandler} created with default settings, thus complete IDENTITY.
      */
-    public static WeightingHandler IDENTITY = new WeightingHandler(new Property());
+    public static final WeightingHandler IDENTITY = new WeightingHandler(new Property());
 
     private boolean amplitudeReciprocal;
     private boolean balanceComponent;
@@ -75,8 +75,10 @@ public class WeightingHandler {
     public static Options defineOptions() {
         Options options = Summon.defaultOptions();
         // output
-        options.addOption(Option.builder("t").longOpt("tag").hasArg().argName("tag")
+        options.addOption(Option.builder("T").longOpt("tag").hasArg().argName("fileTag")
                 .desc("A tag to include in output file name.").build());
+        options.addOption(Option.builder("O").longOpt("omitDate")
+                .desc("Whether to omit date string in output file name.").build());
         return options;
     }
 
@@ -86,8 +88,9 @@ public class WeightingHandler {
      * @throws IOException
      */
     public static void run(CommandLine cmdLine) throws IOException {
-        String tag = cmdLine.hasOption("t") ? cmdLine.getOptionValue("t") : null;
-        Path outputPath = Paths.get(DatasetAid.generateOutputFileName("weighting", tag, GadgetAid.getTemporaryString(), ".properties"));
+        String fileTag = cmdLine.hasOption("T") ? cmdLine.getOptionValue("T") : null;
+        boolean appendFileDate = !cmdLine.hasOption("O");
+        Path outputPath = DatasetAid.generateOutputFilePath(Paths.get(""), "weighting", fileTag, appendFileDate, GadgetAid.getTemporaryString(), ".properties");
         writeDefaultPropertiesFile(outputPath);
     }
 

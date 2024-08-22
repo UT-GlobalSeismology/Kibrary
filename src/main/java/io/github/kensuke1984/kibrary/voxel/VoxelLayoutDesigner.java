@@ -44,16 +44,20 @@ public class VoxelLayoutDesigner extends Operation {
 
     private final Property property;
     /**
-     * Path of the work folder
+     * Path of the work folder.
      */
     private Path workPath;
     /**
      * A tag to include in output file names. When this is empty, no tag is used.
      */
     private String fileTag;
+    /**
+     * Whether to append date string at end of output file names.
+     */
+    private boolean appendFileDate;
 
     /**
-     * Path of the input data entry list file
+     * Path of the input data entry list file.
      */
     private Path dataEntryPath;
     private String[] piercePhases;
@@ -78,7 +82,7 @@ public class VoxelLayoutDesigner extends Operation {
     private double dRadius;
 
     /**
-     * (roughly) median radius of target region
+     * The (roughly) median radius of target region.
      */
     private double centerRadius;
 
@@ -101,6 +105,8 @@ public class VoxelLayoutDesigner extends Operation {
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output file names. If no tag is needed, leave this unset.");
             pw.println("#fileTag ");
+            pw.println("##(boolean) Whether to append date string at end of output file names. (true)");
+            pw.println("#appendFileDate false");
             pw.println("##########Information to design horzontal positions of voxels.");
             pw.println("##Path of a data entry list file, must be set.");
             pw.println("#dataEntryPath dataEntry.lst");
@@ -150,6 +156,7 @@ public class VoxelLayoutDesigner extends Operation {
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
         if (property.containsKey("fileTag")) fileTag = property.parseStringSingle("fileTag", null);
+        appendFileDate = property.parseBoolean("appendFileDate", "true");
 
         dataEntryPath = property.parsePath("dataEntryPath", null, true, workPath);
         piercePhases = property.parseStringArray("piercePhases", "ScS");
@@ -248,7 +255,7 @@ public class VoxelLayoutDesigner extends Operation {
         }
 
         // output
-        Path outputPath = workPath.resolve(DatasetAid.generateOutputFileName("voxel", fileTag, GadgetAid.getTemporaryString(), ".inf"));
+        Path outputPath = DatasetAid.generateOutputFilePath(workPath, "voxel", fileTag, appendFileDate, GadgetAid.getTemporaryString(), ".inf");
         VoxelInformationFile.write(layerThicknesses, layerRadii, horizontalPixels, outputPath);
     }
 
