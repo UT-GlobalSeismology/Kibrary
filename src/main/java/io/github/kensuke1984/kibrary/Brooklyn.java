@@ -94,16 +94,16 @@ enum Brooklyn {
     // Temporal 100
     ;
 
-    private final Class<?> c;
+    private final Class<?> classObject;
     private final int number;
 
-    private Brooklyn(int number, Class<?> c) {
+    private Brooklyn(int number, Class<?> classObject) {
         this.number = number;
-        this.c = c;
+        this.classObject = classObject;
     }
 
     static void printList() {
-        Arrays.stream(values()).sorted().forEach(m -> System.out.println(m.number + " " + m.c.getSimpleName()));
+        Arrays.stream(values()).sorted().forEach(m -> System.out.println(m.number + " " + m.classObject.getSimpleName()));
     }
 
     static String numRange() {
@@ -126,15 +126,15 @@ enum Brooklyn {
     }
 
     String getClassName() {
-        return c.getName();
+        return classObject.getName();
     }
 
     Options getOptions() throws ReflectiveOperationException {
-        return (Options) c.getMethod("defineOptions", (Class<?>[]) null).invoke(null, (Object[]) null);
+        return (Options) classObject.getMethod("defineOptions", (Class<?>[]) null).invoke(null, (Object[]) null);
     }
 
     void summon(CommandLine cmdLine) throws ReflectiveOperationException {
-        c.getMethod("run", CommandLine.class).invoke(null, (Object) cmdLine);
+        classObject.getMethod("run", CommandLine.class).invoke(null, (Object) cmdLine);
     }
 
 }
