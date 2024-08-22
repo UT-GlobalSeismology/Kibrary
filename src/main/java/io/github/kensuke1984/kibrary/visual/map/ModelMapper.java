@@ -79,6 +79,9 @@ public class ModelMapper extends Operation {
      */
     private int[] displayLayers;
     private int nPanelsPerRow;
+    /**
+     * Map region in the form lonMin/lonMax/latMin/latMax, when it is set manually.
+     */
     private String mapRegion;
     private double marginLatitudeRaw;
     private boolean setMarginLatitudeByKm;

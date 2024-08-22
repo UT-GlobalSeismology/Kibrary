@@ -17,7 +17,7 @@ import io.github.kensuke1984.kibrary.util.GadgetAid;
  * <p>
  * In property files, all keys must either have a non-empty value or be commented out. Keys with empty values shall not exist.
  *
- * @author otsuru
+ * @author Kensuke Konishi
  * @since a long time ago
  * @version 2022/1/7 Recreated the original Property to extend Properties instead of generating its instance.
  */

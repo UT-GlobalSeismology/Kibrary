@@ -18,8 +18,7 @@ import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
  * This class is <b>immutable</b>
  *
  * @author Kensuke Konishi
- * @version 0.0.6
- * @author anselme add information files for psv/sh bpcat (catalog)
+ * @since version 0.0.6
  */
 public class BPInputFile extends DSMInputHeader {
 

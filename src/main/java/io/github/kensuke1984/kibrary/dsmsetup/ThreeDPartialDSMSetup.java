@@ -57,7 +57,6 @@ import io.github.kensuke1984.kibrary.voxel.VoxelInformationFile;
  *
  * @author Kensuke Konishi
  * @since version 0.2.2.1
- * @author anselme add content for catalog
  * @version 2021/12/24 renamed from InformationFileMaker to ThreeDPartialDSMSetup
  */
 public class ThreeDPartialDSMSetup extends Operation {
@@ -157,37 +156,37 @@ public class ThreeDPartialDSMSetup extends Operation {
         Path outPath = Property.generatePath(thisClass);
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
             pw.println("manhattan " + thisClass.getSimpleName());
-            pw.println("##Path of a working folder (.)");
+            pw.println("##Path of work folder. (.)");
             pw.println("#workPath ");
-            pw.println("##To reuse FP & BP pools that have already been created, set the folder containing them");
+            pw.println("##To reuse FP & BP pools that have already been created, set the folder containing them.");
             pw.println("#reusePath threeDPartial");
             pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this unset.");
             pw.println("#folderTag ");
             pw.println("##(String) A tag to include in output file names. If no tag is needed, leave this unset.");
             pw.println("#fileTag ");
-            pw.println("##(String) Header for names of output files (as in header_[sh,psv].inf) (PREM)");
+            pw.println("##(String) Header for names of output files (as in header_[sh,psv].inf). (PREM)");
             pw.println("#header ");
-            pw.println("##Path of an event list file, must be set");
+            pw.println("##Path of an event list file, must be set.");
             pw.println("#eventPath event.lst");
-            pw.println("##Path of an observer list file, must be set");
+            pw.println("##Path of an observer list file, must be set.");
             pw.println("#observerPath observer.lst");
-            pw.println("##Path of a voxel information file for perturbation points, must be set");
+            pw.println("##Path of a voxel information file for perturbation points, must be set.");
             pw.println("#voxelPath voxel.inf");
             pw.println("##Path of a structure file you want to use. If this is unset, the following structureName will be referenced.");
             pw.println("#structurePath ");
-            pw.println("##Name of a structure model you want to use (PREM)");
+            pw.println("##Name of a structure model you want to use. (PREM)");
             pw.println("#structureName ");
-            pw.println("##Time length to be computed, must be a power of 2 over 10 (3276.8)");
+            pw.println("##Time length to be computed, must be a power of 2 over 10. (3276.8)");
             pw.println("#tlen ");
-            pw.println("##Number of points to be computed in frequency domain, must be a power of 2 (512)");
+            pw.println("##Number of points to be computed in frequency domain, must be a power of 2. (512)");
             pw.println("#np ");
-            pw.println("##(boolean) Whether to use MPI in the subsequent DSM computations (true)");
+            pw.println("##(boolean) Whether to use MPI in the subsequent DSM computations. (true)");
             pw.println("#mpi false");
-            pw.println("##(boolean) Whether to compute 6 green functions for the FP wavefield to use for joint structure-CMT inversion (false)");
+            pw.println("##(boolean) Whether to compute 6 green functions for the FP wavefield to use for joint structure-CMT inversion. (false)");
             pw.println("#jointCMT ");
-            pw.println("##(boolean) Wavefield catalog mode (false)");
+            pw.println("##(boolean) Wavefield catalog mode. (false)");
             pw.println("#catalogMode ");
-            pw.println("##Catalog distance range: thetamin thetamax dtheta");
+            pw.println("##Catalog distance range: thetamin thetamax dtheta.");
             pw.println("#thetaRange ");
         }
         System.err.println(outPath + " is created.");

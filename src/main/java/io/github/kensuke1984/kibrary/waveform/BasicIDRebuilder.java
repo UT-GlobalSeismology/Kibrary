@@ -94,22 +94,22 @@ public class BasicIDRebuilder extends Operation {
         Path outPath = Property.generatePath(thisClass);
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
             pw.println("manhattan " + thisClass.getSimpleName());
-            pw.println("##Path of a work folder (.)");
+            pw.println("##Path of work folder. (.)");
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this unset.");
             pw.println("#folderTag ");
-            pw.println("##SacComponents to be used, listed using spaces (Z R T)");
+            pw.println("##SacComponents to be used, listed using spaces. (Z R T)");
             pw.println("#components ");
-            pw.println("##Path of a basic waveform folder, must be set");
+            pw.println("##Path of a basic waveform folder, must be set.");
             pw.println("#basicPath actual");
-            pw.println("##Path of a data entry list file, if you want to select raypaths");
+            pw.println("##Path of a data entry list file, if you want to select raypaths.");
             pw.println("#dataEntryPath selectedEntry.lst");
             pw.println("##Phases to be included in timewindows to use, listed using spaces. To use all phases, leave this unset.");
             pw.println("#requiredPhases ");
-            pw.println("##(boolean) Perform a bootstrap test (false)");
+            pw.println("##(boolean) Whether to perform bootstrap test. (false)");
             pw.println("#bootstrap ");
-            pw.println("##(double) Percent of basic IDs to use in subsampling test (100)");
-            pw.println("## Here, 100% is the number of basic IDs after selection.");
+            pw.println("##(double) Percent of basic IDs to use in subsampling test. (100)");
+            pw.println("##  Here, 100% is the number of basic IDs after selection.");
             pw.println("#subsamplingPercent ");
         }
         System.err.println(outPath + " is created.");

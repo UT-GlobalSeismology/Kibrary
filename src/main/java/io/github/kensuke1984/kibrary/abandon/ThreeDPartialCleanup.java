@@ -19,6 +19,7 @@ import io.github.kensuke1984.kibrary.Summon;
 /**
  * Class to clean threeDPartial folders when they are not needed any more.
  * This deletes all files under FPpool/modelName/ and BPpool/modelName/ (which should all be SPC files).
+ *
  * @author otsuru
  * @since 2023/3/21
  */

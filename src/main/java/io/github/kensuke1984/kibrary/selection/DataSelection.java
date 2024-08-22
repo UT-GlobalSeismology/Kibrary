@@ -61,8 +61,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  * Timewindows with no phases will be written in standard output.
  *
  * @author Kensuke Konishi
- * @version 0.1.2.1
- * @author anselme add additional selection critera
+ * @since version 0.1.2.1
  */
 public class DataSelection extends Operation {
 
@@ -165,43 +164,43 @@ public class DataSelection extends Operation {
         Path outPath = Property.generatePath(thisClass);
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
             pw.println("manhattan " + thisClass.getSimpleName());
-            pw.println("##Path of a working folder (.)");
+            pw.println("##Path of work folder. (.)");
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output file names. If no tag is needed, leave this unset.");
             pw.println("#fileTag ");
-            pw.println("##Sac components to be used, listed using spaces (Z R T)");
+            pw.println("##Sac components to be used, listed using spaces. (Z R T)");
             pw.println("#components ");
-            pw.println("##(double) sacSamplingHz (20)");
+            pw.println("##(double) SAC sampling frequency [Hz]. (20)");
             pw.println("#sacSamplingHz cant change now");
-            pw.println("##Path of a root folder containing observed dataset (.)");
+            pw.println("##Path of a root folder containing observed dataset. (.)");
             pw.println("#obsPath ");
-            pw.println("##Path of a root folder containing synthetic dataset (.)");
+            pw.println("##Path of a root folder containing synthetic dataset. (.)");
             pw.println("#synPath ");
-            pw.println("##(boolean) Whether the synthetics have already been convolved (true)");
+            pw.println("##(boolean) Whether the synthetics have already been convolved. (true)");
             pw.println("#convolved ");
-            pw.println("##Path of a timewindow file, must be defined");
+            pw.println("##Path of a timewindow file, must be set.");
             pw.println("#timewindowPath timewindow.dat");
-            pw.println("##Path of a static correction file, if static correction time-shift shall be applied");
+            pw.println("##Path of a static correction file, if static correction time-shift shall be applied.");
             pw.println("#staticCorrectionPath staticCorrection.dat");
-            pw.println("##(double) Threshold of static correction time shift (10.)");
+            pw.println("##(double) Threshold of static correction time shift [s]. (10.)");
             pw.println("#maxStaticShift ");
-            pw.println("##(double) Lower threshold of correlation [-1:maxCorrelation] (0)");
+            pw.println("##(double) Lower threshold of correlation; [-1:maxCorrelation]. (0)");
             pw.println("#minCorrelation ");
-            pw.println("##(double) Upper threshold of correlation [minCorrelation:1] (1)");
+            pw.println("##(double) Upper threshold of correlation; [minCorrelation:1]. (1)");
             pw.println("#maxCorrelation ");
-            pw.println("##(double) Lower threshold of normalized variance [0:maxVariance] (0)");
+            pw.println("##(double) Lower threshold of normalized variance ;[0:maxVariance]. (0)");
             pw.println("#minVariance ");
-            pw.println("##(double) Upper threshold of normalized variance [minVariance:) (2)");
+            pw.println("##(double) Upper threshold of normalized variance; [minVariance:). (2)");
             pw.println("#maxVariance ");
-            pw.println("##(double) Lower threshold of amplitude ratio [0:maxRatio] (0.5)");
+            pw.println("##(double) Lower threshold of amplitude ratio; [0:maxRatio]. (0.5)");
             pw.println("#minRatio ");
-            pw.println("##(double) Upper threshold of amplitude ratio [minRatio:) (2)");
+            pw.println("##(double) Upper threshold of amplitude ratio; [minRatio:). (2)");
             pw.println("#maxRatio ");
-            pw.println("##(double) Threshold of S/N ratio (lower limit) [0:) (0)");
+            pw.println("##(double) Threshold of S/N ratio (lower limit); [0:). (0)");
             pw.println("#minSNratio ");
-            pw.println("##(boolean) Whether to require phases to be included in timewindow (true)");
+            pw.println("##(boolean) Whether to require phases to be included in timewindow. (true)");
             pw.println("#requirePhase ");
-            pw.println("##(boolean) Whether to exclude surface wave (false)");
+            pw.println("##(boolean) Whether to exclude surface wave. (false)");
             pw.println("#excludeSurfaceWave ");
         }
         System.err.println(outPath + " is created.");

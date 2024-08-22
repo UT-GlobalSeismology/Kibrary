@@ -73,8 +73,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
  * the input binary-format file is output in ascii format in the standard output.
  *
  * @author Kensuke Konishi
- * @version 0.2.2
- * @author anselme add phase information
+ * @since version 0.2.2
  */
 public final class StaticCorrectionDataFile {
     private StaticCorrectionDataFile() {}

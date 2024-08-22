@@ -134,17 +134,17 @@ public final class SPC_SAC extends Operation {
         Path outPath = Property.generatePath(thisClass);
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
             pw.println("manhattan " + thisClass.getSimpleName());
-            pw.println("##Path of a working folder (.)");
+            pw.println("##Path of work folder. (.)");
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this unset.");
             pw.println("#folderTag ");
-            pw.println("##SACComponents to be exported, listed using spaces (Z R T)");
+            pw.println("##SACComponents to be exported, listed using spaces. (Z R T)");
             pw.println("#components ");
-            pw.println("##Path of an SH folder (.)");
+            pw.println("##Path of an SH folder. (.)");
             pw.println("#shPath ");
-            pw.println("##Path of a PSV folder (.)");
+            pw.println("##Path of a PSV folder. (.)");
             pw.println("#psvPath ");
-            pw.println("##The mode of spc files that have been computed, from {SH, PSV, BOTH} (BOTH)");
+            pw.println("##The mode of spc files that have been computed, from {SH, PSV, BOTH}. (BOTH)");
             pw.println("#usableSPCMode ");
             pw.println("##The model name used; e.g. if it is PREM, spectrum files in 'eventDir/PREM' are used.");
             pw.println("##  If this is unset, then automatically set as the name of the folder in the eventDirs");
@@ -152,16 +152,16 @@ public final class SPC_SAC extends Operation {
             pw.println("#modelName ");
             pw.println("##Path of folder containing source time functions. If not set, the following sourceTimeFunctionType will be used.");
             pw.println("#userSourceTimeFunctionPath ");
-            pw.println("##Type of source time function, from {0:none, 1:boxcar, 2:triangle, 3:asymmetricTriangle, 4:auto} (0)");
+            pw.println("##Type of source time function, from {0:none, 1:boxcar, 2:triangle, 3:asymmetricTriangle, 4:auto}. (0)");
             pw.println("##  When 'auto' is selected, the function specified in the GCMT catalog will be used.");
             pw.println("#sourceTimeFunctionType ");
             pw.println("##Path of a catalog to set source time function durations. If unneeded, leave this unset.");
             pw.println("#sourceTimeFunctionCatalogPath ");
-            pw.println("##SamplingHz (20) !You can not change yet!");
+            pw.println("##Sampling frequency [Hz]. (20) !You can not change yet!");
             pw.println("#samplingHz ");
-            pw.println("##(boolean) If this is true, temporal partial is computed (false)");
+            pw.println("##(boolean) If this is true, temporal partial is computed. (false)");
             pw.println("#computeTimePartial ");
-            pw.println("##(boolean) If this is true, the SACExtension of computed files will be that of observed (false)");
+            pw.println("##(boolean) If this is true, the SACExtension of computed files will be that of observed. (false)");
             pw.println("##  This is only valid when computeTimePartial is false.");
             pw.println("#computeAsObserved ");
         }

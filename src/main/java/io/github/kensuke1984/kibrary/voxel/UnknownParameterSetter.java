@@ -29,9 +29,9 @@ import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 
 /**
  * Class to create an {@link UnknownParameterFile}.
- * @author ???
+ *
  * @since a long time ago
- * @version 2022/2/12 moved & renamed from inversion.addons.MakeUnknownParameterFile to voxel.UnknownParameterSetter
+ * @version 2022/2/12 moved & renamed from inversion.addons.MakeUnknownParameterFile to voxel.UnknownParameterSetter.
  */
 public class UnknownParameterSetter {
 

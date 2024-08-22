@@ -1,4 +1,4 @@
-package io.github.kensuke1984.kibrary.timewindow;
+package io.github.kensuke1984.kibrary.correction;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -18,14 +18,12 @@ import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.MathAid;
 
 /**
- * Merges {@link TimewindowDataFile}s.
- *
- * TODO merge windows of same entry
+ * Merges {@link StaticCorrectionDataFile}s.
  *
  * @author otsuru
- * @since 2022/12/13
+ * @since 2023/8/16
  */
-public class TimewindowMerge extends Operation {
+public class StaticCorrectionMerge extends Operation {
 
     private static final int MAX_NUM = 10;
 
@@ -40,9 +38,9 @@ public class TimewindowMerge extends Operation {
     private String fileTag;
 
     /**
-     * Paths of input timewindow files.
+     * Paths of input static correction files.
      */
-    private List<Path> timewindowPaths = new ArrayList<>();
+    private List<Path> staticCorrectionPaths = new ArrayList<>();
 
 
     /**
@@ -64,17 +62,17 @@ public class TimewindowMerge extends Operation {
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output file names. If no tag is needed, leave this unset.");
             pw.println("#fileTag ");
-            pw.println("##########From here on, list up paths of timewindow files.");
+            pw.println("##########From here on, list up paths of static correction files.");
             pw.println("##########  Up to " + MAX_NUM + " files can be managed. Any index may be left blank.");
             for (int i = 1; i <= MAX_NUM; i++) {
                 pw.println("##" + MathAid.ordinalNumber(i) + " file.");
-                pw.println("#timewindowPath" + i + " timewindow.dat");
+                pw.println("#staticCorrectionPath" + i + " staticCorrection.dat");
             }
         }
         System.err.println(outPath + " is created.");
     }
 
-    public TimewindowMerge(Property property) throws IOException {
+    public StaticCorrectionMerge(Property property) throws IOException {
         this.property = (Property) property.clone();
     }
 
@@ -84,16 +82,16 @@ public class TimewindowMerge extends Operation {
         if (property.containsKey("fileTag")) fileTag = property.parseStringSingle("fileTag", null);
 
         for (int i = 1; i <= MAX_NUM; i++) {
-            String timewindowKey = "timewindowPath" + i;
-            if (property.containsKey(timewindowKey)) {
-                timewindowPaths.add(property.parsePath(timewindowKey, null, true, workPath));
+            String staticCorrectionKey = "staticCorrectionPath" + i;
+            if (property.containsKey(staticCorrectionKey)) {
+                staticCorrectionPaths.add(property.parsePath(staticCorrectionKey, null, true, workPath));
             }
         }
     }
 
     @Override
     public void run() throws IOException {
-        int fileNum = timewindowPaths.size();
+        int fileNum = staticCorrectionPaths.size();
         if (fileNum == 0) {
             System.err.println("!! No input files found.");
             return;
@@ -103,16 +101,17 @@ public class TimewindowMerge extends Operation {
         }
 
         // read timewindows from all input files
-        Set<TimewindowData> timewindows = new HashSet<>();
-        for (Path timewindowPath : timewindowPaths) {
-            Set<TimewindowData> srcTimewindows = TimewindowDataFile.read(timewindowPath);
-            timewindows.addAll(srcTimewindows);
+        Set<StaticCorrectionData> staticCorrections = new HashSet<>();
+        for (Path staticCorrectionPath : staticCorrectionPaths) {
+            Set<StaticCorrectionData> srcStaticCorrections = StaticCorrectionDataFile.read(staticCorrectionPath);
+            staticCorrections.addAll(srcStaticCorrections);
         }
 
         // output merged file
         String dateStr = GadgetAid.getTemporaryString();
-        Path outputPath = workPath.resolve(DatasetAid.generateOutputFileName("timewindow", fileTag, dateStr, ".dat"));
-        TimewindowDataFile.write(timewindows, outputPath);
+        Path outputPath = workPath.resolve(DatasetAid.generateOutputFileName("staticCorrection", fileTag, dateStr, ".dat"));
+        StaticCorrectionDataFile.write(staticCorrections, outputPath);
     }
+
 
 }

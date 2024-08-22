@@ -73,16 +73,16 @@ public class NetworkLookup extends Operation {
         Path outPath = Property.generatePath(thisClass);
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
             pw.println("manhattan " + thisClass.getSimpleName());
-            pw.println("##Path of a working directory. (.)");
+            pw.println("##Path of work folder. (.)");
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output file names. If no tag is needed, leave this unset.");
             pw.println("#fileTag ");
-            pw.println("##Path of a data entry list file, must be set");
+            pw.println("##Path of a data entry list file, must be set.");
             pw.println("#dataEntryPath dataEntry.lst");
             pw.println("##########From here on, list up paths of data lobby folders containing stationXML files.");
             pw.println("##########  Up to " + MAX_NUM + " folders can be managed. Any index may be left blank.");
             for (int i = 1; i <= MAX_NUM; i++) {
-                pw.println("##" + MathAid.ordinalNumber(i) + " folder");
+                pw.println("##" + MathAid.ordinalNumber(i) + " folder.");
                 pw.println("#lobbyPath" + i + " ");
             }
         }

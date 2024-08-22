@@ -120,17 +120,17 @@ public class PartialWaveformPlotter extends Operation {
         Path outPath = Property.generatePath(thisClass);
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
             pw.println("manhattan " + thisClass.getSimpleName());
-            pw.println("##Path of a working directory. (.)");
+            pw.println("##Path of work folder. (.)");
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this unset.");
             pw.println("#folderTag ");
-            pw.println("##SacComponents to be used, listed using spaces (Z R T)");
+            pw.println("##SacComponents to be used, listed using spaces. (Z R T)");
             pw.println("#components ");
-            pw.println("##Path of a partial waveform folder, must be set");
+            pw.println("##Path of a partial waveform folder, must be set.");
             pw.println("#partialPath partial");
-            pw.println("##Path of a basic waveform folder, if plotting residual waveform");
+            pw.println("##Path of a basic waveform folder, if plotting residual waveform.");
             pw.println("#basicPath actual");
-            pw.println("##Path of a travel time information file, if plotting travel times");
+            pw.println("##Path of a travel time information file, if plotting travel times.");
             pw.println("#travelTimePath travelTime.inf");
             pw.println("##GlobalCMTIDs of events to work for, listed using spaces, must be set.");
             pw.println("#tendEvents ");
@@ -142,9 +142,9 @@ public class PartialWaveformPlotter extends Operation {
             pw.println("#tendVoxelLongitudes ");
             pw.println("##(double) Radii of voxels to work for, listed using spaces, must be set.");
             pw.println("#tendVoxelRadii ");
-            pw.println("##(double) Time length of each plot [s] (150)");
+            pw.println("##(double) Time length of each plot [s]. (150)");
             pw.println("#timeLength ");
-            pw.println("##(double) How much to scale down the residual waveform (1e7)");
+            pw.println("##(double) How much to scale down the residual waveform. (1e7)");
             pw.println("#residualScale ");
         }
         System.err.println(outPath + " is created.");

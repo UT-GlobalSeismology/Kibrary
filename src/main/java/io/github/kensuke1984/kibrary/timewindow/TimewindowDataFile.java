@@ -75,6 +75,9 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
  * <li> In 'timewindow.observer', information of each observer is written.</li>
  * </ol>
  *
+ * @author Kensuke Konishi
+ * @since version 0.3.1
+ * @version 2021/11/2 Renamed from timewindow.TimewindowInformationFile to timewindow.TimewindowDataFile.
  */
 public final class TimewindowDataFile {
     private TimewindowDataFile() {}
