@@ -42,7 +42,7 @@ public class Property extends Properties {
         } else if (args.length == 1) {
             try {
                 if (StringUtils.isNumeric(args[0])) {
-                    manhattan = Manhattan.valueOf(Integer.parseInt(args[0]));
+                    manhattan = Manhattan.ofNumber(Integer.parseInt(args[0]));
                 } else {
                     manhattan = Manhattan.valueOf(args[0]);
                 }
@@ -57,7 +57,7 @@ public class Property extends Properties {
             System.out.print("For which one do you want to create a property file? [" + Manhattan.numRange() + "] : ");
             String valInput = GadgetAid.readInputLine();
             if (valInput.isEmpty()) System.exit(9);
-            manhattan = Manhattan.valueOf(Integer.parseInt(valInput));
+            manhattan = Manhattan.ofNumber(Integer.parseInt(valInput));
         }
 
         //~output file~//

@@ -18,7 +18,7 @@ import io.github.kensuke1984.kibrary.waveform.WaveformDataWriter;
 public enum SACComponent {
     Z(1), R(2), T(3);
 
-    private int number;
+    private final int number;
 
     private SACComponent(int number) {
         this.number = number;

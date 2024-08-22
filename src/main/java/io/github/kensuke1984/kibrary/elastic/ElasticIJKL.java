@@ -15,12 +15,8 @@ public enum ElasticIJKL {
 
     private final int value;
 
-    ElasticIJKL(int n) {
-        value = n;
-    }
-
-    private static boolean checkInt(int n) {
-        return 1 <= n && n <= 3;
+    private ElasticIJKL(int value) {
+        this.value = value;
     }
 
     public static ElasticIJKL valueOf(int i, int j, int k, int l) {
@@ -41,6 +37,10 @@ public enum ElasticIJKL {
         for (ElasticIJKL ijkl : values())
             if (ijkl.getValue() == n) return ijkl;
         throw new RuntimeException("Ananticipated.");
+    }
+
+    private static boolean checkInt(int n) {
+        return 1 <= n && n <= 3;
     }
 
     public int getValue() {

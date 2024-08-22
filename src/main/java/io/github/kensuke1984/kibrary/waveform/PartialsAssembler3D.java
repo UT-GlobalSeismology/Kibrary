@@ -86,7 +86,7 @@ import io.github.kensuke1984.kibrary.voxel.VoxelInformationFile;
  * @since a long time ago
  * @version 2021/12/24 renamed from waveformdata.PartialDatasetMaker_v2 to waveform.PartialWaveformAssembler3D
  */
-public class PartialWaveformAssembler3D extends Operation {
+public class PartialsAssembler3D extends Operation {
 
     /**
      * Number of SPC files to take from BP catalog for interpolation.
@@ -307,7 +307,7 @@ public class PartialWaveformAssembler3D extends Operation {
         System.err.println(outPath + " is created.");
     }
 
-    public PartialWaveformAssembler3D(Property property) throws IOException {
+    public PartialsAssembler3D(Property property) throws IOException {
         this.property = (Property) property.clone();
     }
 
@@ -352,7 +352,7 @@ public class PartialWaveformAssembler3D extends Operation {
         if (property.containsKey("userSourceTimeFunctionPath")) {
             userSourceTimeFunctionPath = property.parsePath("userSourceTimeFunctionPath", null, true, workPath);
         } else {
-            sourceTimeFunctionType = SourceTimeFunctionType.valueOf(property.parseInt("sourceTimeFunctionType", "0"));
+            sourceTimeFunctionType = SourceTimeFunctionType.ofNumber(property.parseInt("sourceTimeFunctionType", "0"));
         }
         if (property.containsKey("sourceTimeFunctionCatalogPath")) {
             sourceTimeFunctionCatalogPath = property.parsePath("sourceTimeFunctionCatalogPath", null, true, workPath);

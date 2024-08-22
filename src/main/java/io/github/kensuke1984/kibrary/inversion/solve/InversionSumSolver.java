@@ -14,6 +14,7 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
+import org.apache.commons.math3.util.FastMath;
 
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
@@ -185,8 +186,8 @@ public class InversionSumSolver extends Operation {
             ata = (i == 0) ? ataEach : ata.add(ataEach);
             atd = (i == 0) ? atdEach : atd.add(atdEach);
             numIndependent += dInfoEach[0];
-            dSumOfSquares += Math.pow(dInfoEach[1], 2);
-            obsSumOfSquares += Math.pow(dInfoEach[2], 2);
+            dSumOfSquares += FastMath.pow(dInfoEach[1], 2);
+            obsSumOfSquares += FastMath.pow(dInfoEach[2], 2);
         }
         double dNorm = Math.sqrt(dSumOfSquares);
         double obsNorm = Math.sqrt(obsSumOfSquares);

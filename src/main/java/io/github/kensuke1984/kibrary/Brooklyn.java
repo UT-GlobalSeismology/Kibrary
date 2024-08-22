@@ -55,9 +55,11 @@ enum Brooklyn {
     Environment(1, Environment.class),
     GlobalCMTCatalogUpdate(2, GlobalCMTCatalogUpdate.class),
     PolynomialStructureFile(3, PolynomialStructureFile.class),
-    VectorFile(7, VectorFile.class),
-    MatrixFile(8, MatrixFile.class),
-    ColorBinInformationFile(9, ColorBinInformationFile.class),
+    EventListFile(4, EventListFile.class),
+    ObserverListFile(5, ObserverListFile.class),
+    DataEntryListFile(6, DataEntryListFile.class),
+    DataEntryIntersection(7, DataEntryIntersection.class),
+    ColorBinInformationFile(8, ColorBinInformationFile.class),
     // Data download 10
     GlobalCMTID(10, GlobalCMTID.class),
     GlobalCMTListup(11, GlobalCMTListup.class),
@@ -69,47 +71,45 @@ enum Brooklyn {
     SACFileAccess(22, SACFileAccess.class),
     // Filtered 30
     TimewindowDataFile(31, TimewindowDataFile.class),
-    TimewindowSubtract(32, TimewindowSubtract.class),
-    StaticCorrectionDataFile(34, StaticCorrectionDataFile.class),
-    EventListFile(35, EventListFile.class),
-    ObserverListFile(36, ObserverListFile.class),
-    DataEntryListFile(37, DataEntryListFile.class),
-    DataEntryIntersection(38, DataEntryIntersection.class),
+    StaticCorrectionDataFile(32, StaticCorrectionDataFile.class),
+    TimewindowSubtract(37, TimewindowSubtract.class),
     // Compiled 40
     BasicIDFile(40, BasicIDFile.class),
-    VarianceComputer(45, VarianceComputer.class),
-    DistanceHistogram(48, DistanceHistogram.class),
-    AzimuthHistogram(49, AzimuthHistogram.class),
+    VarianceComputer(41, VarianceComputer.class),
+    DistanceHistogram(42, DistanceHistogram.class),
+    AzimuthHistogram(43, AzimuthHistogram.class),
     // Voxel 50
-    UnknownParameterSetter(51, UnknownParameterSetter.class),
-    VoxelMapper(52, VoxelMapper.class),
-    LayerInformationFile(53, LayerInformationFile.class),
+    LayerInformationFile(50, LayerInformationFile.class),
+    VoxelMapper(51, VoxelMapper.class),
+    UnknownParameterSetter(52, UnknownParameterSetter.class),
     // Partial 60
-    PartialIDFile(65, PartialIDFile.class),
+    PartialIDFile(60, PartialIDFile.class),
     ThreeDPartialCleanup(69, ThreeDPartialCleanup.class),
     // Inversion 70
     WeightingHandler(70, WeightingHandler.class),
-    PerturbationComparison(71, PerturbationComparison.class),
-    DiagATAExtract(75, DiagATAExtract.class);
+    VectorFile(71, VectorFile.class),
+    MatrixFile(72, MatrixFile.class),
+    DiagATAExtract(73, DiagATAExtract.class),
+    PerturbationComparison(74, PerturbationComparison.class),
     // Temporal 100
     ;
 
-    private Class<?> c;
-    private int value;
+    private final Class<?> c;
+    private final int number;
 
-    Brooklyn(int n, Class<?> c) {
-        value = n;
+    private Brooklyn(int number, Class<?> c) {
+        this.number = number;
         this.c = c;
     }
 
     static void printList() {
-        Arrays.stream(values()).sorted().forEach(m -> System.out.println(m.value + " " + m.c.getSimpleName()));
+        Arrays.stream(values()).sorted().forEach(m -> System.out.println(m.number + " " + m.c.getSimpleName()));
     }
 
     static String numRange() {
         Brooklyn[] all = values();
-        int min = Arrays.stream(all).mapToInt(m -> m.value).min().getAsInt();
-        int max = Arrays.stream(all).mapToInt(m -> m.value).max().getAsInt();
+        int min = Arrays.stream(all).mapToInt(m -> m.number).min().getAsInt();
+        int max = Arrays.stream(all).mapToInt(m -> m.number).max().getAsInt();
         return min + "-" + max;
     }
 
@@ -118,11 +118,11 @@ enum Brooklyn {
      * Note that {@link #valueOf(String)}, which returns a {@link Brooklyn} given a String of its name,
      * is already defined automatically.
      *
-     * @param n (int)The value to get a {@link Brooklyn} for.
+     * @param number (int) The value to get a {@link Brooklyn} for.
      * @return ({@link Brooklyn}) The {@link Brooklyn} corresponding to the value.
      */
-    static Brooklyn valueOf(int n) {
-        return Arrays.stream(values()).filter(m -> m.value == n).findAny().get();
+    static Brooklyn ofNumber(int number) {
+        return Arrays.stream(values()).filter(m -> m.number == number).findAny().get();
     }
 
     String getClassName() {
