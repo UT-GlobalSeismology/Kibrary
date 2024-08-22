@@ -2,6 +2,7 @@ package io.github.kensuke1984.kibrary.util.sac;
 
 import java.io.BufferedOutputStream;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.OpenOption;
@@ -9,9 +10,11 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.EnumMap;
 import java.util.Map;
+import java.util.Set;
 
 import io.github.kensuke1984.kibrary.external.SAC;
 import io.github.kensuke1984.kibrary.math.Trace;
+import io.github.kensuke1984.kibrary.util.EventFolder;
 
 /**
  * Read/Write of a SAC file. (SAC: seismic analysis code)
@@ -21,9 +24,7 @@ import io.github.kensuke1984.kibrary.math.Trace;
  * @see <a href=http://ds.iris.edu/ds/nodes/dmc/forms/sac/>SAC</a>
  */
 public final class SACUtil {
-
-    private SACUtil() {
-    }
+    private SACUtil() {}
 
     /**
      * <p>
@@ -429,6 +430,40 @@ public final class SACUtil {
             for (int i = 0; i < npts; i++)
                 data[i] = stream.readFloat();
             return data;
+        }
+    }
+
+    /**
+     * Read SAC files in event folders and output in ascii format.
+     * Output file name is "sacFileName.txt".
+     * @param eventDirs (Set of {@link EventFolder}) Event folders.
+     */
+    public static void outputSacFileTxts(Set<EventFolder> eventDirs) {
+        for (EventFolder eventDir : eventDirs) {
+            try {
+                Set<SACFileName> set = eventDir.sacFileSet();
+
+                for (SACFileName sacName : set) {
+                    // set output
+                    String fileName = sacName.toPath().getFileName().toString();
+                    Path outputPath = eventDir.toPath().resolve(fileName + ".txt");
+                    if (Files.exists(outputPath)) continue;
+
+                    // set input file path
+                    SACFileAccess sacData = sacName.read();
+                    Trace sacTrace = sacData.createTrace();
+
+                    // output
+                    try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath))) {
+                        for (int i = 0; i < sacTrace.getLength(); i++) {
+                            pw.println(sacTrace.getXAt(i) + " " + sacTrace.getYAt(i));
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                System.err.println("Error on " + eventDir);
+                e.printStackTrace();
+            }
         }
     }
 

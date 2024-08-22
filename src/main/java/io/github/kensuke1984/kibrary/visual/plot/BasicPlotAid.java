@@ -85,20 +85,27 @@ class BasicPlotAid {
     static void plotTravelTimeCurve(TauP_Time timeTool, String[] displayPhases, String[] alignPhases, double reductionSlowness,
             double startDistance, double endDistance,
             String fileTag, String dateString, Path eventPath, SACComponent component, GnuplotFile gnuplot) throws IOException, TauModelException {
-        // set names of all phases to display, and the phase to align if it is specified
+        // set names of all phases to display, and the phases to align on if specified
         timeTool.setPhaseNames(displayPhases);
         if (alignPhases != null) {
             for (String phase : alignPhases) timeTool.appendPhaseName(phase);
         }
 
+        // The following is needed to apply source depth if calcTime() has not been done yet.
+        timeTool.depthCorrect(timeTool.getSourceDepth(), timeTool.getReceiverDepth());
+
         // compute travel times
         List<SeismicPhase> phaseList = timeTool.getSeismicPhases();
-        List<String> alignPhaseNameList = Arrays.asList(alignPhases);
-        List<SeismicPhase> alignPhaseList = phaseList.stream().filter(phase -> alignPhaseNameList.contains(phase.getName())).collect(Collectors.toList());
+        // extract information for phases to be used for alignment
+        List<SeismicPhase> alignPhaseList = null;
+        if (alignPhases != null) {
+            List<String> alignPhaseNameList = Arrays.asList(alignPhases);
+            alignPhaseList = phaseList.stream().filter(phase -> alignPhaseNameList.contains(phase.getName())).collect(Collectors.toList());
+        }
 
         // output file and add curve for each phase
         for (SeismicPhase phase : phaseList) {
-            if(!phase.hasArrivals()) {
+            if (!phase.hasArrivals()) {
                 continue;
             }
 

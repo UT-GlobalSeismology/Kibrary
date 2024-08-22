@@ -520,7 +520,6 @@ public class BasicBinnedStackCreator extends Operation {
         }
 
         private void binStackPlotSetup() {
-
             gnuplot = new GnuplotFile(eventPath.resolve(fileNameRoot + ".plt"));
 
             gnuplot.setOutput("pdf", fileNameRoot + ".pdf", 21, 29.7, true);
@@ -531,7 +530,7 @@ public class BasicBinnedStackCreator extends Operation {
 
             gnuplot.setCommonTitle(eventPath.getFileName().toString());
             if (alignPhases != null) {
-                gnuplot.setCommonXlabel("Time aligned on " + String.join(",", alignPhases) + "-wave arrival (s)");
+                gnuplot.setCommonXlabel("Time aligned on " + String.join(",", alignPhases) + "-phase arrival (s)");
             } else {
                 gnuplot.setCommonXlabel("Reduced time (T - " + reductionSlowness + " Δ) (s)");
             }

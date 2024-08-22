@@ -297,21 +297,21 @@ public class OrthogonalityTest extends Operation {
        gnuplot.nextField();
 
        for (int i = 0; i < testUnknowns.size(); i++) {
-           gnuplot.setTitle("1 event (" + specificEvent + ")");
+           gnuplot.setTitle("1 event (" + specificEvent + "), all stations");
            gnuplot.addLine("oneToAll.txt", 1, i + 2, appearances[i % nAppearances],
                    MathAid.simplestString(testUnknowns.get(i).getPosition().getDepth()) + " km");
        }
        gnuplot.nextField();
 
        for (int i = 0; i < testUnknowns.size(); i++) {
-           gnuplot.setTitle("1 station (" + specificObserverName.replace("_", "\\\\_") + ")");
+           gnuplot.setTitle("1 station (" + specificObserverName.replace("_", "\\\\_") + "), all events");
            gnuplot.addLine("allToOne.txt", 1, i + 2, appearances[i % nAppearances],
                    MathAid.simplestString(testUnknowns.get(i).getPosition().getDepth()) + " km");
        }
        gnuplot.nextField();
 
        for (int i = 0; i < testUnknowns.size(); i++) {
-           gnuplot.setTitle("All waveforms");
+           gnuplot.setTitle("All events and all stations");
            gnuplot.setKey(false, true, "top right");
            gnuplot.addLine("allToAll.txt", 1, i + 2, appearances[i % nAppearances],
                    MathAid.simplestString(testUnknowns.get(i).getPosition().getDepth()) + " km");
