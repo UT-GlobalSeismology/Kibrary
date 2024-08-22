@@ -12,6 +12,7 @@ import org.apache.commons.math3.util.Precision;
 
 import io.github.kensuke1984.kibrary.elastic.ElasticMedium;
 import io.github.kensuke1984.kibrary.elastic.VariableType;
+import io.github.kensuke1984.kibrary.util.MathAid;
 
 /**
  * 1D structure of a planet.
@@ -225,7 +226,6 @@ public final class PolynomialStructure {
         this.qMu = qMu.clone();
         this.qKappa = qKappa.clone();
         this.isDefault = isDefault;
-
     }
 
     /**
@@ -331,9 +331,8 @@ public final class PolynomialStructure {
         double[] qMuNew = originalStructure.getQMu();
         double[] qKappaNew = originalStructure.getQKappa();
 
-        // create a constant function
-        double coefficient = 1.0 + percent / 100.0;
-        PolynomialFunction p0 = new PolynomialFunction(new double[] {coefficient});
+        // decide factor
+        double factor = 1.0 + percent / 100.0;
 
         // multiply the functions of the corresponding zones
         int iZoneR1 = originalStructure.zoneOf(r1);
@@ -341,36 +340,36 @@ public final class PolynomialStructure {
         for (int iZone = iZoneR1; iZone < iZoneR2; iZone++) {
             switch(variable) {
             case RHO:
-                rhoNew[iZone] = rhoNew[iZone].multiply(p0);
+                rhoNew[iZone] = multiplyCoefficient(rhoNew[iZone], factor);
                 break;
             case Vp:
-                vpvNew[iZone] = vpvNew[iZone].multiply(p0);
-                vphNew[iZone] = vphNew[iZone].multiply(p0);
+                vpvNew[iZone] = multiplyCoefficient(vpvNew[iZone], factor);
+                vphNew[iZone] = multiplyCoefficient(vphNew[iZone], factor);
                 break;
             case Vpv:
-                vpvNew[iZone] = vpvNew[iZone].multiply(p0);
+                vpvNew[iZone] = multiplyCoefficient(vpvNew[iZone], factor);
                 break;
             case Vph:
-                vphNew[iZone] = vphNew[iZone].multiply(p0);
+                vphNew[iZone] = multiplyCoefficient(vphNew[iZone], factor);
                 break;
             case Vs:
-                vsvNew[iZone] = vsvNew[iZone].multiply(p0);
-                vshNew[iZone] = vshNew[iZone].multiply(p0);
+                vsvNew[iZone] = multiplyCoefficient(vsvNew[iZone], factor);
+                vshNew[iZone] = multiplyCoefficient(vshNew[iZone], factor);
                 break;
             case Vsv:
-                vsvNew[iZone] = vsvNew[iZone].multiply(p0);
+                vsvNew[iZone] = multiplyCoefficient(vsvNew[iZone], factor);
                 break;
             case Vsh:
-                vshNew[iZone] = vshNew[iZone].multiply(p0);
+                vshNew[iZone] = multiplyCoefficient(vshNew[iZone], factor);
                 break;
             case ETA:
-                etaNew[iZone] = etaNew[iZone].multiply(p0);
+                etaNew[iZone] = multiplyCoefficient(etaNew[iZone], factor);
                 break;
             case Qmu:
-                qMuNew[iZone] = qMuNew[iZone] * coefficient;
+                qMuNew[iZone] = qMuNew[iZone] * factor;
                 break;
             case Qkappa:
-                qKappaNew[iZone] = qKappaNew[iZone] * coefficient;
+                qKappaNew[iZone] = qKappaNew[iZone] * factor;
                 break;
             default:
                 throw new IllegalArgumentException("Illegal variable type: " + variable);
@@ -379,6 +378,11 @@ public final class PolynomialStructure {
 
         return new PolynomialStructure(nZoneNew, nCoreZoneNew, rMinNew, rMaxNew,
                 rhoNew, vpvNew, vphNew, vsvNew, vshNew, etaNew, qMuNew, qKappaNew);
+    }
+
+    private PolynomialFunction multiplyCoefficient(PolynomialFunction function, double factor) {
+        double[] coefficients = Arrays.stream(function.getCoefficients()).map(r -> MathAid.roundForPrecision(r * factor)).toArray();
+        return new PolynomialFunction(coefficients);
     }
 
     /**
