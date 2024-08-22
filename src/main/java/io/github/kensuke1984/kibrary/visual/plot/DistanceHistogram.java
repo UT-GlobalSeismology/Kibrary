@@ -121,7 +121,7 @@ public class DistanceHistogram {
         Path scriptPath = outPath.resolve(fileNameRoot + ".plt");
 
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(scriptPath))) {
-            pw.println("set term pngcairo enhanced font 'Helvetica,14'");
+            pw.println("set term pngcairo enhanced font 'Helvetica,20'");
             pw.println("set xlabel 'Epicentral distance (deg)'");
             pw.println("set ylabel 'Number of records'");
             pw.println("set xrange [" + minimum + ":" + maximum + "]");

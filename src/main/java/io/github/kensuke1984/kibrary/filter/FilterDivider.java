@@ -144,7 +144,7 @@ public class FilterDivider extends Operation {
             pw.println("#lowFreq ");
             pw.println("##Higher limit of the frequency band [Hz]. (0.08)");
             pw.println("#highFreq ");
-            pw.println("##The value of NP for the filter. (4)");
+            pw.println("##(int) The value of NP for the filter. (4)");
             pw.println("#np ");
             pw.println("##(boolean) Whether to apply causal filter. When false, zero-phase filter is applied. (false)");
             pw.println("#causal ");
@@ -181,7 +181,7 @@ public class FilterDivider extends Operation {
 
     @Override
     public void run() throws IOException {
-        setFilter(lowFreq, highFreq, np);
+        setFilter();
 
         Set<EventFolder> eventDirs = new HashSet<>();
         eventDirs.addAll(Files.exists(obsPath) ? DatasetAid.eventFolderSet(obsPath) : Collections.emptySet());
@@ -233,26 +233,25 @@ public class FilterDivider extends Operation {
         };
     }
 
-    /**
-     * @param fMin [Hz] 透過帯域 最小周波数
-     * @param fMax [Hz] 透過帯域 最大周波数
-     * @param n    parameter n
-     */
-    private void setFilter(double fMin, double fMax, int n) {
-        double omegaH = fMax * 2 * Math.PI * delta;
-        double omegaL = fMin * 2 * Math.PI * delta;
+    private void setFilter() {
+        double omegaH = highFreq * 2 * Math.PI * delta;
+        double omegaL = lowFreq * 2 * Math.PI * delta;
         switch (filterType) {
             case "lowpass":
-                filter = new LowPassFilter(omegaL, n);
+                System.err.println("Designing filter. - " + highFreq);
+                filter = new LowPassFilter(omegaH, np);
                 break;
             case "highpass":
-                filter = new HighPassFilter(omegaH, n);
+                System.err.println("Designing filter. " + lowFreq + " - ");
+                filter = new HighPassFilter(omegaL, np);
                 break;
             case "bandpass":
-                filter = new BandPassFilter(omegaH, omegaL, n);
+                System.err.println("Designing filter. " + lowFreq + " - " + highFreq);
+                filter = new BandPassFilter(omegaH, omegaL, np);
                 break;
             case "bandstop":
-                filter = new BandStopFilter(omegaH, omegaL, n);
+                System.err.println("Designing filter. - " + lowFreq + " , " + highFreq + " -");
+                filter = new BandStopFilter(omegaH, omegaL, np);
                 break;
             default:
                 throw new IllegalArgumentException("No such filter as " + filterType);
