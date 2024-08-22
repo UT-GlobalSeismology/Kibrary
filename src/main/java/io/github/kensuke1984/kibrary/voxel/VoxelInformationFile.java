@@ -39,18 +39,17 @@ import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 public class VoxelInformationFile {
 
     /**
-     * thickness of each layer
+     * Thickness of each layer.
      */
     private final double[] layerThicknesses;
     /**
-     * Radii of voxel center points, sorted, no duplication
+     * Radii of voxel center points, sorted, no duplication.
      */
     private final double[] layerRadii;
     /**
-     * Horizontal distribution of voxels
+     * Horizontal distribution of voxels.
      */
     private final List<HorizontalPixel> horizontalPixels = new ArrayList<>();
-
 
     /**
      * Writes a voxel information file given arrays of radii and positions.
@@ -89,8 +88,8 @@ public class VoxelInformationFile {
     }
 
     /**
-     * Reads in a voxel information file.
-     * @param filePath (Path)
+     * Read in a voxel information file.
+     * @param filePath (Path) Input file path.
      * @throws IOException
      */
     public VoxelInformationFile(Path filePath) throws IOException {
@@ -113,24 +112,24 @@ public class VoxelInformationFile {
     }
 
     /**
-     * Get information of layer thicknesses.
-     * @return (double[])
+     * Get layer thicknesses.
+     * @return (double[]) Layer thicknesses.
      */
     public double[] getThicknesses() {
         return layerThicknesses.clone();
     }
 
     /**
-     * Get radii information. The radii should be sorted, and there should be no duplication.
-     * @return (double[])
+     * Get radii. The radii should be sorted, and there should be no duplication.
+     * @return (double[]) Radii.
      */
     public double[] getRadii() {
         return layerRadii.clone();
     }
 
     /**
-     * Get horizontal position information. They may not be sorted. There may be duplication.
-     * @return
+     * Get horizontal positions. They may not be sorted. There may be duplication.
+     * @return (List of {@link HorizontalPosition}) Horizontal positions.
      */
     public List<HorizontalPosition> getHorizontalPositions() {
         return horizontalPixels.stream().map(HorizontalPixel::getPosition).collect(Collectors.toList());
@@ -138,15 +137,15 @@ public class VoxelInformationFile {
 
     /**
      * Get horizontal pixels. They may not be sorted. There may be duplication.
-     * @return
+     * @return (List of {@link HorizontalPixel}) Horizontal pixels.
      */
     public List<HorizontalPixel> getHorizontalPixels() {
         return Collections.unmodifiableList(horizontalPixels);
     }
 
     /**
-     * Get set of full position information.
-     * @return
+     * Get full positions.
+     * @return (Set of {@link FullPosition}) Full positions.
      */
     public Set<FullPosition> fullPositionSet() {
         Set<FullPosition> voxelSet = new HashSet<>();

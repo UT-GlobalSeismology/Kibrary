@@ -627,7 +627,7 @@ public class RaypathMapper extends Operation {
             Set<HorizontalPosition> positions = collectPositions();
 
             // decide on a region temporarily, and split up the returned String into coordinates
-            String[] coordinateStrings = PerturbationMapShellscript.decideMapRegion(positions).split("/");
+            String[] coordinateStrings = ScalarMapShellscript.decideMapRegion(positions).split("/");
             double lonMin = Double.parseDouble(coordinateStrings[0]);
             double lonMax = Double.parseDouble(coordinateStrings[1]);
             double latMin = Double.parseDouble(coordinateStrings[2]);
@@ -660,7 +660,7 @@ public class RaypathMapper extends Operation {
 
         } else {
             Set<HorizontalPosition> positions = collectPositions();
-            String centerString = PerturbationMapShellscript.decideMapCenter(positions);
+            String centerString = ScalarMapShellscript.decideMapCenter(positions);
             return "-Ja" + centerString + "/" + horizon + "/1:120000000";
         }
     }

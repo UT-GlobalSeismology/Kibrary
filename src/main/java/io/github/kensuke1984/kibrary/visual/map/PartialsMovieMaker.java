@@ -17,7 +17,8 @@ import java.util.stream.Collectors;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.elastic.VariableType;
-import io.github.kensuke1984.kibrary.perturbation.PerturbationListFile;
+import io.github.kensuke1984.kibrary.perturbation.ScalarListFile;
+import io.github.kensuke1984.kibrary.perturbation.ScalarType;
 import io.github.kensuke1984.kibrary.timewindow.Timewindow;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.MathAid;
@@ -290,20 +291,22 @@ public class PartialsMovieMaker extends Operation {
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         for (SACComponent component : components) {
-            for (VariableType variableType : variableTypes) {
-                // root for names of file of this variable type, regardless of timeiwndow or timestep
-                String fileNameRoot = "d" + variableType + "Normalized";
+            ScalarType scalarType = ScalarType.partialOf(component);
+
+            for (VariableType variable : variableTypes) {
+                // names of scalar files of this variable type, regardless of timeiwndow or timestep
+                String scalarFileName = ScalarListFile.generateFileName(variable, scalarType, "normalized");
 
                 for (GlobalCMTID event : tendEvents) {
                     for (String observerName : tendObservers) {
                         List<PartialID> partialsForEntry = partialIDs.stream().filter(partial ->
                                 partial.getSacComponent().equals(component)
-                                && partial.getVariableType().equals(variableType)
+                                && partial.getVariableType().equals(variable)
                                 && partial.getGlobalCMTID().equals(event)
                                 && partial.getObserver().toString().equals(observerName))
                                 .collect(Collectors.toList());
                         if (partialsForEntry.size() == 0) continue;
-                        System.err.println("Working for " + component  + " " + variableType + " " + event + " " + observerName);
+                        System.err.println("Working for " + component  + " " + variable + " " + event + " " + observerName);
 
                         double[] startTimes = partialsForEntry.stream().mapToDouble(PartialID::getStartTime).distinct().sorted().toArray();
 
@@ -313,7 +316,7 @@ public class PartialsMovieMaker extends Operation {
                                     .filter(partial -> partial.getStartTime() == startTime).collect(Collectors.toList());
 
                             // create folder
-                            String seriesName = event + "_" + observerName + "_" + component + "_" + variableType + "_w"
+                            String seriesName = event + "_" + observerName + "_" + component + "_" + variable + "_w"
                                     + MathAid.padToString(startTime, Timewindow.TYPICAL_MAX_INTEGER_DIGITS, Timewindow.DECIMALS, true, "d");
                             Path seriesPath = outPath.resolve(seriesName);
                             Files.createDirectories(seriesPath);
@@ -333,7 +336,7 @@ public class PartialsMovieMaker extends Operation {
                             CrossSectionWorker worker = new CrossSectionWorker(pos0Latitude, pos0Longitude, pos1Latitude, pos1Longitude,
                                     beforePos0Deg, afterPosDeg, useAfterPos1, zeroPointRadius, zeroPointName, flipVerticalAxis,
                                     marginLatitudeRaw, setMarginLatitudeByKm, marginLongitudeRaw, setMarginLongitudeByKm, marginRadius,
-                                    scale, mosaic, false, 0, fileNameRoot, discretePositions);
+                                    scale, mosaic, variable, scalarType, "normalized", discretePositions);
 
                             // for each time step
                             for (int i = 0; i < npts; i++) {
@@ -354,24 +357,24 @@ public class PartialsMovieMaker extends Operation {
                                 Files.createDirectories(outSnapshotPath);
 
                                 // output discrete perturbation file
-                                Path outputDiscretePath = outSnapshotPath.resolve(fileNameRoot + ".lst");
-                                PerturbationListFile.write(discreteMap, outputDiscretePath);
+                                Path outputDiscretePath = outSnapshotPath.resolve(scalarFileName);
+                                ScalarListFile.write(discreteMap, outputDiscretePath);
 
                                 // output data for cross section
                                 worker.computeCrossSection(discreteMap, null, outSnapshotPath);
                             }
 
                             // write shellscript to map each snapshot and convert them to gif movie
-                            String scaleLabel = "@%12%\\266@%%U/@%12%\\266@%%" + variableType + " (normalized)";
-                            worker.writeScripts(scaleLabel, seriesPath);
-                            writeParentShellScript(fileNameRoot, seriesPath.resolve(fileNameRoot + "Movie.sh"));
+                            worker.writeScripts(seriesPath);
+                            String plotFileNameRoot = worker.getPlotFileNameRoot();
+                            writeParentShellScript(plotFileNameRoot, seriesPath.resolve(plotFileNameRoot + "Movie.sh"));
                         }
                     }
                 }
             }
         }
         System.err.println("After this finishes, please enter each " + outPath
-                + "/event_observer_component_variable(Folder)/ and run d*NormailzedMovie.sh");
+                + "/event_observer_component_variable(Folder)/ and run *Partial*_normalized.sh");
     }
 
     private void writeParentShellScript(String fileNameRoot, Path outputPath) throws IOException {

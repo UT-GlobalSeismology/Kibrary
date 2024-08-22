@@ -31,34 +31,6 @@ public class PerturbationModel {
         this.voxelList = voxelList;
     }
 
-    public PerturbationModel(List<UnknownParameter> unknowns, double[] values, PolynomialStructure initialStructure) {
-        if (unknowns.size() != values.length) throw new IllegalArgumentException("Number of unknowns and values does not match");
-
-        for (int i = 0; i < unknowns.size(); i++) {
-            boolean flag = false;
-
-            // if a voxel of same position is already added, set value to that voxel
-            for (PerturbationVoxel voxel : voxelList) {
-                if (voxel.getPosition().equals(unknowns.get(i).getPosition())) {
-                    voxel.setDelta(unknowns.get(i).getVariableType(), values[i]);
-                    flag = true;
-                }
-            }
-
-            // otherwise, create new voxel
-            if (flag == false) {
-                PerturbationVoxel voxel = new PerturbationVoxel(unknowns.get(i).getPosition(), unknowns.get(i).getSize(), initialStructure);
-                voxel.setDelta(unknowns.get(i).getVariableType(), values[i]);
-                voxelList.add(voxel);
-            }
-        }
-
-        // if RHO is not included in unknowns, set RHO to value in initial structure
-        for (PerturbationVoxel voxel : voxelList) {
-            voxel.setDefaultIfUndefined(VariableType.RHO);
-        }
-    }
-
     public PerturbationModel(List<KnownParameter> knowns, PolynomialStructure initialStructure) {
         for (int i = 0; i < knowns.size(); i++) {
             boolean flag = false;
@@ -69,7 +41,7 @@ public class PerturbationModel {
             // if a voxel of same position is already added, set value to that voxel
             for (PerturbationVoxel voxel : voxelList) {
                 if (voxel.getPosition().equals(parameter.getPosition())) {
-                    voxel.setDelta(parameter.getVariableType(), value);
+                    voxel.setValue(parameter.getVariableType(), ScalarType.DELTA, value);
                     flag = true;
                 }
             }
@@ -77,7 +49,7 @@ public class PerturbationModel {
             // otherwise, create new voxel
             if (flag == false) {
                 PerturbationVoxel voxel = new PerturbationVoxel(parameter.getPosition(), parameter.getSize(), initialStructure);
-                voxel.setDelta(parameter.getVariableType(), value);
+                voxel.setValue(parameter.getVariableType(), ScalarType.DELTA, value);
                 voxelList.add(voxel);
             }
         }
@@ -89,9 +61,9 @@ public class PerturbationModel {
     }
 
     /**
-     * Create a new perturbation model with the same absolute parameter values but with a different initial structure.
-     * @param oneDStructure
-     * @return
+     * Create a new perturbation model with the same absolute parameter values but with a different reference structure.
+     * @param oneDStructure ({@link PolynomialStructure}) New reference structure.
+     * @return ({@link PerturbationModel}) New perturbation model with the given reference structure.
      */
     public PerturbationModel withReferenceStructureAs(PolynomialStructure oneDStructure) {
         List<PerturbationVoxel> newVoxelList = new ArrayList<>();
@@ -105,41 +77,26 @@ public class PerturbationModel {
         voxelList.add(voxel);
     }
 
+    /**
+     * Get perturbation values for a certain variable in the specified scalar type at all voxels.
+     * @param variable ({@link VariableType}) Variable to get values for.
+     * @param scalarType ({@link ScalarType}) Scalar type to get values in.
+     * @return (LinkedHashMap of {@link FullPosition}, Double) Correspondence of position and values for each voxel.
+     *
+     * @author otsuru
+     * @since 2024/4/22
+     */
+    public Map<FullPosition, Double> getValueMap(VariableType variable, ScalarType scalarType) {
+        // This is created as LinkedHashMap to preserve the order of voxels
+        Map<FullPosition, Double> map = new LinkedHashMap<>();
+        for (PerturbationVoxel voxel : voxelList) {
+            map.put(voxel.getPosition(), voxel.getValue(variable, scalarType));
+        }
+        return map;
+    }
+
     public List<PerturbationVoxel> getVoxels() {
         return new ArrayList<>(voxelList);
     }
 
-    /**
-     * Get perturbation values (in [%]) for a certain variable at all voxels.
-     * @param type ({@link VariableType})
-     * @return (LinkedHashMap of {@link FullPosition}, Double) Correspondence of position and perturbation value (in [%])
-     *
-     * @author otsuru
-     * @since 2023/3/4
-     */
-    public Map<FullPosition, Double> getPercentForType(VariableType type) {
-        // This is created as LinkedHashMap to preserve the order of voxels
-        Map<FullPosition, Double> map = new LinkedHashMap<>();
-        for (PerturbationVoxel voxel : voxelList) {
-            map.put(voxel.getPosition(), voxel.getPercent(type));
-        }
-        return map;
-    }
-
-    /**
-     * Get absolute perturbed values for a certain variable at all voxels.
-     * @param type ({@link VariableType})
-     * @return (LinkedHashMap of {@link FullPosition}, Double) Correspondence of position and absolute perturbed value
-     *
-     * @author otsuru
-     * @since 2023/7/12
-     */
-    public Map<FullPosition, Double> getAbsoluteForType(VariableType type) {
-        // This is created as LinkedHashMap to preserve the order of voxels
-        Map<FullPosition, Double> map = new LinkedHashMap<>();
-        for (PerturbationVoxel voxel : voxelList) {
-            map.put(voxel.getPosition(), voxel.getAbsolute(type));
-        }
-        return map;
-    }
 }

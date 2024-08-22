@@ -29,7 +29,6 @@ public class PerturbationVoxel {
         this.perturbedMedium = new ElasticMedium();
     }
 
-
     private PerturbationVoxel(FullPosition position, double volume, ElasticMedium referenceMedium, ElasticMedium perturbedMedium) {
         this.position = position;
         this.volume = volume;
@@ -37,43 +36,63 @@ public class PerturbationVoxel {
         this.perturbedMedium = perturbedMedium.clone();
     }
 
-    public void setDelta(VariableType type, double perturbation) {
-        double absolute = referenceMedium.get(type) + perturbation;
-        perturbedMedium.set(type, absolute);
+    /**
+     * Set the value of a certain variable in the specified scalar type.
+     * @param variable ({@link VariableType}) Variable to set value.
+     * @param scalarType ({@link ScalarType}) Scalar type to set value in.
+     * @param value (double) Value to set.
+     *
+     * @author otsuru
+     * @since 2024/4/22
+     */
+    public void setValue(VariableType variable, ScalarType scalarType, double value) {
+        double absolute;
+        switch (scalarType) {
+        case ABSOLUTE: absolute = value; break;
+        case DELTA: absolute = referenceMedium.get(variable) + value; break;
+        case PERCENT: absolute = referenceMedium.get(variable) * (1.0 + value / 100.0); break;
+        default: throw new IllegalArgumentException("Unsupported scalar type: " + scalarType);
+        }
+        perturbedMedium.set(variable, absolute);
     }
 
-    public void setPercent(VariableType type, double percent) {
-        double absolute = referenceMedium.get(type) * (1. + percent / 100);
-        perturbedMedium.set(type, absolute);
-    }
-
-    public void setDefaultIfUndefined(VariableType type) {
-        if (!perturbedMedium.isDefined(type)) {
-            double def = referenceMedium.get(type);
-            perturbedMedium.set(type, def);
+    /**
+     * Set a certain variable to its value in the reference medium if it is not defined yet.
+     * @param variable ({@link VariableType}) Variable to set.
+     */
+    public void setDefaultIfUndefined(VariableType variable) {
+        if (!perturbedMedium.isDefined(variable)) {
+            double def = referenceMedium.get(variable);
+            perturbedMedium.set(variable, def);
         }
     }
 
     /**
-     * Create a new perturbation voxel with the same absolute parameter values but with a different initial medium.
-     * @param oneDStructure
-     * @return
+     * Create a new perturbation voxel with the same absolute parameter values but with a different reference medium.
+     * @param oneDStructure ({@link PolynomialStructure}) New reference structure.
+     * @return ({@link PerturbationVoxel}) New perturbation voxel with the given reference structure.
      */
     public PerturbationVoxel withReferenceStructureAs(PolynomialStructure oneDStructure) {
         ElasticMedium newInitialMedium = oneDStructure.mediumAt(position.getR());
         return new PerturbationVoxel(position, volume, newInitialMedium, perturbedMedium);
     }
 
-    public double getDelta(VariableType type) {
-        return perturbedMedium.get(type) - referenceMedium.get(type);
-    }
-
-    public double getAbsolute(VariableType type) {
-        return perturbedMedium.get(type);
-    }
-
-    public double getPercent(VariableType type) {
-        return (perturbedMedium.get(type) / referenceMedium.get(type) - 1.) * 100;
+    /**
+     * Get value of a certain variable in the specified scalar type.
+     * @param variable ({@link VariableType}) Variable to get value for.
+     * @param scalarType ({@link ScalarType}) Scalar type to get value in.
+     * @return (double) Value.
+     *
+     * @author otsuru
+     * @since 2024/4/22
+     */
+    public double getValue(VariableType variable, ScalarType scalarType) {
+        switch (scalarType) {
+        case ABSOLUTE: return perturbedMedium.get(variable);
+        case DELTA: return perturbedMedium.get(variable) - referenceMedium.get(variable);
+        case PERCENT: return (perturbedMedium.get(variable) / referenceMedium.get(variable) - 1.0) * 100.0;
+        default: throw new IllegalArgumentException("Unsupported scalar type: " + scalarType);
+        }
     }
 
     public FullPosition getPosition() {
@@ -83,4 +102,5 @@ public class PerturbationVoxel {
     public double getVolume() {
         return volume;
     }
+
 }

@@ -11,6 +11,8 @@ import java.util.stream.IntStream;
 import org.apache.commons.math3.util.FastMath;
 
 import io.github.kensuke1984.kibrary.elastic.VariableType;
+import io.github.kensuke1984.kibrary.perturbation.ScalarListFile;
+import io.github.kensuke1984.kibrary.perturbation.ScalarType;
 import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 
@@ -21,30 +23,33 @@ import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
  * @since 2022/4/12
  * @version 2022/7/17 renamed from MapperShellscript to PerturbationMapShellscript
  */
-public class PerturbationMapShellscript {
+public class ScalarMapShellscript {
 
     /**
-     * Width of each panel
+     * Width of each panel.
      */
     private static final int PANEL_WIDTH = 21;
     /**
-     * Height of each panel
+     * Height of each panel.
      */
     private static final int PANEL_HEIGHT = 20;
     /**
-     * The interval of deciding map size
+     * The interval of deciding map size.
      */
     private static final int MAP_SIZE_INTERVAL = 5;
     /**
-     * How much space to provide at the rim of the map
+     * How much space to provide at the rim of the map.
      */
     private static final int MAP_RIM = 5;
     /**
-     * Number of nodes to divide an original node when smoothing
+     * Number of nodes to divide an original node when smoothing.
      */
-    public static final int SMOOTHING_FACTOR = 10;
+    public static final int SMOOTHING_FACTOR = 5;
 
     private final VariableType variable;
+    private final ScalarType scalarType;
+    private final String tag;
+
     private final double[] radii;
     /**
      * The displayed value of each layer boundary. This may be radius, depth, or height from a certain discontinuity.
@@ -52,55 +57,74 @@ public class PerturbationMapShellscript {
     private final double[] boundaries;
     private final String mapRegion;
     /**
-     * Interval of
+     * Interval of interpolation when mapping [deg].
      */
     private final double positionInterval;
     /**
-     * Maximum of color scale
+     * Maximum of color scale.
      */
     private final double scale;
-    private final String modelFileNameRoot;
     /**
-     * Number of panels to map in each row
+     * Number of panels to map in each row.
      */
     private final int nPanelsPerRow;
+    /**
+     * File name root of output files.
+     */
+    private final String plotFileNameRoot;
 
     /**
      * Indices of layers to display in the figure. Listed from the inside. Layers are numbered 0, 1, 2, ... from the inside.
      */
     private int[] displayLayers;
+    private final String scalarFileName;
 
-    private String maskFileNameRoot;
+    private boolean maskExists = false;
     private double maskThreshold;
+    private String maskFileName;
 
-    public PerturbationMapShellscript(VariableType variable, double[] radii, double[] boundaries, String mapRegion, double positionInterval, double scale,
-            String modelFileNameRoot, int nPanelsPerRow) {
+    ScalarMapShellscript(VariableType variable, ScalarType scalarType, double[] radii, double[] boundaries,
+            String mapRegion, double positionInterval, double scale, int nPanelsPerRow) {
+        this(variable, scalarType, null, radii, boundaries, mapRegion, positionInterval, scale, nPanelsPerRow);
+    }
+
+    ScalarMapShellscript(VariableType variable, ScalarType scalarType, String tag, double[] radii, double[] boundaries,
+            String mapRegion, double positionInterval, double scale, int nPanelsPerRow) {
         this.variable = variable;
+        this.scalarType = scalarType;
+        this.tag = tag;
         this.radii = radii;
         this.boundaries = boundaries;
         this.mapRegion = mapRegion;
         this.positionInterval = positionInterval;
         this.scale = scale;
-        this.modelFileNameRoot = modelFileNameRoot;
         this.nPanelsPerRow = nPanelsPerRow;
         if (boundaries.length <= radii.length) {
             throw new IllegalArgumentException(boundaries.length + " boundaries is not enough for " + radii.length + " layers.");
         }
 
+        // set file name root of output files
+        this.plotFileNameRoot = variable.toString().toLowerCase() + scalarType.toNaturalString() + ((tag != null) ? ("_" + tag + "_") : "");
         // set this temporarily to display all layers (may be oveerwritten later)
         this.displayLayers = IntStream.range(0, radii.length).toArray();
+        // set scalar file name
+        String tag1 = (tag != null) ? (tag + "_XY") : "XY";
+        this.scalarFileName = ScalarListFile.generateFileName(variable, scalarType, tag1);
     }
 
-    public void setMask(String maskFileNameRoot, double maskThreshold) {
-        this.maskFileNameRoot = maskFileNameRoot;
+    void setMask(VariableType maskVariable, ScalarType maskScalarType, double maskThreshold) {
+        this.maskExists = true;
         this.maskThreshold = maskThreshold;
+        // set scalar file name
+        String tag2 = (tag != null) ? (tag + "_forMaskXY") : "forMaskXY";
+        this.maskFileName = ScalarListFile.generateFileName(maskVariable, maskScalarType, tag2);
     }
 
     /**
      * Specify which of the layers to display.
      * @param displayLayers (int[]) Indices of layers to plot, listed from the inside. Layers are numbered 0, 1, 2, ... from the inside.
      */
-    public void setDisplayLayers(int[] displayLayers) {
+    void setDisplayLayers(int[] displayLayers) {
         this.displayLayers = displayLayers;
         for (int layerIndex : displayLayers) {
             if (layerIndex >= radii.length) {
@@ -114,11 +138,11 @@ public class PerturbationMapShellscript {
      * @param outPath (Path) Directory where output files should be written.
      * @throws IOException
      */
-    public void write(Path outPath) throws IOException {
+    void write(Path outPath) throws IOException {
         writeCpMaster(outPath.resolve("cp_master.cpt"));
-        if (maskFileNameRoot != null) writeCpMask(outPath.resolve("cp_mask.cpt"), maskThreshold);
-        writeGridMaker(outPath.resolve(modelFileNameRoot + "Grid.sh"));
-        writeMakeMap(outPath.resolve(modelFileNameRoot + "Map.sh"));
+        if (maskExists) writeCpMask(outPath.resolve("cp_mask.cpt"), maskThreshold);
+        writeGridMaker(outPath.resolve(plotFileNameRoot + "Grid.sh"));
+        writeMakeMap(outPath.resolve(plotFileNameRoot + "Map.sh"));
     }
 
     static void writeCpMaster(Path outputPath) throws IOException {
@@ -171,13 +195,13 @@ public class PerturbationMapShellscript {
             pw.println("    dep=${depth%.0}");
 
             // grid model
-            pw.println("    grep \"$depth\" " + modelFileNameRoot + "XY.lst | \\");
+            pw.println("    grep \"$depth\" " + scalarFileName + " | \\");
             pw.println("    awk '{print $2,$1,$4}' | \\");
             pw.println("    gmt xyz2grd -G$dep\\model.grd -R" + mapRegion + " -I" + positionInterval + " -di0");
 
             // grid mask
-            if (maskFileNameRoot != null) {
-                pw.println("    grep \"$depth\" " + maskFileNameRoot + "XY.lst | \\");
+            if (maskExists) {
+                pw.println("    grep \"$depth\" " + maskFileName + " | \\");
                 pw.println("    awk '{print $2,$1,$4}' | \\");
                 pw.println("    gmt xyz2grd -G$dep\\mask.grd -R" + mapRegion + " -I" + positionInterval + " -di0");
             }
@@ -187,7 +211,6 @@ public class PerturbationMapShellscript {
     }
 
     private void writeMakeMap(Path outputPath) throws IOException {
-        String paramName = variable.toString();
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath))) {
             pw.println("#!/bin/sh");
             pw.println("");
@@ -205,7 +228,7 @@ public class PerturbationMapShellscript {
             pw.println("J='-JQ15'");
             pw.println("B='-B30f10';");
             pw.println("");
-            pw.println("outputps=" + modelFileNameRoot + "Map.eps");
+            pw.println("outputps=" + plotFileNameRoot + "Map.eps");
             pw.println("MP=" + scale);
             pw.println("gmt makecpt -Ccp_master.cpt -T-$MP/$MP > cp.cpt");
             pw.println("");
@@ -230,7 +253,7 @@ public class PerturbationMapShellscript {
                             + " km\" $B -Ccp.cpt $J $R -K -O -X" + PANEL_WIDTH + " >> $outputps");
                 }
 
-                if (maskFileNameRoot != null) {
+                if (maskExists) {
                     pw.println("gmt grdimage " + radius + "\\mask.grd -Ccp_mask.cpt -G0/0/0 -t80 $J $R -K -O >> $outputps");
                 }
 
@@ -241,7 +264,7 @@ public class PerturbationMapShellscript {
             pw.println("#------- Scale");
             // compute the column number of the last panel (counting as 0, 1, 2, 3, ...)
             int nLastColumn = (displayLayers.length - 1) % nPanelsPerRow;
-            pw.println("gmt psscale -Ccp.cpt -Dx2/-4+w12/0.8+h -B1.0+l\"@~d@~" + paramName + "/" + paramName + " (%)\" -K -O -X-"
+            pw.println("gmt psscale -Ccp.cpt -Dx2/-4+w12/0.8+h -B1.0+l\"" + ScalarType.createScaleLabel(variable, scalarType) + "\" -K -O -X-"
                     + (PANEL_WIDTH * nLastColumn / 2) + " >> $outputps");
             pw.println("");
 
@@ -260,19 +283,22 @@ public class PerturbationMapShellscript {
 
     /**
      * Decides the interval in which to sample the grid in a map.
-     * This method sets the interval at roughly a tenth of the input position spacing.
+     * This method sets the interval at roughly a {@value #SMOOTHING_FACTOR}-th of the input position spacing.
      * @param positions (Set of {@link HorizontalPosition}) Input position set.
      * @return (double) Suggested value of grid spacing.
      */
     static double decideGridSampling(Set<? extends HorizontalPosition> positions) {
-        double positionInterval = HorizontalPosition.findLatitudeInterval(positions);
-        int power = (int) MathAid.floor(Math.log10(positionInterval));
+        double positionInterval = HorizontalPosition.findLatitudeInterval(positions) / SMOOTHING_FACTOR;
+        // the exponent in scientific notation
+        int power = (int) Math.floor(Math.log10(positionInterval));
+        // the coefficient in scientific notation
         double coef = positionInterval / FastMath.pow(10, power);
-        if (coef < 1) throw new IllegalStateException("Grid interval decision went wrong");
-        else if (coef < 2) return 1.0 * FastMath.pow(10, power) / SMOOTHING_FACTOR;
-        else if (coef < 5) return 2.0 * FastMath.pow(10, power) / SMOOTHING_FACTOR;
-        else if (coef < 10) return 5.0 * FastMath.pow(10, power) / SMOOTHING_FACTOR;
-        else throw new IllegalStateException("Grid interval decision went wrong");
+        // round down the coefficient to either 1, 2, or 5
+        if (coef < 1) throw new IllegalStateException("Grid interval decision went wrong.");
+        else if (coef < 2) return 1.0 * FastMath.pow(10, power);
+        else if (coef < 5) return 2.0 * FastMath.pow(10, power);
+        else if (coef < 10) return 5.0 * FastMath.pow(10, power);
+        else throw new IllegalStateException("Grid interval decision went wrong.");
     }
 
     /**
@@ -325,6 +351,10 @@ public class PerturbationMapShellscript {
         double lonCenter = (lonMin + lonMax) / 2;
         // return as String
         return (int) lonCenter + "/" + (int) latCenter;
+    }
+
+    String getPlotFileNameRoot() {
+        return plotFileNameRoot;
     }
 
 }

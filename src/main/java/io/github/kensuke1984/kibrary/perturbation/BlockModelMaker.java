@@ -195,7 +195,7 @@ public class BlockModelMaker extends Operation {
                 PerturbationVoxel voxel = new PerturbationVoxel(position, volume, initialStructure);
                 for (int k = 0; k < perturbVariableTypes.size(); k++) {
                     double percent = findPercentage(position, k);
-                    voxel.setPercent(perturbVariableTypes.get(k), percent);
+                    voxel.setValue(perturbVariableTypes.get(k), ScalarType.PERCENT, percent);
                     // rho must be set to default if it is not in variableTypes  TODO: should this be done to other variables?
                     voxel.setDefaultIfUndefined(VariableType.RHO);
                 }
@@ -208,8 +208,8 @@ public class BlockModelMaker extends Operation {
 
         System.err.println("Outputting perturbation list files.");
         for (VariableType perturbVariableType : perturbVariableTypes) {
-            Path paramPath = outPath.resolve(perturbVariableType.toString().toLowerCase() + "Percent.lst");
-            PerturbationListFile.writePercentForType(perturbVariableType, model, paramPath);
+            Path paramPath = outPath.resolve(ScalarListFile.generateFileName(perturbVariableType, ScalarType.PERCENT));
+            ScalarListFile.write(model, perturbVariableType, ScalarType.PERCENT, paramPath);;
         }
 
         // set known parameters
@@ -218,7 +218,7 @@ public class BlockModelMaker extends Operation {
         for (VariableType outputVariableType : outputVariableTypes) {
             for (PerturbationVoxel voxel : model.getVoxels()) {
                 UnknownParameter unknown = new Physical3DParameter(outputVariableType, voxel.getPosition(), voxel.getVolume());
-                KnownParameter known = new KnownParameter(unknown, voxel.getDelta(outputVariableType));
+                KnownParameter known = new KnownParameter(unknown, voxel.getValue(outputVariableType, ScalarType.DELTA));
                 knowns.add(known);
             }
         }

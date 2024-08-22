@@ -20,7 +20,8 @@ import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.elastic.VariableType;
 import io.github.kensuke1984.kibrary.math.Interpolation;
-import io.github.kensuke1984.kibrary.perturbation.PerturbationListFile;
+import io.github.kensuke1984.kibrary.perturbation.ScalarListFile;
+import io.github.kensuke1984.kibrary.perturbation.ScalarType;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
@@ -215,9 +216,9 @@ public class SensitivityKernelMapper extends Operation {
         double[] radii = positions.stream().mapToDouble(pos -> pos.getR()).distinct().sorted().toArray();
 
         // decide map region
-        if (mapRegion == null) mapRegion = PerturbationMapShellscript.decideMapRegion(positions);
+        if (mapRegion == null) mapRegion = ScalarMapShellscript.decideMapRegion(positions);
         boolean crossDateLine = HorizontalPosition.crossesDateLine(positions);
-        double gridInterval = PerturbationMapShellscript.decideGridSampling(positions);
+        double gridInterval = ScalarMapShellscript.decideGridSampling(positions);
 
         // create output folder
         Path outPath = DatasetAid.createOutputFolder(workPath, "kernel", folderTag, appendFolderDate, null);
@@ -261,17 +262,18 @@ public class SensitivityKernelMapper extends Operation {
                             }
 
                             // output discrete perturbation file
-                            String fileNameRoot = "kernel_" + phaselist + "_" + component + "_" + variableType + String.format("_t0%d", (int) startTime);
-                            Path outputDiscretePath = observerPath.resolve(fileNameRoot + ".lst");
-                            PerturbationListFile.write(discreteMap, outputDiscretePath);
+                            ScalarType scalarType = ScalarType.kernelOf(component);
+                            String tag = phaselist + String.format("_t0%d", (int) startTime);
+                            Path outputDiscretePath = observerPath.resolve(ScalarListFile.generateFileName(variableType, scalarType, tag));
+                            ScalarListFile.write(discreteMap, outputDiscretePath);
                             // output interpolated perturbation file, in range [0:360) when crossDateLine==true so that mapping will succeed
                             Map<FullPosition, Double> interpolatedMap = Interpolation.inEachMapLayer(discreteMap, gridInterval,
                                     marginLatitude, setLatitudeByKm, marginLongitude, setLongitudeByKm, mosaic);
-                            Path outputInterpolatedPath = observerPath.resolve(fileNameRoot + "XY.lst");
-                            PerturbationListFile.write(interpolatedMap, crossDateLine, outputInterpolatedPath);
+                            Path outputInterpolatedPath = observerPath.resolve(ScalarListFile.generateFileName(variableType, scalarType, tag + "_XY"));
+                            ScalarListFile.write(interpolatedMap, crossDateLine, outputInterpolatedPath);
 
-                            PerturbationMapShellscript script = new PerturbationMapShellscript(variableType, radii,
-                                    boundaries, mapRegion, gridInterval, scale, fileNameRoot, nPanelsPerRow); //TODO unit in scale is not correct
+                            ScalarMapShellscript script = new ScalarMapShellscript(variableType, scalarType, tag, radii, boundaries,
+                                    mapRegion, gridInterval, scale, nPanelsPerRow);
                             if (displayLayers != null) script.setDisplayLayers(displayLayers);
                             script.write(observerPath);
                         }
