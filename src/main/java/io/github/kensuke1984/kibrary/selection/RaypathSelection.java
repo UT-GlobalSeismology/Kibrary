@@ -6,6 +6,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
@@ -70,6 +72,14 @@ public class RaypathSelection extends Operation {
      * Global CMT IDs.
      */
     private Set<GlobalCMTID> eventIDs;
+    /**
+     * Start of date range, inclusive.
+     */
+    private LocalDate startDate;
+    /**
+     * End of date range, INCLUSIVE.
+     */
+    private LocalDate endDate;
     /**
      * Moment magnitude range.
      */
@@ -144,6 +154,10 @@ public class RaypathSelection extends Operation {
             pw.println("##########Selection criteria of events##########");
             pw.println("##GlobalCMTIDs, listed using spaces, when using as criterion.");
             pw.println("#eventIDs ");
+            pw.println("##Start date in yyyy-mm-dd format, inclusive, when using as criterion.");
+            pw.println("#startDate 1990-01-01");
+            pw.println("##End date in yyyy-mm-dd format, INCLUSIVE, when using as criterion.");
+            pw.println("#endDate 2020-12-31");
             pw.println("##(double) Lower limit of Mw, inclusive; (:upperEventMw). (0)");
             pw.println("#lowerEventMw ");
             pw.println("##(double) Upper limit of Mw, exclusive; (lowerEventMw:). (10)");
@@ -225,6 +239,10 @@ public class RaypathSelection extends Operation {
 
         if (property.containsKey("eventIDs"))
             eventIDs = Arrays.stream(property.parseStringArray("eventIDs", null)).map(GlobalCMTID::new).collect(Collectors.toSet());
+        if (property.containsKey("startDate")) startDate = LocalDate.parse(property.parseString("startDate", null));
+        if (property.containsKey("endDate")) endDate = LocalDate.parse(property.parseString("endDate", null));
+        if (startDate != null && endDate != null) MathAid.checkDateRangeValidity(startDate, endDate);
+
         double lowerEventMw = property.parseDouble("lowerMw", "0.");
         double upperEventMw = property.parseDouble("upperMw", "10.");
         eventMwRange = new LinearRange("Event magnitude", lowerEventMw, upperEventMw);
@@ -316,14 +334,17 @@ public class RaypathSelection extends Operation {
                 continue;
             }
 
-            // event ID, magnitude, position
+            // event ID, time, magnitude, position
             boolean eventIDCheck = (eventIDs != null) ? eventIDs.contains(entry.getEvent()) : true;
             GlobalCMTAccess eventData = entry.getEvent().getEventData();
+            LocalDateTime eventTime = eventData.getCMTTime();
+            boolean startCheck = (startDate != null) ? eventTime.isAfter(startDate.atTime(0, 0)) : true;
+            boolean endCheck = (endDate != null) ? eventTime.isBefore(endDate.plusDays(1).atTime(0, 0)) : true;
             boolean magnitudeCheck = eventMwRange.check(eventData.getCmt().getMw());
             FullPosition eventPosition = eventData.getCmtPosition();
             boolean horizontalCheck = eventPosition.isInRange(eventLatitudeRange, eventLongitudeRange);
             boolean verticalCheck = eventDepthRange.check(eventPosition.getDepth());
-            if ((eventIDCheck && magnitudeCheck && horizontalCheck && verticalCheck) == false) {
+            if ((eventIDCheck && startCheck && endCheck && magnitudeCheck && horizontalCheck && verticalCheck) == false) {
                 if (eliminationMode) {
                     selectedEntrySet.add(entry);
                 }
