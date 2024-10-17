@@ -239,11 +239,11 @@ public class AzimuthHistogram {
             pw.println("set sample 11");
             pw.println("set output '" + fileNameRoot + ".png'");
             if (conductWeighting) {
-                pw.println("plot '" + fileNameRoot + ".txt' u ($1+" + (interval / 2) + "):2 w boxes lw 2.5 lc 'gold' title 'raw', \\");
+                pw.println("plot '" + fileNameRoot + ".txt' u ($1+" + (interval / 2) + "):2 w boxes lw 2 lc 'gold' title 'raw', \\");
                 pw.println("     '" + fileNameRoot + ".txt' u ($1+" + (interval / 2) + "):3 w boxes fs transparent pattern 4 "
-                        + "lw 1.0 lc 'magenta' title 'weighted'");
+                        + "lw 1.0 lc 'web-blue' title 'weighted'");
             } else {
-                pw.println("plot '" + fileNameRoot + ".txt' u ($1+" + (interval / 2) + "):2 w boxes lw 2.5 lc 'gold' notitle");
+                pw.println("plot '" + fileNameRoot + ".txt' u ($1+" + (interval / 2) + "):2 w boxes lw 2 lc 'gold' notitle");
             }
         }
 

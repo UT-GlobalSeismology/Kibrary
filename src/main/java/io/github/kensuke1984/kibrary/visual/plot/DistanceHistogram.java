@@ -165,11 +165,11 @@ public class DistanceHistogram {
             pw.println("set sample 11");
             pw.println("set output '" + fileNameRoot + ".png'");
             if (conductWeighting) {
-                pw.println("plot '" + fileNameRoot + ".txt' u ($1+" + (interval / 2) + "):2 w boxes lw 2.5 lc 'spring-green' title 'raw', \\");
+                pw.println("plot '" + fileNameRoot + ".txt' u ($1+" + (interval / 2) + "):2 w boxes lw 2.5 lc 'plum' title 'raw', \\");
                 pw.println("     '" + fileNameRoot + ".txt' u ($1+" + (interval / 2) + "):3 w boxes fs transparent pattern 4 "
-                        + "lw 1.0 lc 'dark-violet' title 'weighted'");
+                        + "lw 1.0 lc 'dark-green' title 'weighted'");
             } else {
-                pw.println("plot '" + fileNameRoot + ".txt' u ($1+" + (interval / 2) + "):2 w boxes lw 2.5 lc 'spring-green' notitle");
+                pw.println("plot '" + fileNameRoot + ".txt' u ($1+" + (interval / 2) + "):2 w boxes lw 2.5 lc 'plum' notitle");
             }
         }
 
