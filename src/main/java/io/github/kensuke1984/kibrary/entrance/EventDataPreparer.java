@@ -249,7 +249,7 @@ class EventDataPreparer {
      * @throws IOException
      */
     private boolean xml2resp(StationXmlFile xmlFile, RespDataFile respFile) throws IOException {
-        String command = "xml2resp -o " + respSetPath.getFileName().resolve(respFile.getRespFile())
+        String command = "xml2resp -o " + respSetPath.getFileName().resolve(respFile.getRespName())
                 + " " + stationSetPath.getFileName().resolve(xmlFile.getXmlFile());
         //System.err.println(command);
         ExternalProcess xProcess = ExternalProcess.launch(command, eventDir.toPath());
@@ -392,8 +392,8 @@ class EventDataPreparer {
                 }
 
                 // create resp file
-                RespDataFile respData = new RespDataFile(network, station, location, channel);
-                if (!xml2resp(stationInfo, respData)) {
+                RespDataFile respFile = new RespDataFile(network, station, location, channel);
+                if (!xml2resp(stationInfo, respFile)) {
                     // if RESP file fails to be created, skip the SAC file
                     System.err.println("!!! xml2resp for "+ sacPath + " failed.");
                     continue;
@@ -473,9 +473,13 @@ class EventDataPreparer {
                 String channel = sacFile.getChannel();
 
                 // move resp file
-                RespDataFile respData = new RespDataFile(network, station, location, channel);
-                Files.move(seedSetPath.resolve(respData.getRespFile()), respSetPath.resolve(respData.getRespFile()),
-                        StandardCopyOption.REPLACE_EXISTING);
+                String respFileName = new RespDataFile(network, station, location, channel).getRespName();
+                // There are cases where 2 SAC files exist for 1 channel, in which case there is only 1 resp file.
+                //   The resp file will be moved when treating the 1st SAC file, so nothing has to be moved for the 2nd SAC file.
+                if (Files.exists(seedSetPath.resolve(respFileName))) {
+                    Files.move(seedSetPath.resolve(respFileName), respSetPath.resolve(respFileName),
+                            StandardCopyOption.REPLACE_EXISTING);
+                }
 
                 // read SAC file
                 Map<SACHeaderEnum, String> headerMap = SACUtil.readHeader(sacPath);

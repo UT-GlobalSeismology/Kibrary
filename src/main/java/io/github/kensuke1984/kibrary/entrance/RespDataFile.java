@@ -23,8 +23,8 @@ public class RespDataFile {
 
     private static final String RESP_URL = "http://service.iris.edu/irisws/resp/1/query?";
     private URL url;
-    private String responseFile;
-    private String spectraFile;
+    private String respName;
+    private String spectraName;
 
     private String network = "";
     private String station = "";
@@ -49,9 +49,9 @@ public class RespDataFile {
         this.channel = channel;
 
         // file name is "RESP.II.PFO.00.BHE" or "RESP.IU.INU..BHE"
-        responseFile = "RESP." + network + "." + station + "." + location + "." + channel;
+        respName = "RESP." + network + "." + station + "." + location + "." + channel;
         // file name is "SPECTRA.II.PFO.00.BHE" or "SPECTRA.IU.INU..BHE"
-        spectraFile = "SPECTRA." + network + "." + station + "." + location + "." + channel;
+        spectraName = "SPECTRA." + network + "." + station + "." + location + "." + channel;
 
     }
     /**
@@ -76,12 +76,12 @@ public class RespDataFile {
      * Output directory is here.
      */
     public void downloadRespData() {
-        Path outPath = Paths.get(responseFile);
+        Path outPath = Paths.get(respName);
 
         try (ReadableByteChannel readChannel = Channels.newChannel(url.openStream());
                 FileOutputStream fos = new FileOutputStream(outPath.toFile()); FileChannel outChannel = fos.getChannel()) {
             long size = outChannel.transferFrom(readChannel, 0, Long.MAX_VALUE);
-            System.err.println("Downloaded : " + responseFile + " - " + size + " bytes");
+            System.err.println("Downloaded : " + respName + " - " + size + " bytes");
 
         } catch (IOException e) {
             System.err.println(e.toString());
@@ -93,12 +93,12 @@ public class RespDataFile {
      * @param outDir (Path) Output directory
      */
     public void downloadRespData(Path outDir) {
-        Path outPath = outDir.resolve(responseFile);
+        Path outPath = outDir.resolve(respName);
 
         try (ReadableByteChannel readChannel = Channels.newChannel(url.openStream());
                 FileOutputStream fos = new FileOutputStream(outPath.toFile()); FileChannel outChannel = fos.getChannel()) {
             long size = outChannel.transferFrom(readChannel, 0, Long.MAX_VALUE);
-            System.err.println("Downloaded : " + responseFile + " - " + size + " bytes");
+            System.err.println("Downloaded : " + respName + " - " + size + " bytes");
 
         } catch (IOException e) {
             System.err.println(e.toString());
@@ -108,15 +108,15 @@ public class RespDataFile {
     /**
      * @return (String) Name of RESP file
      */
-    public String getRespFile() {
-        return responseFile;
+    public String getRespName() {
+        return respName;
     }
 
     /**
      * @return (String) Name of SPECTRA file
      */
-    public String getSpectraFile() {
-        return spectraFile;
+    public String getSpectraName() {
+        return spectraName;
     }
 
 }

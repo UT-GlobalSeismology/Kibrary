@@ -477,8 +477,8 @@ class EventProcessor implements Runnable {
                 Path afterPath = outputPath.resolve(afterName);
 
                 RespDataFile respFile = new RespDataFile(modFile.getNetwork(), modFile.getStation(), modFile.getLocation(), modFile.getChannel());
-                Path respPath = inputRespSetPath.resolve(respFile.getRespFile());
-                Path spectraPath = outputPath.resolve(respFile.getSpectraFile());
+                Path respPath = inputRespSetPath.resolve(respFile.getRespName());
+                Path spectraPath = outputPath.resolve(respFile.getSpectraName());
 
                 //System.out.println("deconvolute: "+ afterPath); // 4debug
 
