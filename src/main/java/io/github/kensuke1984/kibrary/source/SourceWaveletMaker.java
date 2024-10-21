@@ -12,6 +12,8 @@ import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
 
+import org.apache.commons.math3.linear.RealVector;
+
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.correction.StaticCorrectionData;
@@ -24,9 +26,12 @@ import io.github.kensuke1984.kibrary.util.ThreadAid;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.sac.SACFileAccess;
+import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
 
 /**
  *
+ *
+ * CAUTION: Time windows shold be the same length for all records of the same event, taken for a single phase.
  *
  * @author otsuru
  * @since 2024/6/14
@@ -50,6 +55,10 @@ public class SourceWaveletMaker extends Operation {
      * Components to use.
      */
     private Set<SACComponent> components;
+    /**
+     * Path of the output folder.
+     */
+    private Path outPath;
 
     /**
      * Path of a time window information file.
@@ -163,7 +172,7 @@ public class SourceWaveletMaker extends Operation {
         staticCorrectionSet = (staticCorrectionPath == null ? Collections.emptySet() :
                 StaticCorrectionDataFile.read(staticCorrectionPath));
 
-        Path outPath = DatasetAid.createOutputFolder(workPath, "wavelets", folderTag, appendFolderDate, null);
+        outPath = DatasetAid.createOutputFolder(workPath, "wavelets", folderTag, appendFolderDate, null);
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         ExecutorService es = ThreadAid.createFixedThreadPool();
@@ -179,30 +188,91 @@ public class SourceWaveletMaker extends Operation {
     }
 
     private class Worker extends DatasetAid.FilteredDatasetWorker {
+        RealVector sumVector;
+        int num = 0;
 
         private Worker(GlobalCMTID eventID) {
             super(eventID, obsPath, synPath, convolved, sacSamplingHz, sourceTimewindowSet);
         }
 
         @Override
-        public void actualWork(TimewindowData timewindow, SACFileAccess obsSac, SACFileAccess synSac) {
+        public void actualWork(TimewindowData timeWindow, SACFileAccess obsSac, SACFileAccess synSac) {
+
+            // check SAC file end time
+            if (timeWindow.getEndTime() > obsSac.getValue(SACHeaderEnum.E)
+                    || timeWindow.getEndTime() > synSac.getValue(SACHeaderEnum.E)) {
+                System.err.println();
+                System.err.println("!! End of time window too late, skipping: " + timeWindow);
+                return;
+            }
 
             // apply static correction
             double shift = 0.;
             if (!staticCorrectionSet.isEmpty()) {
-                StaticCorrectionData correction = StaticCorrectionData.findForTimeWindow(staticCorrectionSet, timewindow);
+                StaticCorrectionData correction = StaticCorrectionData.findForTimeWindow(staticCorrectionSet, timeWindow);
                 if (correction == null) {
                     System.err.println();
-                    System.err.println("!! No static correction data, skipping: " + timewindow);
+                    System.err.println("!! No static correction data, skipping: " + timeWindow);
                     return;
                 }
                 shift = correction.getTimeshift();
             }
 
-            // peak-to-peak amplitude of observed time window
-            Trace obsTrace = obsSac.createTrace().cutWindow(timewindow.shift(-shift), sacSamplingHz);
+            // prepare observed trace
+            Trace obsTrace = obsSac.createTrace().cutWindow(timeWindow.shift(-shift), sacSamplingHz);
+            //TODO integrate
 
+            Trace synTrace = synSac.createTrace().cutWindow(timeWindow, sacSamplingHz);
+            //TODO integrate
+
+            // compute signed amplitude of synthetic (If wavelet is on negative side, this amplitude is negative.)
+            double synMin = synTrace.getMinY();
+            double synMax = synTrace.getMaxY();
+            double synAmp = (-synMin > synMax) ? synMin : synMax;
+
+            // divide observed trace by amplitude of synthetic
+            RealVector normalizedVector = obsTrace.multiply(1 / synAmp).getYVector();
+
+            // stack
+            if (sumVector == null) {
+                sumVector = normalizedVector;
+            } else {
+                int obsLength = normalizedVector.getDimension();
+                int sumLength = sumVector.getDimension();
+                if (obsLength < sumLength) {
+                    sumVector = sumVector.getSubVector(0, obsLength);
+                } else if (sumLength < obsLength) {
+                    normalizedVector = normalizedVector.getSubVector(0, sumLength);
+                }
+                sumVector = sumVector.add(normalizedVector);
+            }
+            num++;
         }
+
+        @Override
+        public void finalWork() {
+            // divide by the number of timewindows added to get average
+            double[] yArray = sumVector.mapDivide(num).toArray();
+
+            // create X axis (time)
+            double[] xArray = new double[sumVector.getDimension()];
+            for (int i = 0; i < sumVector.getDimension(); i++) {
+                xArray[i] = i / sacSamplingHz;
+            }
+
+            // form Trace
+            Trace waveletTrace = new Trace(xArray, yArray);
+
+            // write
+            Path waveletPath = outPath.resolve(eventID + ".txt");
+            try {
+                waveletTrace.write(waveletPath);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
     }
+
 }
 

@@ -341,24 +341,24 @@ public class DataSelection extends Operation {
 
         @Override
         public void actualWork(TimewindowData timeWindow, SACFileAccess obsSac, SACFileAccess synSac) {
+            SACComponent component = timeWindow.getComponent();
+
+            // check SAC file end time
+            if (timeWindow.getEndTime() > obsSac.getValue(SACHeaderEnum.E)
+                    || timeWindow.getEndTime() > synSac.getValue(SACHeaderEnum.E)) {
+                System.err.println();
+                System.err.println("!! End of time window too late, skipping: " + timeWindow);
+                return;
+            }
+
+            // check phase
+            if (requirePhase && timeWindow.getPhases().length == 0) {
+                System.err.println();
+                System.err.println("!! No phase, skipping: " + timeWindow);
+                return;
+            }
+
             try {
-                SACComponent component = timeWindow.getComponent();
-
-                // check SAC file end time
-                if (timeWindow.getEndTime() > obsSac.getValue(SACHeaderEnum.E)
-                        || timeWindow.getEndTime() > synSac.getValue(SACHeaderEnum.E)) {
-                    System.err.println();
-                    System.err.println("!! End of time window too late, skipping: " + timeWindow);
-                    return;
-                }
-
-                // check phase
-                if (requirePhase && timeWindow.getPhases().length == 0) {
-                    System.err.println();
-                    System.err.println("!! No phase, skipping: " + timeWindow);
-                    return;
-                }
-
                 // remove surface wave from window
                 if (excludeSurfaceWave) {
                     Trace synTrace = synSac.createTrace();

@@ -25,6 +25,7 @@ import io.github.kensuke1984.kibrary.perturbation.CheckerboardMaker;
 import io.github.kensuke1984.kibrary.perturbation.ModelSmoothener;
 import io.github.kensuke1984.kibrary.selection.DataSelection;
 import io.github.kensuke1984.kibrary.selection.RaypathSelection;
+import io.github.kensuke1984.kibrary.source.SourceWaveletMaker;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowMaker;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowMerge;
 import io.github.kensuke1984.kibrary.util.DatasetMerge;
@@ -94,6 +95,7 @@ enum Manhattan {
     TimewindowMaker(31, TimewindowMaker.class),
     FujiStaticCorrection(32, FujiStaticCorrection.class),
     DataSelection(33, DataSelection.class),
+    SourceWaveletMaker(34, SourceWaveletMaker.class),
     TimewindowMerge(37, TimewindowMerge.class),
     StaticCorrectionMerge(38, StaticCorrectionMerge.class),
     StaticCorrectionForger(39, StaticCorrectionForger.class),
