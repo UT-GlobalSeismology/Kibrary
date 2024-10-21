@@ -6,6 +6,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
@@ -18,10 +20,13 @@ import io.github.kensuke1984.kibrary.external.TauPPierceWrapper;
 import io.github.kensuke1984.kibrary.math.CircularRange;
 import io.github.kensuke1984.kibrary.math.LinearRange;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
+import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.data.DataEntry;
 import io.github.kensuke1984.kibrary.util.data.DataEntryListFile;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
+import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTAccess;
+import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 
 /**
@@ -64,6 +69,18 @@ public class RaypathSelection extends Operation {
     private boolean eliminationMode;
 
     /**
+     * Global CMT IDs.
+     */
+    private Set<GlobalCMTID> eventIDs;
+    /**
+     * Start of date range, inclusive.
+     */
+    private LocalDate startDate;
+    /**
+     * End of date range, INCLUSIVE.
+     */
+    private LocalDate endDate;
+    /**
      * Moment magnitude range.
      */
     private LinearRange eventMwRange;
@@ -73,6 +90,14 @@ public class RaypathSelection extends Operation {
     private LinearRange eventDepthRange;
     private LinearRange eventLatitudeRange;
     private CircularRange eventLongitudeRange;
+    /**
+     * Networks of observers.
+     */
+    private Set<String> networks;
+    /**
+     * Observers IDs, in the form "net_sta".
+     */
+    private Set<String> observerIDs;
     private LinearRange observerLatitudeRange;
     private CircularRange observerLongitudeRange;
     private LinearRange turningLatitudeRange;
@@ -127,6 +152,12 @@ public class RaypathSelection extends Operation {
             pw.println("#eliminationMode true");
             pw.println("##########Raypaths that satisfy all of the following criteria will be extracted/eliminated.");
             pw.println("##########Selection criteria of events##########");
+            pw.println("##GlobalCMTIDs, listed using spaces, when using as criterion.");
+            pw.println("#eventIDs ");
+            pw.println("##Start date in yyyy-mm-dd format, inclusive, when using as criterion.");
+            pw.println("#startDate 1990-01-01");
+            pw.println("##End date in yyyy-mm-dd format, INCLUSIVE, when using as criterion.");
+            pw.println("#endDate 2020-12-31");
             pw.println("##(double) Lower limit of Mw, inclusive; (:upperEventMw). (0)");
             pw.println("#lowerEventMw ");
             pw.println("##(double) Upper limit of Mw, exclusive; (lowerEventMw:). (10)");
@@ -144,6 +175,10 @@ public class RaypathSelection extends Operation {
             pw.println("##(double) Upper limit of event longitude [deg], exclusive; [-180:360]. (180)");
             pw.println("#upperEventLongitude ");
             pw.println("##########Selection criteria of observers##########");
+            pw.println("##Observer IDs, in form \"sta_net\", listed using spaces, when using as criterion.");
+            pw.println("#observerIDs ");
+            pw.println("##Networks, listed using spaces, when using as criterion.");
+            pw.println("#networks ");
             pw.println("##(double) Lower limit of observer latitude [deg], inclusive; [-90:upperObserverLatitude). (-90)");
             pw.println("#lowerObserverLatitude ");
             pw.println("##(double) Upper limit of observer latitude [deg], exclusive; (lowerObserverLatitude:90]. (90)");
@@ -202,6 +237,12 @@ public class RaypathSelection extends Operation {
         dataEntryPath = property.parsePath("dataEntryPath", null, true, workPath);
         eliminationMode = property.parseBoolean("eliminationMode", "false");
 
+        if (property.containsKey("eventIDs"))
+            eventIDs = Arrays.stream(property.parseStringArray("eventIDs", null)).map(GlobalCMTID::new).collect(Collectors.toSet());
+        if (property.containsKey("startDate")) startDate = LocalDate.parse(property.parseString("startDate", null));
+        if (property.containsKey("endDate")) endDate = LocalDate.parse(property.parseString("endDate", null));
+        if (startDate != null && endDate != null) MathAid.checkDateRangeValidity(startDate, endDate);
+
         double lowerEventMw = property.parseDouble("lowerMw", "0.");
         double upperEventMw = property.parseDouble("upperMw", "10.");
         eventMwRange = new LinearRange("Event magnitude", lowerEventMw, upperEventMw);
@@ -215,6 +256,10 @@ public class RaypathSelection extends Operation {
         double upperEventLongitude = property.parseDouble("upperEventLongitude", "180");
         eventLongitudeRange = new CircularRange("Event longitude", lowerEventLongitude, upperEventLongitude, -180.0, 360.0);
 
+        if (property.containsKey("observerIDs"))
+            observerIDs = Arrays.stream(property.parseStringArray("observerIDs", null)).collect(Collectors.toSet());
+        if (property.containsKey("networks"))
+            networks = Arrays.stream(property.parseStringArray("networks", null)).collect(Collectors.toSet());
         double lowerObserverLatitude = property.parseDouble("lowerObserverLatitude", "-90");
         double upperObserverLatitude = property.parseDouble("upperObserverLatitude", "90");
         observerLatitudeRange = new LinearRange("Observer latitude", lowerObserverLatitude, upperObserverLatitude, -90.0, 90.0);
@@ -277,23 +322,29 @@ public class RaypathSelection extends Operation {
             // in extraction mode (eliminationMode=false), ignore raypaths that are not within range
             // in elimination mode (eliminationMode=true), select raypaths that are not within range
 
-            // observer position
+            // observer ID, network, position
+            boolean observerIDCheck = (observerIDs != null) ? observerIDs.contains(entry.getObserver().toString()) : true;
+            boolean networkCheck = (networks != null) ? networks.contains(entry.getObserver().getNetwork()) : true;
             HorizontalPosition observerPosition = entry.getObserver().getPosition();
-            if (observerPosition.isInRange(observerLatitudeRange, observerLongitudeRange)
-                    == false) {
+            boolean positionCheck = observerPosition.isInRange(observerLatitudeRange, observerLongitudeRange);
+            if ((observerIDCheck && networkCheck && positionCheck) == false) {
                 if (eliminationMode) {
                     selectedEntrySet.add(entry);
                 }
                 continue;
             }
 
-            // event magnitude and position
-            double eventMw = entry.getEvent().getEventData().getCmt().getMw();
-            boolean magnitudeCheck = eventMwRange.check(eventMw);
-            FullPosition eventPosition = entry.getEvent().getEventData().getCmtPosition();
+            // event ID, time, magnitude, position
+            boolean eventIDCheck = (eventIDs != null) ? eventIDs.contains(entry.getEvent()) : true;
+            GlobalCMTAccess eventData = entry.getEvent().getEventData();
+            LocalDateTime eventTime = eventData.getCMTTime();
+            boolean startCheck = (startDate != null) ? eventTime.isAfter(startDate.atTime(0, 0)) : true;
+            boolean endCheck = (endDate != null) ? eventTime.isBefore(endDate.plusDays(1).atTime(0, 0)) : true;
+            boolean magnitudeCheck = eventMwRange.check(eventData.getCmt().getMw());
+            FullPosition eventPosition = eventData.getCmtPosition();
             boolean horizontalCheck = eventPosition.isInRange(eventLatitudeRange, eventLongitudeRange);
             boolean verticalCheck = eventDepthRange.check(eventPosition.getDepth());
-            if ((magnitudeCheck && horizontalCheck && verticalCheck) == false) {
+            if ((eventIDCheck && startCheck && endCheck && magnitudeCheck && horizontalCheck && verticalCheck) == false) {
                 if (eliminationMode) {
                     selectedEntrySet.add(entry);
                 }
@@ -342,7 +393,7 @@ public class RaypathSelection extends Operation {
             }
         }
 
-        System.err.println(selectedEntrySet.size() + " data entries are selected.");
+        System.err.println(MathAid.switchSingularPlural(selectedEntrySet.size(), "data entry is", "data entries are") + " selected.");
         Path outputPath = DatasetAid.generateOutputFilePath(workPath, "selectedEntry", fileTag, appendFileDate, null, ".lst");
         if (selectedEntrySet.size() > 0) DataEntryListFile.writeFromSet(selectedEntrySet, outputPath);
     }

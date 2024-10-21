@@ -56,6 +56,7 @@ import io.github.kensuke1984.kibrary.voxel.VoxelManualDesigner;
 import io.github.kensuke1984.kibrary.waveform.ActualWaveformCompiler;
 import io.github.kensuke1984.kibrary.waveform.BasicIDMerge;
 import io.github.kensuke1984.kibrary.waveform.BasicIDRebuilder;
+import io.github.kensuke1984.kibrary.waveform.OrthogonalitySumUp;
 import io.github.kensuke1984.kibrary.waveform.OrthogonalityTest;
 import io.github.kensuke1984.kibrary.waveform.PartialIDMerge;
 import io.github.kensuke1984.kibrary.waveform.PartialsAssembler3D;
@@ -140,6 +141,7 @@ enum Manhattan {
     PseudoWaveformGenerator(85, PseudoWaveformGenerator.class),
     BasicIDRebuilder(86, BasicIDRebuilder.class),
     OrthogonalityTest(87, OrthogonalityTest.class),
+    OrthogonalitySumUp(88, OrthogonalitySumUp.class),
     // Temporal 100
     ;
 

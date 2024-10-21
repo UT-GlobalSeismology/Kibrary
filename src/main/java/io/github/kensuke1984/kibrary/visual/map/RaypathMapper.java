@@ -554,11 +554,11 @@ public class RaypathMapper extends Operation {
                     case COLOR_BY_PHASE:
                         // list up all phases for that color (in case one color is used for several consecutive phases)
                         String text = String.join(",", Arrays.copyOfRange(piercePhases, colorBin.getStartValueFor(i), colorBin.getStartValueFor(i + 1)));
-                        pw.println("S 0.8c - 0.8c - 0.4p," + colorBin.getColorFor(i) + " 1.5c " + text);
+                        pw.println("S 0.8c - 0.8c - 1p," + colorBin.getColorFor(i) + " 1.5c " + text);
                         break;
                     default:
                         // print degree range
-                        pw.println("S 0.8c - 0.8c - 0.4p," + colorBin.getColorFor(i) + " 1.5c "
+                        pw.println("S 0.8c - 0.8c - 1p," + colorBin.getColorFor(i) + " 1.5c "
                                 + colorBin.getStartValueFor(i) + "@.~" + colorBin.getStartValueFor(i + 1) + "@.");
                     }
                 }
