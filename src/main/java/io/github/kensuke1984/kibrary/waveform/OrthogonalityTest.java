@@ -264,10 +264,17 @@ public class OrthogonalityTest extends Operation {
         }
 
         // output in files
+        outputScalar(dVectorBuilder.getNTimeWindow(), outPanelPath.resolve("record.lst"));
         outputVector(testPartialNorms, outPanelPath.resolve("testPartialNorms.lst"));
         outputVector(mainPartialNorms, outPanelPath.resolve("mainPartialNorms.lst"));
         outputMatrix(innerProducts, outPanelPath.resolve("innerProducts.lst"));
         outputMatrix(correlations, outPanelPath.resolve("correlations.lst"));
+    }
+
+    static void outputScalar(int num, Path outputPath) throws IOException {
+        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath))) {
+            pw.println(num);
+        }
     }
 
     private static void outputVector(double[] vector, Path outputPath) throws IOException {

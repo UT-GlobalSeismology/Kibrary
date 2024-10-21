@@ -140,6 +140,7 @@ public class OrthogonalitySumUp extends Operation {
     }
 
     private void sumPanel(int numTest, int numMain, String panelName) throws IOException {
+        int nTimewindow_sum = 0;
         double[] testPartialNorm2s_sum = new double[numTest];
         double[] mainPartialNorm2s_sum = new double[numMain];
         double[][] innerProducts_sum = new double[numTest][numMain];
@@ -162,10 +163,12 @@ public class OrthogonalitySumUp extends Operation {
             // when no raypaths exist for this dataset, directory is not created, so skip
             if (!Files.exists(panelPath)) continue;
 
+            int nTimewindow_this = readScalar(panelPath.resolve("record.lst"));
             double[] testPartialNorms_this = readVector(panelPath.resolve("testPartialNorms.lst"), numTest);
             double[] mainPartialNorms_this = readVector(panelPath.resolve("mainPartialNorms.lst"), numMain);
             double[][] innerProducts_this = readMatrix(panelPath.resolve("innerProducts.lst"), numTest, numMain);
 
+            nTimewindow_sum += nTimewindow_this;
             for (int i = 0; i < numTest; i++) {
                 testPartialNorm2s_sum[i] += testPartialNorms_this[i] * testPartialNorms_this[i];
                 for (int j = 0; j < numMain; j++) {
@@ -187,10 +190,21 @@ public class OrthogonalitySumUp extends Operation {
         // output
         Path outPanelPath = outPath.resolve(panelName);
         Files.createDirectories(outPanelPath);
+        OrthogonalityTest.outputScalar(nTimewindow_sum, outPanelPath.resolve("record.lst"));
         outputVectorSqrt(testPartialNorm2s_sum, outPanelPath.resolve("testPartialNorms.lst"));
         outputVectorSqrt(mainPartialNorm2s_sum, outPanelPath.resolve("mainPartialNorms.lst"));
         OrthogonalityTest.outputMatrix(innerProducts_sum, outPanelPath.resolve("innerProducts.lst"));
         OrthogonalityTest.outputMatrix(correlations_sum, outPanelPath.resolve("correlations.lst"));
+    }
+
+    private int readScalar(Path inputPath) throws IOException {
+
+        // read input file
+        InformationFileReader reader = new InformationFileReader(inputPath, true);
+        String[] lines = reader.getNonCommentLines();
+        if (lines.length != 1) throw new IllegalStateException("File size is inappropriate.");
+
+        return Integer.parseInt(lines[0]);
     }
 
     private double[] readVector(Path inputPath, int num) throws IOException {
