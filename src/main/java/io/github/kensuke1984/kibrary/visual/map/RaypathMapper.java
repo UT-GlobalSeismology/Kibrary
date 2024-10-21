@@ -441,7 +441,7 @@ public class RaypathMapper extends Operation {
             pw.println("# map parameters");
             pw.println("R='" + createRegionString() + "'");
             pw.println("J='" + createProjectionString() + "'");
-            pw.println("B='-Ba30 -BWeSn'");
+            pw.println("B='-Ba30" + (lambert ? "g30" : "") + " -BWeSn'");
             pw.println("");
             pw.println("gmt pscoast -Ggray -Wthinnest,gray20 $B $J $R -P -K > $outputps");
             pw.println("");

@@ -230,7 +230,7 @@ public class AzimuthHistogram {
 
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(scriptPath))) {
             pw.println("set term pngcairo enhanced font 'Helvetica,20'");
-            pw.println("set xlabel '" + xlabel + " (deg)'");
+            pw.println("set xlabel '" + xlabel + " ({/Symbol \\260})'");
             pw.println("set ylabel 'Number of records'");
             pw.println("set xrange [" + minimum + ":" + maximum + "]");
             pw.println("set xtics " + xtics + " nomirror");

@@ -278,7 +278,8 @@ public class VoxelAutoDesigner extends Operation {
             double azimuthDeg = startPosition.computeAzimuthDeg(endPosition);
 
             // distribute sample points equally along the raypath segment
-            int nSamplePointInterval = (int) Math.round(segmentDistanceDeg / dDistanceRef);
+            // Note: Math.ceil() is used to prevent 0 division in the next line.
+            int nSamplePointInterval = (int) Math.ceil(segmentDistanceDeg / dDistanceRef);
             double dDistanceDeg = segmentDistanceDeg / nSamplePointInterval;
 
             // sample points along the raypath segment, including startPosition and endPosition

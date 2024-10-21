@@ -24,7 +24,6 @@ import io.github.kensuke1984.kibrary.timewindow.Timewindow;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
-import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.ThreadAid;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
@@ -116,7 +115,7 @@ public class FujiStaticCorrection extends Operation {
     private double searchRange;
     private boolean medianTime;
 
-    private Set<TimewindowData> sourceTimewindowSet;
+    private Set<TimewindowData> sourceTimeWindowSet;
     private Set<StaticCorrectionData> staticCorrectionSet = Collections.synchronizedSet(new HashSet<>());
 
     /**
@@ -187,13 +186,13 @@ public class FujiStaticCorrection extends Operation {
     @Override
     public void run() throws IOException {
         // gather all time windows to be processed
-        sourceTimewindowSet = TimewindowDataFile.read(timewindowPath)
+        sourceTimeWindowSet = TimewindowDataFile.read(timewindowPath)
                 .stream().filter(window -> components.contains(window.getComponent())).collect(Collectors.toSet());
         // collect all events that exist in the time window set
-        Set<GlobalCMTID> eventSet = sourceTimewindowSet.stream().map(TimewindowData::getGlobalCMTID)
-                .collect(Collectors.toSet());
+        Set<GlobalCMTID> eventSet = sourceTimeWindowSet.stream().map(TimewindowData::getGlobalCMTID).collect(Collectors.toSet());
 
         ExecutorService es = ThreadAid.createFixedThreadPool();
+        System.err.println("Working for " + eventSet.size() + " events.");
         // for each event, execute run() of class Worker, which is defined at the bottom of this java file
         eventSet.stream().map(Worker::new).forEach(es::execute);
         es.shutdown();
@@ -433,45 +432,35 @@ public class FujiStaticCorrection extends Operation {
     private class Worker extends DatasetAid.FilteredDatasetWorker {
 
         private Worker(GlobalCMTID eventID) {
-            super(eventID, obsPath, synPath, convolved, sourceTimewindowSet);
+            super(eventID, obsPath, synPath, convolved, sacSamplingHz, sourceTimeWindowSet);
         }
 
         @Override
-        public void actualWork(TimewindowData timewindow, SACFileAccess obsSac, SACFileAccess synSac) {
-            Observer observer = timewindow.getObserver();
-            SACComponent component = timewindow.getComponent();
-
-            // check delta
-            double delta = MathAid.roundForPrecision(1.0 / sacSamplingHz);
-            if (delta != obsSac.getValue(SACHeaderEnum.DELTA) || delta != synSac.getValue(SACHeaderEnum.DELTA)) {
-                System.err.println();
-                System.err.println("!! Deltas are invalid, skipping: " + timewindow);
-                System.err.println("   Obs " + obsSac.getValue(SACHeaderEnum.DELTA)
-                        + " , Syn " + synSac.getValue(SACHeaderEnum.DELTA) + " ; must be " + delta);
-                return;
-            }
+        public void actualWork(TimewindowData timeWindow, SACFileAccess obsSac, SACFileAccess synSac) {
+            Observer observer = timeWindow.getObserver();
+            SACComponent component = timeWindow.getComponent();
 
             // check SAC file end time
-            if (timewindow.getEndTime() > obsSac.getValue(SACHeaderEnum.E) - searchRange
-                    || timewindow.getEndTime() > synSac.getValue(SACHeaderEnum.E) - searchRange) {
+            if (timeWindow.getEndTime() > obsSac.getValue(SACHeaderEnum.E) - searchRange
+                    || timeWindow.getEndTime() > synSac.getValue(SACHeaderEnum.E) - searchRange) {
                 System.err.println();
-                System.err.println("!! End time of timewindow too late, skipping: " + timewindow);
+                System.err.println("!! End of time window too late, skipping: " + timeWindow);
                 return;
             }
 
             // compute correction
             try {
                 double shift = 0;
-                if (!medianTime) shift = computeTimeshiftForBestCorrelation(obsSac, synSac, timewindow);
-                else shift = computeTimeshiftForBestCorrelation_peak(obsSac, synSac, timewindow);
+                if (!medianTime) shift = computeTimeshiftForBestCorrelation(obsSac, synSac, timeWindow);
+                else shift = computeTimeshiftForBestCorrelation_peak(obsSac, synSac, timeWindow);
 //                double ratio = computeMaxRatio(obsSac, synSac, shift, timewindow);
-                double ratio = computeP2PRatio(obsSac, synSac, 0.0, timewindow);
+                double ratio = computeP2PRatio(obsSac, synSac, 0.0, timeWindow);
                 StaticCorrectionData correction = new StaticCorrectionData(observer, eventID, component,
-                        timewindow.getStartTime(), shift, ratio, timewindow.getPhases());
+                        timeWindow.getStartTime(), shift, ratio, timeWindow.getPhases());
                 staticCorrectionSet.add(correction);
             } catch (Exception e) {
                 System.err.println();
-                System.err.println("!! Skipping because an error occurs: " + timewindow);
+                System.err.println("!! Skipping because an error occurs: " + timeWindow);
                 e.printStackTrace();
             }
         }

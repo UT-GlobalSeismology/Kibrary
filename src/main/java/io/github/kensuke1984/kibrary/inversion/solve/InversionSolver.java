@@ -78,9 +78,9 @@ public class InversionSolver extends Operation {
             pw.println("#folderTag ");
             pw.println("##Names of inverse methods, listed using spaces, from {CG,SVD,LS,NNLS,BCGS,FCG,FCGD,NCG,CCG}. (CG)");
             pw.println("#inverseMethods ");
-            pw.println("##(double[]) The empirical redundancy parameter alpha to compute AIC for, listed using spaces. (1 100 1000)");
+            pw.println("##(double[]) The empirical redundancy parameter alpha to compute AIC for, listed using spaces. (1 100 500 1000)");
             pw.println("#alpha ");
-            pw.println("##(int) Maximum number of basis vectors to evaluate variance and AIC. (100)");
+            pw.println("##(int) Maximum number of basis vectors to evaluate variance and AIC. (10)");
             pw.println("#evaluateNum ");
             pw.println("##########Settings for Least Squares method.");
             pw.println("##(double[]) Reguralization parameters, listed using spaces. (0)");
@@ -107,8 +107,8 @@ public class InversionSolver extends Operation {
 
         inverseMethods = Arrays.stream(property.parseStringArray("inverseMethods", "CG")).map(InverseMethodEnum::of)
                 .collect(Collectors.toSet());
-        alpha = property.parseDoubleArray("alpha", "1 100 1000");
-        evaluateNum = property.parseInt("evaluateNum", "100");
+        alpha = property.parseDoubleArray("alpha", "1 100 500 1000");
+        evaluateNum = property.parseInt("evaluateNum", "10");
 
         lambdas_LS = property.parseDoubleArray("lambdas_LS", "0");
         if (property.containsKey("tMatrixPath_LS"))

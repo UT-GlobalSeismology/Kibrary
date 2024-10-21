@@ -118,22 +118,24 @@ public class NetworkLookup extends Operation {
        Set<DataEntry> entrySet = DataEntryListFile.readAsSet(dataEntryPath);
        Set<GlobalCMTID> eventSet = entrySet.stream().map(DataEntry::getEvent).collect(Collectors.toSet());
 
-       // search for network names
+       // search for network names (descriptions) for each event
+       // Note that when event is different, the same network code can correspond to different network names.
        System.err.println("Looking up networks ...");
        Set<Network> networkDataSet = new HashSet<>();
        int nEventsDone = 0;
        for (GlobalCMTID eventID : eventSet) {
-           Set<DataEntry> correspondingEntrySet = entrySet.stream().filter(entry -> entry.getEvent().equals(eventID))
-                   .collect(Collectors.toSet());
-           Set<String> networkCodes = correspondingEntrySet.stream().map(entry -> entry.getObserver().getNetwork())
-                   .collect(Collectors.toSet());
 
+           // collect all network codes existing for this event
+           Set<String> networkCodes = entrySet.stream().filter(entry -> entry.getEvent().equals(eventID))
+                   .map(entry -> entry.getObserver().getNetwork()).collect(Collectors.toSet());
+
+           // search up information for each network code
            for (String networkCode : networkCodes) {
-               String networkDescription = lookupDescription(networkCode, eventID);
-               if (networkDescription != null) {
-                   networkDataSet.add(new Network(networkCode, networkDescription));
+               Network networkInformation = lookupNetworkInformation(networkCode, eventID);
+               if (networkInformation != null) {
+                   networkDataSet.add(networkInformation);
                } else {
-                   System.err.println("!! No stationXML files found for " + networkCode + " " + eventID);
+                   System.err.println("!! No description found for " + networkCode + " in " + eventID);
                }
            }
 
@@ -147,22 +149,24 @@ public class NetworkLookup extends Operation {
        Path outputPath = DatasetAid.generateOutputFilePath(workPath, "network", fileTag, appendFileDate, null, ".txt");
        System.err.println("Outputting in " + outputPath);
        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath))) {
-           pw.println("# network|description");
+           pw.println("# network|description|DOI");
            networkDataSet.stream().sorted().forEach(pw::println);
        }
    }
 
     /**
-     * Searches stationXML files for the given network and event until a network description is found.
-     * @param network (String) Network ID to find description for
-     * @param event (GlobalCMTID) The event for which the network has observed
-     * @return (String) Description of network. If none is found, null.
+     * Searches stationXML files for the given network and event until a network description and DOI is found.
+     * Event folders for this event in all dataLobby folders will be searched for.
+     * @param networkCode (String) Network ID to find information for.
+     * @param event (GlobalCMTID) The event for which the network has observed.
+     * @return ({@link Network}) Information of network. If description is not found, null.
      * @throws IOException
      */
-    private String lookupDescription(String network, GlobalCMTID event) throws IOException {
+    private Network lookupNetworkInformation(String networkCode, GlobalCMTID event) throws IOException {
        String description = null;
+       String doi = null;
 
-       // search event folder in lobbies
+       // search event folder in all dataLobby folders
        for (Path lobbyPath : lobbyPaths) {
            Path eventPath = lobbyPath.resolve(event.toString());
            if (!Files.exists(eventPath)) {
@@ -173,14 +177,14 @@ public class NetworkLookup extends Operation {
            List<Path> stationXMLPaths;
            // CAUTION: Files.list() must be in try-with-resources.
            try (Stream<Path> stream = Files.list(eventPath.resolve("station"))) {
-               stationXMLPaths = stream.filter(p -> p.getFileName().toString().startsWith("station." + network + "."))
+               stationXMLPaths = stream.filter(p -> p.getFileName().toString().startsWith("station." + networkCode + "."))
                        .collect(Collectors.toList());
            }
            if (stationXMLPaths.size() == 0) {
                continue;
            }
 
-           // find network description in one of the xml files
+           // find network description and DOI in one of the xml files
            for (Path xmlPath : stationXMLPaths) {
                StationXmlFile stationInfo = new StationXmlFile(xmlPath);
                if (!stationInfo.readStationXml()) {
@@ -190,28 +194,39 @@ public class NetworkLookup extends Operation {
                }
                if (!StringUtils.isEmpty(stationInfo.getNetworkDescription())) {
                    description = stationInfo.getNetworkDescription();
-                   break;
                }
+               if (!StringUtils.isEmpty(stationInfo.getDOI())) {
+                   doi = stationInfo.getDOI();
+               }
+
+               // stop searching when both description and DOI are found
+               if (description != null && doi != null) break;
            }
-           if (description != null) break;
+           if (description != null && doi != null) break;
        }
-       return description;
+
+       // return network information; null when description is unknown
+       if (description != null) return new Network(networkCode, description, doi);
+       else return null;
    }
 
     /**
-     * A class to store information of network code and description.
+     * A class to store information of network code, description, and DOI.
      * This class is needed because Map<>() does not work;
      * there may be networks with same code but different description,
      * or those with different codes but same description.
-     * {@link #compareTo(Network)} is set to sort by code.
+     * {@link #equals(Object)} is set to return true when the code, description, and DOI are the same.
+     * {@link #compareTo(Network)} is set to sort by code, then by description.
      */
     private class Network implements Comparable<Network> {
         private String code;
         private String description;
+        private String doi;
 
-        public Network(String code, String description) {
+        public Network(String code, String description, String doi) {
             this.code = code;
             this.description = description;
+            this.doi = doi;
         }
 
         @Override
@@ -220,6 +235,7 @@ public class NetworkLookup extends Operation {
             int result = 1;
             result = prime * result + ((code == null) ? 0 : code.hashCode());
             result = prime * result + ((description == null) ? 0 : description.hashCode());
+            result = prime * result + ((doi == null) ? 0 : doi.hashCode());
             return result;
         }
 
@@ -245,17 +261,25 @@ public class NetworkLookup extends Operation {
             } else if (!description.equals(other.description))
                 return false;
 
+            if (doi == null) {
+                if (other.doi != null)
+                    return false;
+            } else if (!doi.equals(other.doi))
+                return false;
+
             return true;
         }
 
         @Override
         public int compareTo(Network o) {
-            return code.compareTo(o.code);
+            int tmp = code.compareTo(o.code);
+            if (tmp != 0) return tmp;
+            return description.compareTo(o.description);
         }
 
         @Override
         public String toString() {
-            return code + "|" + description;
+            return code + "|" + description + "|" + (doi != null ? doi : "") ;
         }
     }
 }

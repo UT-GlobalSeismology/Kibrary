@@ -22,6 +22,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.sac.SACExtension;
 import io.github.kensuke1984.kibrary.util.sac.SACFileAccess;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
+import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
 
 /**
  * Utilities for handling datasets and their corresponding folders and files.
@@ -294,23 +295,26 @@ public final class DatasetAid {
         private Path obsEventPath;
         private Path synEventPath;
         private boolean convolved;
-        private Set<TimewindowData> sourceTimewindowSet;
+        private double sacSamplingHz;
+        private Set<TimewindowData> sourceTimeWindowSet;
 
-        public FilteredDatasetWorker(GlobalCMTID eventID, Path obsPath, Path synPath, boolean convolved, Set<TimewindowData> sourceTimewindowSet) {
+        public FilteredDatasetWorker(GlobalCMTID eventID, Path obsPath, Path synPath, boolean convolved,
+                double sacSamplingHz, Set<TimewindowData> sourceTimeWindowSet) {
             this.eventID = eventID;
             obsEventPath = obsPath.resolve(eventID.toString());
             synEventPath = synPath.resolve(eventID.toString());
             this.convolved = convolved;
-            this.sourceTimewindowSet = sourceTimewindowSet;
+            this.sacSamplingHz = sacSamplingHz;
+            this.sourceTimeWindowSet = sourceTimeWindowSet;
         }
 
         /**
-         * A class to implement the actual work that needs to be done to each timewindow.
-         * @param timewindow
+         * A method to implement the actual work that needs to be done to each time window.
+         * @param timeWindow
          * @param obsSac
          * @param synSac
          */
-        public abstract void actualWork(TimewindowData timewindow, SACFileAccess obsSac, SACFileAccess synSac);
+        public abstract void actualWork(TimewindowData timeWindow, SACFileAccess obsSac, SACFileAccess synSac);
 
         @Override
         public void run() {
@@ -324,12 +328,12 @@ public final class DatasetAid {
             }
 
             // pick out time windows of this event
-            Set<TimewindowData> timewindows = sourceTimewindowSet.stream()
+            Set<TimewindowData> timeWindows = sourceTimeWindowSet.stream()
                     .filter(info -> info.getGlobalCMTID().equals(eventID)).collect(Collectors.toSet());
 
-            for (TimewindowData timewindow : timewindows) {
-                Observer observer = timewindow.getObserver();
-                SACComponent component = timewindow.getComponent();
+            for (TimewindowData timeWindow : timeWindows) {
+                Observer observer = timeWindow.getObserver();
+                SACComponent component = timeWindow.getComponent();
 
                 // get observed data
                 SACExtension obsExt = SACExtension.valueOfObserved(component);
@@ -350,8 +354,8 @@ public final class DatasetAid {
                 }
 
                 // get synthetic data
-                SACExtension synExt = convolved ? SACExtension.valueOfConvolutedSynthetic(component)
-                        : SACExtension.valueOfSynthetic(component);
+                SACExtension synExt = convolved ? SACExtension.valueOfConvolutedSynthetic(component) :
+                        SACExtension.valueOfSynthetic(component);
                 SACFileName synName = new SACFileName(synEventPath.resolve(SACFileName.generate(observer, eventID, synExt)));
                 if (!synName.exists()) {
                     System.err.println();
@@ -368,10 +372,26 @@ public final class DatasetAid {
                     continue;
                 }
 
-                actualWork(timewindow, obsSac, synSac);
+                // check delta
+                double delta = MathAid.roundForPrecision(1.0 / sacSamplingHz);
+                if (delta != obsSac.getValue(SACHeaderEnum.DELTA) || delta != synSac.getValue(SACHeaderEnum.DELTA)) {
+                    System.err.println();
+                    System.err.println("!! Deltas are invalid, skipping: " + timeWindow);
+                    System.err.println("   Obs " + obsSac.getValue(SACHeaderEnum.DELTA)
+                            + " , Syn " + synSac.getValue(SACHeaderEnum.DELTA) + " ; must be " + delta);
+                    continue;
+                }
+
+                actualWork(timeWindow, obsSac, synSac);
             }
 
+            finalWork();
             System.err.print(".");
         }
+
+        /**
+         * A method to implement some final work that needs to be done, if any.
+         */
+        public void finalWork() {}
     }
 }

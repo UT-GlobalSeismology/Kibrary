@@ -1,5 +1,9 @@
 package io.github.kensuke1984.kibrary.correction;
 
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 import org.apache.commons.math3.util.Precision;
 
 import io.github.kensuke1984.anisotime.Phase;
@@ -95,6 +99,23 @@ public class StaticCorrectionData implements Comparable<StaticCorrectionData> {
     public boolean isForTimewindow(TimewindowData t) {
         return (t.getObserver().equals(observer) && t.getGlobalCMTID().equals(eventID) && t.getComponent() == component
                 && Math.abs(t.getStartTime() - synStartTime) < TimewindowData.TIME_EPSILON);
+    }
+
+    /**
+     * Find the static correction data corresponding to the specified time window.
+     * @param staticCorrectionSet (Set of {@link StaticCorrectionData}) Set of static correction data to find from.
+     * @param window ({@link TimewindowData}) Time window to find correction for.
+     * @return ({@link StaticCorrectionData}) Static correction data for the given time window.
+     */
+    public static StaticCorrectionData findForTimeWindow(Set<StaticCorrectionData> staticCorrectionSet, TimewindowData window) {
+        List<StaticCorrectionData> corrs = staticCorrectionSet.stream().filter(s -> s.isForTimewindow(window)).collect(Collectors.toList());
+        if (corrs.size() > 1) {
+            throw new RuntimeException("Found more than 1 static correction for window " + window);
+        } else if (corrs.size() == 0) {
+            return null;
+        } else {
+            return corrs.get(0);
+        }
     }
 
     @Override

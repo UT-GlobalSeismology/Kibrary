@@ -53,7 +53,7 @@ public final class GadgetAid {
         MessageDigest md = MessageDigest.getInstance(algorithm);
         try (DigestInputStream digestInputStream = new DigestInputStream(
                 new BufferedInputStream(Files.newInputStream(path)), md)) {
-            while (digestInputStream.read() != -1) ;
+            while (digestInputStream.read() != -1);
         }
         StringBuilder result = new StringBuilder();
         for (byte b : md.digest())
@@ -216,8 +216,8 @@ public final class GadgetAid {
         long mins = TimeUnit.NANOSECONDS.toMinutes(nanoSeconds - used);
         used += TimeUnit.MINUTES.toNanos(mins);
         double sec = (nanoSeconds - used) / 1000000000.0;
-        return (days == 0 ? "" : days + "d, ") + (hours == 0 ? "" : hours + "h, ")
-                + (mins == 0 ? "" : mins + " min, and ") + sec + " s";
+        return (days == 0 ? "" : days + " d ") + (hours == 0 ? "" : hours + " h ")
+                + (mins == 0 ? "" : mins + " m ") + sec + " s";
     }
 
     /**

@@ -10,7 +10,6 @@ import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
@@ -104,6 +103,9 @@ public class DataSelection extends Operation {
      * Sampling frequency of input SAC files [Hz].
      */
     private double sacSamplingHz;
+    /**
+     * Path of static correction file.
+     */
     private Path staticCorrectionPath;
 
     /**
@@ -129,10 +131,10 @@ public class DataSelection extends Operation {
     private boolean requirePhase;
     private boolean excludeSurfaceWave;
 
-    private Set<TimewindowData> sourceTimewindowSet;
+    private Set<TimewindowData> sourceTimeWindowSet;
     private Set<StaticCorrectionData> staticCorrectionSet;
     private Set<DataFeature> dataFeatureSet = Collections.synchronizedSet(new HashSet<>());
-    private Set<TimewindowData> goodTimewindowSet = Collections.synchronizedSet(new HashSet<>());
+    private Set<TimewindowData> goodTimeWindowSet = Collections.synchronizedSet(new HashSet<>());
 
     /**
      * @param args (String[]) Arguments: none to create a property file, path of property file to run it.
@@ -235,17 +237,17 @@ public class DataSelection extends Operation {
     @Override
     public void run() throws IOException {
         // gather all time windows to be processed
-        sourceTimewindowSet = TimewindowDataFile.read(timewindowPath)
+        sourceTimeWindowSet = TimewindowDataFile.read(timewindowPath)
                 .stream().filter(window -> components.contains(window.getComponent())).collect(Collectors.toSet());
         // collect all events that exist in the time window set
-        Set<GlobalCMTID> eventSet = sourceTimewindowSet.stream().map(TimewindowData::getGlobalCMTID)
-                .collect(Collectors.toSet());
+        Set<GlobalCMTID> eventSet = sourceTimeWindowSet.stream().map(TimewindowData::getGlobalCMTID).collect(Collectors.toSet());
 
         // read static corrections
-        staticCorrectionSet = (staticCorrectionPath == null ? Collections.emptySet()
-                : StaticCorrectionDataFile.read(staticCorrectionPath));
+        staticCorrectionSet = (staticCorrectionPath == null ? Collections.emptySet() :
+                StaticCorrectionDataFile.read(staticCorrectionPath));
 
         ExecutorService es = ThreadAid.createFixedThreadPool();
+        System.err.println("Working for " + eventSet.size() + " events.");
         // for each event, execute run() of class Worker, which is defined at the bottom of this java file
         eventSet.stream().map(Worker::new).forEach(es::execute);
         es.shutdown();
@@ -255,13 +257,13 @@ public class DataSelection extends Operation {
         // this println() is for starting new line after writing "."s
         System.err.println();
 
-        System.err.println(MathAid.switchSingularPlural(goodTimewindowSet.size(), "time window is", "time windows are") + " selected.");
+        System.err.println(MathAid.switchSingularPlural(goodTimeWindowSet.size(), "time window is", "time windows are") + " selected.");
 
         // output
         String dateString = GadgetAid.getTemporaryString();
         Path outputFeaturePath = DatasetAid.generateOutputFilePath(workPath, "dataFeature", fileTag, appendFileDate, dateString, ".lst");
         Path outputSelectedPath = DatasetAid.generateOutputFilePath(workPath, "selectedTimewindow", fileTag, appendFileDate, dateString, ".dat");
-        if (goodTimewindowSet.size() > 0) TimewindowDataFile.write(goodTimewindowSet, outputSelectedPath);
+        if (goodTimeWindowSet.size() > 0) TimewindowDataFile.write(goodTimeWindowSet, outputSelectedPath);
         if (dataFeatureSet.size() > 0) DataFeatureListFile.write(dataFeatureSet, outputFeaturePath);
     }
 
@@ -273,17 +275,6 @@ public class DataSelection extends Operation {
     private RealVector cutSAC(SACFileAccess sac, Timewindow timewindow) {
         Trace trace = sac.createTrace();
         return trace.cutWindow(timewindow, sacSamplingHz).getYVector();
-    }
-
-    private StaticCorrectionData getStaticCorrection(TimewindowData window) {
-        List<StaticCorrectionData> corrs = staticCorrectionSet.stream().filter(s -> s.isForTimewindow(window)).collect(Collectors.toList());
-        if (corrs.size() > 1) {
-            throw new RuntimeException("Found more than 1 static correction for window " + window);
-        } else if (corrs.size() == 0) {
-            return null;
-        } else {
-            return corrs.get(0);
-        }
     }
 
     private boolean check(DataFeature feature) throws IOException {
@@ -345,39 +336,29 @@ public class DataSelection extends Operation {
     private class Worker extends DatasetAid.FilteredDatasetWorker {
 
         private Worker(GlobalCMTID eventID) {
-            super(eventID, obsPath, synPath, convolved, sourceTimewindowSet);
+            super(eventID, obsPath, synPath, convolved, sacSamplingHz, sourceTimeWindowSet);
         }
 
         @Override
-        public void actualWork(TimewindowData timewindow, SACFileAccess obsSac, SACFileAccess synSac) {
+        public void actualWork(TimewindowData timeWindow, SACFileAccess obsSac, SACFileAccess synSac) {
+            SACComponent component = timeWindow.getComponent();
+
+            // check SAC file end time
+            if (timeWindow.getEndTime() > obsSac.getValue(SACHeaderEnum.E)
+                    || timeWindow.getEndTime() > synSac.getValue(SACHeaderEnum.E)) {
+                System.err.println();
+                System.err.println("!! End of time window too late, skipping: " + timeWindow);
+                return;
+            }
+
+            // check phase
+            if (requirePhase && timeWindow.getPhases().length == 0) {
+                System.err.println();
+                System.err.println("!! No phase, skipping: " + timeWindow);
+                return;
+            }
+
             try {
-                SACComponent component = timewindow.getComponent();
-
-                // check delta
-                double delta = MathAid.roundForPrecision(1.0 / sacSamplingHz);
-                if (delta != obsSac.getValue(SACHeaderEnum.DELTA) || delta != synSac.getValue(SACHeaderEnum.DELTA)) {
-                    System.err.println();
-                    System.err.println("!! Deltas are invalid, skipping: " + timewindow);
-                    System.err.println("   Obs " + obsSac.getValue(SACHeaderEnum.DELTA)
-                            + " , Syn " + synSac.getValue(SACHeaderEnum.DELTA) + " ; must be " + delta);
-                    return;
-                }
-
-                // check SAC file end time
-                if (timewindow.getEndTime() > obsSac.getValue(SACHeaderEnum.E)
-                        || timewindow.getEndTime() > synSac.getValue(SACHeaderEnum.E)) {
-                    System.err.println();
-                    System.err.println("!! End time of timewindow too late, skipping: " + timewindow);
-                    return;
-                }
-
-                // check phase
-                if (requirePhase && timewindow.getPhases().length == 0) {
-                    System.err.println();
-                    System.err.println("!! No phase, skipping: " + timewindow);
-                    return;
-                }
-
                 // remove surface wave from window
                 if (excludeSurfaceWave) {
                     Trace synTrace = synSac.createTrace();
@@ -385,8 +366,8 @@ public class DataSelection extends Operation {
                     Timewindow surfacewaveWindow = detector.getSurfaceWaveWindow();
 
                     if (surfacewaveWindow != null) {
-                        double endTime = timewindow.getEndTime();
-                        double startTime = timewindow.getStartTime();
+                        double endTime = timeWindow.getEndTime();
+                        double startTime = timeWindow.getStartTime();
                         if (startTime >= surfacewaveWindow.getStartTime() && endTime <= surfacewaveWindow.getEndTime())
                             return;
                         if (endTime > surfacewaveWindow.getStartTime() && startTime < surfacewaveWindow.getStartTime())
@@ -394,52 +375,48 @@ public class DataSelection extends Operation {
                         if (startTime < surfacewaveWindow.getEndTime() && endTime > surfacewaveWindow.getEndTime())
                             startTime = surfacewaveWindow.getEndTime();
 
-                        timewindow = new TimewindowData(startTime
-                                , endTime, timewindow.getObserver(), timewindow.getGlobalCMTID()
-                                , timewindow.getComponent(), timewindow.getPhases());
+                        timeWindow = new TimewindowData(startTime, endTime, timeWindow.getObserver(),
+                                timeWindow.getGlobalCMTID(), timeWindow.getComponent(), timeWindow.getPhases());
                     }
                 }
 
                 // apply static correction
                 double shift = 0.;
                 if (!staticCorrectionSet.isEmpty()) {
-                    StaticCorrectionData correction = getStaticCorrection(timewindow);
+                    StaticCorrectionData correction = StaticCorrectionData.findForTimeWindow(staticCorrectionSet, timeWindow);
                     if (correction == null) {
                         System.err.println();
-                        System.err.println("!! No static correction data, skipping: " + timewindow);
+                        System.err.println("!! No static correction data, skipping: " + timeWindow);
                         return;
                     }
                     shift = correction.getTimeshift();
                     if (Math.abs(shift) > upperStaticShift) {
                         System.err.println();
-                        System.err.println("!! Time shift too large, skipping: " + timewindow);
+                        System.err.println("!! Time shift too large, skipping: " + timeWindow);
                         return;
                     }
                 }
-                TimewindowData shiftedWindow = new TimewindowData(timewindow.getStartTime() - shift
-                        , timewindow.getEndTime() - shift, timewindow.getObserver()
-                        , timewindow.getGlobalCMTID(), timewindow.getComponent(), timewindow.getPhases());
 
                 // cut out waveforms
-                RealVector synU = cutSAC(synSac, timewindow);
-                RealVector obsU = cutSAC(obsSac, shiftedWindow);
+                RealVector synU = cutSAC(synSac, timeWindow);
+                RealVector obsU = cutSAC(obsSac, timeWindow.shift(-shift));
 
                 // signal-to-noise ratio
                 double noise = noisePerSecond(obsSac, component);
-                double signal = obsU.getNorm() / (timewindow.getEndTime() - timewindow.getStartTime());
+                double signal = obsU.getNorm() / (timeWindow.getEndTime() - timeWindow.getStartTime());
                 double snRatio = signal / noise;
 
                 // select by features
-                DataFeature feature = DataFeature.create(timewindow, obsU, synU, snRatio, false);
+                DataFeature feature = DataFeature.create(timeWindow, obsU, synU, snRatio, false);
                 if (check(feature)) {
                     feature.setSelected(true);
-                    goodTimewindowSet.add(timewindow);
+                    goodTimeWindowSet.add(timeWindow);
                 }
                 dataFeatureSet.add(feature);
 
             } catch (Exception e) {
                 System.err.println();
-                System.err.println("!! Skipping because an error occurs: " + timewindow);
+                System.err.println("!! Skipping because an error occurs: " + timeWindow);
                 e.printStackTrace();
             }
         }

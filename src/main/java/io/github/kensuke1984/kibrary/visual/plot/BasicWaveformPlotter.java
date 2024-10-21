@@ -222,73 +222,73 @@ public class BasicWaveformPlotter extends Operation {
             throw new IllegalArgumentException("refBasicPath2 must be set when refSynStyle2 != 0");
     }
 
-   @Override
-   public void run() throws IOException {
-       String dateString = GadgetAid.getTemporaryString();
+    @Override
+    public void run() throws IOException {
+        String dateString = GadgetAid.getTemporaryString();
 
-       // read main basic waveform folders and write waveforms to be used into txt files
-       List<BasicID> mainBasicIDs = BasicIDFile.read(mainBasicPath, true).stream()
-               .filter(id -> components.contains(id.getSacComponent())).collect(Collectors.toList());
-       if (!tendEvents.isEmpty()) {
-           mainBasicIDs = mainBasicIDs.stream().filter(id -> tendEvents.contains(id.getGlobalCMTID())).collect(Collectors.toList());
-       }
-       BasicIDFile.outputWaveformTxts(mainBasicIDs, mainBasicPath);
+        // read main basic waveform folders and write waveforms to be used into txt files
+        List<BasicID> mainBasicIDs = BasicIDFile.read(mainBasicPath, true).stream()
+                .filter(id -> components.contains(id.getSacComponent())).collect(Collectors.toList());
+        if (!tendEvents.isEmpty()) {
+            mainBasicIDs = mainBasicIDs.stream().filter(id -> tendEvents.contains(id.getGlobalCMTID())).collect(Collectors.toList());
+        }
+        BasicIDFile.outputWaveformTxts(mainBasicIDs, mainBasicPath);
 
-       // collect events included in mainBasicIDs
-       Set<GlobalCMTID> events = mainBasicIDs.stream().map(id -> id.getGlobalCMTID()).distinct().collect(Collectors.toSet());
-       if (!DatasetAid.checkNum(events.size(), "event", "events")) {
-           return;
-       }
+        // collect events included in mainBasicIDs
+        Set<GlobalCMTID> events = mainBasicIDs.stream().map(id -> id.getGlobalCMTID()).distinct().collect(Collectors.toSet());
+        if (!DatasetAid.checkNum(events.size(), "event", "events")) {
+            return;
+        }
 
-       // read reference basic waveform folders and write waveforms to be used into txt files
-       List<BasicID> refBasicIDs1 = null;
-       if (refBasicPath1 != null) {
-           refBasicIDs1 = BasicIDFile.read(refBasicPath1, true).stream()
-                   .filter(id -> components.contains(id.getSacComponent()) && events.contains(id.getGlobalCMTID()))
-                   .collect(Collectors.toList());
-           BasicIDFile.outputWaveformTxts(refBasicIDs1, refBasicPath1);
-       }
-       List<BasicID> refBasicIDs2 = null;
-       if (refBasicPath2 != null) {
-           refBasicIDs2 = BasicIDFile.read(refBasicPath2, true).stream()
-                   .filter(id -> components.contains(id.getSacComponent()) && events.contains(id.getGlobalCMTID()))
-                   .collect(Collectors.toList());
-           BasicIDFile.outputWaveformTxts(refBasicIDs2, refBasicPath2);
-       }
+        // read reference basic waveform folders and write waveforms to be used into txt files
+        List<BasicID> refBasicIDs1 = null;
+        if (refBasicPath1 != null) {
+            refBasicIDs1 = BasicIDFile.read(refBasicPath1, true).stream()
+                    .filter(id -> components.contains(id.getSacComponent()) && events.contains(id.getGlobalCMTID()))
+                    .collect(Collectors.toList());
+            BasicIDFile.outputWaveformTxts(refBasicIDs1, refBasicPath1);
+        }
+        List<BasicID> refBasicIDs2 = null;
+        if (refBasicPath2 != null) {
+            refBasicIDs2 = BasicIDFile.read(refBasicPath2, true).stream()
+                    .filter(id -> components.contains(id.getSacComponent()) && events.contains(id.getGlobalCMTID()))
+                    .collect(Collectors.toList());
+            BasicIDFile.outputWaveformTxts(refBasicIDs2, refBasicPath2);
+        }
 
-       // read travel time information
-       if (travelTimePath != null) {
-           travelTimeInfoSet = TravelTimeInformationFile.read(travelTimePath);
-       }
+        // read travel time information
+        if (travelTimePath != null) {
+            travelTimeInfoSet = TravelTimeInformationFile.read(travelTimePath);
+        }
 
-       for (GlobalCMTID event : events) {
+        for (GlobalCMTID event : events) {
 
-           // create plots under workPath
-           Path eventPath = workPath.resolve(event.toString());
-           Files.createDirectories(eventPath);
-           if (splitComponents) {
-               for (SACComponent component : components) {
-                   List<BasicID> useIds = mainBasicIDs.stream()
-                           .filter(id -> id.getSacComponent().equals(component) && id.getGlobalCMTID().equals(event))
-                           .sorted(Comparator.comparing(BasicID::getObserver))
-                           .collect(Collectors.toList());
+            // create plots under workPath
+            Path eventPath = workPath.resolve(event.toString());
+            Files.createDirectories(eventPath);
+            if (splitComponents) {
+                for (SACComponent component : components) {
+                    List<BasicID> useIds = mainBasicIDs.stream()
+                            .filter(id -> id.getSacComponent().equals(component) && id.getGlobalCMTID().equals(event))
+                            .sorted(Comparator.comparing(BasicID::getObserver))
+                            .collect(Collectors.toList());
 
-                   // Here, generateOutputFilePath() is used in an irregular way, adding the component along with the file extension.
-                   Path plotPath = DatasetAid.generateOutputFilePath(eventPath, "plot", fileTag, true, dateString, "_" + component.toString() + ".plt");
-                   createPlot(eventPath, plotPath, useIds);
-               }
-           } else {
-               List<BasicID> useIds = mainBasicIDs.stream()
-                       .filter(id -> id.getGlobalCMTID().equals(event))
-                       .sorted(Comparator.comparing(BasicID::getObserver).thenComparing(BasicID::getSacComponent))
-                       .collect(Collectors.toList());
+                    // Here, generateOutputFilePath() is used in an irregular way, adding the component along with the file extension.
+                    Path plotPath = DatasetAid.generateOutputFilePath(eventPath, "plot", fileTag, true, dateString, "_" + component.toString() + ".plt");
+                    createPlot(eventPath, plotPath, useIds);
+                }
+            } else {
+                List<BasicID> useIds = mainBasicIDs.stream()
+                        .filter(id -> id.getGlobalCMTID().equals(event))
+                        .sorted(Comparator.comparing(BasicID::getObserver).thenComparing(BasicID::getSacComponent))
+                        .collect(Collectors.toList());
 
-               Path plotPath = DatasetAid.generateOutputFilePath(eventPath, "plot", fileTag, true, dateString, ".plt");
-               createPlot(eventPath, plotPath, useIds);
-           }
+                Path plotPath = DatasetAid.generateOutputFilePath(eventPath, "plot", fileTag, true, dateString, ".plt");
+                createPlot(eventPath, plotPath, useIds);
+            }
 
-       }
-   }
+        }
+    }
 
     /**
      * @param eventPath (Path) Path of event folder.
