@@ -7,6 +7,7 @@ import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -36,12 +37,12 @@ public class TravelTimeInformationFile {
 
     /**
      * Writes a file with information of travel times.
-     * @param usePhases Set of phases that are used in timewindow
-     * @param avoidPhases Set of phases that are avoided in timewindow
-     * @param informationSet Set of travel time information
-     * @param outputPath     of write file
-     * @param options     for write
-     * @throws IOException if an I/O error occurs
+     * @param usePhases (Set of Phase) Phases that are used in timewindow.
+     * @param avoidPhases (Set of Phase) Phases that are avoided in timewindow.
+     * @param informationSet (Set of {@link TravelTimeInformation}) Travel time information.
+     * @param outputPath (Path) Output file.
+     * @param options (OpenOption...) Options for write.
+     * @throws IOException if an I/O error occurs.
      */
     public static void write(Set<Phase> usePhases, Set<Phase> avoidPhases, Set<TravelTimeInformation> informationSet,
             Path outputPath, OpenOption... options) throws IOException {
@@ -54,11 +55,13 @@ public class TravelTimeInformationFile {
 
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath, options))) {
             pw.println("# usePhases...");
-            useList.forEach(phase -> pw.print(phase + " "));
+            if (useList.isEmpty()) pw.print("-");
+            else useList.forEach(phase -> pw.print(phase + " "));
             pw.println();
 
             pw.println("# avoidPhases...");
-            avoidList.forEach(phase -> pw.print(phase + " "));
+            if (avoidList.isEmpty()) pw.print("-");
+            else avoidList.forEach(phase -> pw.print(phase + " "));
             pw.println();
 
             pw.println("# eventID station network latitude longitude travelTimes...");
@@ -67,7 +70,7 @@ public class TravelTimeInformationFile {
                 for (Phase phase : useList) {
                     Double travelTime = info.timeOf(phase);
                     if (travelTime != null) {
-                        pw.print(" " + travelTime);
+                        pw.print(" " + MathAid.padToString(travelTime, Timewindow.TYPICAL_MAX_INTEGER_DIGITS, Timewindow.DECIMALS, false));
                     } else {
                         pw.print(" -");
                     }
@@ -75,7 +78,7 @@ public class TravelTimeInformationFile {
                 for (Phase phase : avoidList) {
                     Double travelTime = info.timeOf(phase);
                     if (travelTime != null) {
-                        pw.print(" " + travelTime);
+                        pw.print(" " + MathAid.padToString(travelTime, Timewindow.TYPICAL_MAX_INTEGER_DIGITS, Timewindow.DECIMALS, false));
                     } else {
                         pw.print(" -");
                     }
@@ -85,13 +88,23 @@ public class TravelTimeInformationFile {
         }
     }
 
+    /**
+     * Reads travel time information from a {@link TravelTimeInformationFile}.
+     * @param inputPath (Path) The {@link TravelTimeInformationFile} to read.
+     * @return (Set of {@link TravelTimeInformation}) Travel time information that is read.
+     * @throws IOException
+     */
     public static Set<TravelTimeInformation> read(Path inputPath) throws IOException {
         Set<TravelTimeInformation> informationSet = new HashSet<>();
         InformationFileReader reader = new InformationFileReader(inputPath, true);
 
         // read 1st and 2nd lines
-        List<Phase> useList = Arrays.stream(reader.next().split("\\s+")).map(Phase::create).collect(Collectors.toList());
-        List<Phase> avoidList = Arrays.stream(reader.next().split("\\s+")).map(Phase::create).collect(Collectors.toList());
+        String useListString = reader.next();
+        List<Phase> useList = (useListString.equals("-")) ? Collections.emptyList() :
+                Arrays.stream(useListString.split("\\s+")).map(Phase::create).collect(Collectors.toList());
+        String avoidListString = reader.next();
+        List<Phase> avoidList = (avoidListString.equals("-")) ? Collections.emptyList() :
+                Arrays.stream(avoidListString.split("\\s+")).map(Phase::create).collect(Collectors.toList());
 
         // read rest of file
         String line;

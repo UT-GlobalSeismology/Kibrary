@@ -77,14 +77,14 @@ public class SyntheticDSMInputFile extends DSMInputHeader {
 
             // source
             FullPosition eventLocation = event.getCmtPosition();
-            pw.println("c parameter for the source");
+            pw.println("c parameters for the source");
             pw.println(eventLocation.getR() + " " + eventLocation.getLatitude() + " " + eventLocation.getLongitude()
-                    + " r0(km), lat, lon (deg)");
+                    + " r0 (km), lat, lon (deg)");
             pw.println(Arrays.stream(event.getCmt().toDSMStyle()).mapToObj(Double::toString).collect(Collectors.joining(" "))
-                    + " Moment Tensor (1.e25 dyne cm)");
+                    + " Moment Tensor (Mrr, Mrt, Mrp, Mtt, Mtp, Mpp) (1.e25 dyne cm)");
 
             // receiver
-            pw.println("c parameter for the station");
+            pw.println("c parameters for the stations");
             pw.println("c the number of stations");
             pw.println(observers.size() + " nsta");
             pw.println("c latitude longitude (deg)");
@@ -92,7 +92,7 @@ public class SyntheticDSMInputFile extends DSMInputHeader {
                     .forEach(p -> pw.println(p.getLatitude() + " " + p.getLongitude()));
 
             // write
-            pw.println("c parameter for the write file");
+            pw.println("c output file names");
             observers.stream().sorted()
                     .forEach(observer -> pw.println(output + "/" + SPCFileName.generate(observer, event.getGlobalCMTID(), SPCMode.PSV)));
             pw.println("end");
@@ -121,14 +121,14 @@ public class SyntheticDSMInputFile extends DSMInputHeader {
 
             // source
             FullPosition eventLocation = event.getCmtPosition();
-            pw.println("c parameter for the source");
+            pw.println("c parameters for the source");
             pw.println(eventLocation.getR() + " " + eventLocation.getLatitude() + " " + eventLocation.getLongitude()
-                    + " r0(km), lat, lon (deg)");
+                    + " r0 (km), lat, lon (deg)");
             pw.println(Arrays.stream(event.getCmt().toDSMStyle()).mapToObj(Double::toString).collect(Collectors.joining(" "))
-                    + " Moment Tensor (1.e25 dyne cm)");
+                    + " Moment Tensor (Mrr, Mrt, Mrp, Mtt, Mtp, Mpp) (1.e25 dyne cm)");
 
             // receiver
-            pw.println("c parameter for the station");
+            pw.println("c parameters for the stations");
             pw.println("c the number of stations");
             pw.println(observers.size() + " nsta");
             pw.println("c latitude longitude (deg)");
@@ -136,7 +136,7 @@ public class SyntheticDSMInputFile extends DSMInputHeader {
                     .forEach(p -> pw.println(p.getLatitude() + " " + p.getLongitude()));
 
             // write
-            pw.println("c parameter for the write file");
+            pw.println("c output file names");
             observers.stream().sorted()
                     .forEach(observer -> pw.println(output + "/" + SPCFileName.generate(observer, event.getGlobalCMTID(), SPCMode.SH)));
             pw.println("end");

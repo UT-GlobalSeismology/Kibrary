@@ -70,7 +70,7 @@ public enum ScalarType {
         case MU: paramName = "@~m@~"; break;
         case KAPPA: paramName = "@~k@~"; break;
         case ETA: paramName = "@~h@~"; break;
-        case XI: paramName = "@~c@~"; break;
+        case XI: paramName = "@~x@~"; break;
         case Qmu: paramName = "Q@-@~m@~@-"; break;
         case Qkappa: paramName = "Q@-@~k@~@-"; break;
         default: paramName = variable.toString();

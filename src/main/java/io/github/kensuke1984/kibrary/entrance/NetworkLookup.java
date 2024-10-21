@@ -6,6 +6,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -26,6 +27,7 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 /**
  * Class to create a list of networks that are used in certain sets of data.
  * To be used for creating a table to put in Supplementary Materials of a paper.
+ * A file in fdsnws-dataselect format is also created for generating citation list at https://www.fdsn.org/networks/citation/
  * <p>
  * A {@link DataEntryListFile} shall be given as the set of data for input.
  * Paths of {@link DataLobby} folders must be set to look up the network descriptions in stationXML files.
@@ -133,6 +135,7 @@ public class NetworkLookup extends Operation {
            for (String networkCode : networkCodes) {
                Network networkInformation = lookupNetworkInformation(networkCode, eventID);
                if (networkInformation != null) {
+                   // network is added to set if it does not already exist
                    networkDataSet.add(networkInformation);
                } else {
                    System.err.println("!! No description found for " + networkCode + " in " + eventID);
@@ -151,6 +154,14 @@ public class NetworkLookup extends Operation {
        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath))) {
            pw.println("# network|description|DOI");
            networkDataSet.stream().sorted().forEach(pw::println);
+       }
+
+       // output in fdsnws-dataselect POST request format (for generating citation list)
+       Path outputFDSNWSPath = DatasetAid.generateOutputFilePath(workPath, "networkFDSNWS", fileTag, appendFileDate, null, ".txt");
+       System.err.println("Outputting in fdsnws-dataselect format in " + outputFDSNWSPath
+               + " ; use this for generating citation list at https://www.fdsn.org/networks/citation/");
+       try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputFDSNWSPath))) {
+           networkDataSet.stream().sorted().forEach(network -> pw.println(network.toFDSNWSString()));
        }
    }
 
@@ -206,7 +217,7 @@ public class NetworkLookup extends Operation {
        }
 
        // return network information; null when description is unknown
-       if (description != null) return new Network(networkCode, description, doi);
+       if (description != null) return new Network(networkCode, description, doi, event);
        else return null;
    }
 
@@ -222,11 +233,13 @@ public class NetworkLookup extends Operation {
         private String code;
         private String description;
         private String doi;
+        private GlobalCMTID representativeEvent;
 
-        public Network(String code, String description, String doi) {
+        public Network(String code, String description, String doi, GlobalCMTID representativeEvent) {
             this.code = code;
             this.description = description;
             this.doi = doi;
+            this.representativeEvent = representativeEvent;
         }
 
         @Override
@@ -280,6 +293,11 @@ public class NetworkLookup extends Operation {
         @Override
         public String toString() {
             return code + "|" + description + "|" + (doi != null ? doi : "") ;
+        }
+
+        public String toFDSNWSString() {
+            LocalDateTime eventTime = representativeEvent.getEventData().getCMTTime();
+            return code + " * * * " + eventTime + " " + eventTime.plusMinutes(10);
         }
     }
 }

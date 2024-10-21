@@ -37,6 +37,7 @@ class BasicPlotAid {
     static final GnuplotLineAppearance ZERO_APPEARANCE = new GnuplotLineAppearance(1, GnuplotColorName.light_gray, 1);
     static final GnuplotLineAppearance USE_PHASE_APPEARANCE = new GnuplotLineAppearance(1, GnuplotColorName.turquoise, 1);
     static final GnuplotLineAppearance AVOID_PHASE_APPEARANCE = new GnuplotLineAppearance(1, GnuplotColorName.violet, 1);
+    static final GnuplotLineAppearance SHADE_PHASE_APPEARANCE = new GnuplotLineAppearance(1, GnuplotColorName.SHADE, 70);
 
     static GnuplotLineAppearance switchObservedAppearance(int num) {
         switch(num) {
@@ -82,8 +83,8 @@ class BasicPlotAid {
         }
     }
 
-    static void plotTravelTimeCurve(TauP_Time timeTool, String[] displayPhases, String[] alignPhases, double reductionSlowness,
-            double startDistance, double endDistance,
+    static void plotTravelTimeCurve(TauP_Time timeTool, String[] displayPhases, boolean shadeCurve,
+            String[] alignPhases, double reductionSlowness, double startDistance, double endDistance,
             String fileTag, String dateString, Path eventPath, SACComponent component, GnuplotFile gnuplot) throws IOException, TauModelException {
         // set names of all phases to display, and the phases to align on if specified
         timeTool.setPhaseNames(displayPhases);
@@ -145,7 +146,8 @@ class BasicPlotAid {
                     }
                 }
             }
-            gnuplot.addLine(curveFileName, 2, 1, USE_PHASE_APPEARANCE, "");
+            if (shadeCurve) gnuplot.addLine(curveFileName, "($2+1):1", SHADE_PHASE_APPEARANCE, "");
+            else gnuplot.addLine(curveFileName, 2, 1, USE_PHASE_APPEARANCE, "");
         }
     }
 
