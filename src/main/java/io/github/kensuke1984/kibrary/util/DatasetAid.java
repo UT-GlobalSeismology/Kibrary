@@ -309,7 +309,7 @@ public final class DatasetAid {
         }
 
         /**
-         * A class to implement the actual work that needs to be done to each timewindow.
+         * A method to implement the actual work that needs to be done to each time window.
          * @param timeWindow
          * @param obsSac
          * @param synSac
@@ -385,7 +385,13 @@ public final class DatasetAid {
                 actualWork(timeWindow, obsSac, synSac);
             }
 
+            finalWork();
             System.err.print(".");
         }
+
+        /**
+         * A method to implement some final work that needs to be done, if any.
+         */
+        public void finalWork() {}
     }
 }
