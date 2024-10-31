@@ -20,7 +20,6 @@ import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructureFile;
-import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure_old;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
 
 
@@ -1057,7 +1056,7 @@ public class Make3DModel {
     }
 
     private static Map<Double, Double> readVel(Path inversionRootPath) {
-        PolynomialStructure_old model = PolynomialStructure_old.PREM;
+        PolynomialStructure model = DefaultStructure.PREM;
         Map<Double, Double> velMap = new HashMap<Double, Double>();
         List<String> lines = null;
         try {
@@ -1068,13 +1067,13 @@ public class Make3DModel {
         String[] ss = lines.get(1).split("\\s+");
         double r = Double.valueOf(ss[0]);;
         double depth = 6371. - r;
-        double dv = (Double.valueOf(ss[1]) - model.getVshAt(r)) / Double.valueOf(ss[2]) * 100;
+        double dv = (Double.valueOf(ss[1]) - model.getAtRadius(VariableType.Vsh, r)) / Double.valueOf(ss[2]) * 100;
         velMap.put(depth, dv);
         for (int i = 3; i < lines.size() - 1; i += 2) {
             ss = lines.get(i).split("\\s+");
             r = Double.valueOf(ss[0]);
             depth = 6371. - r;
-            dv = (Double.valueOf(ss[1]) - model.getVshAt(r)) / Double.valueOf(ss[2]) * 100;
+            dv = (Double.valueOf(ss[1]) - model.getAtRadius(VariableType.Vsh, r)) / Double.valueOf(ss[2]) * 100;
             velMap.put(depth, dv);
         }
         ss = lines.get(lines.size() - 1).split("\\s+");
@@ -1085,12 +1084,12 @@ public class Make3DModel {
     }
 
     public static void writeModel(List<PerturbationPoint> perturbations, Path outpath) throws IOException {
-        PolynomialStructure_old prem = PolynomialStructure_old.PREM;
+        PolynomialStructure prem = DefaultStructure.PREM;
         PrintWriter writer = new PrintWriter(new FileWriter(outpath.toString()));
         String line = "#lon(deg), lat(deg), depth(km), Vs-perturbation wrt PREM(%), Vs-PREM (km/s)";
         writer.println(line);
         for (PerturbationPoint pp : perturbations) {
-            line = pp.toString() + String.format(" %.6f", prem.getVshAt(pp.getLocation().getR()));
+            line = pp.toString() + String.format(" %.6f", prem.getAtRadius(VariableType.Vsh, pp.getLocation().getR()));
             writer.println(line);
         }
         writer.close();

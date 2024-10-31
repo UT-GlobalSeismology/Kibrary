@@ -15,9 +15,10 @@ import org.apache.commons.math3.util.Precision;
 
 import edu.sc.seis.TauP.TauModelException;
 import edu.sc.seis.TauP.TauP_Time;
+import io.github.kensuke1984.kibrary.elastic.VariableType;
 import io.github.kensuke1984.kibrary.math.Trace;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
-import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure_old;
+import io.github.kensuke1984.kibrary.util.earth.DefaultStructure;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.sac.WaveformType;
@@ -75,7 +76,7 @@ public class RotationWaveformVisual {
 
                 timeTool.calcTime(distance);
                 double p = timeTool.getArrival(0).getRayParamDeg();
-                double theta = p * 6371. * PolynomialStructure_old.PREM.getVphAt(6371.);
+                double theta = p * 6371. * DefaultStructure.PREM.getAtRadius(VariableType.Vph, 6371.);
                 System.out.println(theta);
                 theta = Math.asin(Math.toRadians(theta));
 
