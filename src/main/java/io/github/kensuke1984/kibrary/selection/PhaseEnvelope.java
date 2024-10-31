@@ -233,7 +233,7 @@ public class PhaseEnvelope {
 
 //							String network = obsname.readHeader().getSACString(SACHeaderEnum.KNETWK);
 //							String stationString = obsname.getStationName() + "_" + network;
-                            String stationString = obsname.getStationCode();
+                            String stationString = obsname.getObserverID();
                             GlobalCMTID id = obsname.getGlobalCMTID();
                             SACComponent component = obsname.getComponent();
                             String name = convolute

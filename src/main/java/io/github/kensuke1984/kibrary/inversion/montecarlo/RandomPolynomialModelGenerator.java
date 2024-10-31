@@ -1,9 +1,5 @@
 package io.github.kensuke1984.kibrary.inversion.montecarlo;
 
-import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
-
-import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure_old;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.OpenOption;
@@ -12,6 +8,11 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+
+import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
+
+import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
+import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure_old;
 
 /**
  * @author Kensuke Konishi
@@ -32,7 +33,7 @@ class RandomPolynomialModelGenerator implements ModelGenerator<PolynomialStructu
 
     private final Random RANDOM = new Random();
 
-    private static void outputModelValue(Path runPath, PolynomialStructure_old structure) throws IOException {
+    private static void outputModelValue(Path runPath, PolynomialStructure structure) throws IOException {
         double[] vs = ModelProbability.readVs(structure);
         double[] q = ModelProbability.readQ(structure);
         List<String> lines = new ArrayList<>();

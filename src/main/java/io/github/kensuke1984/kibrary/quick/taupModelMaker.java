@@ -7,8 +7,11 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 
+import io.github.kensuke1984.kibrary.elastic.VariableType;
+import io.github.kensuke1984.kibrary.util.earth.DefaultStructure;
 import io.github.kensuke1984.kibrary.util.earth.Earth;
-import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure_old;
+import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
+import io.github.kensuke1984.kibrary.util.earth.PolynomialStructureFile;
 
 public class taupModelMaker {
 
@@ -17,7 +20,7 @@ public class taupModelMaker {
 //		PolynomialStructure model = new PolynomialStructure(Paths.get("/Users/Anselme/Dropbox/Kenji/UPPER_MANTLE/1D_REFERENCE_MODEL/POLYNOMIALS/tnasna.poly"));
 //		PolynomialStructure model = new PolynomialStructure(Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/cluster34/oneDPartial_cl4s0_it1/inversion/40km/mantleCorr/ampCorr/lmi_78_vs_cl4_az0_l007_g0_semucb/poly/cl4az0_it2.poly"));
 //		PolynomialStructure model = new PolynomialStructure(Paths.get("/work/anselme/POLY/sw_it1.poly"));
-        PolynomialStructure_old model = new PolynomialStructure_old(Paths.get("/work/anselme/POLY/cl4_high.poly"));
+        PolynomialStructure model = PolynomialStructureFile.read(Paths.get("/work/anselme/POLY/cl4_high.poly"));
 //		PolynomialStructure model = PolynomialStructure.AK135;
 
 //		Path root = Paths.get("/work/anselme/CA_ANEL_NEW/oneDPartial_s0/inversion/alpha_03/lmi_s0_c06_cQ10/poly");
@@ -25,11 +28,11 @@ public class taupModelMaker {
 ////		int nR = Integer.parseInt(args[0]);
         int nR = 5000;
 
-        PolynomialStructure_old prem = PolynomialStructure_old.PREM;
+        PolynomialStructure prem = DefaultStructure.PREM;
 
 //		model = PolynomialStructure.ISO_PREM;
 
-        System.out.println(prem.getRhoAt(3780));
+        System.out.println(prem.getAtRadius(VariableType.RHO, 3780));
         System.exit(0);
 
         double f = 1.03;
@@ -241,39 +244,39 @@ public class taupModelMaker {
 //		System.out.println(isDiscontinous(model, 6356.000, 6345.516) + " " + (Earth.EARTH_RADIUS -  6356) + " " + (Earth.EARTH_RADIUS - 6345) + " " + (Earth.EARTH_RADIUS - model.getRMinOf(model.getiZoneOf(6356))));
     }
 
-    private static String TauPline(PolynomialStructure_old model, double r) {
+    private static String TauPline(PolynomialStructure model, double r) {
         double depth = Earth.EARTH_RADIUS - r;
-        return String.format("%.4f %.4f %.4f %.4f\n", depth, model.getVphAt(r), model.getVshAt(r), model.getRhoAt(r));
+        return String.format("%.4f %.4f %.4f %.4f\n", depth, model.getAtRadius(VariableType.Vph, r), model.getAtRadius(VariableType.Vsh, r), model.getAtRadius(VariableType.RHO, r));
     }
 
-    private static String stdline(PolynomialStructure_old model, double r) {
-        double Qmu = model.getQmuAt(r) == Double.POSITIVE_INFINITY ? Double.POSITIVE_INFINITY : model.getQmuAt(r);
+    private static String stdline(PolynomialStructure model, double r) {
+        double Qmu = model.getAtRadius(VariableType.Qmu, r) == Double.POSITIVE_INFINITY ? Double.POSITIVE_INFINITY : model.getAtRadius(VariableType.Qmu, r);
         return String.format("%.3f %.8f %.8f %.8f %.8f %.8f %.1f %.1f%n"
                 ,Earth.EARTH_RADIUS - r
-                ,model.getVphAt(r)
-                ,model.getVpvAt(r)
-                ,model.getVshAt(r)
-                ,model.getVsvAt(r)
-                ,model.getRhoAt(r)
+                ,model.getAtRadius(VariableType.Vph, r)
+                ,model.getAtRadius(VariableType.Vpv, r)
+                ,model.getAtRadius(VariableType.Vsh, r)
+                ,model.getAtRadius(VariableType.Vsv, r)
+                ,model.getAtRadius(VariableType.RHO, r)
                 ,Qmu
-                ,model.getQkappaAt(r));
+                ,model.getAtRadius(VariableType.Qkappa, r));
     }
 
-    private static String AxiSEMline(PolynomialStructure_old model, double r) {
-        double Qmu = model.getQmuAt(r) == Double.POSITIVE_INFINITY ? 0. : model.getQmuAt(r);
+    private static String AxiSEMline(PolynomialStructure model, double r) {
+        double Qmu = model.getAtRadius(VariableType.Qmu, r) == Double.POSITIVE_INFINITY ? 0. : model.getAtRadius(VariableType.Qmu, r);
         return String.format("            %.0f.  %.2f  %.2f  %.2f    %.1f      %.1f  %.2f  %.2f  %.5f%n"
                 ,r * 1e3
-                ,model.getRhoAt(r) * 1e3
-                ,model.getVpvAt(r) * 1e3
-                ,model.getVsvAt(r) * 1e3
-                ,model.getQkappaAt(r)
+                ,model.getAtRadius(VariableType.RHO, r) * 1e3
+                ,model.getAtRadius(VariableType.Vpv, r) * 1e3
+                ,model.getAtRadius(VariableType.Vsv, r) * 1e3
+                ,model.getAtRadius(VariableType.Qkappa, r)
                 ,Qmu
-                ,model.getVphAt(r) * 1e3
-                ,model.getVshAt(r) * 1e3
-                ,model.getEtaAt(r));
+                ,model.getAtRadius(VariableType.Vph, r) * 1e3
+                ,model.getAtRadius(VariableType.Vsh, r) * 1e3
+                ,model.getAtRadius(VariableType.ETA, r));
     }
 
-    public static void outputTauP(PolynomialStructure_old model, int nR) {
+    public static void outputTauP(PolynomialStructure model, int nR) {
         for (int i = 0; i <= nR; i++) {
             double dr = Earth.EARTH_RADIUS / nR;
             double r = Earth.EARTH_RADIUS - i * dr;
@@ -281,8 +284,8 @@ public class taupModelMaker {
             int izone = model.zoneOf(r);
             if (r > 0) {
                 if (izone != model.zoneOf(r - dr)) {
-                    if (Math.abs(model.getVshAt(r) - model.getVshAt(r - dr)) > 0.05) {
-                        double rZone = model.getRMinOf(izone);
+                    if (Math.abs(model.getAtRadius(VariableType.Vsh, r) - model.getAtRadius(VariableType.Vsh, r - dr)) > 0.05) {
+                        double rZone = model.getRmin()[izone];
                         System.out.print(TauPline(model, r));
                         System.out.print(TauPline(model, rZone));
                         System.out.print(TauPline(model, rZone - .00001));
@@ -298,7 +301,7 @@ public class taupModelMaker {
         }
     }
 
-    public static void outputSTD(PolynomialStructure_old model, int nR, Path outpath) throws IOException {
+    public static void outputSTD(PolynomialStructure model, int nR, Path outpath) throws IOException {
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outpath, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING))) {
             for (int i = 0; i <= nR; i++) {
                 double dr = Earth.EARTH_RADIUS / nR;
@@ -307,8 +310,8 @@ public class taupModelMaker {
                 int izone = model.zoneOf(r);
                 if (r > 0) {
                     if (izone != model.zoneOf(r - dr)) {
-                        if (Math.abs(model.getVshAt(r) - model.getVshAt(r - dr)) > 0.05) {
-                            double rZone = model.getRMinOf(izone);
+                        if (Math.abs(model.getAtRadius(VariableType.Vsh, r) - model.getAtRadius(VariableType.Vsh, r - dr)) > 0.05) {
+                            double rZone = model.getRmin()[izone];
                             pw.print(stdline(model, r));
                             pw.print(stdline(model, rZone));
                             pw.println("#DISCONTINUITY AT " + rZone + " km");
@@ -354,7 +357,7 @@ public class taupModelMaker {
 //		}
 //	}
 
-    public static void outputAxiSEM(PolynomialStructure_old model, int nR) {
+    public static void outputAxiSEM(PolynomialStructure model, int nR) {
         int iDisc = 1;
         System.out.printf("ANELASTIC       T%n"
                 + "ANISOTROPIC     T%n"
@@ -367,7 +370,7 @@ public class taupModelMaker {
             if (r > 0) {
                 if (izone != model.zoneOf(r - dr)) {
                     if (isDiscontinous(model, r, r - dr)) {
-                        double rZone = model.getRMinOf(izone);
+                        double rZone = model.getRmin()[izone];
                         System.out.print(AxiSEMline(model, r));
                         System.out.print(AxiSEMline(model, rZone));
                         System.out.printf("#          Discontinuity   %d, depth:      %.2f km%n", iDisc, Earth.EARTH_RADIUS-rZone);
@@ -385,19 +388,19 @@ public class taupModelMaker {
         }
     }
 
-    private static boolean isDiscontinous(PolynomialStructure_old model, double rPlus, double rMinus) {
+    private static boolean isDiscontinous(PolynomialStructure model, double rPlus, double rMinus) {
         boolean res = false;
         int n = (int) (rPlus - rMinus) * 10;
         for (int i = 0; i < n; i++) {
             double r1 = rPlus - i * (rPlus - rMinus) / n;
             double r2 = rPlus - (i+1) * (rPlus - rMinus) / n;
-            res = Math.abs(model.getVshAt(r1) - model.getVshAt(r2)) > 0.05
-                    || Math.abs(model.getVsvAt(r1) - model.getVsvAt(r2)) > 0.05
-                    || Math.abs(model.getVphAt(r1) - model.getVphAt(r2)) > 0.05
-                    || Math.abs(model.getVpvAt(r1) - model.getVpvAt(r2)) > 0.05
-                    || Math.abs(model.getRhoAt(r1) - model.getRhoAt(r2)) > 0.05
-                    || Math.abs(model.getQkappaAt(r1) - model.getQkappaAt(r2)) > 0.05
-                    || Math.abs(model.getQmuAt(r1) - model.getQmuAt(r2)) > 0.05
+            res = Math.abs(model.getAtRadius(VariableType.Vsh, r1) - model.getAtRadius(VariableType.Vsh, r2)) > 0.05
+                    || Math.abs(model.getAtRadius(VariableType.Vsv, r1) - model.getAtRadius(VariableType.Vsv, r2)) > 0.05
+                    || Math.abs(model.getAtRadius(VariableType.Vph, r1) - model.getAtRadius(VariableType.Vph, r2)) > 0.05
+                    || Math.abs(model.getAtRadius(VariableType.Vpv, r1) - model.getAtRadius(VariableType.Vpv, r2)) > 0.05
+                    || Math.abs(model.getAtRadius(VariableType.RHO, r1) - model.getAtRadius(VariableType.RHO, r2)) > 0.05
+                    || Math.abs(model.getAtRadius(VariableType.Qkappa, r1) - model.getAtRadius(VariableType.Qkappa, r2)) > 0.05
+                    || Math.abs(model.getAtRadius(VariableType.Qmu, r1) - model.getAtRadius(VariableType.Qmu, r2)) > 0.05
                     ;
             if (res == true)
                 break;

@@ -34,8 +34,7 @@ public class SACFileName extends File {
     private static final int SYN_FILE_PARTS = 3;
     private static final int PARTIAL_FILE_PARTS = 7;
 
-    private String stationCode;
-    private String networkCode;
+    private String observerID;
     private GlobalCMTID globalCMTID;
     private SACExtension extension;
     private String x, y, z;
@@ -153,8 +152,7 @@ public class SACFileName extends File {
             throw new IllegalArgumentException(fileName + " contains an invalid Global CMT ID");
         globalCMTID = new GlobalCMTID(eventID);
 
-        stationCode = parts[0].split("_")[0];
-        networkCode = parts[0].split("_")[1];
+        observerID = parts[0];
 
         x = (parts.length != 7) ? null : parts[3];
         y = (parts.length != 7) ? null : parts[4];
@@ -222,17 +220,7 @@ public class SACFileName extends File {
     }
 
     public String getObserverID() {
-        return stationCode + "_" + networkCode;
-    }
-
-    @Deprecated
-    public String getStationCode() { // TODO: delete
-        return stationCode;
-    }
-
-    @Deprecated
-    public String getNetworkCode() { // TODO: delete
-        return networkCode;
+        return observerID;
     }
 
     public String getX() {

@@ -13,9 +13,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import io.github.kensuke1984.kibrary.elastic.VariableType;
 import io.github.kensuke1984.kibrary.util.addons.EventCluster;
+import io.github.kensuke1984.kibrary.util.earth.DefaultStructure;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
+import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
+import io.github.kensuke1984.kibrary.util.earth.PolynomialStructureFile;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure_old;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
 
@@ -576,9 +580,9 @@ public class Make3DModel {
         Map<Double, Double> vel_high = new HashMap<>();
         Map<Double, Double> vel_low = vel3;
 
-        PolynomialStructure_old model = null;
+        PolynomialStructure model = null;
         try {
-            model = new PolynomialStructure_old(Paths.get("/work/anselme/POLY/sw_it1.poly"));
+            model = PolynomialStructureFile.read(Paths.get("/work/anselme/POLY/sw_it1.poly"));
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -589,7 +593,7 @@ public class Make3DModel {
                 dv = (vel0.get(depth) + vel1.get(depth) + vel2.get(depth) + vel4.get(depth) + vel5.get(depth)) / 5.;
             else {
                 double r = 6371 - depth;
-                dv = (model.getVshAt(r) - PolynomialStructure_old.PREM.getVshAt(r)) / PolynomialStructure_old.PREM.getVshAt(r) * 100;
+                dv = (model.getAtRadius(VariableType.Vsh, r) - DefaultStructure.PREM.getAtRadius(VariableType.Vsh, r)) / DefaultStructure.PREM.getAtRadius(VariableType.Vsh, r) * 100;
             }
             vel_high.put(depth, dv);
         }
@@ -604,8 +608,8 @@ public class Make3DModel {
             Collections.sort(sortedDepths);
 
             for (Double depth : sortedDepths) {
-                double vlow = PolynomialStructure_old.PREM.getVshAt(6371 - depth) * (1 + vel_low.get(depth) / 100.);
-                double vhigh = new PolynomialStructure_old(Paths.get("/work/anselme/POLY/sw_it1.poly")).getVshAt(6371. - depth)
+                double vlow = DefaultStructure.PREM.getAtRadius(VariableType.Vsh, 6371 - depth) * (1 + vel_low.get(depth) / 100.);
+                double vhigh = PolynomialStructureFile.read(Paths.get("/work/anselme/POLY/sw_it1.poly")).getAtRadius(VariableType.Vsh, 6371. - depth)
                         * (1 + vel_high.get(depth) / 100.);
                 pw_low.println(depth + " " + vlow + " " + vlow + " " + vlow);
                 pw_high.println(depth + " " + vhigh + " " + vhigh + " " + vhigh);
@@ -851,8 +855,8 @@ public class Make3DModel {
             Collections.sort(sortedDepths);
 
             for (Double depth : sortedDepths) {
-                double vlow = PolynomialStructure_old.PREM.getVshAt(6371 - depth) * (1 + vel_low.get(depth) / 100.);
-                double vhigh = new PolynomialStructure_old(Paths.get("/work/anselme/POLY/cl3az0_it2.poly")).getVshAt(6371. - depth)
+                double vlow = DefaultStructure.PREM.getAtRadius(VariableType.Vsh, 6371 - depth) * (1 + vel_low.get(depth) / 100.);
+                double vhigh = PolynomialStructureFile.read(Paths.get("/work/anselme/POLY/cl3az0_it2.poly")).getAtRadius(VariableType.Vsh, 6371. - depth)
                         * (1 + vel_high.get(depth) / 100.);
                 pw_low.println(depth + " " + vlow + " " + vlow + " " + vlow);
                 pw_high.println(depth + " " + vhigh + " " + vhigh + " " + vhigh);
