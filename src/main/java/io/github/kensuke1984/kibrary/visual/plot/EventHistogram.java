@@ -5,6 +5,7 @@ import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.Set;
 
 import org.apache.commons.cli.CommandLine;
@@ -67,6 +68,8 @@ public class EventHistogram {
                 .desc("Minimum depth in histogram. (0)").build());
         options.addOption(Option.builder("M").longOpt("maxDepth").hasArg().argName("maxDepth")
                 .desc("Maximum depth in histogram. (" + MAX_DEPTH + ")").build());
+        options.addOption(Option.builder("B").longOpt("boundaries").hasArg().argName("boundaries")
+                .desc("Boundaries of magnitude, listed using commas. (5.0,5.5,6.0,6.5,7.0,7.5,8.0)").build());
 
         // output
         options.addOption(Option.builder("T").longOpt("tag").hasArg().argName("folderTag")
@@ -90,11 +93,15 @@ public class EventHistogram {
         Set<GlobalCMTID> eventSet = EventListFile.read(eventPath);
 
         double dDepth = cmdLine.hasOption("i") ? Double.parseDouble(cmdLine.getOptionValue("i")) : 50;
-        double xtics = cmdLine.hasOption("x") ? Double.parseDouble(cmdLine.getOptionValue("i")) : 100;
+        double xtics = cmdLine.hasOption("x") ? Double.parseDouble(cmdLine.getOptionValue("x")) : 100;
         double minimum = cmdLine.hasOption("m") ? Double.parseDouble(cmdLine.getOptionValue("m")) : 0;
         double maximum = cmdLine.hasOption("M") ? Double.parseDouble(cmdLine.getOptionValue("M")) : MAX_DEPTH;
+        double[] mwBorders = {5.0, 5.5, 6.0, 6.5, 7.0, 7.5, 8.0};
+        if (cmdLine.hasOption("B")) {
+            mwBorders = Arrays.stream(cmdLine.getOptionValue("B").split(",")).mapToDouble(Double::parseDouble).toArray();
+        }
 
-        double[] mwBorders = {5.0, 5.5, 6.0, 6.5, 7.0, 7.5};
+        // create 2-D array to store results
         int nMw = mwBorders.length - 1;
         int nDepth = (int) MathAid.ceil(MAX_DEPTH / dDepth);
         int[][] numberOfEvents = new int[nDepth][nMw];
@@ -143,8 +150,7 @@ public class EventHistogram {
             pw.println("set xlabel 'Depth (km)'");
             pw.println("set ylabel 'Number of events'");
             pw.println("set xrange [" + minimum + ":" + maximum + "]");
-            pw.println("set xtics " + xtics + " nomirror");
-            pw.println("set ytics nomirror");
+            pw.println("set xtics " + xtics);
             pw.println("set style fill solid border lc rgb 'black'");
             pw.println("set sample 11");
             pw.println("set output '" + fileNameRoot + ".png'");
@@ -156,7 +162,7 @@ public class EventHistogram {
             for (int j = 0; j < nMw; j++) {
                 String lineString = (j == 0) ? "plot '" : "     '";
                 lineString += fileNameRoot + ".txt' u ($1+" + (interval / 2) + "):(" + numString;
-                lineString += ") w boxes lw 2.5 lc '" + COLORS[j];
+                lineString += ") w boxes lw 1 lc '" + COLORS[j];
                 lineString += "' title 'Mw " + mwBorders[j] + "-" + mwBorders[j + 1];
                 lineString += (j < nMw - 1) ? "', \\" : "'";
                 pw.println(lineString);
