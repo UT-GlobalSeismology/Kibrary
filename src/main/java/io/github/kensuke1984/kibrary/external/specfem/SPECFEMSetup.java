@@ -10,8 +10,13 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
+
+import io.github.kensuke1984.kibrary.Summon;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
-import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.data.DataEntry;
 import io.github.kensuke1984.kibrary.util.data.DataEntryListFile;
@@ -27,32 +32,50 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
  */
 public class SPECFEMSetup {
 
-    private Path workPath;
-    private Path outPath;
+    /**
+     * Set up input directories for SPECFEM.
+     * @param args Options.
+     * @throws IOException if an I/O error occurs
+     */
+    public static void main(String[] args) throws IOException {
+        Options options = defineOptions();
+        try {
+            run(Summon.parseArgs(options, args));
+        } catch (ParseException e) {
+            Summon.showUsage(options);
+        }
+    }
 
     /**
-     * Path of a data entry file.
+     * To be called from {@link Summon}.
+     * @return options
      */
-    private Path dataEntryPath;
+    public static Options defineOptions() {
+        Options options = Summon.defaultOptions();
 
-    public static void main(String[] args) throws IOException {
-        if (args.length != 2) {
-            System.err.println("Usage: inPath workPath");
-            return;
-        }
-        Path inPath = Paths.get(args[0]);
-        Path workPath = Paths.get(args[1]);
+        // input
+        options.addOption(Option.builder("e").longOpt("dataEntryFile").hasArg().argName("dataEntryFile").required()
+                .desc("Path of data entry list file.").build());
 
-        SPECFEMSetup setup = new SPECFEMSetup(inPath, workPath);
-        setup.run();
+        // output
+        options.addOption(Option.builder("T").longOpt("tag").hasArg().argName("folderTag")
+                .desc("A tag to include in output folder name.").build());
+        options.addOption(Option.builder("O").longOpt("omitDate")
+                .desc("Omit date string in output folder name.").build());
+
+        return options;
     }
 
-    public SPECFEMSetup(Path dataEntryPath, Path workPath) {
-        this.dataEntryPath = dataEntryPath;
-        this.workPath = workPath;
-    }
+    /**
+     * To be called from {@link Summon}.
+     * @param cmdLine options
+     * @throws IOException
+     */
+    public static void run(CommandLine cmdLine) throws IOException {
+        String folderTag = cmdLine.hasOption("T") ? cmdLine.getOptionValue("T") : null;
+        boolean appendFolderDate = !cmdLine.hasOption("O");
 
-    private void run() throws IOException {
+        Path dataEntryPath = Paths.get(cmdLine.getOptionValue("e"));
         Map<GlobalCMTID, Set<DataEntry>> entryMap = DataEntryListFile.readAsMap(dataEntryPath);
         int nEvents = entryMap.size();
         if (!DatasetAid.checkNum(nEvents, "event", "events")) {
@@ -63,9 +86,7 @@ public class SPECFEMSetup {
             return;
         }
 
-        outPath = workPath.resolve("specfem" + GadgetAid.getTemporaryString());
-        Files.createDirectories(outPath);
-        System.err.println("Output folder is " + outPath);
+        Path outPath = DatasetAid.createOutputFolder(Paths.get(""), "specfem", folderTag, appendFolderDate, null);
 
         if (nEvents == 1) {
             // this loop is only done once; loop is written here to extract event from Map<GlobalCMTID, Set<DataEntry>>
