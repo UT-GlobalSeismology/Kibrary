@@ -1,4 +1,4 @@
-package io.github.kensuke1984.kibrary.specfem;
+package io.github.kensuke1984.kibrary.external.specfem;
 
 import java.io.IOException;
 import java.io.PrintWriter;

@@ -1,4 +1,4 @@
-package io.github.kensuke1984.kibrary.specfem;
+package io.github.kensuke1984.kibrary.external.specfem;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -33,8 +33,10 @@ import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
  * </ul>
  *
  * @author Anselme
+ * @since a long time ago
+ * @version 2024/11/3 Renamed from specfem.Make3DModel to external.specfem.SPECFEMModelMaker
  */
-public class Make3DModel {
+public class SPECFEMModelMaker {
 
     public static void main(String[] args) throws IOException {
 
