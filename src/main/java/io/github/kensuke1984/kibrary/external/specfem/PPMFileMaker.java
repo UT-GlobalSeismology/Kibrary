@@ -74,6 +74,7 @@ public class PPMFileMaker {
             // radii are called in reverse order so that depths will be in order
             for (int i = radii.length - 1; i >= 0; i--) {
                 double depth = toDepth(radii[i]);
+                double premVs = PREM.mediumAt(radii[i]).get(VariableType.Vs);
 
 /*                for (int j = 0; j < numLongitude; j++) {
                     double longitude = dLongitude * (j+0.5) - 180;
@@ -87,7 +88,7 @@ public class PPMFileMaker {
 
                         int numDiff = i + j + k;
                         double value = percentVs * (((numDiff % 2 == 1) ^ flipSign) ? 1 : -1); // ^ is XOR
-                        pw.println(longitude + " " + latitude + " " + depth + " " + value + " " + PREM.mediumAt(radii[i]).get(VariableType.Vs));
+                        pw.println(longitude + " " + latitude + " " + depth + " " + value + " " + premVs);
                     }
                 }
             }

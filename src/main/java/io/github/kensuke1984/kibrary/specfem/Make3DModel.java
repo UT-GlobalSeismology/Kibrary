@@ -1,6 +1,5 @@
 package io.github.kensuke1984.kibrary.specfem;
 
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Files;
@@ -11,140 +10,119 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.apache.commons.math3.util.Precision;
+
 import io.github.kensuke1984.kibrary.elastic.VariableType;
+import io.github.kensuke1984.kibrary.perturbation.ScalarListFile;
 import io.github.kensuke1984.kibrary.util.addons.EventCluster;
 import io.github.kensuke1984.kibrary.util.earth.DefaultStructure;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructureFile;
-import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
 
 
 /**
- * @author Anselme
- * 3-D model for specfem specified by Vs perturbation w.r.t. PREM at each location (lon, lat, depth)
+ * Class to create 3-D model for SPECFEM specified by Vs perturbation w.r.t. PREM at each position (lon, lat, depth).
+ *
+ * <p>
  * For the method in model_ppm.f90 to correctly retrieve the Vs perturbations,
- * the 3-D model file must be written in that order:
- * depths (min to max)
- * longitudes (min to max)
- * latitudes (min to max)
+ * the 3-D model file must be written in the following order:
+ * <ul>
+ * <li> depths (min to max) </li>
+ * <li> longitudes (min to max) </li>
+ * <li> latitudes (min to max) </li>
+ * </ul>
+ *
+ * @author Anselme
  */
 public class Make3DModel {
 
     public static void main(String[] args) throws IOException {
-//		List<PerturbationPoint> oneLayerModel = onePerturbationLayer(3480., 3630., 2.);
-//		List<PerturbationPoint> checkerboard = checkerboardDppCACAR_100km(1.);
-//		Path outpath = Paths.get("/Users/Anselme/checkerboard_5_100km_1per.inf");
 
-//		double[] depths = new double[] {330, 410, 535, 660, 820};
-//		double dD = 5.;
-//		double nD = 0;
-//		for (int i = 0; i < depths.length-1; i++) {
-//			nD += (int) ((depths[i+1] - depths[i]) / dD);
-//			System.out.println(depths[i+1] - depths[i]);
-//		}
-//		System.out.println(nD);
-//		System.exit(0);
+        List<PerturbationPoint> oneLayer = onePerturbationLayer(3480, 3530, 2);
+        Path oneLayerPath = Paths.get("oneLayer.txt");
 
-//		List<UnknownParameter> unknowns = UnknownParameterFile.read(Paths.get(args[0]));
-//
-//		List<PerturbationPoint> checkerboard_4deg_4layers = checkerboardCATZ_4deg_4layers(2., unknowns);
-//		Path outpath_4deg_4layers = Paths.get("checkerboard_4x4_4layers_2per.inf");
-//
-//		List<PerturbationPoint> checkerboard_4deg_8layers = checkerboardCATZ_4deg_8layers(2., unknowns);
-//		Path outpath_4deg_8layers = Paths.get("checkerboard_4x4_8layers_2per.inf");
+        double[] radii = {3480, 3580, 3680, 3780, 3880};
+        List<PerturbationPoint> checkerboard = checkerboard(radii, 10, 10, 2, false);
+        Path checkerboardPath = Paths.get("checkerboard.txt");
 
-//		List<PerturbationPoint> checkerboard = checkerboardCATZ_6deg_4layers(3., unknowns);
-//		Path outpath = Paths.get("checkerboard_6x6_4layers_3per.inf");
+        List<PerturbationPoint> custom = readScalarFile(Paths.get(args[0]));
+        Path customPath = Paths.get("custom.txt");
 
-//		List<PerturbationPoint> lowVelocityLens = velocityLens_CA(-5);
-//		Path outpath_lowvelocitylens = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/SPECFEM_MODELS/low_velocity_lens_5per.inf");
-
-//		List<PerturbationPoint> hlh = model_hlh();
-//		Path outpath_hlh = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/SPECFEM_MODELS/EFFECT_HLH/model_hlh.txt");
-
-//		List<PerturbationPoint> cl4 = from1DmodelsCl4();
-//		Path outpath_cl4 = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/SPECFEM_MODELS/CL4/model_cl4.txt");
-
-//		List<PerturbationPoint> cl3 = from1DmodelsCl3();
-//		Path outpath_cl3 = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/SPECFEM_MODELS/CL3/model_cl3.txt");
-
-        List<PerturbationPoint> cl4_simple = from1DmodelsCl4_simple();
-        Path outpath_cl4_simple = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/SPECFEM_MODELS/CL3/model_cl4_simple.txt");
-
-        List<PerturbationPoint> cl3_simple = from1DmodelsCl3_simple();
-        Path outpath_cl3_simple = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/SPECFEM_MODELS/CL3/model_cl3_simple.txt");
-
-        List<PerturbationPoint> cl5_simple = from1DmodelsCl5_simple();
-        Path outpath_cl5_simple = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/SPECFEM_MODELS/CL3/model_cl5_simple.txt");
-
-//		try {
-//			writeModel(checkerboard_4deg_4layers, outpath_4deg_4layers);
-//			writeModel(checkerboard_4deg_8layers, outpath_4deg_8layers);
-//			writeModel(lowVelocityLens, outpath_lowvelocitylens);
-//			writeModel(hlh, outpath_hlh);
-//			writeModel(cl4, outpath_cl4);
-//			writeModel(cl3, outpath_cl3);
-//			writeModel(cl4_simple, outpath_cl3_simple);
-//			writeModel(cl3_simple, outpath_cl3_simple);
-//			writeModel(cl5_simple, outpath_cl5_simple);
-//		} catch (IOException e) {
-//			e.printStackTrace();
-//		}
+        writeModel(oneLayer, oneLayerPath);
+        writeModel(checkerboard, checkerboardPath);
+        writeModel(custom, customPath);
     }
 
-    public static List<PerturbationPoint> onePerturbationLayer(double rmin, double rmax, double dvs) {
-        List<PerturbationPoint> perturbations = new ArrayList<>();
-        int nr = (int) ((rmax - rmin) / 5.) + 1;
-        for (int k = 0; k < nr; k++) {
-            for (int i = -180; i <= 179; i+=1) {
-                for (int j = -89; j <= 89; j+=1) {
-                    FullPosition location = new FullPosition(j, i, rmax - k * 5);
-                    PerturbationPoint perturbation = new PerturbationPoint(location, dvs);
-                    perturbations.add(perturbation);
-                }
-            }
-        }
-        return perturbations;
-    }
+    public static List<PerturbationPoint> readScalarFile(Path scalarPath) throws IOException {
+        Map<FullPosition, Double> scalarMap = ScalarListFile.read(scalarPath);
 
+        // gather positions
+        Set<FullPosition> positions = scalarMap.keySet();
+        Set<HorizontalPosition> horizontalPositions = positions.stream().map(FullPosition::toHorizontalPosition).collect(Collectors.toSet());
+        double[] radii = positions.stream().mapToDouble(FullPosition::getR).distinct().sorted().toArray();
 
-    /**
-     * @can checkerboardDppCACAR_2 is the equivalent but simplified version
-     * @param dvs
-     * @return
-     */
-    @Deprecated
-    public static List<PerturbationPoint> checkerboardDppCACAR(double dvs) {
+        // find latitude geometry information
+        double[] latitudes = horizontalPositions.stream().mapToDouble(HorizontalPosition::getLatitude).distinct().sorted().toArray();
+        double minLatitude = latitudes[0];
+        double maxLatitude = latitudes[latitudes.length - 1];
+        double dLatitude = latitudes[1] - latitudes[0];
+        int numLatitude = (int) Math.round((maxLatitude - minLatitude) / dLatitude) + 1;
+        // find longitude geometry information
+        boolean crossDateLine = HorizontalPosition.crossesDateLine(horizontalPositions);
+        double[] longitudes = horizontalPositions.stream().mapToDouble(pos -> pos.getLongitude(crossDateLine)).distinct().sorted().toArray();
+        double minLongitude = longitudes[0];
+        double maxLongitude = longitudes[longitudes.length - 1];
+        double dLongitude = longitudes[1] - longitudes[0];
+        int numLongitude = (int) Math.round((maxLongitude - minLongitude) / dLongitude) + 1;
+
         List<PerturbationPoint> perturbations = new ArrayList<>();
-        for (int k = 0; k < 41;k++) {
-            double r = 3880 - k * 10;
-            double layerSign = Math.pow(-1, k / 5);
-            if (k == 40)
-                layerSign = Math.pow(-1, (k-1) / 5);
-            double iCount = 0;
-            double lonSign = 1;
-            for (int i = -180; i <= 179; i+=1) {
-                if (iCount == 5) {
-                    iCount = 0;
-                    lonSign *= -1;
-                }
-                iCount++;
-                double jCount = 0;
-                double latSign = 1;
-                for (int j = -88; j <= 89; j++) {
-                    if (jCount == 5) {
-                        jCount = 0;
-                        latSign *= -1;
+
+        // radii are called in reverse order so that depths will be in order
+        for (int i = radii.length - 1; i >= 0; i--) {
+            double radius = radii[i];
+            double premVs = DefaultStructure.PREM.mediumAt(radii[i]).get(VariableType.Vs);
+
+            // write values for all positions within the rectangle that includes the input positions
+            for (int j = 0; j < numLongitude; j++) {
+                double longitude = minLongitude + j * dLongitude;
+                for (int k = 0; k < numLatitude; k++) {
+                    double latitude = minLatitude + k * dLatitude;
+                    FullPosition position = new FullPosition(latitude, longitude, radius);
+
+                    // if input file contains this position, write its value; else, write 0
+                    if (positions.contains(position)) {
+                        double percentVs = scalarMap.get(position);
+                        PerturbationPoint perturbation = new PerturbationPoint(position, percentVs, premVs);
+                        perturbations.add(perturbation);
+                    } else {
+                        PerturbationPoint perturbation = new PerturbationPoint(position, 0.0, premVs);
+                        perturbations.add(perturbation);
                     }
-                    jCount++;
-                    FullPosition location = new FullPosition(j+.5, i, r);
-                    PerturbationPoint perturbation = new PerturbationPoint(location
-                            , layerSign * dvs);
-//							, layerSign * lonSign * latSign * dvs);
+                }
+            }
+        }
+
+        return perturbations;
+    }
+
+    public static List<PerturbationPoint> onePerturbationLayer(double rmin, double rmax, double percentVs) {
+        double dR = 5.0;
+        List<PerturbationPoint> perturbations = new ArrayList<>();
+
+        int nr = (int) ((rmax - rmin) / dR);
+        for (int k = 0; k < nr; k++) {
+            double radius = rmax - (k + 0.5) * dR;
+            double premVs = DefaultStructure.PREM.mediumAt(radius).get(VariableType.Vs);
+
+            for (int lon = -180; lon <= 179; lon++) {
+                for (int lat = -89; lat <= 89; lat++) {
+                    FullPosition position = new FullPosition(lat, lon, radius);
+                    PerturbationPoint perturbation = new PerturbationPoint(position, percentVs, premVs);
                     perturbations.add(perturbation);
                 }
             }
@@ -152,288 +130,87 @@ public class Make3DModel {
         return perturbations;
     }
 
-    public static List<PerturbationPoint> checkerboardDppCACAR_2(double dvs) {
+    public static List<PerturbationPoint> checkerboard(double[] borderRadii, double dLatitude, double dLongitude, double percentVs, boolean flipSign) {
         List<PerturbationPoint> perturbations = new ArrayList<>();
-        double layerSign = 1;
-        for (int k = 0; k <= 8;k++) {
-            double r = 3880 - k * 50;
-            double lonSign = 1;
-            for (int i = -180; i <= 175; i+=5) {
-                double latSign = 1;
-                for (int j = -88; j <= 87; j+=5) {
-                    FullPosition location = new FullPosition(j+.5, i, r);
-                    PerturbationPoint perturbation = new PerturbationPoint(location
-                            , layerSign * dvs);
-//							, layerSign * lonSign * latSign * dvs);
+
+        double[] centerRadii = new double[borderRadii.length - 1];
+        for (int i = 0; i < centerRadii.length; i++) {
+            centerRadii[i] = (borderRadii[i] + borderRadii[i + 1]) / 2;
+        }
+
+        double divLatitude = 180 / dLatitude;
+        if (!Precision.equals(divLatitude, Math.round(divLatitude), 0.01)) {
+            throw new IllegalArgumentException("dLatitude must divide 180");
+        }
+        int numLatitude = (int) Math.round(divLatitude);
+
+        double divLongitude = 360 / dLongitude;
+        if (!Precision.equals(divLongitude, Math.round(divLongitude), 0.01)) {
+            throw new IllegalArgumentException("dLongitude must divide 360");
+        }
+        int numLongitude = (int) Math.round(divLongitude);
+
+        // radii are called in reverse order so that depths will be in order
+        for (int i = centerRadii.length - 1; i >= 0; i--) {
+            double radius = centerRadii[i];
+            double premVs = DefaultStructure.PREM.mediumAt(radius).get(VariableType.Vs);
+
+/*                for (int j = 0; j < numLongitude; j++) {
+            double longitude = dLongitude * (j + 0.5) - 180;
+            for (int k = 0; k < numLatitude; k++) {
+                double latitude = dLatitude * (k + 0.5) - 90;
+*/
+            for (int j = 0; j < numLongitude; j++) {
+                double longitude = dLongitude * (j + 0.25) - 180;
+                for (int k = 0; k < numLatitude - 1; k++) {
+                    double latitude = dLatitude * (k + 0.25) - 90;
+
+                    int numDiff = i + j + k;
+                    double value = percentVs * (((numDiff % 2 == 1) ^ flipSign) ? 1 : -1); // ^ is XOR
+                    FullPosition location = new FullPosition(latitude, longitude, radius);
+                    PerturbationPoint perturbation = new PerturbationPoint(location, value, premVs);
                     perturbations.add(perturbation);
-                    latSign *= -1;
                 }
-                lonSign *= -1;
             }
-            if (k != 8)
-                layerSign *= -1;
         }
         return perturbations;
     }
 
-    public static List<PerturbationPoint> checkerboardDppCACAR_100km(double dvs) {
-        List<PerturbationPoint> perturbations = new ArrayList<>();
-        double layerSign = 1;
-        for (int k = 0; k <= 4;k++) {
-            double r = 3880 - k * 100;
-            double lonSign = 1;
-            for (int i = -180; i <= 175; i+=5) {
-                double latSign = 1;
-                for (int j = -88; j <= 87; j+=5) {
-                    FullPosition location = new FullPosition(j+.5, i, r);
-                    PerturbationPoint perturbation = new PerturbationPoint(location
-                            , layerSign * lonSign * latSign * dvs);
-                    perturbations.add(perturbation);
-                    latSign *= -1;
-                }
-                lonSign *= -1;
+
+    public static void writeModel(List<PerturbationPoint> perturbations, Path ppmPath) throws IOException {
+        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(ppmPath))) {
+            pw.println("#lon(deg), lat(deg), depth(km), Vs-perturbation_wrt_PREM(%), Vs-PREM (km/s)");
+            for (PerturbationPoint perturbation : perturbations) {
+                pw.println(perturbation.toString());
             }
-            if (k < 3)
-                layerSign *= -1;
         }
-        return perturbations;
     }
 
-    public static List<PerturbationPoint> checkerboardCATZ_4deg_4layers(double dvs, List<UnknownParameter> unknowns) {
-        List<PerturbationPoint> perturbations = new ArrayList<>();
+    private static class PerturbationPoint {
+        FullPosition position;
+        double percentVs;
+        double premVs;
 
-        List<HorizontalPosition> positions = unknowns.stream().map(p -> p.getPosition().toHorizontalPosition()).distinct().collect(Collectors.toList());
-
-        double[] depths = new double[] {330, 410, 535, 660, 820};
-
-        double dD = 5.;
-        int nD = 0;
-        for (int i = 0; i < depths.length-1; i++) {
-            nD += (int) ((depths[i+1] - depths[i]) / dD);
+        public PerturbationPoint(FullPosition position, double dvs) {
+            this.position = position;
+            this.percentVs = dvs;
+            this.premVs = 0;
         }
-
-        double minLat = 1e3;
-        double maxLat = -1e3;
-        double minLon = 1e3;
-        double maxLon = -1e3;
-        for (HorizontalPosition loci : positions) {
-            if (loci.getLatitude() < minLat)
-                minLat = loci.getLatitude();
-            if (loci.getLongitude() < minLon)
-                minLon = loci.getLongitude();
-            if (loci.getLatitude() > maxLat)
-                maxLat = loci.getLatitude();
-            if (loci.getLongitude() > maxLon)
-                maxLon = loci.getLongitude();
+        public PerturbationPoint(FullPosition position, double percentVs, double premVs) {
+            this.position = position;
+            this.percentVs = percentVs;
+            this.premVs = premVs;
         }
-
-        minLat -= 2;
-        maxLat += 2;
-        minLon -= 2;
-        maxLon += 2;
-
-        int nlat = (int) (Math.abs(maxLat - minLat) / 4);
-        int nlon = (int) (Math.abs(maxLon - minLon) / 4);
-
-        double layerSign = 1;
-        int iDepth = 0;
-        for (int k = 0; k <= nD;k++) {
-            double depth = depths[0] + k  * dD;
-            if (depth == depths[iDepth + 1]) {
-                iDepth++;
-                if (iDepth < 4)
-                    layerSign *= -1;
-            }
-
-            double r = 6371. - depth;
-            double lonSign = 1;
-            for (int i = 0; i <= nlon; i++) {
-                double lon = minLon + 4 * i;
-                double latSign = 1;
-                for (int j = 0; j <= nlat; j++) {
-                    double lat = minLat + 4 * j;
-
-                    FullPosition location = new FullPosition(lat, lon, r);
-                    PerturbationPoint perturbation = new PerturbationPoint(location
-                            , layerSign * lonSign * latSign * dvs);
-                    perturbations.add(perturbation);
-                    latSign *= -1;
-                }
-                lonSign *= -1;
-            }
-
-            System.out.println(depth + " " + depths[iDepth] + " " + layerSign);
+        @Override
+        public String toString() {
+            return position.getLongitude() + " " + position.getLatitude() + " " + position.getDepth() + " " + percentVs + " " + premVs;
         }
-
-        return perturbations;
     }
 
-    public static List<PerturbationPoint> checkerboardCATZ_4deg_8layers(double dvs, List<UnknownParameter> unknowns) {
-        List<PerturbationPoint> perturbations = new ArrayList<>();
 
-        List<HorizontalPosition> positions = unknowns.stream().map(p -> p.getPosition().toHorizontalPosition()).distinct().collect(Collectors.toList());
 
-        double[] depths = new double[] {330, 370, 410, 472.5, 535, 597.5, 660, 740, 820};
 
-        double dD = 2.5;
-        int nD = 0;
-        for (int i = 0; i < depths.length-1; i++) {
-            nD += (int) ((depths[i+1] - depths[i]) / dD);
-        }
 
-        double minLat = 1e3;
-        double maxLat = -1e3;
-        double minLon = 1e3;
-        double maxLon = -1e3;
-        for (HorizontalPosition loci : positions) {
-            if (loci.getLatitude() < minLat)
-                minLat = loci.getLatitude();
-            if (loci.getLongitude() < minLon)
-                minLon = loci.getLongitude();
-            if (loci.getLatitude() > maxLat)
-                maxLat = loci.getLatitude();
-            if (loci.getLongitude() > maxLon)
-                maxLon = loci.getLongitude();
-        }
-
-        minLat -= 2;
-        maxLat += 2;
-        minLon -= 2;
-        maxLon += 2;
-
-        int nlat = (int) (Math.abs(maxLat - minLat) / 4);
-        int nlon = (int) (Math.abs(maxLon - minLon) / 4);
-
-        double layerSign = 1;
-        int iDepth = 0;
-        for (int k = 0; k <= nD; k++) {
-            double depth = depths[0] + k  * dD;
-            if (depth == depths[iDepth + 1]) {
-                iDepth++;
-                if (iDepth < depths.length - 1)
-                    layerSign *= -1;
-            }
-
-            double r = 6371. - depth;
-            double lonSign = 1;
-            for (int i = 0; i <= nlon; i++) {
-                double lon = minLon + 4 * i;
-                double latSign = 1;
-                for (int j = 0; j <= nlat; j++) {
-                    double lat = minLat + 4 * j;
-
-                    FullPosition location = new FullPosition(lat, lon, r);
-                    PerturbationPoint perturbation = new PerturbationPoint(location
-                            , layerSign * lonSign * latSign * dvs);
-                    perturbations.add(perturbation);
-                    latSign *= -1;
-                }
-                lonSign *= -1;
-            }
-
-            System.out.println(depth + " " + depths[iDepth] + " " + layerSign);
-        }
-
-        return perturbations;
-    }
-
-    public static List<PerturbationPoint> checkerboardCATZ_6deg_4layers(double dvs, List<UnknownParameter> unknowns) {
-        List<PerturbationPoint> perturbations = new ArrayList<>();
-
-        List<HorizontalPosition> positions = unknowns.stream().map(p -> p.getPosition().toHorizontalPosition()).distinct().collect(Collectors.toList());
-
-        double[] depths = new double[] {330, 410, 535, 660, 820};
-
-        double dD = 5.;
-        int nD = 0;
-        for (int i = 0; i < depths.length-1; i++) {
-            nD += (int) ((depths[i+1] - depths[i]) / dD);
-        }
-
-        double minLat = 1e3;
-        double maxLat = -1e3;
-        double minLon = 1e3;
-        double maxLon = -1e3;
-        for (HorizontalPosition loci : positions) {
-            if (loci.getLatitude() < minLat)
-                minLat = loci.getLatitude();
-            if (loci.getLongitude() < minLon)
-                minLon = loci.getLongitude();
-            if (loci.getLatitude() > maxLat)
-                maxLat = loci.getLatitude();
-            if (loci.getLongitude() > maxLon)
-                maxLon = loci.getLongitude();
-        }
-
-        // recentering voxels
-        minLat -= 3;
-        maxLat += 3;
-        minLon -= 3;
-        maxLon += 3;
-
-        int nlat = (int) (Math.abs(maxLat - minLat) / 6);
-        int nlon = (int) (Math.abs(maxLon - minLon) / 6);
-
-        double layerSign = 1;
-        int iDepth = 0;
-        for (int k = 0; k <= nD;k++) {
-            double depth = depths[0] + k  * dD;
-            if (depth == depths[iDepth + 1]) {
-                iDepth++;
-                if (iDepth < 4)
-                    layerSign *= -1;
-            }
-
-            double r = 6371. - depth;
-            double lonSign = 1;
-            for (int i = 0; i <= nlon; i++) {
-                double lon = minLon + 6 * i;
-                double latSign = 1;
-                for (int j = 0; j <= nlat; j++) {
-                    double lat = minLat + 6 * j;
-
-                    FullPosition location = new FullPosition(lat, lon, r);
-                    PerturbationPoint perturbation = new PerturbationPoint(location
-                            , layerSign * lonSign * latSign * dvs);
-                    perturbations.add(perturbation);
-                    latSign *= -1;
-                }
-                lonSign *= -1;
-            }
-
-            System.out.println(depth + " " + depths[iDepth] + " " + layerSign);
-        }
-
-        return perturbations;
-    }
-
-    public static List<PerturbationPoint> velocityLens_CA(double dvs) {
-        List<PerturbationPoint> perturbations = new ArrayList<>();
-
-        double lonmin = -77;
-        double lonmax = -74;
-        double latmin = 6;
-        double latmax = 12;
-        double dl = 1;
-        int nlat = (int) ((latmax - latmin) / dl) + 1;
-        int nlon = (int) ((lonmax - lonmin) / dl) + 1;
-
-        double h = 50;
-        double[] depths = new double[] {2891 - h, 2891};
-
-        for (double depth : depths) {
-            for (int ilon = 0; ilon <nlon; ilon++) {
-                double lon = lonmin + ilon * dl;
-                for (int ilat = 0; ilat < nlat; ilat++) {
-                    double lat = latmin + ilat * dl;
-                    FullPosition loc = new FullPosition(lat, lon, 6371 - depth);
-                    perturbations.add(new PerturbationPoint(loc, dvs));
-                }
-            }
-        }
-
-        return perturbations;
-    }
 
     public static List<PerturbationPoint> from1DmodelsCl4() {
         List<PerturbationPoint> perturbations = new ArrayList<>();
@@ -1083,84 +860,6 @@ public class Make3DModel {
         return velMap;
     }
 
-    public static void writeModel(List<PerturbationPoint> perturbations, Path outpath) throws IOException {
-        PolynomialStructure prem = DefaultStructure.PREM;
-        PrintWriter writer = new PrintWriter(new FileWriter(outpath.toString()));
-        String line = "#lon(deg), lat(deg), depth(km), Vs-perturbation wrt PREM(%), Vs-PREM (km/s)";
-        writer.println(line);
-        for (PerturbationPoint pp : perturbations) {
-            line = pp.toString() + String.format(" %.6f", prem.getAtRadius(VariableType.Vsh, pp.getLocation().getR()));
-            writer.println(line);
-        }
-        writer.close();
-    }
-
-    private static class PerturbationPoint {
-        FullPosition location;
-        double dvs;
-        public PerturbationPoint(FullPosition location, double dvs) {
-            this.location = location;
-            this.dvs = dvs;
-        }
-        @Override
-        public String toString() {
-            return String.format("%.5f %.5f %.5f %.6f"
-                    , location.getLongitude()
-                    , location.getLatitude()
-                    , 6371. - location.getR()
-                    , dvs);
-        }
-        public FullPosition getLocation() {
-            return location;
-        }
-    }
-
-    public List<PerturbationPoint> sortForPPM(List<PerturbationPoint> perturbations) {
-        List<PerturbationPoint> sortedList = new ArrayList<>();
-
-        double[] rs = perturbations.stream().mapToDouble(p -> p.getLocation().getR()).sorted().toArray();
-        double[] lats = perturbations.stream().mapToDouble(p -> p.getLocation().getLatitude()).sorted().toArray();
-        double[] lons = perturbations.stream().mapToDouble(p -> p.getLocation().getLongitude()).sorted().toArray();
-
-        return sortedList;
-    }
-
-    public static List<PerturbationPoint> model_hlh() {
-        List<PerturbationPoint> perturbations = new ArrayList<>();
-
-        double lonmin = -84;
-        double lonmax = -64;
-        double latmin = 2;
-        double latmax = 9;
-        double dl = .25;
-        int nlat = (int) ((latmax - latmin) / dl) + 1;
-        int nlon = (int) ((lonmax - lonmin) / dl) + 1;
-
-        double h = 250;
-        double[] depths = new double[] {2891 - h, 2891};
-
-        for (double depth : depths) {
-            for (int ilon = 0; ilon <nlon; ilon++) {
-                double lon = lonmin + ilon * dl;
-                for (int ilat = 0; ilat < nlat; ilat++) {
-                    double lat = latmin + ilat * dl;
-                    FullPosition loc = new FullPosition(lat, lon, 6371 - depth);
-                    double dvs = 0;
-                    if (lat >= 3 && lat < 8) {
-                        if (lon >= -83 && lon < -78)
-                            dvs = 2.5;
-                        else if (lon >= -78 && lon < -73)
-                            dvs = -1.5;
-                        else if (lon >= -73 && lon < -65)
-                            dvs = 3;
-                    }
-                    perturbations.add(new PerturbationPoint(loc, dvs));
-                }
-            }
-        }
-
-        return perturbations;
-    }
 }
 
 

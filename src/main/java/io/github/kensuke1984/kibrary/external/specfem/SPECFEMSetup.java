@@ -6,6 +6,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -152,9 +153,9 @@ public class SPECFEMSetup {
 
         generateCmtSolutionFile(event, dataPath);
 
-        // collect observers in entry set (Note that duplication of observers is eliminated when converting to Set.)
-        Set<Observer> observerSet = entrySet.stream().map(DataEntry::getObserver).collect(Collectors.toSet());
-        generateStationFile(observerSet, dataPath);
+        // collect observers in entry set
+        List<Observer> observerList = entrySet.stream().map(DataEntry::getObserver).distinct().sorted().collect(Collectors.toList());
+        generateStationFile(observerList, dataPath);
     }
 
     private static void generateCmtSolutionFile(GlobalCMTID eventID, Path dataPath) throws IOException {
@@ -189,10 +190,10 @@ public class SPECFEMSetup {
             pw.println("Mtp: " + String.format("%e", mt[4] * 1e25));
         }
     }
-    private static void generateStationFile(Set<Observer> observerSet, Path dataPath) throws IOException {
+    private static void generateStationFile(List<Observer> observerList, Path dataPath) throws IOException {
         Path stationPath = dataPath.resolve("STATIONS");
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(stationPath))) {
-            observerSet.forEach(observer -> pw.println(observer.toPaddedInfoString() + "  0.0  0.0"));
+            observerList.forEach(observer -> pw.println(observer.toPaddedInfoString() + "  0.0  0.0"));
         }
     }
 
