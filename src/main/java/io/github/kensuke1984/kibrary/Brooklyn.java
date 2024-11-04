@@ -11,6 +11,7 @@ import io.github.kensuke1984.kibrary.correction.StaticCorrectionDataFile;
 import io.github.kensuke1984.kibrary.entrance.DataAligner;
 import io.github.kensuke1984.kibrary.entrance.DataTransfer;
 import io.github.kensuke1984.kibrary.external.specfem.SPECFEMModelMaker;
+import io.github.kensuke1984.kibrary.external.specfem.SPECFEMPostProcess;
 import io.github.kensuke1984.kibrary.external.specfem.SPECFEMSetup;
 import io.github.kensuke1984.kibrary.inversion.DiagATAExtract;
 import io.github.kensuke1984.kibrary.inversion.WeightingHandler;
@@ -96,6 +97,7 @@ enum Brooklyn {
     // Tests 80
     SPECFEMSetup(80, SPECFEMSetup.class),
     SPECFEMModelMaker(81, SPECFEMModelMaker.class),
+    SPECFEMPostProcess(82, SPECFEMPostProcess.class),
     // Temporal 100
     ;
 
