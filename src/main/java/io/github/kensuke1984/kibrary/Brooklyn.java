@@ -10,6 +10,7 @@ import io.github.kensuke1984.kibrary.abandon.ThreeDPartialCleanup;
 import io.github.kensuke1984.kibrary.correction.StaticCorrectionDataFile;
 import io.github.kensuke1984.kibrary.entrance.DataAligner;
 import io.github.kensuke1984.kibrary.entrance.DataTransfer;
+import io.github.kensuke1984.kibrary.external.specfem.SPECFEMModelMaker;
 import io.github.kensuke1984.kibrary.external.specfem.SPECFEMSetup;
 import io.github.kensuke1984.kibrary.inversion.DiagATAExtract;
 import io.github.kensuke1984.kibrary.inversion.WeightingHandler;
@@ -94,6 +95,7 @@ enum Brooklyn {
     PerturbationComparison(74, PerturbationComparison.class),
     // Tests 80
     SPECFEMSetup(80, SPECFEMSetup.class),
+    SPECFEMModelMaker(81, SPECFEMModelMaker.class),
     // Temporal 100
     ;
 

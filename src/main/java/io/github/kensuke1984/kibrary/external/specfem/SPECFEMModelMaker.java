@@ -11,10 +11,18 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.OptionGroup;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
 import org.apache.commons.math3.util.Precision;
 
+import io.github.kensuke1984.kibrary.Summon;
 import io.github.kensuke1984.kibrary.elastic.VariableType;
 import io.github.kensuke1984.kibrary.perturbation.ScalarListFile;
+import io.github.kensuke1984.kibrary.util.DatasetAid;
+import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.earth.DefaultStructure;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
@@ -38,24 +46,88 @@ import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
  */
 public class SPECFEMModelMaker {
 
+    /**
+     * Create model file for SPECFEM.
+     * @param args Options.
+     * @throws IOException if an I/O error occurs
+     */
     public static void main(String[] args) throws IOException {
+        Options options = defineOptions();
+        try {
+            run(Summon.parseArgs(options, args));
+        } catch (ParseException e) {
+            Summon.showUsage(options);
+        }
+    }
 
-        List<Perturbation> oneLayer = onePerturbationLayer(3480, 3530, 2);
+    /**
+     * To be called from {@link Summon}.
+     * @return options
+     */
+    public static Options defineOptions() {
+        Options options = Summon.defaultOptions();
+
+        // input
+        options.addOption(Option.builder("s").longOpt("scalarFile").hasArg().argName("scalarFile").required()
+                .desc("Path of scalar list file.").build());
+
+        // settings
+        OptionGroup inputOption = new OptionGroup();
+        inputOption.setRequired(true);
+        inputOption.addOption(Option.builder("i").longOpt("interval").hasArg().argName("interval")
+                .desc("Extract perturbation values at the speficied latitude/longitude interval.").build());
+        inputOption.addOption(Option.builder("a").longOpt("asIs")
+                .desc("Use all input perturbations as is. Note that they must be equally spaced.").build());
+        options.addOptionGroup(inputOption);
+
+        // output
+        options.addOption(Option.builder("T").longOpt("tag").hasArg().argName("fileTag")
+                .desc("A tag to include in output file name.").build());
+        options.addOption(Option.builder("O").longOpt("omitDate")
+                .desc("Omit date string in output file name.").build());
+
+        return options;
+    }
+
+    /**
+     * To be called from {@link Summon}.
+     * @param cmdLine options
+     * @throws IOException
+     */
+    public static void run(CommandLine cmdLine) throws IOException {
+        Path scalarPath = Paths.get(cmdLine.getOptionValue("s"));
+        String fileTag = cmdLine.hasOption("T") ? cmdLine.getOptionValue("T") : null;
+        boolean appendFileDate = !cmdLine.hasOption("O");
+        Path outputPath = DatasetAid.generateOutputFilePath(Paths.get(""), "model", fileTag, appendFileDate, null, ".txt");
+
+        // read interval information
+        double interval;
+        if (cmdLine.hasOption("i")) {
+            interval = Double.parseDouble(cmdLine.getOptionValue("i"));
+        } else if (cmdLine.hasOption("a")) {
+            interval = 0.0;
+        } else {
+            throw new IllegalArgumentException("Either -i or -a must be specified.");
+        }
+
+        // create model
+        List<Perturbation> perturbations = createFromScalarFile(scalarPath, interval);
+        writeModel(perturbations, outputPath);
+
+
+
+        List<Perturbation> oneLayer = onePerturbationLayer(3480, 3580, -2);
         Path oneLayerPath = Paths.get("oneLayer.txt");
+        writeModel(oneLayer, oneLayerPath);
 
         double[] radii = {3480, 3580, 3680, 3780, 3880};
         List<Perturbation> checkerboard = checkerboard(radii, 10, 10, 2, false);
         Path checkerboardPath = Paths.get("checkerboard.txt");
-
-        List<Perturbation> custom = createFromScalarFile(Paths.get(args[0]));
-        Path customPath = Paths.get("custom.txt");
-
-        writeModel(oneLayer, oneLayerPath);
         writeModel(checkerboard, checkerboardPath);
-        writeModel(custom, customPath);
+
     }
 
-    public static List<Perturbation> createFromScalarFile(Path scalarPath) throws IOException {
+    private static List<Perturbation> createFromScalarFile(Path scalarPath, double interval) throws IOException {
         Map<FullPosition, Double> scalarMap = ScalarListFile.read(scalarPath);
 
         // gather positions
@@ -67,8 +139,6 @@ public class SPECFEMModelMaker {
         double[] latitudes = horizontalPositions.stream().mapToDouble(HorizontalPosition::getLatitude).distinct().sorted().toArray();
         double minLatitude = latitudes[0];
         double maxLatitude = latitudes[latitudes.length - 1];
-        double dLatitude = latitudes[1] - latitudes[0];
-        int numLatitude = (int) Math.round((maxLatitude - minLatitude) / dLatitude) + 1;
         // find longitude geometry information
         // I'm not sure if SPECFEM can handle a region crossing the date line, so we will not consider the date line here;
         //   then, longitudes around the globe will be exported when the region crosses the date line. This should be fine for SPECFEM.
@@ -76,7 +146,24 @@ public class SPECFEMModelMaker {
         double[] longitudes = horizontalPositions.stream().mapToDouble(pos -> pos.getLongitude()).distinct().sorted().toArray();
         double minLongitude = longitudes[0];
         double maxLongitude = longitudes[longitudes.length - 1];
-        double dLongitude = longitudes[1] - longitudes[0];
+
+        // decide lat/lon interval
+        double dLatitude;
+        double dLongitude;
+        if (interval > 0.0) {
+            // When extracting perturbations at a certain interval, set min/max lat/lon to a multiple of the interval.
+            dLatitude = interval;
+            dLongitude = interval;
+            minLatitude = MathAid.ceil(minLatitude / interval) * interval;
+            maxLatitude = MathAid.floor(maxLatitude / interval) * interval;
+            minLongitude = MathAid.ceil(minLongitude / interval) * interval;
+            maxLongitude = MathAid.floor(maxLongitude / interval) * interval;
+        } else {
+            // When using the interval of input file, compute its value.
+            dLatitude = latitudes[1] - latitudes[0];
+            dLongitude = longitudes[1] - longitudes[0];
+        }
+        int numLatitude = (int) Math.round((maxLatitude - minLatitude) / dLatitude) + 1;
         int numLongitude = (int) Math.round((maxLongitude - minLongitude) / dLongitude) + 1;
 
         List<Perturbation> perturbations = new ArrayList<>();
@@ -109,7 +196,7 @@ public class SPECFEMModelMaker {
         return perturbations;
     }
 
-    public static List<Perturbation> onePerturbationLayer(double rmin, double rmax, double percentVs) {
+    private static List<Perturbation> onePerturbationLayer(double rmin, double rmax, double percentVs) {
         double dR = 5.0;
         List<Perturbation> perturbations = new ArrayList<>();
 
@@ -118,8 +205,8 @@ public class SPECFEMModelMaker {
             double radius = rmax - (k + 0.5) * dR;
             double premVs = DefaultStructure.PREM.mediumAt(radius).get(VariableType.Vs);
 
-            for (int lon = -180; lon <= 179; lon++) {
-                for (int lat = -89; lat <= 89; lat++) {
+            for (int lon = -180; lon <= 175; lon += 5) {
+                for (int lat = -85; lat <= 85; lat += 5) {
                     FullPosition position = new FullPosition(lat, lon, radius);
                     Perturbation perturbation = new Perturbation(position, percentVs, premVs);
                     perturbations.add(perturbation);
@@ -129,7 +216,7 @@ public class SPECFEMModelMaker {
         return perturbations;
     }
 
-    public static List<Perturbation> checkerboard(double[] borderRadii, double dLatitude, double dLongitude, double percentVs, boolean flipSign) {
+    private static List<Perturbation> checkerboard(double[] borderRadii, double dLatitude, double dLongitude, double percentVs, boolean flipSign) {
         List<Perturbation> perturbations = new ArrayList<>();
 
         double[] centerRadii = new double[borderRadii.length - 1];
@@ -170,7 +257,7 @@ public class SPECFEMModelMaker {
         return perturbations;
     }
 
-    public static void writeModel(List<Perturbation> perturbations, Path ppmPath) throws IOException {
+    private static void writeModel(List<Perturbation> perturbations, Path ppmPath) throws IOException {
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(ppmPath))) {
             pw.println("#lon(deg), lat(deg), depth(km), Vs-perturbation_wrt_PREM(%), Vs-PREM (km/s)");
             for (Perturbation perturbation : perturbations) {
