@@ -114,9 +114,8 @@ public class SPECFEMModelMaker {
         List<Perturbation> perturbations = createFromScalarFile(scalarPath, interval);
         writeModel(perturbations, outputPath);
 
-
-
-        List<Perturbation> oneLayer = onePerturbationLayer(3480, 3580, -2);
+/*
+        List<Perturbation> oneLayer = onePerturbationLayer(3580, 3680, 0);
         Path oneLayerPath = Paths.get("oneLayer.txt");
         writeModel(oneLayer, oneLayerPath);
 
@@ -124,7 +123,7 @@ public class SPECFEMModelMaker {
         List<Perturbation> checkerboard = checkerboard(radii, 10, 10, 2, false);
         Path checkerboardPath = Paths.get("checkerboard.txt");
         writeModel(checkerboard, checkerboardPath);
-
+*/
     }
 
     private static List<Perturbation> createFromScalarFile(Path scalarPath, double interval) throws IOException {

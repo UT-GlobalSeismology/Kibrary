@@ -90,6 +90,12 @@ public class SPECFEMPostProcess {
             pw.println("SETBB COMP \"R\"");
             pw.println("elseif &1,KCMPNM EQ \"MXZ\"");
             pw.println("SETBB COMP \"Z\"");
+            pw.println("elseif &1,KCMPNM EQ \"BXT\"");
+            pw.println("SETBB COMP \"T\"");
+            pw.println("elseif &1,KCMPNM EQ \"BXR\"");
+            pw.println("SETBB COMP \"R\"");
+            pw.println("elseif &1,KCMPNM EQ \"BXZ\"");
+            pw.println("SETBB COMP \"Z\"");
             pw.println("endif");
             pw.println("chnhdr KCMPNM %COMP");
             pw.println("dif five");
