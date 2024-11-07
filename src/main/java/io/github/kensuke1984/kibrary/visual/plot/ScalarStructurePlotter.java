@@ -7,7 +7,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.Map;
-import java.util.Set;
 
 import org.apache.commons.math3.util.Precision;
 
@@ -74,9 +73,7 @@ public class ScalarStructurePlotter  extends Operation {
     private String modelName;
 
     private boolean colorByStructure;
-    private boolean colorByVariable;
     private boolean dashByStructure;
-    private boolean dashByVariable;
 
     private boolean setLowerRadius = false;
     private double lowerRadius;
@@ -117,12 +114,8 @@ public class ScalarStructurePlotter  extends Operation {
             pw.println("#initialStructureName ");
             pw.println("##(boolean) Whether to color structures differently. (true)");
             pw.println("#colorByStructure ");
-            pw.println("##(boolean) Whether to color variables differently. (true)");
-            pw.println("#colorByVariable ");
             pw.println("##(boolean) Whether to dash structures differently. (false)");
             pw.println("#dashByStructure ");
-            pw.println("##(boolean) Whether to dash variables differently. (false)");
-            pw.println("#dashByVariable ");
             pw.println("##(double) Lower limit of radius [km], when setting manually; [0:upperRadius).");
             pw.println("#lowerRadius ");
             pw.println("##(double) Upper limit of radius [km], when setting manually; (lowerRadius:).");
@@ -154,9 +147,7 @@ public class ScalarStructurePlotter  extends Operation {
         }
 
         colorByStructure = property.parseBoolean("colorByStructure", "true");
-        colorByVariable = property.parseBoolean("colorByVariable", "true");
         dashByStructure = property.parseBoolean("dashByStructure", "false");
-        dashByVariable = property.parseBoolean("dashByVariable", "false");
 
         if (property.containsKey("lowerRadius")) {
             lowerRadius = property.parseDouble("lowerRadius", null);
@@ -193,11 +184,10 @@ public class ScalarStructurePlotter  extends Operation {
         VariableType variable = inputFile.getVariable();
         ScalarType scalarType = inputFile.getScalarType();
         Map<FullPosition, Double> discreteMap = inputFile.getValueMap();
-        Set<FullPosition> positions = discreteMap.keySet();
-        double[] radii = positions.stream().mapToDouble(pos -> pos.getR()).distinct().sorted().toArray();
 
         // set up model
-        PerturbationModel model = new PerturbationModel(variable, scalarType, 0.0, discreteMap, initialStructure); //TODO
+        // Here, voxel size is set to 0.0 because it will not be referenced anywhere.
+        PerturbationModel model = new PerturbationModel(variable, scalarType, 0.0, discreteMap, initialStructure);
 
         // create output folder
         Path outPath = DatasetAid.createOutputFolder(workPath, "scalarPlot", folderTag, appendFolderDate, null);
@@ -222,7 +212,7 @@ public class ScalarStructurePlotter  extends Operation {
 
     private void createScript(Path scriptPath, VariableType variable, PolynomialStructure structure, PlotRange plotRange) throws IOException {
         String fileNameRoot = FileAid.extractNameRoot(scriptPath);
-        StructurePlotAid plotAid = new StructurePlotAid(colorByStructure, colorByVariable, dashByStructure, dashByVariable);
+        StructurePlotAid plotAid = new StructurePlotAid(colorByStructure, false, dashByStructure, false);
 
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(scriptPath))) {
             pw.println("set samples 1000");
