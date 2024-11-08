@@ -367,7 +367,7 @@ public class SyntheticDSM1dSetup extends Operation {
             pw.println(nzone);
             pw.println("c ngrid rmin rmax");
             for (int i = 0; i < nzone; i++) {
-                pw.println(ngrid + " " + rmin + " " + rmax);
+                pw.println(ngrid[i] + " " + rmin[i] + " " + rmax[i]);
             }
             pw.println("c radius(km), rho(g/cm^3), L, N(GPa)");
             for (int i = 0; i < sumGrid; i++) {
