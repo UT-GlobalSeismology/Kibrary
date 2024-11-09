@@ -109,7 +109,7 @@ class StationXmlFile {
                 + "&" + "loc=" + requestLocation + "&" + "cha=" + channel
                 + "&" + "starttime=" + startTime.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
                 + "&" + "endtime=" + endTime.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
-                + "&level=response&format=xml&includecomments=true&nodata=404";
+                + "&level=response&format=xml&nodata=404";
 
         url = new URL(urlString);
     }
