@@ -8,11 +8,13 @@ import java.nio.file.Paths;
 
 import org.apache.commons.math3.util.Precision;
 
-import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure_old;
+import io.github.kensuke1984.kibrary.elastic.VariableType;
+import io.github.kensuke1984.kibrary.util.earth.DefaultStructure;
+import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
 
 public class PPMFileMaker {
 
-    private static final PolynomialStructure_old PREM = PolynomialStructure_old.PREM;
+    private static final PolynomialStructure PREM = DefaultStructure.PREM;
     private Path workPath;
     private double[] radii;
     private double dLatitude;
@@ -85,7 +87,7 @@ public class PPMFileMaker {
 
                         int numDiff = i + j + k;
                         double value = percentVs * (((numDiff % 2 == 1) ^ flipSign) ? 1 : -1); // ^ is XOR
-                        pw.println(longitude + " " + latitude + " " + depth + " " + value + " " + PREM.computeVs(radii[i]));
+                        pw.println(longitude + " " + latitude + " " + depth + " " + value + " " + PREM.mediumAt(radii[i]).get(VariableType.Vs));
                     }
                 }
             }

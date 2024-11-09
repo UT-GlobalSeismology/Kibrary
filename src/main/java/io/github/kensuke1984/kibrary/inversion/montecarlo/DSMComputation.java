@@ -82,7 +82,7 @@ class DSMComputation implements DataGenerator<PolynomialStructure, SACFileAccess
         return DatasetAid.eventFolderSet(obsDir).parallelStream().map(eventDir -> {
             try {
                 Set<Observer> stations =
-                        eventDir.sacFileSet().stream().filter(SACFileName::isOBS).map(SACFileName::getStationCode)
+                        eventDir.sacFileSet().stream().filter(SACFileName::isOBS).map(SACFileName::getObserverID)
                                 .distinct().map(this::pickup).collect(Collectors.toSet());
                 GlobalCMTID id = eventDir.getGlobalCMTID();
                 return new SyntheticDSMInputFile(DefaultStructure.PREM, id.getEventData(), stations, id.toString(), TLEN, NP);

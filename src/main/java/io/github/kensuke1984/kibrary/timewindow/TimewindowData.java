@@ -135,22 +135,4 @@ public class TimewindowData extends Timewindow {
         }
     }
 
-    /**TODO erase
-     * @return
-     * @author anselme
-     * @deprecated
-     */
-    public double getAzimuthDegree() {
-        return Math.toDegrees(eventID.getEventData().getCmtPosition().computeAzimuthRad(observer.getPosition()));
-    }
-
-    /**TODO erase
-     * @return
-     * @author anselme
-     * @deprecated
-     */
-    public double getDistanceDegree() {
-        return Math.toDegrees(eventID.getEventData().getCmtPosition().computeEpicentralDistanceRad(observer.getPosition()));
-    }
-
 }
