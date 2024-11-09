@@ -31,6 +31,20 @@ public class PerturbationModel {
         this.voxelList = voxelList;
     }
 
+    public PerturbationModel(VariableType variable, ScalarType scalarType, double size, Map<FullPosition, Double> discreteMap, PolynomialStructure initialStructure) {
+        // create voxel for each position
+        for (FullPosition position : discreteMap.keySet()) {
+            PerturbationVoxel voxel = new PerturbationVoxel(position, size, initialStructure);
+            voxel.setValue(variable, scalarType, discreteMap.get(position));
+            voxelList.add(voxel);
+        }
+
+        // if RHO is not included in unknowns, set RHO to value in initial structure
+        for (PerturbationVoxel voxel : voxelList) {
+            voxel.setDefaultIfUndefined(VariableType.RHO);
+        }
+    }
+
     public PerturbationModel(List<KnownParameter> knowns, PolynomialStructure initialStructure) {
         for (int i = 0; i < knowns.size(); i++) {
             boolean flag = false;
