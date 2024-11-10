@@ -39,12 +39,25 @@ import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
  * <li> longitudes (min to max) </li>
  * <li> latitudes (min to max) </li>
  * </ul>
+ * Depths, longitudes, and latitudes must each be equally spaced, with no missing points within the box of interest.
+ *
+ * <p>
+ * CAUTION: For a certain position, SPECFEM seems to retreive the perturbation value
+ * at a grid point that is to the southwest-up of that position.
+ * So, in this program, we write perturbation values at a position half-a-grid northeast-down from a grid point.
  *
  * @author Anselme
  * @since a long time ago
  * @version 2024/11/3 Renamed from specfem.Make3DModel to external.specfem.SPECFEMModelMaker
  */
 public class SPECFEMModelMaker {
+
+    /**
+     * The number of decimal places to round off the latitude/longitude/depth values.
+     */
+    private static final int DECIMALS = 4;
+
+    private static final double PLANET_RADIUS = 6371.0;
 
     /**
      * Create model file for SPECFEM.
@@ -115,7 +128,7 @@ public class SPECFEMModelMaker {
         writeModel(perturbations, outputPath);
 
 /*
-        List<Perturbation> oneLayer = onePerturbationLayer(3580, 3680, 0);
+        List<Perturbation> oneLayer = onePerturbationLayer(3480, 3580, -2);
         Path oneLayerPath = Paths.get("oneLayer.txt");
         writeModel(oneLayer, oneLayerPath);
 
@@ -133,6 +146,7 @@ public class SPECFEMModelMaker {
         Set<FullPosition> positions = scalarMap.keySet();
         Set<HorizontalPosition> horizontalPositions = positions.stream().map(FullPosition::toHorizontalPosition).collect(Collectors.toSet());
         double[] radii = positions.stream().mapToDouble(FullPosition::getR).distinct().sorted().toArray();
+        double dRadius = radii[1] - radii[0];
 
         // find latitude geometry information
         double[] latitudes = horizontalPositions.stream().mapToDouble(HorizontalPosition::getLatitude).distinct().sorted().toArray();
@@ -151,16 +165,21 @@ public class SPECFEMModelMaker {
         double dLongitude;
         if (interval > 0.0) {
             // When extracting perturbations at a certain interval, set min/max lat/lon to a multiple of the interval.
+            // The min/max are set so that ((i+0.5)*interval, (j+0.5)*interval) has values, except at the maximum.
             dLatitude = interval;
             dLongitude = interval;
-            minLatitude = MathAid.ceil(minLatitude / interval) * interval;
-            maxLatitude = MathAid.floor(maxLatitude / interval) * interval;
-            minLongitude = MathAid.ceil(minLongitude / interval) * interval;
-            maxLongitude = MathAid.floor(maxLongitude / interval) * interval;
+            minLatitude = MathAid.ceil(minLatitude / interval - 0.5) * interval;
+            maxLatitude = MathAid.floor(maxLatitude / interval + 0.5) * interval;
+            minLongitude = MathAid.ceil(minLongitude / interval - 0.5) * interval;
+            maxLongitude = MathAid.floor(maxLongitude / interval + 0.5) * interval;
         } else {
             // When using the interval of input file, compute its value.
             dLatitude = latitudes[1] - latitudes[0];
             dLongitude = longitudes[1] - longitudes[0];
+            minLatitude = minLatitude - dLatitude / 2;
+            maxLatitude = maxLatitude + dLatitude / 2;
+            minLongitude = minLongitude - dLongitude / 2;
+            maxLongitude = maxLongitude + dLongitude / 2;
         }
         int numLatitude = (int) Math.round((maxLatitude - minLatitude) / dLatitude) + 1;
         int numLongitude = (int) Math.round((maxLongitude - minLongitude) / dLongitude) + 1;
@@ -168,24 +187,33 @@ public class SPECFEMModelMaker {
         List<Perturbation> perturbations = new ArrayList<>();
 
         // radii are called in reverse order so that depths will be in order
-        for (int i = radii.length - 1; i >= 0; i--) {
-            double radius = radii[i];
-            double premVs = DefaultStructure.PREM.mediumAt(radii[i]).get(VariableType.Vs);
+        for (int i = radii.length - 1; i >= -1; i--) {
+            // Radius to write is 0.5*radiusInterval above reference radius.
+            double radius;
+            double premVs;
+            if (i >= 0) {
+                radius = radii[i] + dRadius / 2;
+                premVs = DefaultStructure.PREM.mediumAt(radii[i]).get(VariableType.Vs);
+            } else {
+                radius = radii[0] - dRadius / 2;
+                premVs = DefaultStructure.PREM.mediumAt(radii[0] - dRadius).get(VariableType.Vs);
+            }
 
             // write values for all positions within the rectangle that includes the input positions
+            // Note that the positions to be written are 0.5*interval southwest-up of the reference positions.
             for (int j = 0; j < numLongitude; j++) {
                 double longitude = minLongitude + j * dLongitude;
                 for (int k = 0; k < numLatitude; k++) {
                     double latitude = minLatitude + k * dLatitude;
-                    FullPosition position = new FullPosition(latitude, longitude, radius);
+                    FullPosition position = new FullPosition(latitude + dLatitude / 2, longitude + dLongitude / 2, radius - dRadius / 2);
 
                     // if input file contains this position, write its value; else, write 0
                     if (positions.contains(position)) {
                         double percentVs = scalarMap.get(position);
-                        Perturbation perturbation = new Perturbation(position, percentVs, premVs);
+                        Perturbation perturbation = new Perturbation(latitude, longitude, radius, percentVs, premVs);
                         perturbations.add(perturbation);
                     } else {
-                        Perturbation perturbation = new Perturbation(position, 0.0, premVs);
+                        Perturbation perturbation = new Perturbation(latitude, longitude, radius, 0.0, premVs);
                         perturbations.add(perturbation);
                     }
                 }
@@ -200,14 +228,13 @@ public class SPECFEMModelMaker {
         List<Perturbation> perturbations = new ArrayList<>();
 
         int nr = (int) ((rmax - rmin) / dR);
-        for (int k = 0; k < nr; k++) {
-            double radius = rmax - (k + 0.5) * dR;
-            double premVs = DefaultStructure.PREM.mediumAt(radius).get(VariableType.Vs);
+        for (int k = 0; k <= nr; k++) {
+            double radius = rmax - k * dR;
+            double premVs = DefaultStructure.PREM.mediumAt(radius - dR / 2).get(VariableType.Vs);
 
-            for (int lon = -180; lon <= 175; lon += 5) {
-                for (int lat = -85; lat <= 85; lat += 5) {
-                    FullPosition position = new FullPosition(lat, lon, radius);
-                    Perturbation perturbation = new Perturbation(position, percentVs, premVs);
+            for (int lon = -180; lon <= 180; lon += 5) {
+                for (int lat = -90; lat <= 90; lat += 5) {
+                    Perturbation perturbation = new Perturbation(lat, lon, radius, percentVs, premVs);
                     perturbations.add(perturbation);
                 }
             }
@@ -218,10 +245,7 @@ public class SPECFEMModelMaker {
     private static List<Perturbation> checkerboard(double[] borderRadii, double dLatitude, double dLongitude, double percentVs, boolean flipSign) {
         List<Perturbation> perturbations = new ArrayList<>();
 
-        double[] centerRadii = new double[borderRadii.length - 1];
-        for (int i = 0; i < centerRadii.length; i++) {
-            centerRadii[i] = (borderRadii[i] + borderRadii[i + 1]) / 2;
-        }
+        double dRadius = borderRadii[1] - borderRadii[0];
 
         double divLatitude = 180 / dLatitude;
         if (!Precision.equals(divLatitude, Math.round(divLatitude), 0.01)) {
@@ -236,19 +260,18 @@ public class SPECFEMModelMaker {
         int numLongitude = (int) Math.round(divLongitude);
 
         // radii are called in reverse order so that depths will be in order
-        for (int i = centerRadii.length - 1; i >= 0; i--) {
-            double radius = centerRadii[i];
-            double premVs = DefaultStructure.PREM.mediumAt(radius).get(VariableType.Vs);
+        for (int i = borderRadii.length - 1; i >= 0; i--) {
+            double radius = borderRadii[i];
+            double premVs = DefaultStructure.PREM.mediumAt(radius - dRadius / 2).get(VariableType.Vs);
 
-            for (int j = 0; j < numLongitude; j++) {
-                double longitude = dLongitude * (j + 0.5) - 180;
-                for (int k = 0; k < numLatitude; k++) {
-                    double latitude = dLatitude * (k + 0.5) - 90;
+            for (int j = 0; j <= numLongitude; j++) {
+                double longitude = dLongitude * j - 180;
+                for (int k = 0; k <= numLatitude; k++) {
+                    double latitude = dLatitude * k - 90;
 
                     int numDiff = i + j + k;
                     double value = percentVs * (((numDiff % 2 == 1) ^ flipSign) ? 1 : -1); // ^ is XOR
-                    FullPosition location = new FullPosition(latitude, longitude, radius);
-                    Perturbation perturbation = new Perturbation(location, value, premVs);
+                    Perturbation perturbation = new Perturbation(latitude, longitude, radius, value, premVs);
                     perturbations.add(perturbation);
                 }
             }
@@ -266,18 +289,22 @@ public class SPECFEMModelMaker {
     }
 
     private static class Perturbation {
-        FullPosition position;
+        double latitude;
+        double longitude;
+        double depth;
         double percentVs;
         double premVs;
 
-        public Perturbation(FullPosition position, double percentVs, double premVs) {
-            this.position = position;
+        public Perturbation(double latitude, double longitude, double radius, double percentVs, double premVs) {
+            this.latitude = Precision.round(latitude, DECIMALS);
+            this.longitude = Precision.round(longitude, DECIMALS);
+            this.depth = Precision.round(PLANET_RADIUS - radius, DECIMALS);
             this.percentVs = percentVs;
             this.premVs = premVs;
         }
         @Override
         public String toString() {
-            return position.getLongitude() + " " + position.getLatitude() + " " + position.getDepth() + " " + percentVs + " " + premVs;
+            return longitude + " " + latitude + " " + depth + " " + percentVs + " " + premVs;
         }
 
     }
