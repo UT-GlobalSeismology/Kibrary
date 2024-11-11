@@ -34,6 +34,7 @@ import io.github.kensuke1984.kibrary.visual.map.ColorBinInformationFile;
 import io.github.kensuke1984.kibrary.visual.map.VoxelMapper;
 import io.github.kensuke1984.kibrary.visual.plot.AzimuthHistogram;
 import io.github.kensuke1984.kibrary.visual.plot.DistanceHistogram;
+import io.github.kensuke1984.kibrary.visual.plot.EventHistogram;
 import io.github.kensuke1984.kibrary.voxel.LayerInformationFile;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameterSetter;
 import io.github.kensuke1984.kibrary.waveform.BasicIDFile;
@@ -68,6 +69,7 @@ enum Brooklyn {
     GlobalCMTListup(11, GlobalCMTListup.class),
     DataTransfer(12, DataTransfer.class),
     DataAligner(13, DataAligner.class),
+    EventHistogram(18, EventHistogram.class),
     LobbyCleanup(19, LobbyCleanup.class),
     // Synthetic  20
     SPCFileAccess(21, SPCFileAccess.class),
