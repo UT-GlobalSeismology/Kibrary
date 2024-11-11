@@ -95,11 +95,12 @@ enum Brooklyn {
     VectorFile(71, VectorFile.class),
     MatrixFile(72, MatrixFile.class),
     DiagATAExtract(73, DiagATAExtract.class),
-    PerturbationComparison(74, PerturbationComparison.class),
     // Tests 80
     SPECFEMSetup(80, SPECFEMSetup.class),
     SPECFEMModelMaker(81, SPECFEMModelMaker.class),
     SPECFEMPostProcess(82, SPECFEMPostProcess.class),
+    // Scalar 90
+    PerturbationComparison(90, PerturbationComparison.class),
     // Temporal 100
     ;
 
