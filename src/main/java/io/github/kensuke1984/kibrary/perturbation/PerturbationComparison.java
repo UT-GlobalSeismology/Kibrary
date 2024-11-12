@@ -53,10 +53,10 @@ public class PerturbationComparison {
     public static Options defineOptions() {
         Options options = Summon.defaultOptions();
 
-        options.addOption(Option.builder("n").longOpt("numerator").hasArg().argName("perturbationFile").required()
-                .desc("Path of perturbation file to compare.").build());
-        options.addOption(Option.builder("d").longOpt("denominator").hasArg().argName("perturbationFile").required()
-                .desc("Path of perturbation file to compare to.").build());
+        options.addOption(Option.builder("n").longOpt("numerator").hasArg().argName("scalarFile").required()
+                .desc("Path of scalar file to compare.").build());
+        options.addOption(Option.builder("d").longOpt("denominator").hasArg().argName("scalarFile").required()
+                .desc("Path of scalar file to compare to.").build());
 
         // output
         options.addOption(Option.builder("T").longOpt("tag").hasArg().argName("folderTag")

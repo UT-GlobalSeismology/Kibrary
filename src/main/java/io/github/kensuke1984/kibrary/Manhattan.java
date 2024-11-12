@@ -132,8 +132,6 @@ enum Manhattan {
     ModelStructurePlotter(74, ModelStructurePlotter.class),
     ModelSetMapper(75, ModelSetMapper.class),
     ModelMapper(76, ModelMapper.class),
-    ScalarMapper(77, ScalarMapper.class),
-    CrossSectionCreator(78, CrossSectionCreator.class),
     ModelStructureConverter(79, ModelStructureConverter.class),
     // Tests 80
     CheckerboardMaker(80, CheckerboardMaker.class),
@@ -143,8 +141,11 @@ enum Manhattan {
     BasicIDRebuilder(86, BasicIDRebuilder.class),
     OrthogonalityTest(87, OrthogonalityTest.class),
     OrthogonalitySumUp(88, OrthogonalitySumUp.class),
+    // Scalar 90
+    ScalarStructurePlotter(91, ScalarStructurePlotter.class),
+    ScalarMapper(92, ScalarMapper.class),
+    CrossSectionCreator(93, CrossSectionCreator.class),
     // Temporal 100
-    ScalarStructurePlotter(100, ScalarStructurePlotter.class),
     ;
 
     private final Class<? extends Operation> operation;
