@@ -8,6 +8,7 @@ import java.util.Set;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
+import org.apache.commons.cli.OptionGroup;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.math3.linear.RealVector;
@@ -50,8 +51,13 @@ public class VarianceComputer {
         //input
         options.addOption(Option.builder("b").longOpt("basic").hasArg().argName("basicFolder").required()
                 .desc("Path of basic waveform folder.").build());
-        options.addOption(Option.builder("w").longOpt("weighting").hasArg().argName("weightingFile").required()
+        OptionGroup inputOption = new OptionGroup();
+        inputOption.setRequired(true);
+        inputOption.addOption(Option.builder("w").longOpt("weighting").hasArg().argName("weightingFile")
                 .desc("Path of weighting properties file.").build());
+        inputOption.addOption(Option.builder("I").longOpt("identity")
+                .desc("Use IDENTITY weighting.").build());
+        options.addOptionGroup(inputOption);
         options.addOption(Option.builder("p").longOpt("improvement").hasArg().argName("improvementWindowFile")
                 .desc("Path of improvement window file, if it is to be used.").build());
         return options;
@@ -63,9 +69,17 @@ public class VarianceComputer {
      * @throws IOException
      */
     public static void run(CommandLine cmdLine) throws IOException {
-
         List<BasicID> basicIDs = BasicIDFile.read(Paths.get(cmdLine.getOptionValue("b")), true);
-        WeightingHandler weightingHandler = new WeightingHandler(Paths.get(cmdLine.getOptionValue("w")));
+
+        // decide weighting
+        WeightingHandler weightingHandler;
+        if (cmdLine.hasOption("w")) {
+            weightingHandler = new WeightingHandler(Paths.get(cmdLine.getOptionValue("w")));
+        } else if (cmdLine.hasOption("I")) {
+            weightingHandler = WeightingHandler.IDENTITY;
+        } else {
+            throw new IllegalArgumentException("Either -w or -I must be specified.");
+        }
 
         // cut out improvement windows if the file is given
         if (cmdLine.hasOption("p")) {
