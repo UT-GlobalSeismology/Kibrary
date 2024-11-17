@@ -109,6 +109,9 @@ public class CrossSectionCreator extends Operation {
      */
     private double maskThreshold;
 
+    private double horizontalGridInterval;
+    private double verticalGridInterval;
+
     /**
      * @param args (String[]) Arguments: none to create a property file, path of property file to run it.
      * @throws IOException
@@ -173,6 +176,11 @@ public class CrossSectionCreator extends Operation {
             pw.println("#mosaic true");
             pw.println("##(double) Threshold for mask. (0.3)");
             pw.println("#maskThreshold ");
+            pw.println("##########Image resolution parameters.");
+            pw.println("##(double) Horizontal grid interval. (0.25)");
+            pw.println("#horizontalGridInterval ");
+            pw.println("##(double) Vertical grid interval. (2.5)");
+            pw.println("#verticalGridInterval ");
         }
         System.err.println(outPath + " is created.");
     }
@@ -232,6 +240,9 @@ public class CrossSectionCreator extends Operation {
         scale = property.parseDouble("scale", "3");
         mosaic = property.parseBoolean("mosaic", "false");
         maskThreshold = property.parseDouble("maskThreshold", "0.3");
+
+        horizontalGridInterval = property.parseDouble("horizontalGridInterval", "0.25");
+        verticalGridInterval = property.parseDouble("verticalGridInterval", "2.5");
     }
 
     @Override
@@ -262,7 +273,7 @@ public class CrossSectionCreator extends Operation {
         CrossSectionWorker worker = new CrossSectionWorker(pos0Latitude, pos0Longitude, pos1Latitude, pos1Longitude,
                 beforePos0Deg, afterPosDeg, useAfterPos1, zeroPointRadius, zeroPointName, flipVerticalAxis,
                 marginLatitudeRaw, setMarginLatitudeByKm, marginLongitudeRaw, setMarginLongitudeByKm, marginRadius,
-                scale, mosaic, variable, scalarType, null, discretePositions);
+                scale, mosaic, variable, scalarType, horizontalGridInterval, verticalGridInterval, null, discretePositions);
         if (maskPath != null) worker.setMask(maskVariable, maskScalarType, maskThreshold);
         worker.computeCrossSection(discreteMap, maskDiscreteMap, outPath);
         worker.writeScripts(outPath);

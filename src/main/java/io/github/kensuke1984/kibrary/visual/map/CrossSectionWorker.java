@@ -32,15 +32,6 @@ import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
  */
 public class CrossSectionWorker {
 
-    /**
-     * Interval of horizontal grid.
-     */
-    public static final double HORIZONTAL_GRID_INTERVAL = 0.2;
-    /**
-     * Interval of vertical grid.
-     */
-    public static final int VERTICAL_GRID_INTERVAL = 1;
-
     private final Map<Double, HorizontalPosition> samplePositionMap = new TreeMap<>();
     private final double distance;
     private final double startAngle;
@@ -115,7 +106,8 @@ public class CrossSectionWorker {
             double beforePos0Deg, double afterPosDeg, boolean useAfterPos1, double zeroPointRadius,
             String zeroPointName, boolean flipVerticalAxis, double marginLatitudeRaw, boolean setMarginLatitudeByKm,
             double marginLongitudeRaw, boolean setMarginLongitudeByKm, double marginRadius, double scale,
-            boolean mosaic, VariableType variable, ScalarType scalarType, String tag, Set<FullPosition> discretePositions) {
+            boolean mosaic, VariableType variable, ScalarType scalarType,
+            double horizontalGridInterval, double verticalGridInterval, String tag, Set<FullPosition> discretePositions) {
 
         //~decide start and end positions of cross section
         HorizontalPosition pos0 = new HorizontalPosition(pos0Latitude, pos0Longitude);
@@ -133,7 +125,7 @@ public class CrossSectionWorker {
         startAngle = -beforePos0Deg;
         endAngle = distance - beforePos0Deg;
         double azimuth = startPosition.computeAzimuthDeg(endPosition);
-        horizontalGridInterval = HORIZONTAL_GRID_INTERVAL;
+        this.horizontalGridInterval = horizontalGridInterval;
         int nSamplePosition = (int) Math.round(distance / horizontalGridInterval) + 1;
         for (int i = 0; i < nSamplePosition; i++) {
             HorizontalPosition position = startPosition.pointAlongAzimuth(azimuth, i * horizontalGridInterval);
@@ -141,7 +133,7 @@ public class CrossSectionWorker {
         }
 
         // decide vertical settings
-        verticalGridInterval = VERTICAL_GRID_INTERVAL;
+        this.verticalGridInterval = verticalGridInterval;
         radii = discretePositions.stream().mapToDouble(FullPosition::getR).distinct().sorted().toArray();
 
         // decide margins
