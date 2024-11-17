@@ -39,15 +39,6 @@ import io.github.kensuke1984.kibrary.waveform.PartialIDFile;
  */
 public class PartialsMovieMaker extends Operation {
 
-    /**
-     * How much finer to make the grid.
-     */
-    public static final int GRID_SMOOTHING_FACTOR = 5;
-    /**
-     * Size of vertical grid with respect to horizontal grid.
-     */
-    public static final int VERTICAL_ENLARGE_FACTOR = 2;
-
     private final Property property;
     /**
      * Path of the work folder.

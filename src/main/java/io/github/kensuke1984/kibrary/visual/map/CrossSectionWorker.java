@@ -33,16 +33,18 @@ import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 public class CrossSectionWorker {
 
     /**
-     * How much finer to make the grid.
+     * Interval of horizontal grid.
      */
-    public static final int GRID_SMOOTHING_FACTOR = 2;
+    public static final double HORIZONTAL_GRID_INTERVAL = 0.2;
     /**
-     * Size of vertical grid with respect to horizontal grid.
+     * Interval of vertical grid.
      */
-    public static final int VERTICAL_ENLARGE_FACTOR = 4;
+    public static final int VERTICAL_GRID_INTERVAL = 1;
 
     private final Map<Double, HorizontalPosition> samplePositionMap = new TreeMap<>();
     private final double distance;
+    private final double startAngle;
+    private final double endAngle;
     private final double horizontalGridInterval;
     private final double verticalGridInterval;
     private final double[] radii;
@@ -128,16 +130,18 @@ public class CrossSectionWorker {
 
         //~decide horizontal positions at which to sample values
         distance = Math.round(startPosition.computeEpicentralDistanceDeg(endPosition));
+        startAngle = -beforePos0Deg;
+        endAngle = distance - beforePos0Deg;
         double azimuth = startPosition.computeAzimuthDeg(endPosition);
-        horizontalGridInterval = ScalarMapShellscript.decideGridSampling(discretePositions) / GRID_SMOOTHING_FACTOR;
+        horizontalGridInterval = HORIZONTAL_GRID_INTERVAL;
         int nSamplePosition = (int) Math.round(distance / horizontalGridInterval) + 1;
         for (int i = 0; i < nSamplePosition; i++) {
             HorizontalPosition position = startPosition.pointAlongAzimuth(azimuth, i * horizontalGridInterval);
-            samplePositionMap.put(i * horizontalGridInterval, position);
+            samplePositionMap.put(i * horizontalGridInterval - beforePos0Deg, position);
         }
 
         // decide vertical settings
-        verticalGridInterval = horizontalGridInterval * VERTICAL_ENLARGE_FACTOR;
+        verticalGridInterval = VERTICAL_GRID_INTERVAL;
         radii = discretePositions.stream().mapToDouble(FullPosition::getR).distinct().sorted().toArray();
 
         // decide margins
@@ -330,7 +334,7 @@ public class CrossSectionWorker {
         double upperRadius = radii[radii.length - 1] + marginRadius;
         double[] annotationRadii = {lowerRadius, upperRadius};
         writeAnnotationFile(annotationRadii, annotationPath);
-        writeShellscript(distance, lowerRadius, upperRadius, horizontalGridInterval, verticalGridInterval, gmtPath);
+        writeShellscript(startAngle, endAngle, lowerRadius, upperRadius, horizontalGridInterval, verticalGridInterval, gmtPath);
     }
 
     /**
@@ -356,7 +360,7 @@ public class CrossSectionWorker {
         }
     }
 
-    private void writeShellscript(double sectionDistance, double lowerRadius, double upperRadius,
+    private void writeShellscript(double startAngle, double endAngle, double lowerRadius, double upperRadius,
             double horizontalGridInterval, double verticalGridInterval, Path outputPath) throws IOException {
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath))) {
             pw.println("#!/bin/sh");
@@ -364,13 +368,13 @@ public class CrossSectionWorker {
             pw.println("# create grid");
             pw.println("cat " + scalarFileName + " | \\");
             pw.println("awk '{print $1,$4,$5}' | \\");
-            pw.println("gmt xyz2grd -G0model.grd -R0/" + MathAid.simplestString(sectionDistance)
+            pw.println("gmt xyz2grd -G0model.grd -R" + MathAid.simplestString(startAngle) + "/" + MathAid.simplestString(endAngle)
                     + "/" + MathAid.simplestString(lowerRadius) + "/" + MathAid.simplestString(upperRadius)
                     + " -I" + MathAid.simplestString(horizontalGridInterval) + "/" + MathAid.simplestString(verticalGridInterval) + " -di0");
             if (maskExists) {
                 pw.println("cat " + maskFileName + " | \\");
                 pw.println("awk '{print $1,$4,$5}' | \\");
-                pw.println("gmt xyz2grd -G0mask.grd -R0/" + MathAid.simplestString(sectionDistance)
+                pw.println("gmt xyz2grd -G0mask.grd -R" + MathAid.simplestString(startAngle) + "/" + MathAid.simplestString(endAngle)
                         + "/" + MathAid.simplestString(lowerRadius) + "/" + MathAid.simplestString(upperRadius)
                         + " -I" + MathAid.simplestString(horizontalGridInterval) + "/" + MathAid.simplestString(verticalGridInterval) + " -di0");
             }
@@ -387,9 +391,9 @@ public class CrossSectionWorker {
             pw.println("gmt set MAP_TICK_LENGTH_PRIMARY 10p");
             pw.println("");
             pw.println("# map parameters");
-            pw.println("R='-R0/" + MathAid.simplestString(sectionDistance)
+            pw.println("R='-R" + MathAid.simplestString(startAngle) + "/" + MathAid.simplestString(endAngle)
                     + "/" + MathAid.simplestString(lowerRadius) + "/" + MathAid.simplestString(upperRadius) + "'");
-            pw.println("J='-JP60+a+t" + MathAid.simplestString(sectionDistance / 2) + "'");
+            pw.println("J='-JP60+a+t" + MathAid.simplestString((endAngle + startAngle) / 2) + "'");
             pw.println("B='-BWeSn -Bx30f10 -BycrAnnotation.txt'");
             pw.println("");
             pw.println("outputps=" + plotFileNameRoot + "Section.eps");
