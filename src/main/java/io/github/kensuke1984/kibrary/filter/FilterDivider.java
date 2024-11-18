@@ -240,7 +240,7 @@ public class FilterDivider extends Operation {
                 }
 
                 Files.createDirectories(outPath.resolve(eventDir.getName()));
-                sacNameSet.forEach(this::filterAndout);
+                sacNameSet.forEach(this::filterAndOut);
             } catch (Exception e) {
                 // if an exception is thrown, ignore that event folder and finish up the rest
                 System.err.println("Error on " + eventDir);
@@ -299,7 +299,7 @@ public class FilterDivider extends Operation {
      *
      * @param name a name of a SAC file to be filtered
      */
-    private void filterAndout(SACFileName name) {
+    private void filterAndOut(SACFileName name) {
         try {
             SACFileAccess sacFile = name.read().applyButterworthFilter(filter);
             Path out = outPath.resolve(name.getGlobalCMTID().toString()).resolve(name.getName());

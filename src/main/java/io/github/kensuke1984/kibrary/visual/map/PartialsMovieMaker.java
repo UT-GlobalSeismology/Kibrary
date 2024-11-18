@@ -380,7 +380,7 @@ public class PartialsMovieMaker extends Operation {
                             // normalize by maximum value
                             double normalization = partialsForWindow.stream()
                                     .mapToDouble(partialID -> partialID.toTrace().getYVector().getLInfNorm()).max().getAsDouble();
-                            System.err.println("Normalizing my maximum value " + normalization);
+                            System.err.println("  Normalizing by maximum value " + normalization);
 
                             CrossSectionWorker worker = new CrossSectionWorker(pos0Latitude, pos0Longitude, pos1Latitude, pos1Longitude,
                                     beforePos0Deg, afterPosDeg, useAfterPos1, zeroPointRadius, zeroPointName, flipVerticalAxis,

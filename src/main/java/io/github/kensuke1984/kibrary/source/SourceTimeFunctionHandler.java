@@ -11,6 +11,7 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 
 /**
  * Class to create {@link SourceTimeFunction}s based on various settings.
+ *
  * @author otsuru
  * @since 2022/11/3
  */

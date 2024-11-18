@@ -236,7 +236,7 @@ public final class SPC_SAC extends Operation {
         System.err.println("Model name is " + modelName);
 
         stfHandler = new SourceTimeFunctionHandler(sourceTimeFunctionType,
-                sourceTimeFunctionCatalogPath, userSourceTimeFunctionPath, DatasetAid.globalCMTIDSet(workPath));
+                sourceTimeFunctionCatalogPath, userSourceTimeFunctionPath, null);
 
         if (usableSPCMode != SPCFileAid.UsableSPCMode.PSV && (shSPCs = collectSPCsFromAllEvents(SPCMode.SH, shPath)).isEmpty()) {
             throw new FileNotFoundException("No SH spectrum files are found.");
