@@ -72,11 +72,13 @@ public class CrossSectionWorker {
     private final String plotFileNameRoot;
     private final String scalarFileName;
 
-
     private boolean maskExists = false;
     private double maskThreshold;
     private String maskFileName;
 
+    private Path raypathPath;
+    private Path leftTextPath;
+    private Path rightTextPath;
 
     /**
      * Set parameters that should be used when creating cross sections.
@@ -173,6 +175,24 @@ public class CrossSectionWorker {
         // set scalar file name
         String tag2 = (tag != null) ? (tag + "_forMaskXZ") : "forMaskXZ";
         this.maskFileName = ScalarListFile.generateFileName(maskVariable, maskScalarType, tag2);
+    }
+
+    /**
+     * Set file with raypath information to show on cross section.
+     * @param raypathPath (Path) File with raypath information.
+     */
+    void setRaypathFile(Path raypathPath) {
+        this.raypathPath = raypathPath;
+    }
+
+    /**
+     * Set files containing text to display at top left and top right of figure.
+     * @param leftTextPath (Path) File for top left text.
+     * @param rightTextPath (Path) File for top right text.
+     */
+    void setTextFiles(Path leftTextPath, Path rightTextPath) {
+        this.leftTextPath = leftTextPath;
+        this.rightTextPath = rightTextPath;
     }
 
     /**
@@ -397,13 +417,21 @@ public class CrossSectionWorker {
             if (maskExists) {
                 pw.println("gmt grdimage 0mask.grd $J $R -Ccp_mask.cpt -G0/0/0 -t80 -K -O >> $outputps");
             }
+            if (raypathPath != null) {
+                pw.println("");
+                pw.println("cat " + raypathPath + " | gmt psxy -J -R -K -O >> $outputps");
+            }
             pw.println("");
             pw.println("#------- Scale");
-            pw.println("gmt psscale -Ccp.cpt -Dx2/-4+w12/0.8+h -B$MP+l\"" + ScalarType.createScaleLabel(variable, scalarType)
-                    + "\" -K -O -Y2 -X5 >> $outputps");
+            pw.println("gmt psscale -Ccp.cpt -DjCB+jCB+w12/0.8+h -B$MP+l\"" + ScalarType.createScaleLabel(variable, scalarType)
+                    + "\" -J -R -K -O >> $outputps");
             pw.println("");
             pw.println("#------- Finalize");
-            pw.println("gmt pstext -N -F+jLM+f30p,Helvetica,black $J $R -O << END >> $outputps");
+            if (leftTextPath != null)
+                pw.println("gmt pstext -N -D0/-2 -F+cTL+a0+jTL+f50p,Helvetica,black -J -R -K -O < " + leftTextPath + " >> $outputps");
+            if (rightTextPath != null)
+                pw.println("gmt pstext -N -D-2/-2 -F+cTR+a0+jTR+f50p,Helvetica,black -J -R -K -O < " + rightTextPath + " >> $outputps");
+            pw.println("gmt pstext -N -F+cBR+a0+jBR+f50p,Helvetica,black -J -R -O << END >> $outputps");
             pw.println("END");
             pw.println("");
             pw.println("gmt psconvert $outputps -E100 -Tf -A -Qg4");
