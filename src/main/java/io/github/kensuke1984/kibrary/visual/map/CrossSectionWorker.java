@@ -21,6 +21,7 @@ import io.github.kensuke1984.kibrary.math.Trace;
 import io.github.kensuke1984.kibrary.perturbation.ScalarListFile;
 import io.github.kensuke1984.kibrary.perturbation.ScalarType;
 import io.github.kensuke1984.kibrary.util.MathAid;
+import io.github.kensuke1984.kibrary.util.earth.Earth;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 
@@ -79,6 +80,9 @@ public class CrossSectionWorker {
     private Path raypathPath;
     private Path leftTextPath;
     private Path rightTextPath;
+    private double sourceRadius = Double.NaN;
+    private double receiverDistance;
+    private boolean showReceiver;
 
     /**
      * Set parameters that should be used when creating cross sections.
@@ -114,6 +118,7 @@ public class CrossSectionWorker {
         //~decide start and end positions of cross section
         HorizontalPosition pos0 = new HorizontalPosition(pos0Latitude, pos0Longitude);
         HorizontalPosition pos1 = new HorizontalPosition(pos1Latitude, pos1Longitude);
+        receiverDistance = pos0.computeEpicentralDistanceDeg(pos1);
         HorizontalPosition startPosition = pos0.pointAlongAzimuth(pos0.computeAzimuthDeg(pos1), -beforePos0Deg);
         HorizontalPosition endPosition;
         if (useAfterPos1) {
@@ -183,6 +188,22 @@ public class CrossSectionWorker {
      */
     void setRaypathFile(Path raypathPath) {
         this.raypathPath = raypathPath;
+    }
+
+    /**
+     * Set radius of source, if plotting star of source.
+     * @param sourceRadius (double) Radius [km].
+     */
+    void setSourceRadius(double sourceRadius) {
+        this.sourceRadius = sourceRadius;
+    }
+
+    /**
+     * Whether to plot circle of receiver.
+     * @param showReceiver (boolean) Whether to plot receiver.
+     */
+    void showReceiver(boolean showReceiver) {
+        this.showReceiver = showReceiver;
     }
 
     /**
@@ -413,15 +434,25 @@ public class CrossSectionWorker {
             pw.println("gmt makecpt -Ccp_master.cpt -T-$MP/$MP > cp.cpt");
             pw.println("");
             pw.println("#------- Panels");
-            pw.println("gmt grdimage 0model.grd $B $J $R -Ccp.cpt -K -Y80 -X20> $outputps");
+            pw.println("gmt grdimage 0model.grd $B $J $R -Ccp.cpt -K -Y80 -X20 > $outputps");
             if (maskExists) {
                 pw.println("gmt grdimage 0mask.grd $J $R -Ccp_mask.cpt -G0/0/0 -t80 -K -O >> $outputps");
             }
-            if (raypathPath != null) {
-                pw.println("");
-                pw.println("cat " + raypathPath + " | gmt psxy -J -R -K -O >> $outputps");
-            }
             pw.println("");
+            if (raypathPath != null) {
+                pw.println("cat " + raypathPath + " | gmt psxy -J -R -K -O >> $outputps");
+                pw.println("");
+            }
+            if (!Double.isNaN(sourceRadius)) {
+                pw.println("echo \"0 " + sourceRadius + "\" | \\");
+                pw.println("gmt psxy -N -SA1 -G156/255/0 -Wthickest -J -R -K -O >> $outputps");
+                pw.println("");
+            }
+            if (showReceiver) {
+                pw.println("echo \"" + receiverDistance + " " + Earth.EARTH_RADIUS + "\" | \\");
+                pw.println("gmt psxy -N -SC1 -G0/255/156 -Wthickest -J -R -K -O >> $outputps");
+                pw.println("");
+            }
             pw.println("#------- Scale");
             pw.println("gmt psscale -Ccp.cpt -DjCB+jCB+w12/0.8+h -B$MP+l\"" + ScalarType.createScaleLabel(variable, scalarType)
                     + "\" -J -R -K -O >> $outputps");

@@ -335,6 +335,8 @@ public class PartialsMovieMaker extends Operation {
                 String scalarFileName = ScalarListFile.generateFileName(variable, scalarType, "normalized");
 
                 for (GlobalCMTID event : tendEvents) {
+                    double eventRadius = event.getEventData().getCmtPosition().getR();
+
                     for (String observerName : tendObservers) {
                         List<PartialID> partialsForEntry = partialIDs.stream().filter(partial ->
                                 partial.getSacComponent().equals(component)
@@ -382,6 +384,8 @@ public class PartialsMovieMaker extends Operation {
                                     beforePos0Deg, afterPosDeg, useAfterPos1, zeroPointRadius, zeroPointName, flipVerticalAxis,
                                     marginLatitudeRaw, setMarginLatitudeByKm, marginLongitudeRaw, setMarginLongitudeByKm, marginRadius,
                                     scale, mosaic, variable, scalarType, horizontalGridInterval, verticalGridInterval, "normalized", discretePositions);
+                            worker.setSourceRadius(eventRadius);
+                            worker.showReceiver(true);
                             if (raypathPath != null) worker.setRaypathFile(Paths.get("../../..").resolve(raypathPath));
                             worker.setTextFiles(Paths.get("textL.txt"), Paths.get("textR.txt"));
 
