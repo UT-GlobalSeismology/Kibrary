@@ -26,6 +26,7 @@ import io.github.kensuke1984.kibrary.timewindow.TravelTimeInformation;
 import io.github.kensuke1984.kibrary.timewindow.TravelTimeInformationFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.MathAid;
+import io.github.kensuke1984.kibrary.util.earth.Earth;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
@@ -379,13 +380,14 @@ public class PartialsMovieMaker extends Operation {
                             // normalize by maximum value
                             double normalization = partialsForWindow.stream()
                                     .mapToDouble(partialID -> partialID.toTrace().getYVector().getLInfNorm()).max().getAsDouble();
+                            System.err.println("Normalizing my maximum value " + normalization);
 
                             CrossSectionWorker worker = new CrossSectionWorker(pos0Latitude, pos0Longitude, pos1Latitude, pos1Longitude,
                                     beforePos0Deg, afterPosDeg, useAfterPos1, zeroPointRadius, zeroPointName, flipVerticalAxis,
                                     marginLatitudeRaw, setMarginLatitudeByKm, marginLongitudeRaw, setMarginLongitudeByKm, marginRadius,
                                     scale, mosaic, variable, scalarType, horizontalGridInterval, verticalGridInterval, "normalized", discretePositions);
                             worker.setSourceRadius(eventRadius);
-                            worker.showReceiver(true);
+                            worker.setReceiverRadius(Earth.EARTH_RADIUS);
                             if (raypathPath != null) worker.setRaypathFile(Paths.get("../../..").resolve(raypathPath));
                             worker.setTextFiles(Paths.get("textL.txt"), Paths.get("textR.txt"));
 

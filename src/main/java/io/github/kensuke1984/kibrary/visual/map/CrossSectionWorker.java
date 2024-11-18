@@ -21,7 +21,6 @@ import io.github.kensuke1984.kibrary.math.Trace;
 import io.github.kensuke1984.kibrary.perturbation.ScalarListFile;
 import io.github.kensuke1984.kibrary.perturbation.ScalarType;
 import io.github.kensuke1984.kibrary.util.MathAid;
-import io.github.kensuke1984.kibrary.util.earth.Earth;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 
@@ -35,6 +34,7 @@ public class CrossSectionWorker {
 
     private final Map<Double, HorizontalPosition> samplePositionMap = new TreeMap<>();
     private final double distance;
+    private final double receiverDistance;
     private final double startAngle;
     private final double endAngle;
     private final double horizontalGridInterval;
@@ -81,8 +81,7 @@ public class CrossSectionWorker {
     private Path leftTextPath;
     private Path rightTextPath;
     private double sourceRadius = Double.NaN;
-    private double receiverDistance;
-    private boolean showReceiver;
+    private double receiverRadius = Double.NaN;
 
     /**
      * Set parameters that should be used when creating cross sections.
@@ -199,11 +198,11 @@ public class CrossSectionWorker {
     }
 
     /**
-     * Whether to plot circle of receiver.
-     * @param showReceiver (boolean) Whether to plot receiver.
+     * Set radius of receiver, if plotting circle of receiver.
+     * @param receiverRadius (double) Radius [km].
      */
-    void showReceiver(boolean showReceiver) {
-        this.showReceiver = showReceiver;
+    void setReceiverRadius(double receiverRadius) {
+        this.receiverRadius = receiverRadius;
     }
 
     /**
@@ -448,13 +447,14 @@ public class CrossSectionWorker {
                 pw.println("gmt psxy -N -SA1 -G156/255/0 -Wthickest -J -R -K -O >> $outputps");
                 pw.println("");
             }
-            if (showReceiver) {
-                pw.println("echo \"" + receiverDistance + " " + Earth.EARTH_RADIUS + "\" | \\");
+            if (!Double.isNaN(receiverRadius)) {
+                pw.println("echo \"" + receiverDistance + " " + receiverRadius + "\" | \\");
                 pw.println("gmt psxy -N -SC1 -G0/255/156 -Wthickest -J -R -K -O >> $outputps");
                 pw.println("");
             }
             pw.println("#------- Scale");
-            pw.println("gmt psscale -Ccp.cpt -DjCB+jCB+w12/0.8+h -B$MP+l\"" + ScalarType.createScaleLabel(variable, scalarType)
+            pw.println("gmt psscale -Ccp.cpt " + (scalarType.isNonNegative() ? "-G0/$MP " : "")
+                    + "-DjCB+jCB+w12/0.8+h -B$MP+l\"" + ScalarType.createScaleLabel(variable, scalarType)
                     + "\" -J -R -K -O >> $outputps");
             pw.println("");
             pw.println("#------- Finalize");

@@ -109,6 +109,8 @@ public class CrossSectionCreator extends Operation {
      */
     private double maskThreshold;
 
+    private double pos0Radius = Double.NaN;
+    private double pos1Radius = Double.NaN;
     private double horizontalGridInterval;
     private double verticalGridInterval;
 
@@ -176,6 +178,11 @@ public class CrossSectionCreator extends Operation {
             pw.println("#mosaic true");
             pw.println("##(double) Threshold for mask. (0.3)");
             pw.println("#maskThreshold ");
+            pw.println("##########Parameters for perturbation values.");
+            pw.println("##(double) Radius of position 0, if displaying its position.");
+            pw.println("#pos0Radius ");
+            pw.println("##(double) Radius of position 1, if displaying its position.");
+            pw.println("#pos1Radius ");
             pw.println("##########Image resolution parameters.");
             pw.println("##(double) Horizontal grid interval. (0.25)");
             pw.println("#horizontalGridInterval ");
@@ -241,6 +248,8 @@ public class CrossSectionCreator extends Operation {
         mosaic = property.parseBoolean("mosaic", "false");
         maskThreshold = property.parseDouble("maskThreshold", "0.3");
 
+        if (property.containsKey("pos0Radius")) pos0Radius = property.parseDouble("pos0Radius", null);
+        if (property.containsKey("pos1Radius")) pos1Radius = property.parseDouble("pos1Radius", null);
         horizontalGridInterval = property.parseDouble("horizontalGridInterval", "0.25");
         verticalGridInterval = property.parseDouble("verticalGridInterval", "2.5");
     }
@@ -275,6 +284,8 @@ public class CrossSectionCreator extends Operation {
                 marginLatitudeRaw, setMarginLatitudeByKm, marginLongitudeRaw, setMarginLongitudeByKm, marginRadius,
                 scale, mosaic, variable, scalarType, horizontalGridInterval, verticalGridInterval, null, discretePositions);
         if (maskPath != null) worker.setMask(maskVariable, maskScalarType, maskThreshold);
+        if (!Double.isNaN(pos0Radius)) worker.setSourceRadius(pos0Radius);
+        if (!Double.isNaN(pos1Radius)) worker.setReceiverRadius(pos1Radius);
         worker.computeCrossSection(discreteMap, maskDiscreteMap, outPath);
         worker.writeScripts(outPath);
         String plotFileNameRoot = worker.getPlotFileNameRoot();

@@ -47,6 +47,15 @@ public enum ScalarType {
         }
     }
 
+    public boolean isNonNegative() {
+        switch (this) {
+        case ABSOLUTE:
+        case KERNEL_Z: case KERNEL_R: case KERNEL_T:
+        return true;
+        default: return false;
+        }
+    }
+
     /**
      * Get scalar type name in UpperCamelCase.
      * @return (String) Scalar type name in UpperCamelCase.
