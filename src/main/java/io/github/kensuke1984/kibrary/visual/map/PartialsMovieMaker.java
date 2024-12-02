@@ -417,7 +417,7 @@ public class PartialsMovieMaker extends Operation {
                                 worker.computeCrossSection(discreteMap, null, outSnapshotPath);
 
                                 // write out time
-                                Files.writeString(outSnapshotPath.resolve("textL.txt"), "t = " + time);
+                                Files.write(outSnapshotPath.resolve("textL.txt"), ("t = " + time).getBytes());
 
                                 // write out phases arriving at this time
                                 if (travelTimeInfo != null) {
@@ -434,9 +434,9 @@ public class PartialsMovieMaker extends Operation {
                                         if (Math.abs(time - travelTime) < HALF_PHASE_TIME)
                                             arrivingPhases.add(entry.getKey().toString());
                                     }
-                                    Files.writeString(outSnapshotPath.resolve("textR.txt"), String.join(", ", arrivingPhases));
+                                    Files.write(outSnapshotPath.resolve("textR.txt"), String.join(", ", arrivingPhases).getBytes());
                                 } else {
-                                    Files.writeString(outSnapshotPath.resolve("textR.txt"), "");
+                                    Files.write(outSnapshotPath.resolve("textR.txt"), "".getBytes());
                                 }
                             }
 
