@@ -60,6 +60,10 @@ public class SensitivityKernelMapper extends Operation {
      */
     private Set<SACComponent> components;
     /**
+     * Partial waveform folder.
+     */
+    private Path partialPath;
+    /**
      * Variable types to make maps for.
      */
     private Set<VariableType> variableTypes;
@@ -73,9 +77,9 @@ public class SensitivityKernelMapper extends Operation {
     private Set<String> tendObservers = new HashSet<>();
 
     /**
-     * Partial waveform folder.
+     * Whether to create map.
      */
-    private Path partialPath;
+    private boolean map;
     private double[] boundaries;
     /**
      * Indices of layers to display in the figure. Listed from the inside. Layers are numbered 0, 1, 2, ... from the inside.
@@ -127,6 +131,9 @@ public class SensitivityKernelMapper extends Operation {
             pw.println("#tendEvents ");
             pw.println("##Observers to work for, in the form STA_NET, listed using spaces, must be set.");
             pw.println("#tendObservers ");
+            pw.println("##########The following are parameters for the map.");
+            pw.println("##(boolean) Whether to create map. (false)");
+            pw.println("#map true");
             pw.println("##(double[]) The display values of each layer boundary, listed from the inside using spaces. (0 50 100 150 200 250 300 350 400)");
             pw.println("#boundaries ");
             pw.println("##(int[]) Indices of layers to display, listed from the inside using spaces, when specific layers are to be displayed.");
@@ -146,7 +153,7 @@ public class SensitivityKernelMapper extends Operation {
             pw.println("##(double) Longitude margin at both ends [deg]. (2.5)");
             pw.println("#marginLongitudeDeg ");
             pw.println("##########Parameters for perturbation values");
-            pw.println("##(double) The factor to amplify the sensitivity values. (1e29)");
+            pw.println("##(double) The factor to amplify the normalized sensitivity values. (1e5)");
             pw.println("#amplification ");
             pw.println("##(double) Range of scale. (3)");
             pw.println("#scale ");
@@ -175,6 +182,7 @@ public class SensitivityKernelMapper extends Operation {
                 .collect(Collectors.toSet());
         tendObservers = Arrays.stream(property.parseStringArray("tendObservers", null)).collect(Collectors.toSet());
 
+        map = property.parseBoolean("map", "false");
         boundaries = property.parseDoubleArray("boundaries", "0 50 100 150 200 250 300 350 400");
         if (property.containsKey("displayLayers")) displayLayers = property.parseIntArray("displayLayers", null);
         nPanelsPerRow = property.parseInt("nPanelsPerRow", "4");
@@ -197,7 +205,7 @@ public class SensitivityKernelMapper extends Operation {
         }
         if (marginLongitude <= 0) throw new IllegalArgumentException("marginLongitude must be positive");
 
-        amplification = property.parseDouble("amplification", "1e29");
+        amplification = property.parseDouble("amplification", "1e5");
         scale = property.parseDouble("scale", "3");
         mosaic = property.parseBoolean("mosaic", "false");
     }
@@ -216,9 +224,13 @@ public class SensitivityKernelMapper extends Operation {
         double[] radii = positions.stream().mapToDouble(pos -> pos.getR()).distinct().sorted().toArray();
 
         // decide map region
-        if (mapRegion == null) mapRegion = ScalarMapShellscript.decideMapRegion(positions);
-        boolean crossDateLine = HorizontalPosition.crossesDateLine(positions);
-        double gridInterval = ScalarMapShellscript.decideGridSampling(positions);
+        boolean crossDateLine = false;
+        double gridInterval = 0.0;
+        if (map) {
+            if (mapRegion == null) mapRegion = ScalarMapShellscript.decideMapRegion(positions);
+            crossDateLine = HorizontalPosition.crossesDateLine(positions);
+            gridInterval = ScalarMapShellscript.decideGridSampling(positions);
+        }
 
         // create output folder
         Path outPath = DatasetAid.createOutputFolder(workPath, "kernel", folderTag, appendFolderDate, null);
@@ -258,31 +270,42 @@ public class SensitivityKernelMapper extends Operation {
                                 for (int i = 0; i < data.length; i++) {
                                     cumulativeSensitivity += data[i] * data[i];
                                 }
-                                discreteMap.put(partial.getVoxelPosition(), cumulativeSensitivity * amplification);
+                                discreteMap.put(partial.getVoxelPosition(), cumulativeSensitivity);
                             }
+
+                            // normalize
+                            double max = discreteMap.values().stream().mapToDouble(Double::valueOf).max().getAsDouble();
+                            System.err.println("Normalizing my maximum value " + max);
+                            System.err.println("  and amplifying by " + amplification);
+                            discreteMap.entrySet().forEach(entry -> discreteMap.put(entry.getKey(), entry.getValue() / max * amplification));
 
                             // output discrete perturbation file
                             ScalarType scalarType = ScalarType.kernelOf(component);
                             String tag = phaselist + String.format("_t0%d", (int) startTime);
                             Path outputDiscretePath = observerPath.resolve(ScalarListFile.generateFileName(variableType, scalarType, tag));
                             ScalarListFile.write(discreteMap, outputDiscretePath);
-                            // output interpolated perturbation file, in range [0:360) when crossDateLine==true so that mapping will succeed
-                            Map<FullPosition, Double> interpolatedMap = Interpolation.inEachMapLayer(discreteMap, gridInterval,
-                                    marginLatitude, setLatitudeByKm, marginLongitude, setLongitudeByKm, crossDateLine, mosaic);
-                            Path outputInterpolatedPath = observerPath.resolve(ScalarListFile.generateFileName(variableType, scalarType, tag + "_XY"));
-                            ScalarListFile.write(interpolatedMap, crossDateLine, outputInterpolatedPath);
 
-                            ScalarMapShellscript script = new ScalarMapShellscript(variableType, scalarType, tag, radii, boundaries,
-                                    mapRegion, gridInterval, scale, nPanelsPerRow);
-                            if (displayLayers != null) script.setDisplayLayers(displayLayers);
-                            script.write(observerPath);
+                            if (map) {
+                                // output interpolated perturbation file, in range [0:360) when crossDateLine==true so that mapping will succeed
+                                Map<FullPosition, Double> interpolatedMap = Interpolation.inEachMapLayer(discreteMap, gridInterval,
+                                        marginLatitude, setLatitudeByKm, marginLongitude, setLongitudeByKm, crossDateLine, mosaic);
+                                Path outputInterpolatedPath = observerPath.resolve(ScalarListFile.generateFileName(variableType, scalarType, tag + "_XY"));
+                                ScalarListFile.write(interpolatedMap, crossDateLine, outputInterpolatedPath);
+
+                                ScalarMapShellscript script = new ScalarMapShellscript(variableType, scalarType, tag, radii, boundaries,
+                                        mapRegion, gridInterval, scale, nPanelsPerRow);
+                                if (displayLayers != null) script.setDisplayLayers(displayLayers);
+                                script.write(observerPath);
+                            }
                         }
                     }
                 }
             }
         }
-        System.err.println("After this finishes, please enter each " + outPath
-                + "/event_observerFolder/ and run *Grid.sh and *Map.sh");
+        if (map) {
+            System.err.println("After this finishes, please enter each " + outPath
+                    + "/event_observerFolder/ and run *Grid.sh and *Map.sh");
+        }
     }
 
 }

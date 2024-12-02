@@ -87,13 +87,13 @@ public class VoxelManualDesigner extends Operation {
             pw.println("##(boolean) Whether to append date string at end of output file names. (true)");
             pw.println("#appendFileDate false");
             pw.println("##########Parameters for the CENTER positions of voxels to create.");
-            pw.println("##(double) Lower limit of latitude [deg]; [-90:upperLatitude). (0)");
+            pw.println("##(double) Lower limit of latitude [deg], inclusive; [-90:upperLatitude). (-90)");
             pw.println("#lowerLatitude ");
-            pw.println("##(double) Upper limit of latitude [deg]; (lowerLatitude:90]. (0)");
+            pw.println("##(double) Upper limit of latitude [deg], inclusive; (lowerLatitude:90]. (90)");
             pw.println("#upperLatitude ");
-            pw.println("##(double) Lower limit of longitude [deg]; [-180:upperLongitude). (0)");
+            pw.println("##(double) Lower limit of longitude [deg], inclusive; [-180:upperLongitude). (-180)");
             pw.println("#lowerLongitude ");
-            pw.println("##(double) Upper limit of longitude [deg]; (lowerLongitude:360]. (180)");
+            pw.println("##(double) Upper limit of longitude [deg], inclusive; (lowerLongitude:360]. (180)");
             pw.println("#upperLongitude ");
             pw.println("##(double) Latitude spacing [km]; (0:). If unset, the following dLatitudeDeg will be used.");
             pw.println("##  The (roughly) median radius of target region will be used to convert this to degrees.");
@@ -133,11 +133,11 @@ public class VoxelManualDesigner extends Operation {
         if (property.containsKey("fileTag")) fileTag = property.parseStringSingle("fileTag", null);
         appendFileDate = property.parseBoolean("appendFileDate", "true");
 
-        lowerLatitude = property.parseDouble("lowerLatitude", "0");
-        upperLatitude = property.parseDouble("upperLatitude", "0");
+        lowerLatitude = property.parseDouble("lowerLatitude", "-90");
+        upperLatitude = property.parseDouble("upperLatitude", "90");
         LinearRange.checkValidity("Latitude", lowerLatitude, upperLatitude, -90.0, 90.0);
 
-        lowerLongitude = property.parseDouble("lowerLongitude", "0");
+        lowerLongitude = property.parseDouble("lowerLongitude", "-180");
         upperLongitude = property.parseDouble("upperLongitude", "180");
         LinearRange.checkValidity("Longitude", lowerLongitude, upperLongitude, -180.0, 360.0);
 

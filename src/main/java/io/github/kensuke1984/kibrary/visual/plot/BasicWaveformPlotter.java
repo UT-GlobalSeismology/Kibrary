@@ -97,6 +97,10 @@ public class BasicWaveformPlotter extends Operation {
      * The time length to plot.
      */
     private double timeLength;
+    /**
+     * How much to scale up the residual waveform.
+     */
+    private double residualScale;
 
     private int unshiftedObsStyle;
     private String unshiftedObsName;
@@ -150,6 +154,8 @@ public class BasicWaveformPlotter extends Operation {
             pw.println("#splitComponents ");
             pw.println("##(double) Time length of each plot [s]. (150)");
             pw.println("#timeLength ");
+            pw.println("##(double) How much to scale up the residual waveform. (1)");
+            pw.println("#residualScale ");
             pw.println("##Plot style for unshifted observed waveform, from {0:no plot, 1:gray, 2:black}. (1)");
             pw.println("#unshiftedObsStyle 0");
             pw.println("##Name for unshifted observed waveform. (unshifted)");
@@ -203,6 +209,7 @@ public class BasicWaveformPlotter extends Operation {
         }
         splitComponents = property.parseBoolean("splitComponents", "true");
         timeLength = property.parseDouble("timeLength", "150");
+        residualScale = property.parseDouble("residualScale", "1");
 
         unshiftedObsStyle = property.parseInt("unshiftedObsStyle", "1");
         unshiftedObsName = property.parseString("unshiftedObsName", "unshifted");
@@ -336,7 +343,8 @@ public class BasicWaveformPlotter extends Operation {
             if (mainSynStyle != 0)
                 gnuplot.addLine(mainFilePath.toString(), 3, 4, BasicPlotAid.switchSyntheticAppearance(mainSynStyle), mainSynName);
             if (residualStyle != 0)
-                gnuplot.addLine(mainFilePath.toString(), "3:($2-$4)", BasicPlotAid.switchResidualAppearance(residualStyle), residualName);
+                gnuplot.addLine(mainFilePath.toString(), "3:(($2-$4)*" + residualScale + ")",
+                        BasicPlotAid.switchResidualAppearance(residualStyle), residualName + " * " + residualScale);
             if (refSynStyle1 != 0) {
                 Path refFilePath1 = refBasicPath1.toAbsolutePath().resolve(eventName).resolve(txtFileName);
                 gnuplot.addLine(refFilePath1.toString(), 3, 4, BasicPlotAid.switchSyntheticAppearance(refSynStyle1), refSynName1);

@@ -10,12 +10,14 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
+import org.apache.commons.cli.OptionGroup;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
 import io.github.kensuke1984.kibrary.Summon;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
+import io.github.kensuke1984.kibrary.voxel.UnknownParameterFile;
 import io.github.kensuke1984.kibrary.voxel.VoxelInformationFile;
 
 /**
@@ -48,8 +50,14 @@ public class VoxelMapper {
         Options options = Summon.defaultOptions();
 
         // input
-        options.addOption(Option.builder("v").longOpt("voxelFile").hasArg().argName("voxelFile").required()
+        OptionGroup inputOption = new OptionGroup();
+        inputOption.setRequired(true);
+        inputOption.addOption(Option.builder("v").longOpt("voxelFile").hasArg().argName("voxelFile")
                 .desc("Path of voxel information file.").build());
+        inputOption.addOption(Option.builder("u").longOpt("unknownsFile").hasArg().argName("unknownsFile")
+                .desc("Path of unknown parameter list file.").build());
+        options.addOptionGroup(inputOption);
+
         // settings
         options.addOption(Option.builder("l").longOpt("lambert")
                 .desc("Use Lambert azimuthal projection. Otherwise, equidistant cylindrical projection").build());
@@ -76,8 +84,17 @@ public class VoxelMapper {
      */
     public static void run(CommandLine cmdLine) throws IOException {
         // read input voxels
-        Path voxelPath = Paths.get(cmdLine.getOptionValue("v"));
-        List<HorizontalPosition> voxelPositions = new VoxelInformationFile(voxelPath).getHorizontalPositions();
+        List<HorizontalPosition> voxelPositions;
+        if (cmdLine.hasOption("v")) {
+            Path voxelPath = Paths.get(cmdLine.getOptionValue("v"));
+            voxelPositions = new VoxelInformationFile(voxelPath).getHorizontalPositions();
+        } else if (cmdLine.hasOption("u")) {
+            Path unknownParameterPath = Paths.get(cmdLine.getOptionValue("u"));
+            voxelPositions = UnknownParameterFile.read(unknownParameterPath)
+                    .stream().map(u -> u.getPosition().toHorizontalPosition()).distinct().collect(Collectors.toList());
+        } else {
+            throw new IllegalArgumentException("Either -v or -u must be specified.");
+        }
 
         // decide map region
         String regionString;

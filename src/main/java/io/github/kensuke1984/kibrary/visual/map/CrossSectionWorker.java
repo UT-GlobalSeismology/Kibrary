@@ -32,17 +32,11 @@ import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
  */
 public class CrossSectionWorker {
 
-    /**
-     * How much finer to make the grid.
-     */
-    public static final int GRID_SMOOTHING_FACTOR = 2;
-    /**
-     * Size of vertical grid with respect to horizontal grid.
-     */
-    public static final int VERTICAL_ENLARGE_FACTOR = 4;
-
     private final Map<Double, HorizontalPosition> samplePositionMap = new TreeMap<>();
     private final double distance;
+    private final double receiverDistance;
+    private final double startAngle;
+    private final double endAngle;
     private final double horizontalGridInterval;
     private final double verticalGridInterval;
     private final double[] radii;
@@ -79,11 +73,15 @@ public class CrossSectionWorker {
     private final String plotFileNameRoot;
     private final String scalarFileName;
 
-
     private boolean maskExists = false;
     private double maskThreshold;
     private String maskFileName;
 
+    private Path raypathPath;
+    private Path leftTextPath;
+    private Path rightTextPath;
+    private double sourceRadius = Double.NaN;
+    private double receiverRadius = Double.NaN;
 
     /**
      * Set parameters that should be used when creating cross sections.
@@ -113,11 +111,13 @@ public class CrossSectionWorker {
             double beforePos0Deg, double afterPosDeg, boolean useAfterPos1, double zeroPointRadius,
             String zeroPointName, boolean flipVerticalAxis, double marginLatitudeRaw, boolean setMarginLatitudeByKm,
             double marginLongitudeRaw, boolean setMarginLongitudeByKm, double marginRadius, double scale,
-            boolean mosaic, VariableType variable, ScalarType scalarType, String tag, Set<FullPosition> discretePositions) {
+            boolean mosaic, VariableType variable, ScalarType scalarType,
+            double horizontalGridInterval, double verticalGridInterval, String tag, Set<FullPosition> discretePositions) {
 
         //~decide start and end positions of cross section
         HorizontalPosition pos0 = new HorizontalPosition(pos0Latitude, pos0Longitude);
         HorizontalPosition pos1 = new HorizontalPosition(pos1Latitude, pos1Longitude);
+        receiverDistance = pos0.computeEpicentralDistanceDeg(pos1);
         HorizontalPosition startPosition = pos0.pointAlongAzimuth(pos0.computeAzimuthDeg(pos1), -beforePos0Deg);
         HorizontalPosition endPosition;
         if (useAfterPos1) {
@@ -128,16 +128,18 @@ public class CrossSectionWorker {
 
         //~decide horizontal positions at which to sample values
         distance = Math.round(startPosition.computeEpicentralDistanceDeg(endPosition));
+        startAngle = -beforePos0Deg;
+        endAngle = distance - beforePos0Deg;
         double azimuth = startPosition.computeAzimuthDeg(endPosition);
-        horizontalGridInterval = ScalarMapShellscript.decideGridSampling(discretePositions) / GRID_SMOOTHING_FACTOR;
+        this.horizontalGridInterval = horizontalGridInterval;
         int nSamplePosition = (int) Math.round(distance / horizontalGridInterval) + 1;
         for (int i = 0; i < nSamplePosition; i++) {
             HorizontalPosition position = startPosition.pointAlongAzimuth(azimuth, i * horizontalGridInterval);
-            samplePositionMap.put(i * horizontalGridInterval, position);
+            samplePositionMap.put(i * horizontalGridInterval - beforePos0Deg, position);
         }
 
         // decide vertical settings
-        verticalGridInterval = horizontalGridInterval * VERTICAL_ENLARGE_FACTOR;
+        this.verticalGridInterval = verticalGridInterval;
         radii = discretePositions.stream().mapToDouble(FullPosition::getR).distinct().sorted().toArray();
 
         // decide margins
@@ -177,6 +179,40 @@ public class CrossSectionWorker {
         // set scalar file name
         String tag2 = (tag != null) ? (tag + "_forMaskXZ") : "forMaskXZ";
         this.maskFileName = ScalarListFile.generateFileName(maskVariable, maskScalarType, tag2);
+    }
+
+    /**
+     * Set file with raypath information to show on cross section.
+     * @param raypathPath (Path) File with raypath information.
+     */
+    void setRaypathFile(Path raypathPath) {
+        this.raypathPath = raypathPath;
+    }
+
+    /**
+     * Set radius of source, if plotting star of source.
+     * @param sourceRadius (double) Radius [km].
+     */
+    void setSourceRadius(double sourceRadius) {
+        this.sourceRadius = sourceRadius;
+    }
+
+    /**
+     * Set radius of receiver, if plotting circle of receiver.
+     * @param receiverRadius (double) Radius [km].
+     */
+    void setReceiverRadius(double receiverRadius) {
+        this.receiverRadius = receiverRadius;
+    }
+
+    /**
+     * Set files containing text to display at top left and top right of figure.
+     * @param leftTextPath (Path) File for top left text.
+     * @param rightTextPath (Path) File for top right text.
+     */
+    void setTextFiles(Path leftTextPath, Path rightTextPath) {
+        this.leftTextPath = leftTextPath;
+        this.rightTextPath = rightTextPath;
     }
 
     /**
@@ -330,7 +366,7 @@ public class CrossSectionWorker {
         double upperRadius = radii[radii.length - 1] + marginRadius;
         double[] annotationRadii = {lowerRadius, upperRadius};
         writeAnnotationFile(annotationRadii, annotationPath);
-        writeShellscript(distance, lowerRadius, upperRadius, horizontalGridInterval, verticalGridInterval, gmtPath);
+        writeShellscript(startAngle, endAngle, lowerRadius, upperRadius, horizontalGridInterval, verticalGridInterval, gmtPath);
     }
 
     /**
@@ -356,7 +392,7 @@ public class CrossSectionWorker {
         }
     }
 
-    private void writeShellscript(double sectionDistance, double lowerRadius, double upperRadius,
+    private void writeShellscript(double startAngle, double endAngle, double lowerRadius, double upperRadius,
             double horizontalGridInterval, double verticalGridInterval, Path outputPath) throws IOException {
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath))) {
             pw.println("#!/bin/sh");
@@ -364,13 +400,13 @@ public class CrossSectionWorker {
             pw.println("# create grid");
             pw.println("cat " + scalarFileName + " | \\");
             pw.println("awk '{print $1,$4,$5}' | \\");
-            pw.println("gmt xyz2grd -G0model.grd -R0/" + MathAid.simplestString(sectionDistance)
+            pw.println("gmt xyz2grd -G0model.grd -R" + MathAid.simplestString(startAngle) + "/" + MathAid.simplestString(endAngle)
                     + "/" + MathAid.simplestString(lowerRadius) + "/" + MathAid.simplestString(upperRadius)
                     + " -I" + MathAid.simplestString(horizontalGridInterval) + "/" + MathAid.simplestString(verticalGridInterval) + " -di0");
             if (maskExists) {
                 pw.println("cat " + maskFileName + " | \\");
                 pw.println("awk '{print $1,$4,$5}' | \\");
-                pw.println("gmt xyz2grd -G0mask.grd -R0/" + MathAid.simplestString(sectionDistance)
+                pw.println("gmt xyz2grd -G0mask.grd -R" + MathAid.simplestString(startAngle) + "/" + MathAid.simplestString(endAngle)
                         + "/" + MathAid.simplestString(lowerRadius) + "/" + MathAid.simplestString(upperRadius)
                         + " -I" + MathAid.simplestString(horizontalGridInterval) + "/" + MathAid.simplestString(verticalGridInterval) + " -di0");
             }
@@ -387,9 +423,9 @@ public class CrossSectionWorker {
             pw.println("gmt set MAP_TICK_LENGTH_PRIMARY 10p");
             pw.println("");
             pw.println("# map parameters");
-            pw.println("R='-R0/" + MathAid.simplestString(sectionDistance)
+            pw.println("R='-R" + MathAid.simplestString(startAngle) + "/" + MathAid.simplestString(endAngle)
                     + "/" + MathAid.simplestString(lowerRadius) + "/" + MathAid.simplestString(upperRadius) + "'");
-            pw.println("J='-JP60+a+t" + MathAid.simplestString(sectionDistance / 2) + "'");
+            pw.println("J='-JP60+a+t" + MathAid.simplestString((endAngle + startAngle) / 2) + "'");
             pw.println("B='-BWeSn -Bx30f10 -BycrAnnotation.txt'");
             pw.println("");
             pw.println("outputps=" + plotFileNameRoot + "Section.eps");
@@ -397,17 +433,36 @@ public class CrossSectionWorker {
             pw.println("gmt makecpt -Ccp_master.cpt -T-$MP/$MP > cp.cpt");
             pw.println("");
             pw.println("#------- Panels");
-            pw.println("gmt grdimage 0model.grd $B $J $R -Ccp.cpt -K -Y80 -X20> $outputps");
+            pw.println("gmt grdimage 0model.grd $B $J $R -Ccp.cpt -K -Y80 -X20 > $outputps");
             if (maskExists) {
                 pw.println("gmt grdimage 0mask.grd $J $R -Ccp_mask.cpt -G0/0/0 -t80 -K -O >> $outputps");
             }
             pw.println("");
+            if (raypathPath != null) {
+                pw.println("cat " + raypathPath + " | gmt psxy -J -R -K -O >> $outputps");
+                pw.println("");
+            }
+            if (!Double.isNaN(sourceRadius)) {
+                pw.println("echo \"0 " + sourceRadius + "\" | \\");
+                pw.println("gmt psxy -N -SA1 -G156/255/0 -Wthickest -J -R -K -O >> $outputps");
+                pw.println("");
+            }
+            if (!Double.isNaN(receiverRadius)) {
+                pw.println("echo \"" + receiverDistance + " " + receiverRadius + "\" | \\");
+                pw.println("gmt psxy -N -SC1 -G0/255/156 -Wthickest -J -R -K -O >> $outputps");
+                pw.println("");
+            }
             pw.println("#------- Scale");
-            pw.println("gmt psscale -Ccp.cpt -Dx2/-4+w12/0.8+h -B$MP+l\"" + ScalarType.createScaleLabel(variable, scalarType)
-                    + "\" -K -O -Y2 -X5 >> $outputps");
+            pw.println("gmt psscale -Ccp.cpt " + (scalarType.isNonNegative() ? "-G0/$MP " : "")
+                    + "-DjCB+jCB+w12/0.8+h -B$MP+l\"" + ScalarType.createScaleLabel(variable, scalarType)
+                    + "\" -J -R -K -O >> $outputps");
             pw.println("");
             pw.println("#------- Finalize");
-            pw.println("gmt pstext -N -F+jLM+f30p,Helvetica,black $J $R -O << END >> $outputps");
+            if (leftTextPath != null)
+                pw.println("gmt pstext -N -D0/-2 -F+cTL+a0+jTL+f50p,Helvetica,black -J -R -K -O < " + leftTextPath + " >> $outputps");
+            if (rightTextPath != null)
+                pw.println("gmt pstext -N -D-2/-2 -F+cTR+a0+jTR+f50p,Helvetica,black -J -R -K -O < " + rightTextPath + " >> $outputps");
+            pw.println("gmt pstext -N -F+cBR+a0+jBR+f50p,Helvetica,black -J -R -O << END >> $outputps");
             pw.println("END");
             pw.println("");
             pw.println("gmt psconvert $outputps -E100 -Tf -A -Qg4");

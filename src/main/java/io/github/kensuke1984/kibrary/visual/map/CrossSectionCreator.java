@@ -47,6 +47,7 @@ public class CrossSectionCreator extends Operation {
      * Path of scalar file to be used as mask.
      */
     private Path maskPath;
+    private Path raypathPath;
 
     private double pos0Latitude;
     private double pos0Longitude;
@@ -109,6 +110,11 @@ public class CrossSectionCreator extends Operation {
      */
     private double maskThreshold;
 
+    private double pos0Radius = Double.NaN;
+    private double pos1Radius = Double.NaN;
+    private double horizontalGridInterval;
+    private double verticalGridInterval;
+
     /**
      * @param args (String[]) Arguments: none to create a property file, path of property file to run it.
      * @throws IOException
@@ -133,6 +139,8 @@ public class CrossSectionCreator extends Operation {
             pw.println("#scalarPath scalar.Vs.PERCENT.lst");
             pw.println("##Path of scalar file for mask, when mask is to be applied.");
             pw.println("#maskPath scalar.Vs.PERCENT_RATIO.lst");
+            pw.println("##Path of file with raypath information, if plotting raypaths.");
+            pw.println("#raypathPath ");
             pw.println("##########Settings of great circle arc to display in the cross section.");
             pw.println("##(double) Latitude of position 0, must be set.");
             pw.println("#pos0Latitude ");
@@ -173,6 +181,16 @@ public class CrossSectionCreator extends Operation {
             pw.println("#mosaic true");
             pw.println("##(double) Threshold for mask. (0.3)");
             pw.println("#maskThreshold ");
+            pw.println("##########Parameters for perturbation values.");
+            pw.println("##(double) Radius of position 0, if displaying its position.");
+            pw.println("#pos0Radius ");
+            pw.println("##(double) Radius of position 1, if displaying its position.");
+            pw.println("#pos1Radius ");
+            pw.println("##########Image resolution parameters.");
+            pw.println("##(double) Horizontal grid interval. (0.25)");
+            pw.println("#horizontalGridInterval ");
+            pw.println("##(double) Vertical grid interval. (2.5)");
+            pw.println("#verticalGridInterval ");
         }
         System.err.println(outPath + " is created.");
     }
@@ -188,9 +206,10 @@ public class CrossSectionCreator extends Operation {
         appendFolderDate = property.parseBoolean("appendFolderDate", "true");
 
         scalarPath = property.parsePath("scalarPath", null, true, workPath);
-        if (property.containsKey("maskPath")) {
+        if (property.containsKey("maskPath"))
             maskPath = property.parsePath("maskPath", null, true, workPath);
-        }
+        if (property.containsKey("raypathPath"))
+            raypathPath = property.parsePath("raypathPath", null, true, workPath);
 
         pos0Latitude = property.parseDouble("pos0Latitude", null);
         pos0Longitude = property.parseDouble("pos0Longitude", null);
@@ -232,6 +251,11 @@ public class CrossSectionCreator extends Operation {
         scale = property.parseDouble("scale", "3");
         mosaic = property.parseBoolean("mosaic", "false");
         maskThreshold = property.parseDouble("maskThreshold", "0.3");
+
+        if (property.containsKey("pos0Radius")) pos0Radius = property.parseDouble("pos0Radius", null);
+        if (property.containsKey("pos1Radius")) pos1Radius = property.parseDouble("pos1Radius", null);
+        horizontalGridInterval = property.parseDouble("horizontalGridInterval", "0.25");
+        verticalGridInterval = property.parseDouble("verticalGridInterval", "2.5");
     }
 
     @Override
@@ -262,8 +286,11 @@ public class CrossSectionCreator extends Operation {
         CrossSectionWorker worker = new CrossSectionWorker(pos0Latitude, pos0Longitude, pos1Latitude, pos1Longitude,
                 beforePos0Deg, afterPosDeg, useAfterPos1, zeroPointRadius, zeroPointName, flipVerticalAxis,
                 marginLatitudeRaw, setMarginLatitudeByKm, marginLongitudeRaw, setMarginLongitudeByKm, marginRadius,
-                scale, mosaic, variable, scalarType, null, discretePositions);
+                scale, mosaic, variable, scalarType, horizontalGridInterval, verticalGridInterval, null, discretePositions);
         if (maskPath != null) worker.setMask(maskVariable, maskScalarType, maskThreshold);
+        if (!Double.isNaN(pos0Radius)) worker.setSourceRadius(pos0Radius);
+        if (!Double.isNaN(pos1Radius)) worker.setReceiverRadius(pos1Radius);
+        if (raypathPath != null) worker.setRaypathFile(Paths.get("..").resolve(raypathPath));
         worker.computeCrossSection(discreteMap, maskDiscreteMap, outPath);
         worker.writeScripts(outPath);
         String plotFileNameRoot = worker.getPlotFileNameRoot();

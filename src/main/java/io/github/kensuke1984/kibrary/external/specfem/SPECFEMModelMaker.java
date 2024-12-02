@@ -24,8 +24,11 @@ import io.github.kensuke1984.kibrary.perturbation.ScalarListFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.earth.DefaultStructure;
+import io.github.kensuke1984.kibrary.util.earth.Earth;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
+import io.github.kensuke1984.kibrary.util.earth.Latitude;
+import io.github.kensuke1984.kibrary.util.earth.Longitude;
 
 
 /**
@@ -51,13 +54,6 @@ import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
  * @version 2024/11/3 Renamed from specfem.Make3DModel to external.specfem.SPECFEMModelMaker
  */
 public class SPECFEMModelMaker {
-
-    /**
-     * The number of decimal places to round off the latitude/longitude/depth values.
-     */
-    private static final int DECIMALS = 4;
-
-    private static final double PLANET_RADIUS = 6371.0;
 
     /**
      * Create model file for SPECFEM.
@@ -296,9 +292,9 @@ public class SPECFEMModelMaker {
         double premVs;
 
         public Perturbation(double latitude, double longitude, double radius, double percentVs, double premVs) {
-            this.latitude = Precision.round(latitude, DECIMALS);
-            this.longitude = Precision.round(longitude, DECIMALS);
-            this.depth = Precision.round(PLANET_RADIUS - radius, DECIMALS);
+            this.latitude = Precision.round(latitude, Latitude.DECIMALS);
+            this.longitude = Precision.round(longitude, Longitude.DECIMALS);
+            this.depth = Precision.round(Earth.EARTH_RADIUS - radius, FullPosition.RADIUS_DECIMALS);
             this.percentVs = percentVs;
             this.premVs = premVs;
         }

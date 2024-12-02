@@ -29,7 +29,7 @@ public final class FullPosition extends HorizontalPosition {
     /**
      * The number of decimal places to round off the radius value.
      */
-    private static final int RADIUS_DECIMALS = 6;
+    public static final int RADIUS_DECIMALS = 6;
     /**
      * Margin to decide whether two radii are the same value.
      */

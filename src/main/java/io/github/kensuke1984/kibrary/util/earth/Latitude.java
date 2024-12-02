@@ -14,12 +14,12 @@ import io.github.kensuke1984.kibrary.util.MathAid;
  * @author Kensuke Konishi
  * @since a long time ago
  */
-final class Latitude implements Comparable<Latitude> {
+public final class Latitude implements Comparable<Latitude> {
 
     /**
      * The number of decimal places to round off the latitude value.
      */
-    static final int DECIMALS = 4;
+    public static final int DECIMALS = 4;
 
     /**
      * Geographic latitude [deg]. [-90:90]
@@ -142,7 +142,7 @@ final class Latitude implements Comparable<Latitude> {
      * 1 letter ("P" for positive or "M" for negative) followed by 2 + {@value #DECIMALS} digits.
      * @return (String) Code for this latitude.
      */
-    public String toCode() {
+    String toCode() {
         String sign;
         if (geographicLatitude >= 0) sign = "P";
         else sign = "M";

@@ -6,6 +6,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -14,14 +15,18 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.elastic.VariableType;
 import io.github.kensuke1984.kibrary.perturbation.ScalarListFile;
 import io.github.kensuke1984.kibrary.perturbation.ScalarType;
 import io.github.kensuke1984.kibrary.timewindow.Timewindow;
+import io.github.kensuke1984.kibrary.timewindow.TravelTimeInformation;
+import io.github.kensuke1984.kibrary.timewindow.TravelTimeInformationFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.MathAid;
+import io.github.kensuke1984.kibrary.util.earth.Earth;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
@@ -32,6 +37,8 @@ import io.github.kensuke1984.kibrary.waveform.PartialIDFile;
 /**
  * Creates a movie of partials inside a cross section.
  * <p>
+ * The "convert" command of ImageMagick must be installed to run the script produced by this program.
+ * <p>
  * NOTE: the voxel volume is NOT multiplied.
  *
  * @author otsuru
@@ -40,13 +47,9 @@ import io.github.kensuke1984.kibrary.waveform.PartialIDFile;
 public class PartialsMovieMaker extends Operation {
 
     /**
-     * How much finer to make the grid.
+     * Half of the time to display arriving phase.
      */
-    public static final int GRID_SMOOTHING_FACTOR = 5;
-    /**
-     * Size of vertical grid with respect to horizontal grid.
-     */
-    public static final int VERTICAL_ENLARGE_FACTOR = 2;
+    private static final double HALF_PHASE_TIME = 5.0;
 
     private final Property property;
     /**
@@ -77,6 +80,12 @@ public class PartialsMovieMaker extends Operation {
      * Events to work for. If this is empty, work for all events in workPath.
      */
     private Set<String> tendObservers = new HashSet<>();
+
+    private Path raypathPath;
+    /**
+     * Path of a travel time information file.
+     */
+    private Path travelTimePath;
 
     /**
      * Partial waveform folder.
@@ -140,6 +149,14 @@ public class PartialsMovieMaker extends Operation {
      */
     private boolean mosaic;
 
+    private double horizontalGridInterval;
+    private double verticalGridInterval;
+
+    /**
+     * Set of information of travel times.
+     */
+    private Set<TravelTimeInformation> travelTimeInfoSet;
+
     /**
      * @param args (String[]) Arguments: none to create a property file, path of property file to run it.
      * @throws IOException
@@ -170,6 +187,10 @@ public class PartialsMovieMaker extends Operation {
             pw.println("#tendEvents ");
             pw.println("##Observers to work for, in the form STA_NET, listed using spaces, must be set.");
             pw.println("#tendObservers ");
+            pw.println("##Path of file with raypath information, if plotting raypaths.");
+            pw.println("#raypathPath ");
+            pw.println("##Path of a travel time information file, if displaying travel times.");
+            pw.println("#travelTimePath travelTime.inf");
             pw.println("##########Settings of great circle arc to display in the cross section.");
             pw.println("##(double) Latitude of position 0, must be set.");
             pw.println("#pos0Latitude ");
@@ -208,6 +229,11 @@ public class PartialsMovieMaker extends Operation {
             pw.println("#scale ");
             pw.println("##(boolean) Whether to display map as mosaic without smoothing. (false)");
             pw.println("#mosaic ");
+            pw.println("##########Image resolution parameters.");
+            pw.println("##(double) Horizontal grid interval. (0.25)");
+            pw.println("#horizontalGridInterval ");
+            pw.println("##(double) Vertical grid interval. (2.5)");
+            pw.println("#verticalGridInterval ");
         }
         System.err.println(outPath + " is created.");
     }
@@ -230,6 +256,10 @@ public class PartialsMovieMaker extends Operation {
         tendEvents = Arrays.stream(property.parseStringArray("tendEvents", null)).map(GlobalCMTID::new)
                 .collect(Collectors.toSet());
         tendObservers = Arrays.stream(property.parseStringArray("tendObservers", null)).collect(Collectors.toSet());
+        if (property.containsKey("raypathPath"))
+            raypathPath = property.parsePath("raypathPath", null, true, workPath);
+        if (property.containsKey("travelTimePath"))
+            travelTimePath = property.parsePath("travelTimePath", null, true, workPath);
 
         pos0Latitude = property.parseDouble("pos0Latitude", null);
         pos0Longitude = property.parseDouble("pos0Longitude", null);
@@ -271,6 +301,9 @@ public class PartialsMovieMaker extends Operation {
 //        amplification = property.parseDouble("amplification", "1e29");
         scale = property.parseDouble("scale", "1");
         mosaic = property.parseBoolean("mosaic", "false");
+
+        horizontalGridInterval = property.parseDouble("horizontalGridInterval", "0.25");
+        verticalGridInterval = property.parseDouble("verticalGridInterval", "2.5");
     }
 
     @Override
@@ -286,6 +319,11 @@ public class PartialsMovieMaker extends Operation {
 
         Set<FullPosition> discretePositions = partialIDs.stream().map(partialID -> partialID.getVoxelPosition()).collect(Collectors.toSet());
 
+        // read travel time information
+        if (travelTimePath != null) {
+            travelTimeInfoSet = TravelTimeInformationFile.read(travelTimePath);
+        }
+
         // create output folder
         Path outPath = DatasetAid.createOutputFolder(workPath, "movie", folderTag, appendFolderDate, null);
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
@@ -298,6 +336,8 @@ public class PartialsMovieMaker extends Operation {
                 String scalarFileName = ScalarListFile.generateFileName(variable, scalarType, "normalized");
 
                 for (GlobalCMTID event : tendEvents) {
+                    double eventRadius = event.getEventData().getCmtPosition().getR();
+
                     for (String observerName : tendObservers) {
                         List<PartialID> partialsForEntry = partialIDs.stream().filter(partial ->
                                 partial.getSacComponent().equals(component)
@@ -309,6 +349,14 @@ public class PartialsMovieMaker extends Operation {
                         System.err.println("Working for " + component  + " " + variable + " " + event + " " + observerName);
 
                         double[] startTimes = partialsForEntry.stream().mapToDouble(PartialID::getStartTime).distinct().sorted().toArray();
+
+                        // find travel time info for this event and observer
+                        TravelTimeInformation travelTimeInfo = null;
+                        if (travelTimeInfoSet != null) {
+                            travelTimeInfo = travelTimeInfoSet.stream()
+                                    .filter(info -> info.getEvent().equals(event) && info.getObserver().toString().equals(observerName))
+                                    .findFirst().get();
+                        }
 
                         // for each timewindow
                         for (double startTime : startTimes) {
@@ -332,11 +380,16 @@ public class PartialsMovieMaker extends Operation {
                             // normalize by maximum value
                             double normalization = partialsForWindow.stream()
                                     .mapToDouble(partialID -> partialID.toTrace().getYVector().getLInfNorm()).max().getAsDouble();
+                            System.err.println("Normalizing my maximum value " + normalization);
 
                             CrossSectionWorker worker = new CrossSectionWorker(pos0Latitude, pos0Longitude, pos1Latitude, pos1Longitude,
                                     beforePos0Deg, afterPosDeg, useAfterPos1, zeroPointRadius, zeroPointName, flipVerticalAxis,
                                     marginLatitudeRaw, setMarginLatitudeByKm, marginLongitudeRaw, setMarginLongitudeByKm, marginRadius,
-                                    scale, mosaic, variable, scalarType, "normalized", discretePositions);
+                                    scale, mosaic, variable, scalarType, horizontalGridInterval, verticalGridInterval, "normalized", discretePositions);
+                            worker.setSourceRadius(eventRadius);
+                            worker.setReceiverRadius(Earth.EARTH_RADIUS);
+                            if (raypathPath != null) worker.setRaypathFile(Paths.get("../../..").resolve(raypathPath));
+                            worker.setTextFiles(Paths.get("textL.txt"), Paths.get("textR.txt"));
 
                             // for each time step
                             for (int i = 0; i < npts; i++) {
@@ -362,6 +415,29 @@ public class PartialsMovieMaker extends Operation {
 
                                 // output data for cross section
                                 worker.computeCrossSection(discreteMap, null, outSnapshotPath);
+
+                                // write out time
+                                Files.write(outSnapshotPath.resolve("textL.txt"), ("t = " + time).getBytes());
+
+                                // write out phases arriving at this time
+                                if (travelTimeInfo != null) {
+                                    Map<Phase, Double> usePhaseMap = travelTimeInfo.getUsePhases();
+                                    List<String> arrivingPhases = new ArrayList<>();
+                                    for (Map.Entry<Phase, Double> entry : usePhaseMap.entrySet()) {
+                                        double travelTime = entry.getValue();
+                                        if (Math.abs(time - travelTime) < HALF_PHASE_TIME)
+                                            arrivingPhases.add(entry.getKey().toString());
+                                    }
+                                    Map<Phase, Double> avoidPhaseMap = travelTimeInfo.getAvoidPhases();
+                                    for (Map.Entry<Phase, Double> entry : avoidPhaseMap.entrySet()) {
+                                        double travelTime = entry.getValue();
+                                        if (Math.abs(time - travelTime) < HALF_PHASE_TIME)
+                                            arrivingPhases.add(entry.getKey().toString());
+                                    }
+                                    Files.write(outSnapshotPath.resolve("textR.txt"), String.join(", ", arrivingPhases).getBytes());
+                                } else {
+                                    Files.write(outSnapshotPath.resolve("textR.txt"), "".getBytes());
+                                }
                             }
 
                             // write shellscript to map each snapshot and convert them to gif movie
