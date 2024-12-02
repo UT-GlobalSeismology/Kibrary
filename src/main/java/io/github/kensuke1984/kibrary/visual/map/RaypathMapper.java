@@ -29,6 +29,7 @@ import io.github.kensuke1984.kibrary.util.data.Raypath;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
+import io.github.kensuke1984.kibrary.voxel.UnknownParameterFile;
 import io.github.kensuke1984.kibrary.voxel.VoxelInformationFile;
 
 /**
@@ -96,6 +97,7 @@ public class RaypathMapper extends Operation {
 
     private Path dataEntryPath;
     private Path voxelPath;
+    private Path unknownParameterPath;
 
     private boolean forSlides;
     private boolean cutAtPiercePoint;
@@ -165,9 +167,11 @@ public class RaypathMapper extends Operation {
             pw.println("#components ");
             pw.println("##Path of a data entry file, must be set if reusePath is not set.");
             pw.println("#dataEntryPath dataEntry.lst");
-            pw.println("##########To plot perturbation points, set the following.");
+            pw.println("##########To plot perturbation points, set one of the following.");
             pw.println("##Path of a voxel information file.");
             pw.println("#voxelPath voxel.inf");
+            pw.println("##Path of an unknown parameter list file. Used only when voxelPath is not set.");
+            pw.println("#unknownParameterPath unknowns.lst");
             pw.println("##########Overall settings.");
             pw.println("##(String) A tag to include in output file names. If no tag is needed, leave this unset.");
             pw.println("#fileTag ");
@@ -236,6 +240,8 @@ public class RaypathMapper extends Operation {
 
         if (property.containsKey("voxelPath")) {
             voxelPath = property.parsePath("voxelPath", null, true, workPath);
+        } else if (property.containsKey("unknownParameterPath")) {
+            unknownParameterPath = property.parsePath("unknownParameterPath", null, true, workPath);
         }
         if (property.containsKey("fileTag")) fileTag = property.parseStringSingle("fileTag", null);
         appendFileDate = property.parseBoolean("appendFileDate", "true");
@@ -292,8 +298,15 @@ public class RaypathMapper extends Operation {
             throw new IllegalStateException("Input folder or file not set");
         }
 
+        // read voxelFile or unknownsFile and write voxel positions
+        List<HorizontalPosition> voxelPositions = null;
         if (voxelPath != null) {
-            List<HorizontalPosition> voxelPositions = new VoxelInformationFile(voxelPath).getHorizontalPositions();
+            voxelPositions = new VoxelInformationFile(voxelPath).getHorizontalPositions();
+        } else if (unknownParameterPath != null) {
+            voxelPositions = UnknownParameterFile.read(unknownParameterPath)
+                    .stream().map(u -> u.getPosition().toHorizontalPosition()).distinct().collect(Collectors.toList());
+        }
+        if (voxelPositions != null) {
             List<String> pixelLines = voxelPositions.stream().map(HorizontalPosition::toString).collect(Collectors.toList());
             Files.write(outPath.resolve(pixelFileName), pixelLines);
             // NOTE: HorizontalPosition.crossesDateLine() is not needed here, as psxy can plot points on longitude+360
@@ -532,7 +545,7 @@ public class RaypathMapper extends Operation {
             }
 
             // pixel points
-            if (voxelPath != null) {
+            if (voxelPath != null || unknownParameterPath != null) {
                 pw.println("#------- Pixels");
                 pw.println("gmt psxy " + pixelFileName + " -: -Sc0.2 -G0/255/0 -Wthinnest -J -R -P -O -K >> $outputps");
                 pw.println("");
