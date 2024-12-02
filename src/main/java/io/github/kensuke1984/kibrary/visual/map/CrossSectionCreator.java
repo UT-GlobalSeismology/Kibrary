@@ -47,6 +47,7 @@ public class CrossSectionCreator extends Operation {
      * Path of scalar file to be used as mask.
      */
     private Path maskPath;
+    private Path raypathPath;
 
     private double pos0Latitude;
     private double pos0Longitude;
@@ -138,6 +139,8 @@ public class CrossSectionCreator extends Operation {
             pw.println("#scalarPath scalar.Vs.PERCENT.lst");
             pw.println("##Path of scalar file for mask, when mask is to be applied.");
             pw.println("#maskPath scalar.Vs.PERCENT_RATIO.lst");
+            pw.println("##Path of file with raypath information, if plotting raypaths.");
+            pw.println("#raypathPath ");
             pw.println("##########Settings of great circle arc to display in the cross section.");
             pw.println("##(double) Latitude of position 0, must be set.");
             pw.println("#pos0Latitude ");
@@ -203,9 +206,10 @@ public class CrossSectionCreator extends Operation {
         appendFolderDate = property.parseBoolean("appendFolderDate", "true");
 
         scalarPath = property.parsePath("scalarPath", null, true, workPath);
-        if (property.containsKey("maskPath")) {
+        if (property.containsKey("maskPath"))
             maskPath = property.parsePath("maskPath", null, true, workPath);
-        }
+        if (property.containsKey("raypathPath"))
+            raypathPath = property.parsePath("raypathPath", null, true, workPath);
 
         pos0Latitude = property.parseDouble("pos0Latitude", null);
         pos0Longitude = property.parseDouble("pos0Longitude", null);
@@ -286,6 +290,7 @@ public class CrossSectionCreator extends Operation {
         if (maskPath != null) worker.setMask(maskVariable, maskScalarType, maskThreshold);
         if (!Double.isNaN(pos0Radius)) worker.setSourceRadius(pos0Radius);
         if (!Double.isNaN(pos1Radius)) worker.setReceiverRadius(pos1Radius);
+        if (raypathPath != null) worker.setRaypathFile(Paths.get("..").resolve(raypathPath));
         worker.computeCrossSection(discreteMap, maskDiscreteMap, outPath);
         worker.writeScripts(outPath);
         String plotFileNameRoot = worker.getPlotFileNameRoot();
