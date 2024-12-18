@@ -15,9 +15,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import org.apache.commons.math3.complex.Complex;
-import org.apache.commons.math3.transform.DftNormalization;
-import org.apache.commons.math3.transform.FastFourierTransformer;
-import org.apache.commons.math3.transform.TransformType;
 
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
@@ -26,6 +23,7 @@ import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.ThreadAid;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
+import io.github.kensuke1984.kibrary.util.sac.SACExtension;
 import io.github.kensuke1984.kibrary.util.sac.SACFileAccess;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderAccess;
@@ -37,10 +35,6 @@ import io.github.kensuke1984.kibrary.util.spc.SPCFileAid;
  * @since 2024/11/18
  */
 public class SourceTimeFunctionConvolver extends Operation {
-    /**
-     * FFT
-     */
-    private static final FastFourierTransformer FFT = new FastFourierTransformer(DftNormalization.STANDARD);
 
     private final Property property;
     /**
@@ -254,28 +248,31 @@ public class SourceTimeFunctionConvolver extends Operation {
             Complex[] complexWave = Arrays.stream(waveData).mapToObj(Complex::new).toArray(Complex[]::new);
 
             // FFT to frequency domain
-            complexWave = FFT.transform(complexWave, TransformType.FORWARD);
-            // extract non-negative frequency part
-            int npToUse = (np < Integer.highestOneBit(Integer.MAX_VALUE)) ? np : finalNpts / 2;
-            complexWave = Arrays.copyOfRange(complexWave, 0, npToUse + 1);
-
-            // set up STF
             double tlen = finalNpts * delta;
             double samplingHz = 1 / delta;
+            double omegaI = -Math.log(1.e-2) / tlen;
+            int npToUse = (np < Integer.highestOneBit(Integer.MAX_VALUE)) ? np : finalNpts / 2;
+            System.err.println(npToUse + " " + samplingHz + " " + omegaI);
+            complexWave = SPCFileAid.convertToFrequencyDomain(complexWave, npToUse, samplingHz, omegaI);
+
+            // set up STF
             SourceTimeFunction sourceTimeFunction = stfHandler.createSourceTimeFunction(npToUse, tlen, samplingHz, sacFile.getGlobalCMTID());
+            if (sourceTimeFunction == null) throw new IllegalStateException("No STF created.");
 
             // convolve STF
             complexWave = sourceTimeFunction.convolve(complexWave, false);
 
             // FFT back to time domain
-            complexWave = SPCFileAid.convertToTimeDomain(complexWave, npToUse, finalNpts);
+            complexWave = SPCFileAid.convertToTimeDomain(complexWave, npToUse, finalNpts, samplingHz, omegaI);
             waveData = Arrays.stream(complexWave).mapToDouble(Complex::getReal).toArray();
 
             // set new waveform
             sacFile = sacFile.setSACData(waveData);
 
             // write SAC file. If there are SAC files with the same name, this throws an exception
-            Path outSacPath = outPath.resolve(name.getGlobalCMTID().toString()).resolve(name.getName());
+            SACExtension ext = SACExtension.valueOfConvolutedSynthetic(name.getComponent());
+            String outSacName = SACFileName.generate(name, ext);
+            Path outSacPath = outPath.resolve(name.getGlobalCMTID().toString()).resolve(outSacName);
             sacFile.writeSAC(outSacPath, StandardOpenOption.CREATE_NEW);
 
         } catch (Exception e) {
