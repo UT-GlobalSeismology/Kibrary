@@ -35,6 +35,9 @@ public class SourceTimeFunctionHandler {
         }
         if (userSTFPath != null) {
             readUserSourceTimeFunctions(userSTFPath, events);
+            System.err.println("Using user-defined STFs.");
+        } else {
+            System.err.println("STF type: " + type);
         }
     }
 
@@ -118,6 +121,5 @@ public class SourceTimeFunctionHandler {
             }
         }
     }
-
 
 }

@@ -27,6 +27,11 @@ public final class SPCFileAid {
     private SPCFileAid() {}
 
     /**
+     * FFT
+     */
+    private static final FastFourierTransformer FFT = new FastFourierTransformer(DftNormalization.STANDARD);
+
+    /**
      * @param path ({@link Path}) Folder in which to look for {@link FormattedSPCFileName}s.
      * @return (Set of {@link SPCFileName}) SPC files in the folder.
      * @throws IOException
@@ -83,7 +88,7 @@ public final class SPCFileAid {
     }
 
     /**
-     * Convert the data in frequency domain to time domain.
+     * Convert the data in frequency domain to time domain, fixing artificial damping and amplitude from DSM.
      * <p>
      * First, the inverse fast Fourier transform (FFT) is conducted.
      * <p>
@@ -99,30 +104,15 @@ public final class SPCFileAid {
      * <li> multiply by 1000 to convert from [km] to [m].
      * </ul>
      *
-     * @param uFreq (Complex[]) Waveform in frequency domain.
+     * @param uFreq (Complex[]) Waveform in frequency domain (non-negative frequency part). Length must be np+1.
      * @param np (int) Number of steps in frequency domain. Should not exceed npts/2; points above that will be ignored.
      * @param npts (int) Number of data points in time domain. Must be a power of 2.
      * @param samplingHz (double) Sampling frequency [Hz].
      * @param omegaI (double) &omega;<sub>i</sub>.
      * @return (Complex[]) Waveform in time domain.
      */
-    public static Complex[] convertToTimeDomain(Complex[] uFreq, int np, int npts, double samplingHz, double omegaI) {
-        if (npts != Integer.highestOneBit(npts)) throw new IllegalArgumentException("npts must be a power of 2.");
-        int nnp = npts / 2;
-        if (np > nnp) System.err.println("!CAUTION: np=" + np + " is larger than npts/2=" + nnp + ", using only points up to " + nnp + ".");
-
-        //~conduct inverse Fourier transform
-        FastFourierTransformer fft = new FastFourierTransformer(DftNormalization.STANDARD);
-        // pack to temporary Complex array
-        Complex[] data = new Complex[npts];
-        System.arraycopy(uFreq, 0, data, 0, np + 1);
-        // set blank due to difference in np and npts
-        Arrays.fill(data, np + 1, nnp + 1, Complex.ZERO);
-        // set values for imaginary frequency: F[i] = F[N-i]
-        for (int i = 0; i < nnp - 1; i++)
-            data[nnp + i + 1] = data[nnp - i - 1].conjugate();
-        // fast fourier transformation
-        Complex[] uTime = fft.transform(data, TransformType.INVERSE);
+    public static Complex[] convertToTimeDomainWithFix(Complex[] uFreq, int np, int npts, double samplingHz, double omegaI) {
+        Complex[] uTime = convertToTimeDomain(uFreq, np, npts);
 
         //~apply growing exponential
         double constant = omegaI / samplingHz;
@@ -133,6 +123,34 @@ public final class SPCFileAid {
         double coef = 1000 * samplingHz;
         for (int i = 0; i < npts; i++)
             uTime[i] = uTime[i].multiply(coef);
+
+        return uTime;
+    }
+
+    /**
+     * Convert the data in frequency domain to time domain using the inverse fast Fourier transform (FFT).
+     *
+     * @param uFreq (Complex[]) Waveform in frequency domain (non-negative frequency part). Length must be np+1.
+     * @param np (int) Number of steps in frequency domain. Should not exceed npts/2; points above that will be ignored.
+     * @param npts (int) Number of data points in time domain. Must be a power of 2.
+     * @return (Complex[]) Waveform in time domain.
+     */
+    public static Complex[] convertToTimeDomain(Complex[] uFreq, int np, int npts) {
+        if (uFreq.length != np + 1) throw new IllegalArgumentException("Length of waveform in frequency domain must be np+1=" + (np + 1));
+        if (npts != Integer.highestOneBit(npts)) throw new IllegalArgumentException("npts must be a power of 2.");
+        int nnp = npts / 2;
+        if (np > nnp) System.err.println("!CAUTION: np=" + np + " is larger than npts/2=" + nnp + ", using only points up to " + nnp + ".");
+
+        // pack to temporary Complex array
+        Complex[] data = new Complex[npts];
+        System.arraycopy(uFreq, 0, data, 0, np + 1);
+        // set blank due to difference in np and npts
+        Arrays.fill(data, np + 1, nnp + 1, Complex.ZERO);
+        // set values for imaginary frequency: F[i] = F[N-i]
+        for (int i = 0; i < nnp - 1; i++)
+            data[nnp + i + 1] = data[nnp - i - 1].conjugate();
+        // fast fourier transformation
+        Complex[] uTime = FFT.transform(data, TransformType.INVERSE);
 
         return uTime;
     }

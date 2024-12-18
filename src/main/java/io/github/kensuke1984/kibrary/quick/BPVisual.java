@@ -76,7 +76,7 @@ public class BPVisual {
             for (int i = 0; i < bpSpc.nbody(); i++) {
                 SPCBody body = bpSpc.getSpcBodyList().get(i);
 
-                body.convertToTimeDomain(SPCFileAid.findNpts(bpSpc.tlen(), samplingHz), samplingHz, bpSpc.omegai());
+                body.convertToTimeDomainWithFix(SPCFileAid.findNpts(bpSpc.tlen(), samplingHz), samplingHz, bpSpc.omegai());
 
                 SPCElement[] spcComponents = body.getSpcElements();
                 for (int j = 0; j < spcComponents.length; j++) {

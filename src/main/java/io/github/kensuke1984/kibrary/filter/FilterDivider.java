@@ -16,7 +16,6 @@ import java.util.stream.Collectors;
 
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
-import io.github.kensuke1984.kibrary.external.SAC;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.MathAid;
@@ -301,23 +300,20 @@ public class FilterDivider extends Operation {
      */
     private void filterAndOut(SACFileName name) {
         try {
+            // apply filter
             SACFileAccess sacFile = name.read().applyButterworthFilter(filter);
-            Path out = outPath.resolve(name.getGlobalCMTID().toString()).resolve(name.getName());
+
+            // cut if needed
+            if (npts < sacFile.getInt(SACHeaderEnum.NPTS)) sacFile = sacFile.cut(npts);
+
             // write SAC file. If there are SAC files with the same name, this throws an exception
+            Path out = outPath.resolve(name.getGlobalCMTID().toString()).resolve(name.getName());
             sacFile.writeSAC(out, StandardOpenOption.CREATE_NEW);
-            if (npts < sacFile.getInt(SACHeaderEnum.NPTS)) slim(out);
+
         } catch (Exception e) {
             // if an exception is thrown, move on to the next SAC file
             System.err.println("Error on " + name.getPath());
             e.printStackTrace();
-        }
-    }
-
-    private void slim(Path path) throws IOException {
-        try (SAC sac = SAC.createProcess()) {
-            sac.inputCMD("cut b n " + npts);
-            sac.inputCMD("r " + path.toAbsolutePath());
-            sac.inputCMD("w over");
         }
     }
 

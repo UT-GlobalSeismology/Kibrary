@@ -245,6 +245,8 @@ public interface SACFileAccess extends SACHeaderAccess {
 
     SACFileAccess applyButterworthFilter(ButterworthFilter filter);
 
+    SACFileAccess cut(int npts);
+
     double[] getData();
 
     /**

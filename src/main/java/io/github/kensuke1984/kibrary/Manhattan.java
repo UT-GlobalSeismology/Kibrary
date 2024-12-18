@@ -25,6 +25,7 @@ import io.github.kensuke1984.kibrary.perturbation.CheckerboardMaker;
 import io.github.kensuke1984.kibrary.perturbation.ModelSmoothener;
 import io.github.kensuke1984.kibrary.selection.DataSelection;
 import io.github.kensuke1984.kibrary.selection.RaypathSelection;
+import io.github.kensuke1984.kibrary.source.SourceTimeFunctionConvolver;
 import io.github.kensuke1984.kibrary.source.SourceWaveletMaker;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowMaker;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowMerge;
@@ -90,7 +91,8 @@ enum Manhattan {
     // Synthetic  20
     SyntheticDSMSetup(20, SyntheticDSMSetup.class),
     SPC_SAC(21, SPC_SAC.class),
-    SyntheticRecordSection(22, SyntheticRecordSection.class),
+    SourceTimeFunctionConvolver(22, SourceTimeFunctionConvolver.class),
+    SyntheticRecordSection(23, SyntheticRecordSection.class),
     VirtualDatasetMaker(25, VirtualDatasetMaker.class),
     // Filtered 30
     FilterDivider(30, FilterDivider.class),

@@ -14,6 +14,11 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
+import org.apache.commons.math3.complex.Complex;
+import org.apache.commons.math3.transform.DftNormalization;
+import org.apache.commons.math3.transform.FastFourierTransformer;
+import org.apache.commons.math3.transform.TransformType;
+
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
@@ -21,15 +26,21 @@ import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.ThreadAid;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
+import io.github.kensuke1984.kibrary.util.sac.SACFileAccess;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderAccess;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
+import io.github.kensuke1984.kibrary.util.spc.SPCFileAid;
 
 /**
  * @author otsuru
  * @since 2024/11/18
  */
 public class SourceTimeFunctionConvolver extends Operation {
+    /**
+     * FFT
+     */
+    private static final FastFourierTransformer FFT = new FastFourierTransformer(DftNormalization.STANDARD);
 
     private final Property property;
     /**
@@ -74,6 +85,14 @@ public class SourceTimeFunctionConvolver extends Operation {
      * Catalog containing source time function durations.
      */
     private Path sourceTimeFunctionCatalogPath;
+    /**
+     * SAC files with NPTS over this value will be slimmed.
+     */
+    private int npts;
+    /**
+     * Number of steps in frequency domain (counting only positive frequency part) during computation.
+     */
+    private int np;
 
     private SourceTimeFunctionHandler stfHandler;
     /**
@@ -114,6 +133,12 @@ public class SourceTimeFunctionConvolver extends Operation {
             pw.println("#sourceTimeFunctionType ");
             pw.println("##Path of a catalog to set source time function durations. If unneeded, leave this unset.");
             pw.println("#sourceTimeFunctionCatalogPath ");
+            pw.println("##NPTS, only if you want to slim SAC files down to that specific number, must be a power of 2.");
+            pw.println("##  Otherwise, SAC files are slimmed to the largest power of 2 that does not exceed its length.");
+            pw.println("#npts ");
+            pw.println("##Number of steps in frequency domain during convolution, only if specifying it, must be a power of 2.");
+            pw.println("##  Otherwise, (npts of waveform)/2 will be used.");
+            pw.println("#np ");
         }
         System.err.println(outPath + " is created.");
     }
@@ -141,6 +166,10 @@ public class SourceTimeFunctionConvolver extends Operation {
         if (property.containsKey("sourceTimeFunctionCatalogPath")) {
             sourceTimeFunctionCatalogPath = property.parsePath("sourceTimeFunctionCatalogPath", null, true, workPath);
         }
+        npts = property.parseInt("npts", String.valueOf(Integer.highestOneBit(Integer.MAX_VALUE)));
+        if (npts != Integer.highestOneBit(npts)) throw new IllegalArgumentException("npts must be a power of 2.");
+        np = property.parseInt("np", String.valueOf(Integer.highestOneBit(Integer.MAX_VALUE)));
+        if (np != Integer.highestOneBit(np)) throw new IllegalArgumentException("np must be a power of 2.");
     }
 
     @Override
@@ -211,6 +240,49 @@ public class SourceTimeFunctionConvolver extends Operation {
     }
 
     private void convolveAndOut(SACFileName name) {
+        try {
+            SACFileAccess sacFile = name.read();
+            int sacNpts = sacFile.getInt(SACHeaderEnum.NPTS);
+            double delta = sacFile.getValue(SACHeaderEnum.DELTA);
 
+            // cut length to a power of 2
+            int finalNpts = (npts < sacNpts) ? npts : Integer.highestOneBit(sacNpts);
+            sacFile = sacFile.cut(finalNpts);
+
+            // get waveform data
+            double[] waveData = sacFile.getData();
+            Complex[] complexWave = Arrays.stream(waveData).mapToObj(Complex::new).toArray(Complex[]::new);
+
+            // FFT to frequency domain
+            complexWave = FFT.transform(complexWave, TransformType.FORWARD);
+            // extract non-negative frequency part
+            int npToUse = (np < Integer.highestOneBit(Integer.MAX_VALUE)) ? np : finalNpts / 2;
+            complexWave = Arrays.copyOfRange(complexWave, 0, npToUse + 1);
+
+            // set up STF
+            double tlen = finalNpts * delta;
+            double samplingHz = 1 / delta;
+            SourceTimeFunction sourceTimeFunction = stfHandler.createSourceTimeFunction(npToUse, tlen, samplingHz, sacFile.getGlobalCMTID());
+
+            // convolve STF
+            complexWave = sourceTimeFunction.convolve(complexWave, false);
+
+            // FFT back to time domain
+            complexWave = SPCFileAid.convertToTimeDomain(complexWave, npToUse, finalNpts);
+            waveData = Arrays.stream(complexWave).mapToDouble(Complex::getReal).toArray();
+
+            // set new waveform
+            sacFile = sacFile.setSACData(waveData);
+
+            // write SAC file. If there are SAC files with the same name, this throws an exception
+            Path outSacPath = outPath.resolve(name.getGlobalCMTID().toString()).resolve(name.getName());
+            sacFile.writeSAC(outSacPath, StandardOpenOption.CREATE_NEW);
+
+        } catch (Exception e) {
+            // if an exception is thrown, move on to the next SAC file
+            System.err.println("Error on " + name.getPath());
+            e.printStackTrace();
+        }
     }
+
 }

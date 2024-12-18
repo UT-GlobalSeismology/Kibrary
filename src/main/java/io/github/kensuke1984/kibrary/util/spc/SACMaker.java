@@ -278,7 +278,7 @@ public class SACMaker implements Runnable {
             body.addBody(secondarySPC.getSpcBodyList().get(0));
 
         if (sourceTimeFunction != null) body.applySourceTimeFunction(sourceTimeFunction);
-        body.convertToTimeDomain(npts, samplingHz, primarySPC.omegai());
+        body.convertToTimeDomainWithFix(npts, samplingHz, primarySPC.omegai());
 
         for (SACComponent component : components) {
             SACExtension ext;
@@ -301,7 +301,7 @@ public class SACMaker implements Runnable {
             SPCBody bodyT = body.copy();
             bodyT.differentiate(primarySPC.tlen());
             if (sourceTimeFunction != null) bodyT.applySourceTimeFunction(sourceTimeFunction);
-            bodyT.convertToTimeDomain(npts, samplingHz, primarySPC.omegai());
+            bodyT.convertToTimeDomainWithFix(npts, samplingHz, primarySPC.omegai());
 
             for (SACComponent component : components) {
                 SACExtension extT = sourceTimeFunction != null
@@ -430,6 +430,11 @@ public class SACMaker implements Runnable {
 
         @Override
         public SAC applyButterworthFilter(ButterworthFilter filter) {
+            throw new RuntimeException("UnEXPEcteD");
+        }
+
+        @Override
+        public SAC cut(int finalNpts) {
             throw new RuntimeException("UnEXPEcteD");
         }
 

@@ -475,7 +475,7 @@ public class ThreeDPartialMaker {
         if (sourceTimeFunction != null)
             partial_frequency = sourceTimeFunction.convolve(partial_frequency, parallel);
 
-        Complex[] partial_time = SPCFileAid.convertToTimeDomain(partial_frequency, fp.np(), npts, samplingHz, fp.omegai());
+        Complex[] partial_time = SPCFileAid.convertToTimeDomainWithFix(partial_frequency, fp.np(), npts, samplingHz, fp.omegai());
         return Arrays.stream(partial_time).mapToDouble(Complex::getReal).toArray();
     }
 
