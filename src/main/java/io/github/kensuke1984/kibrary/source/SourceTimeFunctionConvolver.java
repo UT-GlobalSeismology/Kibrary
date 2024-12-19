@@ -29,8 +29,16 @@ import io.github.kensuke1984.kibrary.util.sac.SACFileName;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderAccess;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
 import io.github.kensuke1984.kibrary.util.spc.SPCFileAid;
+import io.github.kensuke1984.kibrary.util.spc.SPC_SAC;
 
 /**
+ * Operation to convolve source time functions on timeseries data stored as SAC files.
+ * <p>
+ * Waveforms in time domain are converted to frequency domain using FFT, convolved STFs, then converted back to time domain.
+ * <p>
+ * The (&omega; - i &omega;<sub>i</sub>)-domain used in DSM can be used instead of the regular &omega;-domain.
+ * This will ensure that the resulting waveforms are identical to those directly convolved in {@link SPC_SAC}.
+ *
  * @author otsuru
  * @since 2024/11/18
  */
@@ -87,6 +95,10 @@ public class SourceTimeFunctionConvolver extends Operation {
      * Number of steps in frequency domain (counting only positive frequency part) during computation.
      */
     private int np;
+    /**
+     * Artificial damping to apply upon Fourier transform. This is used to match the procedures of DSM.
+     */
+    private double artificialDamping = 1.e-2;
 
     private SourceTimeFunctionHandler stfHandler;
     /**
@@ -133,6 +145,8 @@ public class SourceTimeFunctionConvolver extends Operation {
             pw.println("##Number of steps in frequency domain during convolution, only if specifying it, must be a power of 2.");
             pw.println("##  Otherwise, (npts of waveform)/2 will be used.");
             pw.println("#np ");
+            pw.println("##Artificial damping to apply upon Fourier transform, used to match the procedures of DSM. (0.01)");
+            pw.println("#artificialDamping 0");
         }
         System.err.println(outPath + " is created.");
     }
@@ -164,6 +178,7 @@ public class SourceTimeFunctionConvolver extends Operation {
         if (npts != Integer.highestOneBit(npts)) throw new IllegalArgumentException("npts must be a power of 2.");
         np = property.parseInt("np", String.valueOf(Integer.highestOneBit(Integer.MAX_VALUE)));
         if (np != Integer.highestOneBit(np)) throw new IllegalArgumentException("np must be a power of 2.");
+        artificialDamping = property.parseDouble("artificialDamping", "0.01");
     }
 
     @Override
@@ -250,9 +265,8 @@ public class SourceTimeFunctionConvolver extends Operation {
             // FFT to frequency domain
             double tlen = finalNpts * delta;
             double samplingHz = 1 / delta;
-            double omegaI = -Math.log(1.e-2) / tlen;
+            double omegaI = -Math.log(artificialDamping) / tlen;
             int npToUse = (np < Integer.highestOneBit(Integer.MAX_VALUE)) ? np : finalNpts / 2;
-            System.err.println(npToUse + " " + samplingHz + " " + omegaI);
             complexWave = SPCFileAid.convertToFrequencyDomain(complexWave, npToUse, samplingHz, omegaI);
 
             // set up STF

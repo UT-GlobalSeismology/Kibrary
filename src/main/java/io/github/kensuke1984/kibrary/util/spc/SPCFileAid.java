@@ -190,9 +190,11 @@ public final class SPCFileAid {
      */
     public static Complex[] convertToFrequencyDomain(Complex[] uTime, int np, double samplingHz, double omegaI) {
         int npts = uTime.length;
-        Complex[] data = new Complex[npts];
+        int nnp = npts / 2;
+        if (np > nnp) System.err.println("!CAUTION: np=" + np + " is larger than npts/2=" + nnp + ", using only points up to " + nnp + ".");
 
         //~apply growing exponential
+        Complex[] data = new Complex[npts];
         double constant = omegaI / samplingHz;
         for (int i = 0; i < npts; i++)
             data[i] = uTime[i].divide(Math.exp(constant * i));

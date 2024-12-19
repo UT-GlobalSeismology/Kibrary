@@ -180,7 +180,7 @@ public class MomentTensor {
 
     @Override
     public String toString() {
-        return "Moment Tensor (in Global CMT project order): Expo=" + mtExponent
+        return "Moment Tensor (rr tt pp rt rp tp): Expo=" + mtExponent
                 + " " + mrrCoefficient + " " + mttCoefficient + " " + mppCoefficient
                 + " " + mrtCoefficient + " " + mrpCoefficient + " " + mtpCoefficient;
     }
