@@ -6,6 +6,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.commons.math3.util.Precision;
+
 import io.github.kensuke1984.kibrary.util.InformationFileReader;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 
@@ -30,13 +32,13 @@ public class SourceTimeFunctionHandler {
         this.catalogPath = catalogPath;
         this.events = events;
 
-        if (catalogPath != null) {
-            readCatalog(catalogPath);
-        }
         if (userSTFPath != null) {
             readUserSourceTimeFunctions(userSTFPath, events);
             System.err.println("Using user-defined STFs.");
         } else {
+            if (catalogPath != null) {
+                readCatalog(catalogPath);
+            }
             System.err.println("STF type: " + type);
         }
     }
@@ -54,8 +56,7 @@ public class SourceTimeFunctionHandler {
     private void readUserSourceTimeFunctions(Path inPath, Set<GlobalCMTID> events) throws IOException {
         userSourceTimeFunctions = new HashMap<>(events.size());
         for (GlobalCMTID event : events)
-            userSourceTimeFunctions
-                    .put(event, SourceTimeFunction.readSourceTimeFunction(inPath.resolve(event + ".stf")));
+            userSourceTimeFunctions.put(event, SourceTimeFunction.read(inPath.resolve(event + ".stf")));
     }
 
     public Map<GlobalCMTID, SourceTimeFunction> createSourceTimeFunctionMap(int np, double tlen) {
@@ -79,6 +80,9 @@ public class SourceTimeFunctionHandler {
             SourceTimeFunction tmp = userSourceTimeFunctions.get(event);
             if (tmp == null) {
                 System.err.println("! Source time function for " + event + " not found, using triangular instead.");
+                tmp = SourceTimeFunction.triangleSourceTimeFunction(np, tlen, halfDuration);
+            } else if (tmp.getNp() != np || Precision.equals(tmp.getTlen(), tlen)) {
+                System.err.println("! Input np " + tmp.getNp() + "and tlen " + tmp.getTlen() + " do not match requirements, using triangular instead.");
                 tmp = SourceTimeFunction.triangleSourceTimeFunction(np, tlen, halfDuration);
             }
             return tmp;

@@ -421,7 +421,7 @@ public class SCARDEC {
         Complex[] stfFreq = FourierTransform.FFT.transform(stfForFFT, TransformType.FORWARD);
 
         // consider NP
-        Complex[] cutSTF = new Complex[np];
+        Complex[] cutSTF = new Complex[np + 1];
         System.arraycopy(stfFreq, 0, cutSTF, 0, 1024);
 
         SourceTimeFunction stf = new SourceTimeFunction(np, tlen);

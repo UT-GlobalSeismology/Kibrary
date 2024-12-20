@@ -2,6 +2,7 @@ package io.github.kensuke1984.kibrary.source;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -33,7 +34,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
 import io.github.kensuke1984.kibrary.util.spc.SPCFileAid;
 
 /**
- *
+ * Operation to create source wavelets by stacking waveforms along a certain phase for each event.
  *
  * CAUTION: Time windows shold be the same length for all records of the same event, taken for a single phase.
  *
@@ -307,7 +308,7 @@ public class SourceWaveletMaker extends Operation {
                 paddedArray[npts / 2 - shiftNpts + i] = yArray[i];
             }
 
-            // Fourier transform
+            // convert to frequency domain
             Complex[] complexWave = FourierTransform.convertToFrequencyDomain(paddedArray, np);
 
             // time-shift so that the wavelet is at time zero
@@ -317,7 +318,13 @@ public class SourceWaveletMaker extends Operation {
             }
 
             // output
-            Path waveletPath = outPath.resolve(eventID + ".txt");
+            SourceTimeFunction sourceTimeFunction = new SourceTimeFunction(complexWave, tlen);
+            Path waveletPath = outPath.resolve(eventID + ".stf");
+            try {
+                sourceTimeFunction.write(waveletPath);
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
+            }
         }
 
     }
