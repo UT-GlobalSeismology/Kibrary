@@ -269,7 +269,7 @@ public class SourceTimeFunctionConvolver extends Operation {
             Complex[] complexWave = FourierTransform.convertToFrequencyDomain(waveData, npToUse, samplingHz, omegaI);
 
             // set up STF
-            SourceTimeFunction sourceTimeFunction = stfHandler.createSourceTimeFunction(npToUse, tlen, samplingHz, sacFile.getGlobalCMTID());
+            SourceTimeFunction sourceTimeFunction = stfHandler.createSourceTimeFunction(npToUse, tlen, sacFile.getGlobalCMTID());
             if (sourceTimeFunction == null) throw new IllegalStateException("No STF created.");
 
             // convolve STF

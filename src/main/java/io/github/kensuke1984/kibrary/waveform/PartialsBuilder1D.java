@@ -318,7 +318,7 @@ public class PartialsBuilder1D extends Operation {
         // set source time functions
         SourceTimeFunctionHandler stfHandler = new SourceTimeFunctionHandler(sourceTimeFunctionType,
                 sourceTimeFunctionCatalogPath, userSourceTimeFunctionPath, eventSet);
-        sourceTimeFunctions = stfHandler.createSourceTimeFunctionMap(np, tlen, partialSamplingHz);
+        sourceTimeFunctions = stfHandler.createSourceTimeFunctionMap(np, tlen);
 
         // design bandpass filter
         filter = designBandPassFilter();

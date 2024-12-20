@@ -11,7 +11,7 @@ import org.apache.commons.math3.transform.TransformType;
 
 public class FourierTransform {
 
-    private static final FastFourierTransformer FFT = new FastFourierTransformer(DftNormalization.STANDARD);
+    public static final FastFourierTransformer FFT = new FastFourierTransformer(DftNormalization.STANDARD);
 
     private static final double TAPER_LENGTH_PERCENT = 5.0;
 

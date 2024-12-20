@@ -303,7 +303,7 @@ public final class SPC_SAC extends Operation {
      * @return ({@link SACMaker})
      */
     private SACMaker createSACMaker(SPCFile primarySPC, SPCFile secondarySPC) {
-        SourceTimeFunction sourceTimeFunction = stfHandler.createSourceTimeFunction(primarySPC.np(), primarySPC.tlen(), samplingHz,
+        SourceTimeFunction sourceTimeFunction = stfHandler.createSourceTimeFunction(primarySPC.np(), primarySPC.tlen(),
                 new GlobalCMTID(primarySPC.getSourceID()));
         // create instance of an anonymous inner class extending SACMaker with the following run() function
         SACMaker sm = new SACMaker(primarySPC, secondarySPC, sourceTimeFunction, samplingHz) {

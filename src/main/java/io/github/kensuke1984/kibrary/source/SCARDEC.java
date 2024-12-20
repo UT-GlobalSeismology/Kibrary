@@ -32,6 +32,7 @@ import org.apache.commons.math3.complex.Complex;
 import org.apache.commons.math3.transform.TransformType;
 
 import io.github.kensuke1984.kibrary.Environment;
+import io.github.kensuke1984.kibrary.math.FourierTransform;
 import io.github.kensuke1984.kibrary.math.Trace;
 import io.github.kensuke1984.kibrary.util.FileAid;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
@@ -417,13 +418,13 @@ public class SCARDEC {
         for (int i = 0; i < stfForFFT.length; i++)
             stfForFFT[i] /= stfSize;
 
-        Complex[] stfFreq = SourceTimeFunction.fft.transform(stfForFFT, TransformType.FORWARD);
+        Complex[] stfFreq = FourierTransform.FFT.transform(stfForFFT, TransformType.FORWARD);
 
         // consider NP
         Complex[] cutSTF = new Complex[np];
         System.arraycopy(stfFreq, 0, cutSTF, 0, 1024);
 
-        SourceTimeFunction stf = new SourceTimeFunction(np, nptsInTime, samplingHz);
+        SourceTimeFunction stf = new SourceTimeFunction(np, tlen);
         stf.setSourceTimeFunction(cutSTF);
         return stf;
     }

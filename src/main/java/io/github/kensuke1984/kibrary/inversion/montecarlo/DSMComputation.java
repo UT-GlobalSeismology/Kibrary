@@ -154,7 +154,7 @@ class DSMComputation implements DataGenerator<PolynomialStructure, SACFileAccess
 
     private void makeSacFiles(EventFolder eventDir) throws IOException {
         Path spcPath = eventDir.toPath();
-        SourceTimeFunction sourceTimeFunction = SourceTimeFunction.boxcarSourceTimeFunction(NP, TLEN, SAMPLING_HZ,
+        SourceTimeFunction sourceTimeFunction = SourceTimeFunction.boxcarSourceTimeFunction(NP, TLEN,
                 eventDir.getGlobalCMTID().getEventData().getHalfDuration());
         try (Stream<Path> stream = Files.list(spcPath)) {
             stream.filter(path -> path.toString().endsWith("SH.spc")).forEach(shPath -> {

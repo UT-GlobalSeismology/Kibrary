@@ -58,7 +58,7 @@ public class SourceTimeFunctionHandler {
                     .put(event, SourceTimeFunction.readSourceTimeFunction(inPath.resolve(event + ".stf")));
     }
 
-    public Map<GlobalCMTID, SourceTimeFunction> createSourceTimeFunctionMap(int np, double tlen, double samplingHz) {
+    public Map<GlobalCMTID, SourceTimeFunction> createSourceTimeFunctionMap(int np, double tlen) {
         if (userSTFPath != null) {
             return userSourceTimeFunctions;
 
@@ -66,20 +66,20 @@ public class SourceTimeFunctionHandler {
             Map<GlobalCMTID, SourceTimeFunction> stfMap = new HashMap<>();
 
             for (GlobalCMTID event : events) {
-                stfMap.put(event, createSourceTimeFunction(np, tlen, samplingHz, event));
+                stfMap.put(event, createSourceTimeFunction(np, tlen, event));
             }
             return stfMap;
         }
     }
 
-    public SourceTimeFunction createSourceTimeFunction(int np, double tlen, double samplingHz, GlobalCMTID event) {
+    public SourceTimeFunction createSourceTimeFunction(int np, double tlen, GlobalCMTID event) {
         double halfDuration = event.getEventData().getHalfDuration();
 
         if (userSTFPath != null) {
             SourceTimeFunction tmp = userSourceTimeFunctions.get(event);
             if (tmp == null) {
                 System.err.println("! Source time function for " + event + " not found, using triangular instead.");
-                tmp = SourceTimeFunction.triangleSourceTimeFunction(np, tlen, samplingHz, halfDuration);
+                tmp = SourceTimeFunction.triangleSourceTimeFunction(np, tlen, halfDuration);
             }
             return tmp;
 
@@ -99,22 +99,22 @@ public class SourceTimeFunctionHandler {
                     String[] ss = sourceTimeFunctionCatalog.get(event).split("\\s+");
                     halfDuration = Double.parseDouble(ss[1]);
                 }
-                return SourceTimeFunction.boxcarSourceTimeFunction(np, tlen, samplingHz, halfDuration);
+                return SourceTimeFunction.boxcarSourceTimeFunction(np, tlen, halfDuration);
             case TRIANGLE:
                 if (catalogPath != null && sourceTimeFunctionCatalog.containsKey(event)) {
                     String[] ss = sourceTimeFunctionCatalog.get(event).split("\\s+");
                     halfDuration = Double.parseDouble(ss[1]);
                 }
-                return SourceTimeFunction.triangleSourceTimeFunction(np, tlen, samplingHz, halfDuration);
+                return SourceTimeFunction.triangleSourceTimeFunction(np, tlen, halfDuration);
             case ASYMMETRIC_TRIANGLE:
                 if (catalogPath != null && sourceTimeFunctionCatalog.containsKey(event)) {
                     String[] ss = sourceTimeFunctionCatalog.get(event).split("\\s+");
                     double halfDuration1 = Double.parseDouble(ss[1]);
                     double halfDuration2 = Double.parseDouble(ss[2]);
-                    return SourceTimeFunction.asymmetricTriangleSourceTimeFunction(np, tlen, samplingHz, halfDuration1, halfDuration2);
+                    return SourceTimeFunction.asymmetricTriangleSourceTimeFunction(np, tlen, halfDuration1, halfDuration2);
                 } else {
                     System.err.println("! Catalog data for " + event + " not found, using triangular instead.");
-                    return SourceTimeFunction.triangleSourceTimeFunction(np, tlen, samplingHz, halfDuration);
+                    return SourceTimeFunction.triangleSourceTimeFunction(np, tlen, halfDuration);
                 }
             default:
                 throw new RuntimeException("Invalid source time function type.");
