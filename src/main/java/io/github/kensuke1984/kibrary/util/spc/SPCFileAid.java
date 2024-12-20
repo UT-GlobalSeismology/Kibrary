@@ -3,17 +3,11 @@ package io.github.kensuke1984.kibrary.util.spc;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import org.apache.commons.math3.complex.Complex;
-import org.apache.commons.math3.transform.DftNormalization;
-import org.apache.commons.math3.transform.FastFourierTransformer;
-import org.apache.commons.math3.transform.TransformType;
 
 import io.github.kensuke1984.kibrary.util.MathAid;
 
@@ -25,11 +19,6 @@ import io.github.kensuke1984.kibrary.util.MathAid;
  */
 public final class SPCFileAid {
     private SPCFileAid() {}
-
-    /**
-     * FFT
-     */
-    private static final FastFourierTransformer FFT = new FastFourierTransformer(DftNormalization.STANDARD);
 
     /**
      * @param path ({@link Path}) Folder in which to look for {@link FormattedSPCFileName}s.
@@ -85,126 +74,6 @@ public final class SPCFileAid {
         int npts = (int) MathAid.roundForPrecision(tlen * samplingHz);
         if (npts != Integer.highestOneBit(npts)) throw new IllegalArgumentException("tlen * samplingHz must be a power of 2.");
         return npts;
-    }
-
-    /**
-     * Convert the data in frequency domain to time domain using the inverse fast Fourier transform (FFT).
-     * Artificial damping and amplitude are not corrected.
-     *
-     * @param uFreq (Complex[]) Waveform in frequency domain (non-negative frequency part). Length must be np+1.
-     * @param np (int) Number of steps in frequency domain. Should not exceed npts/2; points above that will be ignored.
-     * @param npts (int) Number of data points in time domain. Must be a power of 2.
-     * @return (Complex[]) Waveform in time domain.
-     */
-    public static Complex[] convertToTimeDomain(Complex[] uFreq, int np, int npts) {
-        if (uFreq.length != np + 1) throw new IllegalArgumentException("Length of waveform in frequency domain must be np+1=" + (np + 1));
-        if (npts != Integer.highestOneBit(npts)) throw new IllegalArgumentException("npts must be a power of 2.");
-        int nnp = npts / 2;
-        if (np > nnp) System.err.println("!CAUTION: np=" + np + " is larger than npts/2=" + nnp + ", using only points up to " + nnp + ".");
-
-        // pack to temporary Complex array
-        Complex[] data = new Complex[npts];
-        System.arraycopy(uFreq, 0, data, 0, np + 1);
-        // set blank due to difference in np and npts
-        Arrays.fill(data, np + 1, nnp + 1, Complex.ZERO);
-        // set values for imaginary frequency: F[i] = F[N-i]
-        for (int i = 0; i < nnp - 1; i++)
-            data[nnp + i + 1] = data[nnp - i - 1].conjugate();
-        // fast fourier transformation
-        Complex[] uTime = FFT.transform(data, TransformType.INVERSE);
-
-        return uTime;
-    }
-
-    /**
-     * Convert the data in frequency domain to time domain, fixing artificial damping. Amplitude is not corrected.
-     * <p>
-     * First, the inverse fast Fourier transform (FFT) is conducted.
-     * <p>
-     * After the inverse FFT, exp(&omega;<sub>I</sub>t) is multiplied
-     * to account for the artificial damping introduced in DSM as &omega; = &omega;<sub>R</sub> - i&omega;<sub>I</sub>
-     * (see section 5.1 of Geller & Ohminato 1994).
-     * Here, t = tlen * i / nptsInTimeDomain = i / samplingHz.
-     *
-     * @param uFreq (Complex[]) Waveform in frequency domain (non-negative frequency part). Length must be np+1.
-     * @param np (int) Number of steps in frequency domain. Should not exceed npts/2; points above that will be ignored.
-     * @param npts (int) Number of data points in time domain. Must be a power of 2.
-     * @param samplingHz (double) Sampling frequency [Hz].
-     * @param omegaI (double) &omega;<sub>i</sub>.
-     * @return (Complex[]) Waveform in time domain.
-     */
-    public static Complex[] convertToTimeDomain(Complex[] uFreq, int np, int npts, double samplingHz, double omegaI) {
-        Complex[] uTime = convertToTimeDomain(uFreq, np, npts);
-
-        //~apply growing exponential
-        double constant = omegaI / samplingHz;
-        for (int i = 0; i < npts; i++)
-            uTime[i] = uTime[i].multiply(Math.exp(constant * i));
-
-        return uTime;
-    }
-
-    /**
-     * Convert the data in frequency domain to time domain, fixing artificial damping and amplitude from DSM.
-     * <p>
-     * First, the inverse fast Fourier transform (FFT) is conducted.
-     * <p>
-     * After the inverse FFT, exp(&omega;<sub>I</sub>t) is multiplied
-     * to account for the artificial damping introduced in DSM as &omega; = &omega;<sub>R</sub> - i&omega;<sub>I</sub>
-     * (see section 5.1 of Geller & Ohminato 1994).
-     * Here, t = tlen * i / nptsInTimeDomain = i / samplingHz.
-     * <p>
-     * Also, the amplitude of time series is corrected.
-     * Here, the following is done:
-     * <ul>
-     * <li> multiply by sampling frequency [Hz] so that the FFT matches with the Fourier transform used in DSM.
-     * <li> multiply by 1000 to convert from [km] to [m].
-     * </ul>
-     *
-     * @param uFreq (Complex[]) Waveform in frequency domain (non-negative frequency part). Length must be np+1.
-     * @param np (int) Number of steps in frequency domain. Should not exceed npts/2; points above that will be ignored.
-     * @param npts (int) Number of data points in time domain. Must be a power of 2.
-     * @param samplingHz (double) Sampling frequency [Hz].
-     * @param omegaI (double) &omega;<sub>i</sub>.
-     * @return (Complex[]) Waveform in time domain.
-     */
-    public static Complex[] convertToTimeDomainWithFix(Complex[] uFreq, int np, int npts, double samplingHz, double omegaI) {
-        Complex[] uTime = convertToTimeDomain(uFreq, np, npts, samplingHz, omegaI);
-
-        //~correct amplitude
-        double coef = 1000 * samplingHz;
-        for (int i = 0; i < npts; i++)
-            uTime[i] = uTime[i].multiply(coef);
-
-        return uTime;
-    }
-
-    /**
-     * Convert the data in time domain to frequency domain, applying artificial damping. Amplitude is not modified.
-     *
-     * @param uTime (Complex[]) Waveform in time domain.
-     * @param np (int) Number of steps in frequency domain. Should not exceed npts/2; points above that will be ignored.
-     * @param samplingHz (double) Sampling frequency [Hz].
-     * @param omegaI (double) &omega;<sub>i</sub>.
-     * @return (Complex[]) Waveform in frequency domain (non-negative frequency part). Length is np+1.
-     */
-    public static Complex[] convertToFrequencyDomain(Complex[] uTime, int np, double samplingHz, double omegaI) {
-        int npts = uTime.length;
-        int nnp = npts / 2;
-        if (np > nnp) System.err.println("!CAUTION: np=" + np + " is larger than npts/2=" + nnp + ", using only points up to " + nnp + ".");
-
-        //~apply growing exponential
-        Complex[] data = new Complex[npts];
-        double constant = omegaI / samplingHz;
-        for (int i = 0; i < npts; i++)
-            data[i] = uTime[i].divide(Math.exp(constant * i));
-
-        // FFT to frequency domain
-        data = FFT.transform(data, TransformType.FORWARD);
-        // extract non-negative frequency part
-        Complex[] uFreq = Arrays.copyOfRange(data, 0, np + 1);
-
-        return uFreq;
     }
 
     public static enum UsableSPCMode {

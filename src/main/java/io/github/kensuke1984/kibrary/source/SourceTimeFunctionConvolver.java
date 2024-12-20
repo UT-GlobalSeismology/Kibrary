@@ -18,6 +18,7 @@ import org.apache.commons.math3.complex.Complex;
 
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
+import io.github.kensuke1984.kibrary.math.FourierTransform;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.MathAid;
@@ -28,7 +29,6 @@ import io.github.kensuke1984.kibrary.util.sac.SACFileAccess;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderAccess;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
-import io.github.kensuke1984.kibrary.util.spc.SPCFileAid;
 import io.github.kensuke1984.kibrary.util.spc.SPC_SAC;
 
 /**
@@ -43,8 +43,6 @@ import io.github.kensuke1984.kibrary.util.spc.SPC_SAC;
  * @since 2024/11/18
  */
 public class SourceTimeFunctionConvolver extends Operation {
-
-    private static final double TAPER_LENGTH_PERCENT = 5.0;
 
     private final Property property;
     /**
@@ -260,16 +258,15 @@ public class SourceTimeFunctionConvolver extends Operation {
             int finalNpts = (npts < sacNpts) ? npts : Integer.highestOneBit(sacNpts);
             sacFile = sacFile.cut(finalNpts);
 
-            // get waveform data and taper
-            double[] waveData = sacFile.createTrace().taper(TAPER_LENGTH_PERCENT).getY();
-            Complex[] complexWave = Arrays.stream(waveData).mapToObj(Complex::new).toArray(Complex[]::new);
+            // get waveform data
+            double[] waveData = sacFile.createTrace().getY();
 
             // FFT to frequency domain
             double tlen = finalNpts * delta;
             double samplingHz = 1 / delta;
             double omegaI = -Math.log(artificialDamping) / tlen;
             int npToUse = (np < Integer.highestOneBit(Integer.MAX_VALUE)) ? np : finalNpts / 2;
-            complexWave = SPCFileAid.convertToFrequencyDomain(complexWave, npToUse, samplingHz, omegaI);
+            Complex[] complexWave = FourierTransform.convertToFrequencyDomain(waveData, npToUse, samplingHz, omegaI);
 
             // set up STF
             SourceTimeFunction sourceTimeFunction = stfHandler.createSourceTimeFunction(npToUse, tlen, samplingHz, sacFile.getGlobalCMTID());
@@ -279,7 +276,7 @@ public class SourceTimeFunctionConvolver extends Operation {
             complexWave = sourceTimeFunction.convolve(complexWave, false);
 
             // FFT back to time domain
-            complexWave = SPCFileAid.convertToTimeDomain(complexWave, npToUse, finalNpts, samplingHz, omegaI);
+            complexWave = FourierTransform.convertToTimeDomain(complexWave, npToUse, finalNpts, samplingHz, omegaI);
             waveData = Arrays.stream(complexWave).mapToDouble(Complex::getReal).toArray();
 
             // set new waveform

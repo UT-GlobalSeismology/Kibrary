@@ -9,6 +9,7 @@ import java.util.Set;
 import org.apache.commons.math3.complex.Complex;
 
 import io.github.kensuke1984.kibrary.elastic.VariableType;
+import io.github.kensuke1984.kibrary.math.FourierTransform;
 import io.github.kensuke1984.kibrary.source.SourceTimeFunction;
 import io.github.kensuke1984.kibrary.util.earth.DefaultStructure;
 import io.github.kensuke1984.kibrary.util.earth.Earth;
@@ -475,7 +476,7 @@ public class ThreeDPartialMaker {
         if (sourceTimeFunction != null)
             partial_frequency = sourceTimeFunction.convolve(partial_frequency, parallel);
 
-        Complex[] partial_time = SPCFileAid.convertToTimeDomainWithFix(partial_frequency, fp.np(), npts, samplingHz, fp.omegai());
+        Complex[] partial_time = FourierTransform.convertToTimeDomainWithFix(partial_frequency, fp.np(), npts, samplingHz, fp.omegai());
         return Arrays.stream(partial_time).mapToDouble(Complex::getReal).toArray();
     }
 

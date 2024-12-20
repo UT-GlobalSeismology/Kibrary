@@ -14,6 +14,7 @@ import org.apache.commons.math3.complex.Complex;
 import org.apache.commons.math3.transform.DftNormalization;
 import org.apache.commons.math3.transform.FastFourierTransformer;
 
+import io.github.kensuke1984.kibrary.math.FourierTransform;
 import io.github.kensuke1984.kibrary.math.Trace;
 import io.github.kensuke1984.kibrary.util.spc.SPCFileAid;
 
@@ -246,7 +247,7 @@ public class SourceTimeFunction {
         Complex[] stf = new Complex[np + 1];
         stf[0] = Complex.ZERO;
         for (int i = 0; i < np; i++) stf[i+1] = sourceTimeFunction[i];
-        double[] stfInTime = Arrays.stream(SPCFileAid.convertToTimeDomain(stf, np, npts))
+        double[] stfInTime = Arrays.stream(FourierTransform.convertToTimeDomain(stf, np, npts))
                 .mapToDouble(Complex::getReal).map(d -> d * samplingHz).toArray();
         return new Trace(time, stfInTime);
     }

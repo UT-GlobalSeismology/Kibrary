@@ -38,8 +38,6 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  */
 public class SourceWaveletMaker extends Operation {
 
-    private static final double TAPER_LENGTH_PERCENT = 5.0;
-
     private final Property property;
     /**
      * Path of the work folder.
@@ -263,8 +261,8 @@ public class SourceWaveletMaker extends Operation {
                 xArray[i] = i / sacSamplingHz;
             }
 
-            // form Trace and taper
-            Trace waveletTrace = new Trace(xArray, yArray).taper(TAPER_LENGTH_PERCENT);
+            // form Trace
+            Trace waveletTrace = new Trace(xArray, yArray);
 
             // write
             Path waveletPath = outPath.resolve(eventID + ".txt");

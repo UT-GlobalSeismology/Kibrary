@@ -4,6 +4,7 @@ import java.util.Arrays;
 
 import org.apache.commons.math3.complex.Complex;
 
+import io.github.kensuke1984.kibrary.math.FourierTransform;
 import io.github.kensuke1984.kibrary.source.SourceTimeFunction;
 
 /**
@@ -116,7 +117,7 @@ public class SPCElement {
      * @param omegaI (double) &omega;<sub>i</sub>.
      */
     public void convertToTimeDomainWithFix(int npts, double samplingHz, double omegaI) {
-        uTime = SPCFileAid.convertToTimeDomainWithFix(uFreq, np, npts, samplingHz, omegaI);
+        uTime = FourierTransform.convertToTimeDomainWithFix(uFreq, np, npts, samplingHz, omegaI);
     }
 
     private int getNp() {
