@@ -542,6 +542,43 @@ public final class Trace {
     }
 
     /**
+     * Integrate the trace.
+     * @return ({@link Trace}) Integrated trace.
+     */
+    public Trace integrate() {
+        // add up trapezoids
+        double[] integratedArray = new double[xArray.length];
+        integratedArray[0] = 0.0;
+        for (int i = 1; i < xArray.length; i++) {
+            double area = (xArray[i] - xArray[i - 1]) * (yArray[i] + yArray[i - 1]) / 2.0;
+            integratedArray[i] = integratedArray[i - 1] + area;
+        }
+        return new Trace(xArray, integratedArray);
+    }
+
+    /**
+     * Taper both ends of the trace using sine taper.
+     * @param taperLengthPercent (double) Ratio of length to taper at each end [%].
+     * @return ({@link Trace}) Tapered trace.
+     */
+    public Trace taper(double taperLengthPercent) {
+        int npts = xArray.length;
+
+        // create shape of taper
+        int taperLength = (int) Math.round(npts * taperLengthPercent / 100);
+        double dAngle = Math.PI / 2 / taperLength;
+        double[] taper = IntStream.range(0, taperLength + 1).mapToDouble(i -> i * dAngle).map(Math::sin).toArray();
+
+        // apply taper
+        double[] taperedArray = yArray.clone();
+        for (int i = 0; i < taperLength + 1; i++) {
+            taperedArray[i] *= taper[i];
+            taperedArray[(npts - 1) - i] *= taper[i];
+        }
+        return new Trace(xArray, taperedArray);
+    }
+
+    /**
      * fit X, Y in this to  y<sub>j</sub> = &sum;<sub>i</sub> (a<sub>i</sub> f<sub>i</sub> (x<sub>j</sub>))
      * by the least-square method.
      *

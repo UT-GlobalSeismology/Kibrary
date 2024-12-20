@@ -44,6 +44,8 @@ import io.github.kensuke1984.kibrary.util.spc.SPC_SAC;
  */
 public class SourceTimeFunctionConvolver extends Operation {
 
+    private static final double TAPER_LENGTH_PERCENT = 5.0;
+
     private final Property property;
     /**
      * Path of the work folder.
@@ -258,8 +260,8 @@ public class SourceTimeFunctionConvolver extends Operation {
             int finalNpts = (npts < sacNpts) ? npts : Integer.highestOneBit(sacNpts);
             sacFile = sacFile.cut(finalNpts);
 
-            // get waveform data
-            double[] waveData = sacFile.getData();
+            // get waveform data and taper
+            double[] waveData = sacFile.createTrace().taper(TAPER_LENGTH_PERCENT).getY();
             Complex[] complexWave = Arrays.stream(waveData).mapToObj(Complex::new).toArray(Complex[]::new);
 
             // FFT to frequency domain

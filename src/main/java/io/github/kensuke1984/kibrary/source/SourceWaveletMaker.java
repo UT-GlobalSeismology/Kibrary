@@ -38,6 +38,8 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  */
 public class SourceWaveletMaker extends Operation {
 
+    private static final double TAPER_LENGTH_PERCENT = 5.0;
+
     private final Property property;
     /**
      * Path of the work folder.
@@ -218,19 +220,20 @@ public class SourceWaveletMaker extends Operation {
                 shift = correction.getTimeshift();
             }
 
-            // prepare observed trace
+            // prepare observed trace, integrated to get displacement waveform
             Trace obsTrace = obsSac.createTrace().cutWindow(timeWindow.shift(-shift), sacSamplingHz);
-            //TODO integrate
+            obsTrace = obsTrace.integrate();
 
+            // prepare synthetic trace, integrated to get displacement waveform
             Trace synTrace = synSac.createTrace().cutWindow(timeWindow, sacSamplingHz);
-            //TODO integrate
+            synTrace = synTrace.integrate();
 
-            // compute signed amplitude of synthetic (If wavelet is on negative side, this amplitude is negative.)
+            // compute signed max amplitude of synthetic (If wavelet is on negative side, this amplitude is negative.)
             double synMin = synTrace.getMinY();
             double synMax = synTrace.getMaxY();
             double synAmp = (-synMin > synMax) ? synMin : synMax;
 
-            // divide observed trace by amplitude of synthetic
+            // divide observed trace by signed max amplitude of synthetic (This should result on positive side for most cases.)
             RealVector normalizedVector = obsTrace.multiply(1 / synAmp).getYVector();
 
             // stack
@@ -260,8 +263,8 @@ public class SourceWaveletMaker extends Operation {
                 xArray[i] = i / sacSamplingHz;
             }
 
-            // form Trace
-            Trace waveletTrace = new Trace(xArray, yArray);
+            // form Trace and taper
+            Trace waveletTrace = new Trace(xArray, yArray).taper(TAPER_LENGTH_PERCENT);
 
             // write
             Path waveletPath = outPath.resolve(eventID + ".txt");
