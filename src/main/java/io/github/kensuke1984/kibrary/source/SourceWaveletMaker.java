@@ -44,7 +44,7 @@ import io.github.kensuke1984.kibrary.util.spc.SPCFileAid;
  */
 public class SourceWaveletMaker extends Operation {
 
-    private static final double TAPER_LENGTH_PERCENT = 5.0;
+    private static final double TAPER_LENGTH_PERCENT = 15.0;
 
     private final Property property;
     /**
@@ -292,7 +292,7 @@ public class SourceWaveletMaker extends Operation {
             // divide by the number of timewindows added to get average, and half duration to normalize the amplitude
             double[] yArray = sumVector.mapDivide(num).mapDivide(halfDuration).toArray();
             // taper
-            yArray = FourierTransform.taper(yArray, TAPER_LENGTH_PERCENT);
+            yArray = FourierTransform.taper(yArray, TAPER_LENGTH_PERCENT, true);
 
             // create X axis (time)
             double[] xArray = new double[sumVector.getDimension()];

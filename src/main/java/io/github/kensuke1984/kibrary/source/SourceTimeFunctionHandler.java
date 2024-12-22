@@ -1,10 +1,13 @@
 package io.github.kensuke1984.kibrary.source;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.commons.math3.util.Precision;
 
@@ -33,7 +36,7 @@ public class SourceTimeFunctionHandler {
         this.events = events;
 
         if (userSTFPath != null) {
-            readUserSourceTimeFunctions(userSTFPath, events);
+            readUserSourceTimeFunctions(userSTFPath);
             System.err.println("Using user-defined STFs.");
         } else {
             if (catalogPath != null) {
@@ -53,10 +56,19 @@ public class SourceTimeFunctionHandler {
         }
     }
 
-    private void readUserSourceTimeFunctions(Path inPath, Set<GlobalCMTID> events) throws IOException {
-        userSourceTimeFunctions = new HashMap<>(events.size());
-        for (GlobalCMTID event : events)
-            userSourceTimeFunctions.put(event, SourceTimeFunction.read(inPath.resolve(event + ".stf")));
+    private void readUserSourceTimeFunctions(Path inPath) throws IOException {
+        // collect STF files
+        Set<Path> stfPaths;
+        // CAUTION: Files.list() must be in try-with-resources.
+        try (Stream<Path> stream = Files.list(inPath)) {
+            stfPaths = stream.filter(dir -> dir.getFileName().toString().endsWith(".stf")).collect(Collectors.toSet());
+        }
+
+        userSourceTimeFunctions = new HashMap<>();
+        for (Path stfPath: stfPaths) {
+            GlobalCMTID event = new GlobalCMTID(stfPath.getFileName().toString().split("\\.")[0]);
+            userSourceTimeFunctions.put(event, SourceTimeFunction.read(stfPath));
+        }
     }
 
     public Map<GlobalCMTID, SourceTimeFunction> createSourceTimeFunctionMap(int np, double tlen) {
@@ -81,8 +93,8 @@ public class SourceTimeFunctionHandler {
             if (tmp == null) {
                 System.err.println("! Source time function for " + event + " not found, using triangular instead.");
                 tmp = SourceTimeFunction.triangleSourceTimeFunction(np, tlen, halfDuration);
-            } else if (tmp.getNp() != np || Precision.equals(tmp.getTlen(), tlen)) {
-                System.err.println("! Input np " + tmp.getNp() + "and tlen " + tmp.getTlen() + " do not match requirements, using triangular instead.");
+            } else if (tmp.getNp() != np || !Precision.equals(tmp.getTlen(), tlen)) {
+                System.err.println("! Input np " + tmp.getNp() + " and tlen " + tmp.getTlen() + " do not match requirements, using triangular instead.");
                 tmp = SourceTimeFunction.triangleSourceTimeFunction(np, tlen, halfDuration);
             }
             return tmp;

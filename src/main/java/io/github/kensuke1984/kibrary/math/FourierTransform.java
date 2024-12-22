@@ -122,7 +122,7 @@ public class FourierTransform {
         if (np > nnp) System.err.println("!CAUTION: np=" + np + " is larger than npts/2=" + nnp + ", using only points up to " + nnp + ".");
 
         // apply taper
-        double[] realArray = taper(uTime, TAPER_LENGTH_PERCENT);
+        double[] realArray = taper(uTime, TAPER_LENGTH_PERCENT, false);
 
         // switch to Complex
         Complex[] complexArray = Arrays.stream(realArray).mapToObj(Complex::new).toArray(Complex[]::new);
@@ -161,16 +161,20 @@ public class FourierTransform {
 
     /**
      * Taper both ends of the input waveform using sine taper.
+     * @param waveArray (double[]) Input waveform in time domain.
      * @param taperLengthPercent (double) Ratio of length to taper at each end [%].
+     * @param cosine (boolean) Whether to use cosine taper. Otherwise, sine.
      * @return (double[]) Tapered waveform.
      */
-    public static double[] taper(double[] waveArray, double taperLengthPercent) {
+    public static double[] taper(double[] waveArray, double taperLengthPercent, boolean cosine) {
         int npts = waveArray.length;
 
         // create shape of taper
         int taperLength = (int) Math.round(npts * taperLengthPercent / 100);
         double dAngle = Math.PI / 2 / taperLength;
-        double[] taper = IntStream.range(0, taperLength + 1).mapToDouble(i -> i * dAngle).map(Math::sin).toArray();
+        double[] taper = cosine ?
+                IntStream.range(0, taperLength + 1).mapToDouble(i -> i * dAngle).map(i -> Math.sin(i) * Math.sin(i)).toArray() :
+                IntStream.range(0, taperLength + 1).mapToDouble(i -> i * dAngle).map(Math::sin).toArray();
 
         // apply taper
         double[] taperedArray = waveArray.clone();
