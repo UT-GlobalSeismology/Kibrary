@@ -5,6 +5,7 @@ import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -77,7 +78,8 @@ public class SourceTimeFunction {
         sourceTimeFunction.sourceTimeFunction = new Complex[np + 1];
         double deltaF = 1.0 / tlen;
         double h = 2. /(halfDuration1 + halfDuration2);
-        for (int i = 0; i < np + 1; i++) {
+        sourceTimeFunction.sourceTimeFunction[0] = Complex.ONE;
+        for (int i = 1; i < np + 1; i++) {
              double omega = i * 2. * Math.PI * deltaF;
              sourceTimeFunction.sourceTimeFunction[i]
                      = new Complex(1.*h/omega/omega*(1./halfDuration1 + 1./halfDuration2 - Math.cos(omega*halfDuration1)/halfDuration1 - Math.cos(omega*halfDuration2)/halfDuration2),
@@ -106,7 +108,8 @@ public class SourceTimeFunction {
         sourceTimeFunction.sourceTimeFunction = new Complex[np + 1];
         final double deltaF = 1.0 / tlen;
         final double constant = 2 * Math.PI * deltaF * halfDuration;
-        for (int i = 0; i < np + 1; i++) {
+        sourceTimeFunction.sourceTimeFunction[0] = Complex.ONE;
+        for (int i = 1; i < np + 1; i++) {
             double omegaTau = i * constant;
             sourceTimeFunction.sourceTimeFunction[i] = new Complex((2 - 2 * Math.cos(omegaTau)) / omegaTau / omegaTau);
         }
@@ -131,7 +134,8 @@ public class SourceTimeFunction {
         sourceTimeFunction.sourceTimeFunction = new Complex[np + 1];
         final double deltaF = 1.0 / tlen;
         final double constant = 2 * Math.PI * deltaF * halfDuration;
-        for (int i = 0; i < np + 1; i++) {
+        sourceTimeFunction.sourceTimeFunction[0] = Complex.ONE;
+        for (int i = 1; i < np + 1; i++) {
             double omegaTau = i * constant;
             sourceTimeFunction.sourceTimeFunction[i] = new Complex(Math.sin(omegaTau) / omegaTau);
         }
@@ -157,7 +161,8 @@ public class SourceTimeFunction {
         sourceTimeFunction.sourceTimeFunction = new Complex[np + 1];
         final double deltaF = 1.0 / tlen;
         final double constant = 2 * Math.PI * deltaF * halfDuration / 4 * Math.PI;
-        for (int i = 0; i < np + 1; i++) {
+        sourceTimeFunction.sourceTimeFunction[0] = Complex.ONE;
+        for (int i = 1; i < np + 1; i++) {
             double omegaTau = i * constant;
             sourceTimeFunction.sourceTimeFunction[i] = new Complex(omegaTau / Math.sinh(omegaTau));
         }
@@ -175,6 +180,7 @@ public class SourceTimeFunction {
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, options))) {
             pw.println("#np tlen");
             pw.println(np + " " + tlen);
+            pw.println("#real complex");
             for (int i = 0; i < sourceTimeFunction.length; i++)
                 pw.println(sourceTimeFunction[i].getReal() + " " + sourceTimeFunction[i].getImaginary());
         }
@@ -185,7 +191,7 @@ public class SourceTimeFunction {
         String[] parts = lines.get(1).split("\\s+");
         int np = Integer.parseInt(parts[0]);
         double tlen = Double.parseDouble(parts[1]);
-        Complex[] function = IntStream.range(0, np + 1).mapToObj(i -> toComplex(lines.get(i + 2))).toArray(Complex[]::new);
+        Complex[] function = IntStream.range(0, np + 1).mapToObj(i -> toComplex(lines.get(i + 3))).toArray(Complex[]::new);
 
         SourceTimeFunction stf = new SourceTimeFunction(np, tlen);
         stf.sourceTimeFunction = function;
@@ -252,6 +258,10 @@ public class SourceTimeFunction {
 
     void setSourceTimeFunction(Complex[] sourceTimeFunction) {
         this.sourceTimeFunction = sourceTimeFunction;
+    }
+
+    public static void main(String[] args) throws IOException {
+        triangleSourceTimeFunction(512, 3276.8, 1.5).write(Paths.get("test.stf"));
     }
 
 }

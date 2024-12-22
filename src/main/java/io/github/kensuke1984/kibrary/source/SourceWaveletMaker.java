@@ -22,6 +22,7 @@ import io.github.kensuke1984.kibrary.correction.StaticCorrectionData;
 import io.github.kensuke1984.kibrary.correction.StaticCorrectionDataFile;
 import io.github.kensuke1984.kibrary.math.FourierTransform;
 import io.github.kensuke1984.kibrary.math.Trace;
+import io.github.kensuke1984.kibrary.timewindow.Timewindow;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
@@ -173,6 +174,7 @@ public class SourceWaveletMaker extends Operation {
                 .map(SACComponent::valueOf).collect(Collectors.toSet());
 
         timewindowPath = property.parsePath("timewindowPath", null, true, workPath);
+        frontShift = property.parseDouble("frontShift", "20");
         obsPath = property.parsePath("obsPath", ".", true, workPath);
         synPath = property.parsePath("synPath", ".", true, workPath);
         convolved = property.parseBoolean("convolved", "true");
@@ -218,9 +220,11 @@ public class SourceWaveletMaker extends Operation {
     private class Worker extends DatasetAid.FilteredDatasetWorker {
         RealVector sumVector;
         int num = 0;
+        double halfDuration;
 
         private Worker(GlobalCMTID eventID) {
             super(eventID, obsPath, synPath, convolved, sacSamplingHz, sourceTimewindowSet);
+            halfDuration = eventID.getEventData().getHalfDuration();
         }
 
         @Override
@@ -234,7 +238,7 @@ public class SourceWaveletMaker extends Operation {
                 return;
             }
 
-            // apply static correction
+            // retrieve static correction
             double shift = 0.;
             if (!staticCorrectionSet.isEmpty()) {
                 StaticCorrectionData correction = StaticCorrectionData.findForTimeWindow(staticCorrectionSet, timeWindow);
@@ -246,12 +250,17 @@ public class SourceWaveletMaker extends Operation {
                 shift = correction.getTimeshift();
             }
 
+            // use window [arrival - halfDuration, arrival + 3 * halfDuration]
+            double startTime = timeWindow.getStartTime() + frontShift - halfDuration;
+            double endTime = timeWindow.getStartTime() + frontShift + 3 * halfDuration;
+            Timewindow stfWindow = new Timewindow(startTime, endTime);
+
             // prepare observed trace, integrated to get displacement waveform
-            Trace obsTrace = obsSac.createTrace().cutWindow(timeWindow.shift(-shift), sacSamplingHz);
+            Trace obsTrace = obsSac.createTrace().cutWindow(stfWindow.shift(-shift), sacSamplingHz);
             obsTrace = obsTrace.integrate();
 
             // prepare synthetic trace, integrated to get displacement waveform
-            Trace synTrace = synSac.createTrace().cutWindow(timeWindow, sacSamplingHz);
+            Trace synTrace = synSac.createTrace().cutWindow(stfWindow, sacSamplingHz);
             synTrace = synTrace.integrate();
 
             // compute signed max amplitude of synthetic (If wavelet is on negative side, this amplitude is negative.)
@@ -280,8 +289,8 @@ public class SourceWaveletMaker extends Operation {
 
         @Override
         public void finalWork() {
-            // divide by the number of timewindows added to get average
-            double[] yArray = sumVector.mapDivide(num).toArray();
+            // divide by the number of timewindows added to get average, and half duration to normalize the amplitude
+            double[] yArray = sumVector.mapDivide(num).mapDivide(halfDuration).toArray();
             // taper
             yArray = FourierTransform.taper(yArray, TAPER_LENGTH_PERCENT);
 
@@ -301,8 +310,9 @@ public class SourceWaveletMaker extends Operation {
             }
 
             // zero-pad, with wavelet placed at the center of the time series
+            //   Here, arrival + halfDuration is set at center.
             int npts = SPCFileAid.findNpts(tlen, sacSamplingHz);
-            int shiftNpts = (int) MathAid.roundForPrecision(frontShift * sacSamplingHz);
+            int shiftNpts = (int) MathAid.roundForPrecision(2 * halfDuration * sacSamplingHz);
             double[] paddedArray = new double[npts];
             for (int i = 0; i < yArray.length; i++) {
                 paddedArray[npts / 2 - shiftNpts + i] = yArray[i];
@@ -311,10 +321,12 @@ public class SourceWaveletMaker extends Operation {
             // convert to frequency domain
             Complex[] complexWave = FourierTransform.convertToFrequencyDomain(paddedArray, np);
 
-            // time-shift so that the wavelet is at time zero
-            // This is done by reversing sign of odd-number index entries.
-            for (int i = 1; i < complexWave.length; i += 2) {
-                complexWave[i] = complexWave[i].multiply(-1.0);
+            for (int i = 0; i < complexWave.length; i++) {
+                // divide sampling frequency [Hz] so that the FFT matches with the Fourier transform
+                complexWave[i] = complexWave[i].divide(sacSamplingHz);
+                // time-shift so that the wavelet is at time zero
+                // This is done by reversing sign of odd-number index entries.
+                if (i % 2 == 1) complexWave[i] = complexWave[i].multiply(-1.0);
             }
 
             // output
