@@ -11,10 +11,18 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.IntStream;
 
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.OptionGroup;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
 import org.apache.commons.math3.complex.Complex;
 
+import io.github.kensuke1984.kibrary.Summon;
 import io.github.kensuke1984.kibrary.math.FourierTransform;
 import io.github.kensuke1984.kibrary.math.Trace;
+import io.github.kensuke1984.kibrary.util.DatasetAid;
+import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.spc.SPCFileAid;
 
 /**
@@ -35,7 +43,7 @@ public class SourceTimeFunction {
      */
     private final int np;
     /**
-     * Time length of STF [s]. Its reciprocal will be the size of frequency steps.
+     * Time length of whole STF waveform [s]. Its reciprocal will be the size of frequency steps.
      */
     private final double tlen;
     /**
@@ -45,7 +53,7 @@ public class SourceTimeFunction {
 
     /**
      * @param np (int) Number of steps in frequency domain (only positive frequency part).
-     * @param tlen (double) Time length of STF [s]. Its reciprocal will be the size of frequency steps.
+     * @param tlen (double) Time length of whole STF waveform [s]. Its reciprocal will be the size of frequency steps.
      */
     SourceTimeFunction(int np, double tlen) {
         this.np = np;
@@ -54,7 +62,7 @@ public class SourceTimeFunction {
 
     /**
      * @param sourceTimeFunction (Complex[]) Source time function in frequency domain. Length is np + 1.
-     * @param tlen (double) Time length of STF [s]. Its reciprocal will be the size of frequency steps.
+     * @param tlen (double) Time length of whole STF waveform [s]. Its reciprocal will be the size of frequency steps.
      */
     SourceTimeFunction(Complex[] sourceTimeFunction, double tlen) {
         this.np = sourceTimeFunction.length - 1;
@@ -225,10 +233,10 @@ public class SourceTimeFunction {
     }
 
     /**
+     * Get source time function in time domain.
      * x axis: time [s], y axis: amplitude
-     * After considering that conjugate F[i] = F[N-i],
-     *
-     * @return trace of Source time function in time domain
+     * Converted after considering that conjugate F[i] = F[N-i].
+     * @return ({@link Trace}) Source time function in time domain.
      */
     Trace getSourceTimeFunctionInTimeDomain(double samplingHz) {
         Objects.requireNonNull(sourceTimeFunction, "Source time function is not set yet.");
@@ -260,8 +268,89 @@ public class SourceTimeFunction {
         this.sourceTimeFunction = sourceTimeFunction;
     }
 
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    /**
+     * Create a source time function file under the working folder.
+     * @param args Options.
+     * @throws IOException
+     */
     public static void main(String[] args) throws IOException {
-        triangleSourceTimeFunction(512, 3276.8, 1.5).write(Paths.get("test.stf"));
+        Options options = defineOptions();
+        try {
+            run(Summon.parseArgs(options, args));
+        } catch (ParseException e) {
+            Summon.showUsage(options);
+        }
+    }
+
+    /**
+     * To be called from {@link Summon}.
+     * @return options
+     */
+    public static Options defineOptions() {
+        Options options = Summon.defaultOptions();
+
+        // input
+        OptionGroup inputOption = new OptionGroup();
+        inputOption.addOption(Option.builder("i").longOpt("id").hasArg().argName("eventID")
+                .desc("Global CMT ID.").build());
+        inputOption.addOption(Option.builder("h").longOpt("halfDuration").hasArg().argName("halfDuration")
+                .desc("Half duration [s] of the source.").build());
+        inputOption.setRequired(true);
+        options.addOptionGroup(inputOption);
+
+        options.addOption(Option.builder("f").longOpt("function").hasArg().argName("functionType")
+                .desc("Type of source time function, from {1:boxcar, 2:triangle, 4:auto}. (4)").build());
+        options.addOption(Option.builder("n").longOpt("np").hasArg().argName("np")
+                .desc("Number of steps in frequency domain (counting only positive frequency part). (512)").build());
+        options.addOption(Option.builder("t").longOpt("tlen").hasArg().argName("tlen")
+                .desc("Time length of whole STF waveform [s]. Its reciprocal will be the size of frequency steps. (3276.8)").build());
+
+        // output
+        options.addOption(Option.builder("T").longOpt("tag").hasArg().argName("fileTag")
+                .desc("A tag to include in output file name.").build());
+        options.addOption(Option.builder("O").longOpt("omitDate")
+                .desc("Omit date string in output file name.").build());
+
+        return options;
+    }
+
+    /**
+     * To be called from {@link Summon}.
+     * @param cmdLine options
+     * @throws IOException
+     */
+    public static void run(CommandLine cmdLine) throws IOException {
+        String fileTag = cmdLine.hasOption("T") ? cmdLine.getOptionValue("T") : null;
+        boolean appendFileDate = !cmdLine.hasOption("O");
+
+        SourceTimeFunctionType type = cmdLine.hasOption("f") ?
+                SourceTimeFunctionType.ofNumber(Integer.parseInt(cmdLine.getOptionValue("f"))) : SourceTimeFunctionType.AUTO;
+        int np = cmdLine.hasOption("n") ? Integer.parseInt(cmdLine.getOptionValue("n")) : 512;
+        double tlen = cmdLine.hasOption("t") ? Double.parseDouble(cmdLine.getOptionValue("t")) : 3276.8;
+
+        if (cmdLine.hasOption("i")) {
+            GlobalCMTID event = new GlobalCMTID(cmdLine.getOptionValue("i"));
+            SourceTimeFunctionHandler stfHandler = new SourceTimeFunctionHandler(type, null, null, null);
+            Path outputPath = DatasetAid.generateOutputFilePath(Paths.get(""), event.toString(), fileTag, false, null, ".stf");
+            stfHandler.createSourceTimeFunction(np, tlen, event).write(outputPath);
+
+        } else if (cmdLine.hasOption("h")) {
+            double halfDuration = Double.parseDouble(cmdLine.getOptionValue("h"));
+            Path outputPath = DatasetAid.generateOutputFilePath(Paths.get(""), "testSTF", fileTag, appendFileDate, null, ".stf");
+            switch (type) {
+            case BOXCAR:
+                boxcarSourceTimeFunction(np, tlen, halfDuration).write(outputPath);
+                break;
+            case TRIANGLE:
+                triangleSourceTimeFunction(np, tlen, halfDuration).write(outputPath);
+                break;
+            default:
+                throw new IllegalArgumentException("STF type " + type + " not allowed.");
+            }
+        }
     }
 
 }
