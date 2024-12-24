@@ -19,10 +19,13 @@ import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotColorName;
 import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotFile;
+import io.github.kensuke1984.kibrary.math.CircularRange;
+import io.github.kensuke1984.kibrary.math.LinearRange;
 import io.github.kensuke1984.kibrary.timewindow.TravelTimeInformation;
 import io.github.kensuke1984.kibrary.timewindow.TravelTimeInformationFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
+import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.waveform.BasicID;
@@ -102,6 +105,9 @@ public class BasicWaveformPlotter extends Operation {
      */
     private double residualScale;
 
+    private LinearRange distanceRange;
+    private CircularRange azimuthRange;
+
     private int unshiftedObsStyle;
     private String unshiftedObsName;
     private int shiftedObsStyle;
@@ -156,6 +162,14 @@ public class BasicWaveformPlotter extends Operation {
             pw.println("#timeLength ");
             pw.println("##(double) How much to scale up the residual waveform. (1)");
             pw.println("#residualScale ");
+            pw.println("##(double) Lower limit of range of epicentral distance to be used [deg], inclusive; [0:upperDistance). (0)");
+            pw.println("#lowerDistance ");
+            pw.println("##(double) Upper limit of range of epicentral distance to be used [deg], exclusive; (lowerDistance:180]. (180)");
+            pw.println("#upperDistance ");
+            pw.println("##(double) Lower limit of range of azimuth to be used [deg], inclusive; [-180:360]. (0)");
+            pw.println("#lowerAzimuth ");
+            pw.println("##(double) Upper limit of range of azimuth to be used [deg], exclusive; [-180:360]. (360)");
+            pw.println("#upperAzimuth ");
             pw.println("##Plot style for unshifted observed waveform, from {0:no plot, 1:gray, 2:black}. (1)");
             pw.println("#unshiftedObsStyle 0");
             pw.println("##Name for unshifted observed waveform. (unshifted)");
@@ -210,6 +224,14 @@ public class BasicWaveformPlotter extends Operation {
         splitComponents = property.parseBoolean("splitComponents", "true");
         timeLength = property.parseDouble("timeLength", "150");
         residualScale = property.parseDouble("residualScale", "1");
+
+        double lowerDistance = property.parseDouble("lowerDistance", "0");
+        double upperDistance = property.parseDouble("upperDistance", "180");
+        distanceRange = new LinearRange("Distance", lowerDistance, upperDistance, 0.0, 180.0);
+
+        double lowerAzimuth = property.parseDouble("lowerAzimuth", "0");
+        double upperAzimuth = property.parseDouble("upperAzimuth", "360");
+        azimuthRange = new CircularRange("Azimuth", lowerAzimuth, upperAzimuth, -180.0, 360.0);
 
         unshiftedObsStyle = property.parseInt("unshiftedObsStyle", "1");
         unshiftedObsName = property.parseString("unshiftedObsName", "unshifted");
@@ -277,6 +299,8 @@ public class BasicWaveformPlotter extends Operation {
                 for (SACComponent component : components) {
                     List<BasicID> useIds = mainBasicIDs.stream()
                             .filter(id -> id.getSacComponent().equals(component) && id.getGlobalCMTID().equals(event))
+                            .filter(id -> distanceRange.check(id.toDataEntry().computeEpicentralDistanceDeg()))
+                            .filter(id -> azimuthRange.check(id.toDataEntry().computeAzimuthDeg()))
                             .sorted(Comparator.comparing(BasicID::getObserver))
                             .collect(Collectors.toList());
 
@@ -287,6 +311,8 @@ public class BasicWaveformPlotter extends Operation {
             } else {
                 List<BasicID> useIds = mainBasicIDs.stream()
                         .filter(id -> id.getGlobalCMTID().equals(event))
+                        .filter(id -> distanceRange.check(id.toDataEntry().computeEpicentralDistanceDeg()))
+                        .filter(id -> azimuthRange.check(id.toDataEntry().computeAzimuthDeg()))
                         .sorted(Comparator.comparing(BasicID::getObserver).thenComparing(BasicID::getSacComponent))
                         .collect(Collectors.toList());
 
@@ -330,6 +356,8 @@ public class BasicWaveformPlotter extends Operation {
             // display data of timewindow
             gnuplot.addLabel(obsID.getObserver().toPaddedInfoString() + " " + obsID.getSacComponent().toString(), "graph", 0.01, 0.95);
             gnuplot.addLabel(obsID.getGlobalCMTID().toString(), "graph", 0.01, 0.85);
+            gnuplot.addLabel("dist: " + MathAid.roundToString(obsID.toDataEntry().computeEpicentralDistanceDeg(), 2)
+                + ", az: " + MathAid.roundToString(obsID.toDataEntry().computeAzimuthDeg(), 2), "graph", 0.01, 0.10);
 
             // plot waveforms
             // Absolute paths are used here because relative paths are hard to construct when workPath != mainBasicPath.
