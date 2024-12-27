@@ -147,6 +147,27 @@ public class ScalarMapShellscript {
 
     static void writeCpMaster(Path outputPath) throws IOException {
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath))) {
+            pw.println("-4.00 102   5   6  -3.75 102   5   6");
+            pw.println("-3.75 145  12   7  -3.25 145  12   7");
+            pw.println("-3.25 204  32  16  -2.75 204  32  16");
+            pw.println("-2.75 230  85  50  -2.25 230  85  50");
+            pw.println("-2.25 240 136  84  -1.75 240 136  84");
+            pw.println("-1.75 243 180 114  -1.25 243 180 114");
+            pw.println("-1.25 248 212 128  -0.75 248 212 128");
+            pw.println("-0.75 250 235 154  -0.25 250 235 154");
+            pw.println("-0.25 253 253 253  0.25 253 253 253");
+            pw.println("0.25 198 232 248   0.75 198 232 248");
+            pw.println("0.75 169 202 235   1.25 169 202 235");
+            pw.println("1.25 147 172 220   1.75 147 172 220");
+            pw.println("1.75 129 142 215   2.25 129 142 215");
+            pw.println("2.25 104 104 209   2.75 104 104 209");
+            pw.println("2.75  90  59 199   3.25  90  59 199");
+            pw.println("3.25  69   6 158   3.75  69   6 158");
+            pw.println("3.75  53   5 102   4.00  53   5 102");
+            pw.println("B       102   5   6");
+            pw.println("F        53   5 102");
+            pw.println("N       255 255 255");
+/*
             pw.println("-3.5 129 14  30 -3.088235294117647 129 14  30");
             pw.println("-3.088235294117647 158 15  9 -2.6764705882352944 158 15  9");
             pw.println("-2.6764705882352944 218 20  7 -2.264705882352941 218 20  7");
@@ -167,6 +188,7 @@ public class ScalarMapShellscript {
             pw.println("B       129 14  30");
             pw.println("F       17 46  85");
             pw.println("N       255 255 255");
+*/
         }
     }
 
