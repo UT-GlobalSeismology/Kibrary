@@ -34,14 +34,6 @@ public class ScalarMapShellscript {
     private static final int CP_STYLE = 1;
 
     /**
-     * Width of each panel.
-     */
-    private static final int PANEL_WIDTH = 21;
-    /**
-     * Height of each panel.
-     */
-    private static final int PANEL_HEIGHT = 20;
-    /**
      * The interval of deciding map size.
      */
     private static final int MAP_SIZE_INTERVAL = 5;
@@ -273,7 +265,7 @@ public class ScalarMapShellscript {
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath))) {
             pw.println("#!/bin/sh");
             pw.println("");
-            pw.println("# GMT options");
+            pw.println("#------- GMT options");
             pw.println("gmt set COLOR_MODEL RGB");
             pw.println("gmt set PS_MEDIA 6000x6000");
             pw.println("gmt set PS_PAGE_ORIENTATION landscape");
@@ -284,17 +276,24 @@ public class ScalarMapShellscript {
             pw.println("gmt set FONT_ANNOT 40");
             pw.println("gmt set FONT_LABEL 50p,Helvetica,black");
             pw.println("");
-            pw.println("# map parameters");
+            pw.println("#------- Map parameters");
             pw.println("R='-R" + mapRegion + "'");
             pw.println("J='-JQ15'");
-            pw.println("B='-B30f10';");
+            pw.println("B='-B" + decideTickSpacing(mapRegion) + "'");
             pw.println("");
-            pw.println("outputps=" + plotFileNameRoot + "Map.eps");
+            pw.println("#------- Color palette");
             pw.println("MP=" + scale);
             pw.println("gmt makecpt -Ccp_master.cpt -T-$MP/$MP > cp.cpt");
             pw.println("");
 
+            pw.println("#------- Begin main plot");
+            pw.println("gmt begin " + plotFileNameRoot + "Map eps,pdf,png");
+            pw.println("");
             pw.println("#------- Panels");
+            int nPanelsPerColumn = MathAid.divideUp(displayLayers.length, nPanelsPerRow);
+            pw.println("gmt subplot begin " + nPanelsPerColumn + "x" + nPanelsPerRow + " -Fs15/0 -SCb+t -SRr -M1/1.5 -Y10 -BwESn $B $J $R");
+            pw.println("");
+
             for (int iPanel = 0; iPanel < displayLayers.length; iPanel++) {
                 // CAUTION: layers are referenced in reverse order because we will draw from the top
                 int iPanelRev = displayLayers.length - 1 - iPanel;
@@ -303,39 +302,26 @@ public class ScalarMapShellscript {
                 String upperBound = MathAid.simplestString(boundaries[layerIndex + 1]);
                 String lowerBound = MathAid.simplestString(boundaries[layerIndex]);
 
-                if (iPanel == 0) {
-                    pw.println("gmt grdimage " + radius + "\\model.grd -BwESn+t\"" + upperBound + "-" + lowerBound
-                            + " km\" $B -Ccp.cpt $J $R -K -Y180 > $outputps");
-                } else if (iPanel % nPanelsPerRow == 0) {
-                    pw.println("gmt grdimage " + radius + "\\model.grd -BwESn+t\"" + upperBound + "-" + lowerBound
-                            + " km\" $B -Ccp.cpt $J $R -K -O -X-" + (PANEL_WIDTH * (nPanelsPerRow - 1)) + " -Y-" + PANEL_HEIGHT + " >> $outputps");
-                } else {
-                    pw.println("gmt grdimage " + radius + "\\model.grd -BwESn+t\"" + upperBound + "-" + lowerBound
-                            + " km\" $B -Ccp.cpt $J $R -K -O -X" + PANEL_WIDTH + " >> $outputps");
-                }
+                pw.println("gmt subplot set");
+                pw.println("gmt grdimage " + radius + "\\model.grd -B+t\"" + upperBound + "-" + lowerBound + " km\" -Ccp.cpt");
 
                 if (maskExists) {
-                    pw.println("gmt grdimage " + radius + "\\mask.grd -Ccp_mask.cpt -G0/0/0 -t80 $J $R -K -O >> $outputps");
+                    pw.println("gmt grdimage " + radius + "\\mask.grd -Ccp_mask.cpt -G0/0/0 -t80");
                 }
 
-                pw.println("gmt pscoast -Wthinner,black -A500 -J -R -K -O >> $outputps");
+                pw.println("gmt pscoast -Wthinner,black -A500");
                 pw.println("");
             }
 
+            pw.println("gmt subplot end");
+            pw.println("");
             pw.println("#------- Scale");
-            // compute the column number of the last panel (counting as 0, 1, 2, 3, ...)
-            int nLastColumn = (displayLayers.length - 1) % nPanelsPerRow;
-            pw.println("gmt psscale -Ccp.cpt -Dx2/-4+w12/0.8+h -B1.0+l\"" + ScalarType.createScaleLabel(variable, scalarType) + "\" -K -O -X-"
-                    + (PANEL_WIDTH * nLastColumn / 2) + " >> $outputps");
+            pw.println("gmt psscale -Ccp.cpt -DJCB+w12/0.8+h -Y-2 -B$MP+l\"" + ScalarType.createScaleLabel(variable, scalarType) + "\"");
+            pw.println("");
+            pw.println("#------- Finalize");
+            pw.println("gmt end");
             pw.println("");
 
-            pw.println("#------- Finalize");
-            pw.println("gmt pstext -N -F+jLM+f30p,Helvetica,black $J $R -O << END >> $outputps");
-            pw.println("END");
-            pw.println("");
-            pw.println("gmt psconvert $outputps -E100 -Tf -A -Qg4");
-            pw.println("gmt psconvert $outputps -E100 -Tg -A -Qg4");
-            pw.println("");
             pw.println("#-------- Clear");
             pw.println("rm -rf cp.cpt gmt.conf gmt.history");
             pw.println("echo \"Done!\"");
@@ -388,6 +374,35 @@ public class ScalarMapShellscript {
         if (latMax > 90) latMax = 90;
         // return as String
         return (int) lonMin + "/" + (int) lonMax + "/" + (int) latMin + "/" + (int) latMax;
+    }
+
+    private static String decideTickSpacing(String mapRegion) {
+        String[] parts = mapRegion.split("/");
+        int lonMin = Integer.parseInt(parts[0]);
+        int lonMax = Integer.parseInt(parts[1]);
+        int latMin = Integer.parseInt(parts[2]);
+        int latMax = Integer.parseInt(parts[3]);
+        // get average of longitude length and latitude length
+        double length = ((lonMax - lonMin) + (latMax - latMin)) / 2.0;
+        if (length > 150.0) {
+            return "30";
+        } else if (length > 70.0) {
+            return "30f10";
+        } else if (length > 55.0) {
+            return "20f10";
+        } else if (length > 40.0) {
+            return "15f5";
+        } else if (length > 22.0) {
+            return "10f5";
+        } else if (length > 12.0) {
+            return "5f2.5";
+        } else if (length > 9.0) {
+            return "4f2";
+        } else if (length > 4.0) {
+            return "2f1";
+        } else {
+            return "1f0.5";
+        }
     }
 
     /**
