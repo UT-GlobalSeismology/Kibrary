@@ -376,7 +376,31 @@ public class ScalarMapShellscript {
         return (int) lonMin + "/" + (int) lonMax + "/" + (int) latMin + "/" + (int) latMax;
     }
 
-    private static String decideTickSpacing(String mapRegion) {
+    static String decideTickSpacing(double length, boolean setGrid) {
+        double aNum, fNum;
+        if (length > 150.0) {
+            aNum = 30; fNum = 30;
+        } else if (length > 70.0) {
+            aNum = 30; fNum = 10;
+        } else if (length > 55.0) {
+            aNum = 20; fNum = 10;
+        } else if (length > 40.0) {
+            aNum = 15; fNum = 5;
+        } else if (length > 22.0) {
+            aNum = 10; fNum = 5;
+        } else if (length > 12.0) {
+            aNum = 5; fNum = 2.5;
+        } else if (length > 9.0) {
+            aNum = 4; fNum = 2;
+        } else if (length > 4.0) {
+            aNum = 2; fNum = 1;
+        } else {
+            aNum = 1; fNum = 0.5;
+        }
+        return "a" + MathAid.simplestString(aNum) + (setGrid ? "g" + MathAid.simplestString(aNum) : "f" + MathAid.simplestString(fNum));
+    }
+
+    static String decideTickSpacing(String mapRegion) {
         String[] parts = mapRegion.split("/");
         int lonMin = Integer.parseInt(parts[0]);
         int lonMax = Integer.parseInt(parts[1]);
@@ -384,25 +408,7 @@ public class ScalarMapShellscript {
         int latMax = Integer.parseInt(parts[3]);
         // get average of longitude length and latitude length
         double length = ((lonMax - lonMin) + (latMax - latMin)) / 2.0;
-        if (length > 150.0) {
-            return "30";
-        } else if (length > 70.0) {
-            return "30f10";
-        } else if (length > 55.0) {
-            return "20f10";
-        } else if (length > 40.0) {
-            return "15f5";
-        } else if (length > 22.0) {
-            return "10f5";
-        } else if (length > 12.0) {
-            return "5f2.5";
-        } else if (length > 9.0) {
-            return "4f2";
-        } else if (length > 4.0) {
-            return "2f1";
-        } else {
-            return "1f0.5";
-        }
+        return decideTickSpacing(length, false);
     }
 
     /**
