@@ -279,7 +279,7 @@ public class ScalarMapShellscript {
             pw.println("#------- Map parameters");
             pw.println("R='-R" + mapRegion + "'");
             pw.println("J='-JQ15'");
-            pw.println("B='-B" + decideTickSpacing(mapRegion) + "'");
+            pw.println("B='-B" + decideTickSpacing(mapRegion) + " -BwESn'");
             pw.println("");
             pw.println("#------- Color palette");
             pw.println("MP=" + scale);
@@ -291,7 +291,7 @@ public class ScalarMapShellscript {
             pw.println("");
             pw.println("#------- Panels");
             int nPanelsPerColumn = MathAid.divideUp(displayLayers.length, nPanelsPerRow);
-            pw.println("gmt subplot begin " + nPanelsPerColumn + "x" + nPanelsPerRow + " -Fs15/0 -SCb+t -SRr -M1/1.5 -Y10 -BwESn $B $J $R");
+            pw.println("gmt subplot begin " + nPanelsPerColumn + "x" + nPanelsPerRow + " -Fs15/0 -SCb+t -SRr -M1/1.5 -Y10 $B $J $R");
             pw.println("");
 
             for (int iPanel = 0; iPanel < displayLayers.length; iPanel++) {
