@@ -316,7 +316,8 @@ public class ScalarMapShellscript {
             pw.println("gmt subplot end");
             pw.println("");
             pw.println("#------- Scale");
-            pw.println("gmt psscale -Ccp.cpt -DJCB+w12/0.8+h -Y-2 -B$MP+l\"" + ScalarType.createScaleLabel(variable, scalarType) + "\"");
+            pw.println("#gmt psscale -Ccp.cpt -DJCB+w12/0.8+h -Y-2 -B$MP+l\"" + ScalarType.createScaleLabel(variable, scalarType) + "\"");
+            pw.println("gmt psscale -Ccp.cpt -DJCB+w12/0.8+h -Y-2 -B$MP+l\"" + ScalarType.createScaleLabel_TeX(variable, scalarType) + "\"");
             pw.println("");
             pw.println("#------- Finalize");
             pw.println("gmt end");

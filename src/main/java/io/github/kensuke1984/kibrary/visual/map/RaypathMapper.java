@@ -109,6 +109,7 @@ public class RaypathMapper extends Operation {
     private int colorMode;
     private Path colorBinPath;
     private boolean drawOutsides;
+    private boolean drawTurningPoints;
     private Path outsideColorBinPath;
     private double rayTransparency;
 
@@ -198,6 +199,8 @@ public class RaypathMapper extends Operation {
             pw.println("#colorBinPath ");
             pw.println("##(boolean) Whether to draw the raypaths outside the pierce points. (false)");
             pw.println("#drawOutsides ");
+            pw.println("##(boolean) Whether to draw the turning points. (true)");
+            pw.println("#drawTurningPoints ");
             pw.println("##Path of color bin file for the outside segments, must be set if colorMode is not 0 and drawOutsides is true.");
             pw.println("#outsideColorBinPath ");
             pw.println("##(double) Transparency of raypaths and turning points [%]. (0)");
@@ -257,6 +260,7 @@ public class RaypathMapper extends Operation {
         if (colorMode > 0)
             colorBinPath = property.parsePath("colorBinPath", null, true, workPath);
         drawOutsides = property.parseBoolean("drawOutsides", "false");
+        drawTurningPoints = property.parseBoolean("drawTurningPoints", "true");
         if (colorMode > 0 && drawOutsides == true)
             outsideColorBinPath = property.parsePath("outsideColorBinPath", null, true, workPath);
         rayTransparency = property.parseDouble("rayTransparency", "0");
@@ -540,7 +544,7 @@ public class RaypathMapper extends Operation {
             pw.println("");
 
             // turning points
-            if (cutAtPiercePoint) {
+            if (cutAtPiercePoint && drawTurningPoints) {
                 pw.println("awk '{print $1, $2}' " + turningPointFileName
                         + " | gmt psxy -: -Sx0.3 -Wthinnest,black" + rayTransparencyOption);
                 pw.println("");
