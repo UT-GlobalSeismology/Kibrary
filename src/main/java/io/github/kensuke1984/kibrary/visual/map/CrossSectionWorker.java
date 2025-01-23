@@ -456,9 +456,9 @@ public class CrossSectionWorker {
                 pw.println("");
             }
             pw.println("#------- Scale");
-            pw.println("#gmt psscale -Ccp.cpt " + (scalarType.isNonNegative() ? "-G0/$MP " : "")
-                    + "-DjCB+jCB+w12/0.8+h -B$MP+l\"" + ScalarType.createScaleLabel(variable, scalarType) + "\"");
             pw.println("gmt psscale -Ccp.cpt " + (scalarType.isNonNegative() ? "-G0/$MP " : "")
+                    + "-DjCB+jCB+w12/0.8+h -B$MP+l\"" + ScalarType.createScaleLabel(variable, scalarType) + "\"");
+            pw.println("#gmt psscale -Ccp.cpt " + (scalarType.isNonNegative() ? "-G0/$MP " : "")
                     + "-DjCB+jCB+w12/0.8+h -B$MP+l\"" + ScalarType.createScaleLabel_TeX(variable, scalarType) + "\"");
             pw.println("");
             pw.println("#------- Labels");

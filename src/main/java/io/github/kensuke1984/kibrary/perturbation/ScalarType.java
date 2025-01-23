@@ -103,13 +103,13 @@ public enum ScalarType {
         switch (scalarType) {
         case ABSOLUTE: return paramName + (!unit.isEmpty() ? (" (" + unit + ")") : "");
         case DELTA: return "@~d@~" + paramName + (!unit.isEmpty() ? (" (" + unit + ")") : "");
-        case PERCENT: return "@~d@~" + paramName + "/" + paramName + " (%)";
-        case PERCENT_DIFFERENCE: return "@~d@~" + paramName + "/" + paramName + " Difference (%)";
-        case PERCENT_RATIO: return "@~d@~" + paramName + "/" + paramName + " Ratio";
+        case PERCENT: return "@~d@~" + paramName + "@- @:75:/@::@-" + paramName + " (%)";
+        case PERCENT_DIFFERENCE: return "@~d@~" + paramName + "@- @:75:/@::@-" + paramName + " Difference (%)";
+        case PERCENT_RATIO: return "@~d@~" + paramName + "@- @:75:/@::@-" + paramName + " Ratio";
         case KERNEL_Z: case KERNEL_R: case KERNEL_T: return "Sensitivity (normalized)";
-        case PARTIAL_Z: return "@%12%\\266@%%u@-Z@-/@%12%\\266@%%" + paramName + " (normalized)";
-        case PARTIAL_R: return "@%12%\\266@%%u@-R@-/@%12%\\266@%%" + paramName + " (normalized)";
-        case PARTIAL_T: return "@%12%\\266@%%u@-T@-/@%12%\\266@%%" + paramName + " (normalized)";
+        case PARTIAL_Z: return "@%12%\\266@%%u@-Z@-@- @:75:/@::@-@%12%\\266@%%" + paramName + " (normalized)";
+        case PARTIAL_R: return "@%12%\\266@%%u@-R@-@- @:75:/@::@-@%12%\\266@%%" + paramName + " (normalized)";
+        case PARTIAL_T: return "@%12%\\266@%%u@-T@-@- @:75:/@::@-@%12%\\266@%%" + paramName + " (normalized)";
         default: throw new IllegalArgumentException("Unsupported scalar type.");
         }
     }
