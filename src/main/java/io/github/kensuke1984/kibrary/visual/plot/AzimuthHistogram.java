@@ -183,9 +183,15 @@ public class AzimuthHistogram {
         // decide weights
         double[] weights = decideWeights(numberOfRecords, conductWeighting);
         Map<DataEntry, Double> weightMap = new HashMap<>();
-        for (DataEntry entry : entrySet) {
-            double weight = weights[(int) (azimuthMap.get(entry) / interval)];
-            weightMap.put(entry, weight);
+        if (conductWeighting) {
+            for (DataEntry entry : entrySet) {
+                if (!azimuthMap.containsKey(entry)) {
+                    // If raypath with no azimuth information exists, weights cannot be computed.
+                    throw new IllegalStateException("No information for " + entry + ".");
+                }
+                double weight = weights[(int) (azimuthMap.get(entry) / interval)];
+                weightMap.put(entry, weight);
+            }
         }
 
         // output
