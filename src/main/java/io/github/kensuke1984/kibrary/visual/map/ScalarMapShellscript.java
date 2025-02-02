@@ -26,14 +26,6 @@ import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 public class ScalarMapShellscript {
 
     /**
-     * Color palette.
-     * 0: red-yellow-white-skyblue-turquoise
-     * 1: orange-yellow-white-cyan-skyblue
-     * 2: red-orange-white-skyblue-purple
-     */
-    private static final int CP_STYLE = 1;
-
-    /**
      * The interval of deciding map size.
      */
     private static final int MAP_SIZE_INTERVAL = 5;
@@ -82,6 +74,14 @@ public class ScalarMapShellscript {
     private boolean maskExists = false;
     private double maskThreshold;
     private String maskFileName;
+
+    /**
+     * Color palette.
+     * 0: red-yellow-white-skyblue-turquoise
+     * 1: orange-yellow-white-cyan-skyblue
+     * 2: red-orange-white-skyblue-purple
+     */
+    private int cpStyle = 1;
 
     ScalarMapShellscript(VariableType variable, ScalarType scalarType, double[] radii, double[] boundaries,
             String mapRegion, double positionInterval, double scale, int nPanelsPerRow) {
@@ -133,21 +133,25 @@ public class ScalarMapShellscript {
         }
     }
 
+    void setCpStyle(int cpStyle, VariableType variable) {
+        this.cpStyle = cpStyle;
+    }
+
     /**
      * Write cp_master file, grid shellscript, and map shellscript.
      * @param outPath (Path) Directory where output files should be written.
      * @throws IOException
      */
     void write(Path outPath) throws IOException {
-        writeCpMaster(outPath.resolve("cp_master.cpt"));
+        writeCpMaster(outPath.resolve("cp_master.cpt"), cpStyle);
         if (maskExists) writeCpMask(outPath.resolve("cp_mask.cpt"), maskThreshold);
         writeGridMaker(outPath.resolve(plotFileNameRoot + "Grid.sh"));
         writeMakeMap(outPath.resolve(plotFileNameRoot + "Map.sh"));
     }
 
-    static void writeCpMaster(Path outputPath) throws IOException {
+    static void writeCpMaster(Path outputPath, int cpStyle) throws IOException {
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath))) {
-            switch(CP_STYLE) {
+            switch(cpStyle) {
             case 0:
                 // red-yellow-white-skyblue-turquoise
                 pw.println("-3.5 129 14  30 -3.088235294117647 129 14  30");

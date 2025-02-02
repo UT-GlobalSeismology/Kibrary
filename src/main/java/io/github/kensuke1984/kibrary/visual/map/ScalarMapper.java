@@ -70,6 +70,7 @@ public class ScalarMapper extends Operation {
      * Whether to display map as mosaic without smoothing.
      */
     private boolean mosaic;
+    private int cpStyle;
     private double maskThreshold;
 
     /**
@@ -119,6 +120,8 @@ public class ScalarMapper extends Operation {
             pw.println("#scale ");
             pw.println("##(boolean) Whether to display map as mosaic without smoothing. (false)");
             pw.println("#mosaic ");
+            pw.println("##Style of color palette, from {0: red-turquoise, 1: orange-skyblue, 2: red-purple}. (1)");
+            pw.println("#cpStyle ");
             pw.println("##(double) Threshold for mask. (0.3)");
             pw.println("#maskThreshold ");
         }
@@ -164,6 +167,7 @@ public class ScalarMapper extends Operation {
 
         scale = property.parseDouble("scale", "3");
         mosaic = property.parseBoolean("mosaic", "false");
+        cpStyle = property.parseInt("cpStyle", "1");
         maskThreshold = property.parseDouble("maskThreshold", "0.3");
     }
 
@@ -218,6 +222,7 @@ public class ScalarMapper extends Operation {
                 mapRegion, gridInterval, scale, nPanelsPerRow);
         if (displayLayers != null) script.setDisplayLayers(displayLayers);
         if (maskPath != null) script.setMask(maskVariable, maskScalarType, maskThreshold);
+        script.setCpStyle(cpStyle, variable);
         script.write(outPath);
         String fileNameRoot = script.getPlotFileNameRoot();
         System.err.println("After this finishes, please enter " + outPath

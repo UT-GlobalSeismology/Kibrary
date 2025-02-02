@@ -77,6 +77,14 @@ public class CrossSectionWorker {
     private double maskThreshold;
     private String maskFileName;
 
+    /**
+     * Color palette.
+     * 0: red-yellow-white-skyblue-turquoise
+     * 1: orange-yellow-white-cyan-skyblue
+     * 2: red-orange-white-skyblue-purple
+     */
+    private int cpStyle = 1;
+
     private Path raypathPath;
     private Path leftTextPath;
     private Path rightTextPath;
@@ -179,6 +187,10 @@ public class CrossSectionWorker {
         // set scalar file name
         String tag2 = (tag != null) ? (tag + "_forMaskXZ") : "forMaskXZ";
         this.maskFileName = ScalarListFile.generateFileName(maskVariable, maskScalarType, tag2);
+    }
+
+    void setCpStyle(int cpStyle, VariableType variable) {
+        this.cpStyle = cpStyle;
     }
 
     /**
@@ -357,7 +369,7 @@ public class CrossSectionWorker {
         Path annotationPath = outPath.resolve("rAnnotation.txt");
         Path gmtPath = outPath.resolve(plotFileNameRoot + "Section.sh");
 
-        ScalarMapShellscript.writeCpMaster(cpMasterPath);
+        ScalarMapShellscript.writeCpMaster(cpMasterPath, cpStyle);
         if (maskExists) {
             ScalarMapShellscript.writeCpMask(cpMaskPath, maskThreshold);
         }

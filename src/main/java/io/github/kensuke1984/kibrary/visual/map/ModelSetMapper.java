@@ -103,6 +103,7 @@ public class ModelSetMapper extends Operation {
      * Whether to display map as mosaic without smoothing.
      */
     private boolean mosaic;
+    private int cpStyle;
 
     /**
      * @param args (String[]) Arguments: none to create a property file, path of property file to run it.
@@ -165,6 +166,8 @@ public class ModelSetMapper extends Operation {
             pw.println("#scale ");
             pw.println("##(boolean) Whether to display map as mosaic without smoothing. (false)");
             pw.println("#mosaic ");
+            pw.println("##Style of color palette, from {0: red-turquoise, 1: orange-skyblue, 2: red-purple}. (1)");
+            pw.println("#cpStyle ");
         }
         System.err.println(outPath + " is created.");
     }
@@ -223,6 +226,7 @@ public class ModelSetMapper extends Operation {
 
         scale = property.parseDouble("scale", "3");
         mosaic = property.parseBoolean("mosaic", "false");
+        cpStyle = property.parseInt("cpStyle", "1");
     }
 
     @Override
@@ -301,6 +305,7 @@ public class ModelSetMapper extends Operation {
             ScalarMapShellscript script = new ScalarMapShellscript(variable, ScalarType.PERCENT, radii, boundaries,
                     mapRegion, gridInterval, scale, nPanelsPerRow);
             if (displayLayers != null) script.setDisplayLayers(displayLayers);
+            script.setCpStyle(cpStyle, variable);
             script.write(outPath);
             String fileNameRoot = script.getPlotFileNameRoot();
             writeParentShellscript(fileNameRoot, outPath.resolve(fileNameRoot + "AllMap.sh"));
