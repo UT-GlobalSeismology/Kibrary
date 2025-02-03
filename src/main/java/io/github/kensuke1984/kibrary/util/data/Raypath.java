@@ -118,11 +118,14 @@ public final class Raypath {
 
         int startBelowIndex = -1;
         int startAboveIndex = -1;
+        boolean valid = false;
         // if start point is outside layer, set it to startIndex
         if (positions.get(0).getR() < lowerRadius) {
             startBelowIndex = 0;
+            valid = true;
         } else if (upperRadius < positions.get(0).getR()) {
             startAboveIndex = 0;
+            valid = true;
         }
         for (int i = 0; i < nPoint; i++) {
             if (startBelowIndex < 0 && Precision.equals(positions.get(i).getR(), lowerRadius, FullPosition.RADIUS_EPSILON)) {
@@ -130,26 +133,36 @@ public final class Raypath {
                 startBelowIndex = i;
             } else if (startBelowIndex >= 0 && Precision.equals(positions.get(i).getR(), lowerRadius, FullPosition.RADIUS_EPSILON)) {
                 // do nothing if raypath is still at the lower border
+                // This is here to exclude cases where the radius becomes slightly larger than lowerRadius due to precision effects.
+            } else if (startBelowIndex >= 0 && positions.get(i).getR() < lowerRadius) {
+                // set valid when raypath goes under the lower border
+                valid = true;
             } else if (startBelowIndex >= 0 && positions.get(i).getR() > lowerRadius) {
                 // once the raypath goes above the lower border, clip from startBelowIndex to the previous index
-                if (i - 1 > startBelowIndex) clippedRaypaths.add(clip(startBelowIndex, i));
+                if ((i - 1 > startBelowIndex) && valid) clippedRaypaths.add(clip(startBelowIndex, i));
                 startBelowIndex = -1;
+                valid = false;
             }
             if (startAboveIndex < 0 && Precision.equals(positions.get(i).getR(), upperRadius, FullPosition.RADIUS_EPSILON)) {
                 // when raypath comes up to upper border, remember that index
                 startAboveIndex = i;
             } else if (startAboveIndex >= 0 && Precision.equals(positions.get(i).getR(), upperRadius, FullPosition.RADIUS_EPSILON)) {
                 // do nothing if raypath is still at the upper border
+                // This is here to exclude cases where the radius becomes slightly smaller than upperRadius due to precision effects.
+            } else if (startAboveIndex >= 0 && positions.get(i).getR() > upperRadius) {
+                // set valid when raypath goes above the upper border
+                valid = true;
             } else if (startAboveIndex >= 0 && positions.get(i).getR() < upperRadius) {
                 // once the raypath goes below the upper border, clip from startAboveIndex to the previous index
-                if (i - 1 > startAboveIndex) clippedRaypaths.add(clip(startAboveIndex, i));
+                if ((i - 1 > startAboveIndex) && valid) clippedRaypaths.add(clip(startAboveIndex, i));
                 startAboveIndex = -1;
+                valid = false;
             }
         }
         // if end point is still outside layer, add the final clip
-        if (startBelowIndex >= 0 && (nPoint - 1 > startBelowIndex)) {
+        if (startBelowIndex >= 0 && (nPoint - 1 > startBelowIndex) && valid) {
             clippedRaypaths.add(clip(startBelowIndex, nPoint));
-        } else if (startAboveIndex >= 0 && (nPoint - 1 > startAboveIndex)) {
+        } else if (startAboveIndex >= 0 && (nPoint - 1 > startAboveIndex) && valid) {
             clippedRaypaths.add(clip(startAboveIndex, nPoint));
         }
 
