@@ -1,6 +1,11 @@
 package io.github.kensuke1984.kibrary;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 
 import edu.sc.seis.TauP.TauModelException;
 import io.github.kensuke1984.kibrary.util.MathAid;
@@ -8,6 +13,36 @@ import io.github.kensuke1984.kibrary.util.MathAid;
 public class Test_temp {
 
     public static void main(String[] args) throws IOException, TauModelException {
+        Path inPath = Paths.get(args[0]);
+
+        double centerLat = 0;
+        double centerLon = 0;
+        double centerRad = 3680;
+
+        List<String> inLines = Files.readAllLines(inPath);
+        List<String> outLines = new ArrayList<>();
+        for (String inLine : inLines) {
+            String[] parts = inLine.split("\\s+");
+
+            double lat = Double.parseDouble(parts[2]);
+            double lon = Double.parseDouble(parts[3]);
+            double rad = Double.parseDouble(parts[4]);
+
+            lat = centerLat * 2 - lat;
+            lon = centerLon * 2 - lon;
+            rad = centerRad * 2 - rad;
+
+            String outLine = parts[0] + " " + parts[1] + " " + lat + " " + lon + " " + rad + " " + parts[5] + " " + parts[6];
+            outLines.add(outLine);
+        }
+
+        Path outPath = Paths.get("tmp.txt");
+        Files.write(outPath, outLines);
+
+
+
+
+
         System.err.println(MathAid.padToString(234, 2, false));
         System.err.println(MathAid.padToString(234, 4, false));
         System.err.println(MathAid.padToString(-234, 2, false));
