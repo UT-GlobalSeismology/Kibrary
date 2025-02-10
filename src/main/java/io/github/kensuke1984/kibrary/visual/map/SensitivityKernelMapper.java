@@ -275,8 +275,8 @@ public class SensitivityKernelMapper extends Operation {
 
                             // normalize
                             double max = discreteMap.values().stream().mapToDouble(Double::valueOf).max().getAsDouble();
-                            System.err.println("Normalizing my maximum value " + max);
-                            System.err.println("  and amplifying by " + amplification);
+                            System.err.println("  Normalizing by maximum value " + max);
+                            System.err.println("    and amplifying by " + amplification);
                             discreteMap.entrySet().forEach(entry -> discreteMap.put(entry.getKey(), entry.getValue() / max * amplification));
 
                             // output discrete perturbation file

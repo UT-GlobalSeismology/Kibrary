@@ -11,6 +11,7 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 
 /**
  * Class to create {@link SourceTimeFunction}s based on various settings.
+ *
  * @author otsuru
  * @since 2022/11/3
  */
@@ -34,6 +35,9 @@ public class SourceTimeFunctionHandler {
         }
         if (userSTFPath != null) {
             readUserSourceTimeFunctions(userSTFPath, events);
+            System.err.println("Using user-defined STFs.");
+        } else {
+            System.err.println("STF type: " + type);
         }
     }
 
@@ -117,6 +121,5 @@ public class SourceTimeFunctionHandler {
             }
         }
     }
-
 
 }

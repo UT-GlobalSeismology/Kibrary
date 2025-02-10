@@ -167,7 +167,7 @@ public class SPCBody {
 
     /**
      * Apply ramped source time function.
-     * To be conducted before {@link #convertToTimeDomain(int, double, double)}.
+     * To be conducted before {@link #convertToTimeDomainWithFix(int, double, double)}.
      * @param sourceTimeFunction ({@link SourceTimeFunction}) Source time function to be applied to all elements.
      */
     public void applySourceTimeFunction(SourceTimeFunction sourceTimeFunction) {
@@ -176,7 +176,7 @@ public class SPCBody {
 
     /**
      * Differentiate the data for all elements (in frequency domain) by time.
-     * To be conducted before {@link #convertToTimeDomain(int, double, double)}.
+     * To be conducted before {@link #convertToTimeDomainWithFix(int, double, double)}.
      * @param tlen (double) Time length [s].
      */
     void differentiate(double tlen) {
@@ -196,8 +196,8 @@ public class SPCBody {
      * @param samplingHz (double) Sampling frequency [Hz].
      * @param omegaI (double) &omega;<sub>i</sub>.
      */
-    public void convertToTimeDomain(int npts, double samplingHz, double omegaI) {
-        Arrays.stream(spcElements).forEach(element -> element.convertToTimeDomain(npts, samplingHz, omegaI));
+    public void convertToTimeDomainWithFix(int npts, double samplingHz, double omegaI) {
+        Arrays.stream(spcElements).forEach(element -> element.convertToTimeDomainWithFix(npts, samplingHz, omegaI));
     }
 
     public int getNp() {

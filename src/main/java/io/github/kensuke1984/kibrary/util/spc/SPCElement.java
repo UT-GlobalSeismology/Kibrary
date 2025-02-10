@@ -15,7 +15,7 @@ import io.github.kensuke1984.kibrary.source.SourceTimeFunction;
 public class SPCElement {
 
     /**
-     * Number of steps in frequency domain.
+     * Number of steps in frequency domain (counting only positive frequency part).
      */
     private final int np;
     /**
@@ -69,7 +69,7 @@ public class SPCElement {
     /**
      * Apply ramped source time function.
      * <p>
-     * To be conducted before {@link #convertToTimeDomain(int, double, double)}.
+     * To be conducted before {@link #convertToTimeDomainWithFix(int, double, double)}.
      * @param sourceTimeFunction ({@link SourceTimeFunction}) Source time function to be applied.
      */
     public void applySourceTimeFunction(SourceTimeFunction sourceTimeFunction) {
@@ -81,7 +81,7 @@ public class SPCElement {
      * <p>
      * -ufreq[i] * 2 i &pi; (ip / tlen).
      * <p>
-     * To be conducted before {@link #convertToTimeDomain(int, double, double)}.
+     * To be conducted before {@link #convertToTimeDomainWithFix(int, double, double)}.
      * @param tlen (double) Time length [s].
      */
     void differentiate(double tlen) {
@@ -115,8 +115,8 @@ public class SPCElement {
      * @param samplingHz (double) Sampling frequency [Hz].
      * @param omegaI (double) &omega;<sub>i</sub>.
      */
-    public void convertToTimeDomain(int npts, double samplingHz, double omegaI) {
-        uTime = SPCFileAid.convertToTimeDomain(uFreq, np, npts, samplingHz, omegaI);
+    public void convertToTimeDomainWithFix(int npts, double samplingHz, double omegaI) {
+        uTime = SPCFileAid.convertToTimeDomainWithFix(uFreq, np, npts, samplingHz, omegaI);
     }
 
     private int getNp() {

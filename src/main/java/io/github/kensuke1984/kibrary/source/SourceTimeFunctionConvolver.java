@@ -1,4 +1,4 @@
-package io.github.kensuke1984.kibrary.filter;
+package io.github.kensuke1984.kibrary.source;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -14,39 +14,35 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
+import org.apache.commons.math3.complex.Complex;
+
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.ThreadAid;
-import io.github.kensuke1984.kibrary.util.data.DataEntry;
-import io.github.kensuke1984.kibrary.util.data.DataEntryListFile;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
+import io.github.kensuke1984.kibrary.util.sac.SACExtension;
 import io.github.kensuke1984.kibrary.util.sac.SACFileAccess;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderAccess;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
+import io.github.kensuke1984.kibrary.util.spc.SPCFileAid;
+import io.github.kensuke1984.kibrary.util.spc.SPC_SAC;
 
 /**
- * Operation that filters observed and synthetic SAC files in eventFolders under obsDir and synDir.
- * Resulting files will all be placed inside event folders under outDir.
+ * Operation to convolve source time functions on timeseries data stored as SAC files.
  * <p>
- * SAC files that satisfy the following criteria will be filtered:
- * <ul>
- * <li> the component is included in the components specified in the property file </li>
- * </ul>
- * Even synthetic SAC files under obsDir and observed SAC files under synDir will be processed.
- * Filtering will be done even if only observed (and not synthetic) SAC files exist, or vice versa.
- * If both obsDir and synDir are empty for a certain event, the corresponding event folder will not be created.
+ * Waveforms in time domain are converted to frequency domain using FFT, convolved STFs, then converted back to time domain.
  * <p>
- * The lower and upper period limits of the filter will be written in headers USER0 and USER1 of resulting SAC files.
+ * The (&omega; - i &omega;<sub>i</sub>)-domain used in DSM can be used instead of the regular &omega;-domain.
+ * This will ensure that the resulting waveforms are identical to those directly convolved in {@link SPC_SAC}.
  *
- * @author Kensuke Konishi
- * @since a long time ago
- * @version 2021/11/18 moved from selection.FilterDivider to filter.FilterDivider
+ * @author otsuru
+ * @since 2024/11/18
  */
-public class FilterDivider extends Operation {
+public class SourceTimeFunctionConvolver extends Operation {
 
     private final Property property;
     /**
@@ -71,49 +67,40 @@ public class FilterDivider extends Operation {
     private Set<SACComponent> components;
 
     /**
-     * The root folder containing event folders which have observed SAC files to be filtered.
-     */
-    private Path obsPath;
-    /**
      * The root folder containing event folders which have synthetic SAC files to be filtered.
      */
     private Path synPath;
-
-    private ButterworthFilter filter;
     /**
      * Sampling frequency of input SAC files [Hz].
      */
     private double sacSamplingHz;
+
     /**
-     * Path of a data entry file.
+     * Source time function. {0: none, 1: boxcar, 2: triangle, 3: asymmetric triangle, 4: auto}
      */
-    private Path dataEntryPath;
+    private SourceTimeFunctionType sourceTimeFunctionType;
     /**
-     * Type of filter to apply, from {lowpass, highpass, bandpass, bandstop}.
+     * Folder containing user-defined source time functions.
      */
-    private String filterType;
+    private Path userSourceTimeFunctionPath;
     /**
-     * Lower cut-off frequency [Hz].
+     * Catalog containing source time function durations.
      */
-    private double lowFreq;
-    /**
-     * Upper cut-off frequency [Hz].
-     */
-    private double highFreq;
-    /**
-     * see Saito, n
-     */
-    private int filterNp;
-    /**
-     * Whether to apply causal filter. {true: causal, false: zero-phase}
-     */
-    private boolean causal;
+    private Path sourceTimeFunctionCatalogPath;
     /**
      * SAC files with NPTS over this value will be slimmed.
      */
     private int npts;
+    /**
+     * Number of steps in frequency domain (counting only positive frequency part) during computation.
+     */
+    private int np;
+    /**
+     * Artificial damping to apply upon Fourier transform. This is used to match the procedures of DSM.
+     */
+    private double artificialDamping = 1.e-2;
 
-    Set<DataEntry> entrySet;
+    private SourceTimeFunctionHandler stfHandler;
     /**
      * Number of processed event folders
      */
@@ -141,32 +128,30 @@ public class FilterDivider extends Operation {
             pw.println("#appendFolderDate false");
             pw.println("##SacComponents to be applied the filter, listed using spaces. (Z R T)");
             pw.println("#components ");
-            pw.println("##Path of a root folder containing observed dataset. (.)");
-            pw.println("#obsPath ");
             pw.println("##Path of a root folder containing synthetic dataset. (.)");
             pw.println("#synPath ");
             pw.println("##(double) Sampling frequency of input SAC files [Hz]. Files with a different value will be ignored. (20)");
             pw.println("#sacSamplingHz ");
-            pw.println("##Path of a data entry list file, if you want to select raypaths.");
-            pw.println("#dataEntryPath selectedEntry.lst");
-            pw.println("##Filter type to be applied, from {lowpass, highpass, bandpass, bandstop}. (bandpass)");
-            pw.println("#filterType ");
-            pw.println("##Lower limit of the frequency band [Hz]. (0.005)");
-            pw.println("#lowFreq ");
-            pw.println("##Higher limit of the frequency band [Hz]. (0.08)");
-            pw.println("#highFreq ");
-            pw.println("##(int) The value of NP for the filter. (4)");
-            pw.println("#filterNp ");
-            pw.println("##(boolean) Whether to apply causal filter. When false, zero-phase filter is applied. (false)");
-            pw.println("#causal ");
+            pw.println("##Path of folder containing source time functions. If not set, the following sourceTimeFunctionType will be used.");
+            pw.println("#userSourceTimeFunctionPath ");
+            pw.println("##Type of source time function, from {0:none, 1:boxcar, 2:triangle, 3:asymmetricTriangle, 4:auto}. (0)");
+            pw.println("##  When 'auto' is selected, the function specified in the GCMT catalog will be used.");
+            pw.println("#sourceTimeFunctionType ");
+            pw.println("##Path of a catalog to set source time function durations. If unneeded, leave this unset.");
+            pw.println("#sourceTimeFunctionCatalogPath ");
             pw.println("##NPTS, only if you want to slim SAC files down to that specific number, must be a power of 2.");
-            pw.println("##  When this is set, SAC files are slimmed. SAC files with a value of NPTS below the set value are not slimmed.");
+            pw.println("##  Otherwise, SAC files are slimmed to the largest power of 2 that does not exceed its length.");
             pw.println("#npts ");
+            pw.println("##Number of steps in frequency domain during convolution, only if specifying it, must be a power of 2.");
+            pw.println("##  Otherwise, (npts of waveform)/2 will be used.");
+            pw.println("#np ");
+            pw.println("##Artificial damping to apply upon Fourier transform, used to match the procedures of DSM. (0.01)");
+            pw.println("#artificialDamping 0");
         }
         System.err.println(outPath + " is created.");
     }
 
-    public FilterDivider(Property property) throws IOException {
+    public SourceTimeFunctionConvolver(Property property) throws IOException {
         this.property = (Property) property.clone();
     }
 
@@ -178,48 +163,45 @@ public class FilterDivider extends Operation {
         components = Arrays.stream(property.parseStringArray("components", "Z R T"))
                 .map(SACComponent::valueOf).collect(Collectors.toSet());
 
-        obsPath = property.parsePath("obsPath", ".", true, workPath);
         synPath = property.parsePath("synPath", ".", true, workPath);
         sacSamplingHz = property.parseDouble("sacSamplingHz", "20");
 
-        if (property.containsKey("dataEntryPath")) {
-            dataEntryPath = property.parsePath("dataEntryPath", null, true, workPath);
+        if (property.containsKey("userSourceTimeFunctionPath")) {
+            userSourceTimeFunctionPath = property.parsePath("userSourceTimeFunctionPath", null, true, workPath);
+        } else {
+            sourceTimeFunctionType = SourceTimeFunctionType.ofNumber(property.parseInt("sourceTimeFunctionType", "0"));
         }
-
-        filterType = property.parseString("filterType", "bandpass");
-        lowFreq = property.parseDouble("lowFreq", "0.005");
-        highFreq = property.parseDouble("highFreq", "0.08");
-        filterNp = property.parseInt("filterNp", "4");
-        causal = property.parseBoolean("causal", "false");
+        if (property.containsKey("sourceTimeFunctionCatalogPath")) {
+            sourceTimeFunctionCatalogPath = property.parsePath("sourceTimeFunctionCatalogPath", null, true, workPath);
+        }
         npts = property.parseInt("npts", String.valueOf(Integer.highestOneBit(Integer.MAX_VALUE)));
         if (npts != Integer.highestOneBit(npts)) throw new IllegalArgumentException("npts must be a power of 2.");
+        np = property.parseInt("np", String.valueOf(Integer.highestOneBit(Integer.MAX_VALUE)));
+        if (np != Integer.highestOneBit(np)) throw new IllegalArgumentException("np must be a power of 2.");
+        artificialDamping = property.parseDouble("artificialDamping", "0.01");
     }
 
     @Override
     public void run() throws IOException {
-        setFilter();
-
-        if (dataEntryPath != null) entrySet = DataEntryListFile.readAsSet(dataEntryPath);
+        stfHandler = new SourceTimeFunctionHandler(sourceTimeFunctionType,
+                sourceTimeFunctionCatalogPath, userSourceTimeFunctionPath, null);
 
         Set<EventFolder> eventDirs = new HashSet<>();
-        eventDirs.addAll(Files.exists(obsPath) ? DatasetAid.eventFolderSet(obsPath) : Collections.emptySet());
-        int obsNum = eventDirs.size();
-        System.err.println("Number of events in obsDir: " + obsNum);
         eventDirs.addAll(Files.exists(synPath) ? DatasetAid.eventFolderSet(synPath) : Collections.emptySet());
         int totalNum = eventDirs.size();
-        System.err.println("Number of events in synDir: " + (totalNum - obsNum));
+        System.err.println("Number of events in synDir: " + totalNum);
         if (totalNum == 0) {
             System.err.println("No events found.");
             return;
         }
 
-        outPath = DatasetAid.createOutputFolder(workPath, "filtered", folderTag, appendFolderDate, null);
+        outPath = DatasetAid.createOutputFolder(workPath, "convolved", folderTag, appendFolderDate, null);
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         ExecutorService es = ThreadAid.createFixedThreadPool();
         eventDirs.stream().map(this::process).forEach(es::execute);
         es.shutdown();
-        System.err.println("Filtering SAC files ...");
+        System.err.println("Convolving STFs to SAC files ...");
         while (!es.isTerminated()) {
             System.err.print("\r " + MathAid.ceil(100.0 * processedFolders.get() / eventDirs.size()) + "% of events done");
             ThreadAid.sleep(100);
@@ -239,7 +221,7 @@ public class FilterDivider extends Operation {
                 }
 
                 Files.createDirectories(outPath.resolve(eventDir.getName()));
-                sacNameSet.forEach(this::filterAndOut);
+                sacNameSet.forEach(this::convolveAndOut);
             } catch (Exception e) {
                 // if an exception is thrown, ignore that event folder and finish up the rest
                 System.err.println("Error on " + eventDir);
@@ -254,7 +236,6 @@ public class FilterDivider extends Operation {
         if (!components.contains(sacName.getComponent())) return false;
         try {
             SACHeaderAccess sacHeader = sacName.readHeader();
-            if (entrySet != null && entrySet.contains(sacHeader.toDataEntry()) == false) return false;
             double delta = MathAid.roundForPrecision(1.0 / sacSamplingHz);
             if (sacHeader.getValue(SACHeaderEnum.DELTA) != delta) {
                 System.err.println("! Sampling frequency is not " + sacSamplingHz + ", skipping: " + sacName.toString());
@@ -267,48 +248,46 @@ public class FilterDivider extends Operation {
         }
     }
 
-    private void setFilter() {
-        double omegaH = highFreq * 2 * Math.PI / sacSamplingHz;
-        double omegaL = lowFreq * 2 * Math.PI / sacSamplingHz;
-        switch (filterType) {
-            case "lowpass":
-                System.err.println("Designing filter. - " + highFreq);
-                filter = new LowPassFilter(omegaH, filterNp);
-                break;
-            case "highpass":
-                System.err.println("Designing filter. " + lowFreq + " - ");
-                filter = new HighPassFilter(omegaL, filterNp);
-                break;
-            case "bandpass":
-                System.err.println("Designing filter. " + lowFreq + " - " + highFreq);
-                filter = new BandPassFilter(omegaH, omegaL, filterNp);
-                break;
-            case "bandstop":
-                System.err.println("Designing filter. - " + lowFreq + " , " + highFreq + " -");
-                filter = new BandStopFilter(omegaH, omegaL, filterNp);
-                break;
-            default:
-                throw new IllegalArgumentException("No such filter as " + filterType);
-        }
-        filter.setCausal(causal);
-    }
-
-    /**
-     * Apply the filter on the sacFile and write in the outDir
-     *
-     * @param name a name of a SAC file to be filtered
-     */
-    private void filterAndOut(SACFileName name) {
+    private void convolveAndOut(SACFileName name) {
         try {
-            // apply filter
-            SACFileAccess sacFile = name.read().applyButterworthFilter(filter);
+            SACFileAccess sacFile = name.read();
+            int sacNpts = sacFile.getInt(SACHeaderEnum.NPTS);
+            double delta = sacFile.getValue(SACHeaderEnum.DELTA);
 
-            // cut if needed
-            if (npts < sacFile.getInt(SACHeaderEnum.NPTS)) sacFile = sacFile.cut(npts);
+            // cut length to a power of 2
+            int finalNpts = (npts < sacNpts) ? npts : Integer.highestOneBit(sacNpts);
+            sacFile = sacFile.cut(finalNpts);
+
+            // get waveform data
+            double[] waveData = sacFile.getData();
+            Complex[] complexWave = Arrays.stream(waveData).mapToObj(Complex::new).toArray(Complex[]::new);
+
+            // FFT to frequency domain
+            double tlen = finalNpts * delta;
+            double samplingHz = 1 / delta;
+            double omegaI = -Math.log(artificialDamping) / tlen;
+            int npToUse = (np < Integer.highestOneBit(Integer.MAX_VALUE)) ? np : finalNpts / 2;
+            complexWave = SPCFileAid.convertToFrequencyDomain(complexWave, npToUse, samplingHz, omegaI);
+
+            // set up STF
+            SourceTimeFunction sourceTimeFunction = stfHandler.createSourceTimeFunction(npToUse, tlen, samplingHz, sacFile.getGlobalCMTID());
+            if (sourceTimeFunction == null) throw new IllegalStateException("No STF created.");
+
+            // convolve STF
+            complexWave = sourceTimeFunction.convolve(complexWave, false);
+
+            // FFT back to time domain
+            complexWave = SPCFileAid.convertToTimeDomain(complexWave, npToUse, finalNpts, samplingHz, omegaI);
+            waveData = Arrays.stream(complexWave).mapToDouble(Complex::getReal).toArray();
+
+            // set new waveform
+            sacFile = sacFile.setSACData(waveData);
 
             // write SAC file. If there are SAC files with the same name, this throws an exception
-            Path out = outPath.resolve(name.getGlobalCMTID().toString()).resolve(name.getName());
-            sacFile.writeSAC(out, StandardOpenOption.CREATE_NEW);
+            SACExtension ext = SACExtension.valueOfConvolutedSynthetic(name.getComponent());
+            String outSacName = SACFileName.generate(name, ext);
+            Path outSacPath = outPath.resolve(name.getGlobalCMTID().toString()).resolve(outSacName);
+            sacFile.writeSAC(outSacPath, StandardOpenOption.CREATE_NEW);
 
         } catch (Exception e) {
             // if an exception is thrown, move on to the next SAC file

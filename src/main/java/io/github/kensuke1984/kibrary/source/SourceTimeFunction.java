@@ -34,7 +34,7 @@ public class SourceTimeFunction {
     static final FastFourierTransformer fft = new FastFourierTransformer(DftNormalization.STANDARD);
 
     /**
-     * Number of steps in frequency domain.
+     * Number of steps in frequency domain (counting only positive frequency part).
      */
     private final int np;
     /**
@@ -51,7 +51,8 @@ public class SourceTimeFunction {
     private Complex[] sourceTimeFunction;
 
     /**
-     * @param np (int) Number of steps in frequency domain. Should not exceed npts/2; points above that will be ignored.
+     * @param np (int) Number of steps in frequency domain (only positive frequency part).
+     *                   Should not exceed npts/2; points above that will be ignored.
      * @param npts (int) Number of data points in time domain. Must be a power of 2.
      * @param samplingHz (double) Sampling frequency [Hz].
      */
@@ -213,7 +214,8 @@ public class SourceTimeFunction {
 
     /**
      * Operates convolution for data in <b>frequency</b> domain.
-     * @param data (Complex[]) Data to be convolved in <b>frequency</b> domain. Length must be {@link #np} + 1.
+     * @param data (Complex[]) Data to be convolved in <b>frequency</b> domain (non-negative frequency part).
+     *                           Length must be {@link #np} + 1.
      * @param parallel (boolean) Whether to conduct parallel computations.
      * @return (Complex[]) Convolved data in <b>frequency</b> domain.
      */
@@ -244,7 +246,7 @@ public class SourceTimeFunction {
         Complex[] stf = new Complex[np + 1];
         stf[0] = Complex.ZERO;
         for (int i = 0; i < np; i++) stf[i+1] = sourceTimeFunction[i];
-        double[] stfInTime = Arrays.stream(SPCFileAid.convertToTimeDomain(stf, np, npts, samplingHz, 0.0))
+        double[] stfInTime = Arrays.stream(SPCFileAid.convertToTimeDomain(stf, np, npts))
                 .mapToDouble(Complex::getReal).map(d -> d * samplingHz).toArray();
         return new Trace(time, stfInTime);
     }

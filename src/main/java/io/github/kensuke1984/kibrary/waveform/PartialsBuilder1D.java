@@ -434,7 +434,7 @@ public class PartialsBuilder1D extends Operation {
                 spcFile.getSpcBodyList().stream().map(body -> body.getSpcElement(component))
                         .forEach(spcElement -> {
                             spcElement.applySourceTimeFunction(sourceTimeFunctions.get(event));
-                            spcElement.convertToTimeDomain(npts, partialSamplingHz, spcFile.omegai());
+                            spcElement.convertToTimeDomainWithFix(npts, partialSamplingHz, spcFile.omegai());
                         });
             }
         }

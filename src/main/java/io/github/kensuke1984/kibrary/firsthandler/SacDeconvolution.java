@@ -30,6 +30,10 @@ import io.github.kensuke1984.kibrary.util.sac.SACUtil;
  * @since a long time ago
  */
 class SacDeconvolution {
+    /**
+     * FFT
+     */
+    private static final FastFourierTransformer FFT = new FastFourierTransformer(DftNormalization.STANDARD);
 
     private final Path sourcePath;
     private final Path spectraPath;
@@ -57,10 +61,6 @@ class SacDeconvolution {
      * ナイキスト周波数
      */
     private static double nyquistFreq = 10;
-    /**
-     * フーリエ変換
-     */
-    private static FastFourierTransformer fft = new FastFourierTransformer(DftNormalization.STANDARD);
 
     /**
      * @param sourcePath 元になるSacFile
@@ -88,8 +88,8 @@ class SacDeconvolution {
         if (taperAreaRatio != 0) taperInTimeDomain(wavedata);
 
         Complex[] complexWave = Arrays.stream(wavedata).mapToObj(Complex::new).toArray(Complex[]::new);
-        // フーリエ変換 波形を周波数空間へ
-        complexWave = fft.transform(complexWave, TransformType.FORWARD);
+        // FFT to frequency domain
+        complexWave = FFT.transform(complexWave, TransformType.FORWARD);
 
         Complex[] resp = new Complex[npts];
         double[] freq = new double[npts];
@@ -111,13 +111,12 @@ class SacDeconvolution {
         // 装置関数を外す
         deconvolve(complexWave, resp);
 
-        // 時間領域に戻す
-        Complex[] finalComplexWave = fft.transform(complexWave, TransformType.INVERSE);
+        // FFT back to time domain
+        Complex[] finalComplexWave = FFT.transform(complexWave, TransformType.INVERSE);
 
         Arrays.parallelSetAll(wavedata, i -> finalComplexWave[i].getReal());
 
         SACUtil.writeSAC(outputPath, sacHeader, wavedata);
-
     }
 
     /**
