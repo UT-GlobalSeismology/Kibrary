@@ -542,6 +542,21 @@ public final class Trace {
     }
 
     /**
+     * Integrate the trace.
+     * @return ({@link Trace}) Integrated trace.
+     */
+    public Trace integrate() {
+        // add up trapezoids
+        double[] integratedArray = new double[xArray.length];
+        integratedArray[0] = 0.0;
+        for (int i = 1; i < xArray.length; i++) {
+            double area = (xArray[i] - xArray[i - 1]) * (yArray[i] + yArray[i - 1]) / 2.0;
+            integratedArray[i] = integratedArray[i - 1] + area;
+        }
+        return new Trace(xArray, integratedArray);
+    }
+
+    /**
      * fit X, Y in this to  y<sub>j</sub> = &sum;<sub>i</sub> (a<sub>i</sub> f<sub>i</sub> (x<sub>j</sub>))
      * by the least-square method.
      *

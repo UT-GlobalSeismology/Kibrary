@@ -105,6 +105,7 @@ public class BasicBinnedStackCreator extends Operation {
     private BasicPlotAid.AmpStyle obsAmpStyle;
     private BasicPlotAid.AmpStyle synAmpStyle;
     private double ampScale;
+    private double widthFactor;
 
     /**
      * Whether to plot the figure with azimuth as the Y-axis.
@@ -192,6 +193,8 @@ public class BasicBinnedStackCreator extends Operation {
             pw.println("#synAmpStyle ");
             pw.println("##(double) Coefficient to multiply to all waveforms. (1.0)");
             pw.println("#ampScale ");
+            pw.println("##(double) When changing line width by number of waveforms, specify its factor.");
+            pw.println("#widthFactor 0.1");
             pw.println("##(boolean) Whether to plot the figure with azimuth as the Y-axis. (false)");
             pw.println("#byAzimuth ");
             pw.println("##(boolean) Whether to set the azimuth range to [-180:180) instead of [0:360). (false)");
@@ -259,6 +262,7 @@ public class BasicBinnedStackCreator extends Operation {
         obsAmpStyle = BasicPlotAid.AmpStyle.valueOf(property.parseString("obsAmpStyle", "synEach"));
         synAmpStyle = BasicPlotAid.AmpStyle.valueOf(property.parseString("synAmpStyle", "synEach"));
         ampScale = property.parseDouble("ampScale", "1.0");
+        widthFactor = property.parseDouble("widthFactor", "0.0");
 
         byAzimuth = property.parseBoolean("byAzimuth", "false");
         flipAzimuth = property.parseBoolean("flipAzimuth", "false");
@@ -376,7 +380,6 @@ public class BasicBinnedStackCreator extends Operation {
         private GnuplotFile gnuplot;
         private double obsMeanMax;
         private double synMeanMax;
-        private boolean firstPlot = true;
 
         /**
          * @param eventDir
@@ -405,16 +408,19 @@ public class BasicBinnedStackCreator extends Operation {
             synMeanMax = mainSynList.stream().collect(Collectors.averagingDouble(id -> new ArrayRealVector(id.getData()).getLInfNorm()));
 
             // create array to insert stacked waveforms
+            int[] numStacked;
             Trace[] obsStacks;
             Trace[] mainSynStacks;
             Trace[] refSynStacks1;
             Trace[] refSynStacks2;
             if (!byAzimuth) {
+                numStacked = new int[(int) MathAid.ceil(180 / binWidth)];
                 obsStacks = new Trace[(int) MathAid.ceil(180 / binWidth)];
                 mainSynStacks = new Trace[(int) MathAid.ceil(180 / binWidth)];
                 refSynStacks1 = new Trace[(int) MathAid.ceil(180 / binWidth)];
                 refSynStacks2 = new Trace[(int) MathAid.ceil(180 / binWidth)];
             } else {
+                numStacked = new int[(int) MathAid.ceil(360 / binWidth)];
                 obsStacks = new Trace[(int) MathAid.ceil(360 / binWidth)];
                 mainSynStacks = new Trace[(int) MathAid.ceil(360 / binWidth)];
                 refSynStacks1 = new Trace[(int) MathAid.ceil(360 / binWidth)];
@@ -473,6 +479,7 @@ public class BasicBinnedStackCreator extends Operation {
                 }
 
                 //~add waveform
+                numStacked[k]++;
                 // observed
                 // Time shift of static correction shall be applied to the observed waveform.
                 Trace obsTrace = obsID.toTrace().withXAs(mainSynID.toTrace().getX());
@@ -501,10 +508,22 @@ public class BasicBinnedStackCreator extends Operation {
 
             binStackPlotSetup();
 
+            // create key (This is done beforehand so that the line widths in the key are always 1.)
+            gnuplot.addLine("NaN", BasicPlotAid.SHIFTED_APPEARANCE, "observed");
+            gnuplot.addLine("NaN", BasicPlotAid.switchSyntheticAppearance(mainSynStyle), mainSynName);
+            if (refSynStyle1 != 0) gnuplot.addLine("NaN", BasicPlotAid.switchSyntheticAppearance(refSynStyle1), refSynName1);
+            if (refSynStyle2 != 0) gnuplot.addLine("NaN", BasicPlotAid.switchSyntheticAppearance(refSynStyle2), refSynName2);
+
             // plot for each bin
             for (int j = 0; j < obsStacks.length; j++) {
                 if (obsStacks[j] != null && mainSynStacks[j] != null) {
-                    binStackPlotContent(obsStacks[j], mainSynStacks[j], refSynStacks1[j], refSynStacks2[j], (j + 0.5) * binWidth);
+                    // divide traces by number stacked to get average
+                    obsStacks[j] = obsStacks[j].multiply(1.0 / numStacked[j]);
+                    mainSynStacks[j] = mainSynStacks[j].multiply(1.0 / numStacked[j]);
+                    if (refSynStacks1[j] != null) refSynStacks1[j] = refSynStacks1[j].multiply(1.0 / numStacked[j]);
+                    if (refSynStacks2[j] != null) refSynStacks2[j] = refSynStacks2[j].multiply(1.0 / numStacked[j]);
+
+                    binStackPlotContent(obsStacks[j], mainSynStacks[j], refSynStacks1[j], refSynStacks2[j], numStacked[j], (j + 0.5) * binWidth);
                 }
             }
 
@@ -512,11 +531,11 @@ public class BasicBinnedStackCreator extends Operation {
             if (minDistance > maxDistance || minTime > maxTime) return;
             int startDistance = (int) MathAid.floor(minDistance / GRAPH_SIZE_INTERVAL) * GRAPH_SIZE_INTERVAL - Y_AXIS_RIM;
             int endDistance = (int) MathAid.ceil(maxDistance / GRAPH_SIZE_INTERVAL) * GRAPH_SIZE_INTERVAL + Y_AXIS_RIM;
-            gnuplot.setCommonYrange(startDistance, endDistance);
+            if (!byAzimuth) gnuplot.setCommonYrange(startDistance, endDistance);
             gnuplot.setCommonXrange(minTime - TIME_RIM, maxTime + TIME_RIM);
 
             // add travel time curves
-            if (displayPhases != null) {
+            if (displayPhases != null && !byAzimuth) {
                 BasicPlotAid.plotTravelTimeCurve(timeTool, displayPhases, shadeCurve, alignPhases, reductionSlowness,
                         startDistance, endDistance, null, "", eventPath, component, gnuplot);
             }
@@ -536,18 +555,18 @@ public class BasicBinnedStackCreator extends Operation {
 
             gnuplot.setCommonTitle(eventPath.getFileName().toString());
             if (alignPhases != null) {
-                gnuplot.setCommonXlabel("Time aligned on " + String.join(",", alignPhases) + "-phase arrival (s)");
+                gnuplot.setCommonXlabel("Time from " + String.join(",", alignPhases) + "-phase arrival (s)");
             } else {
                 gnuplot.setCommonXlabel("Reduced time (T - " + reductionSlowness + " Δ) (s)");
             }
             if (!byAzimuth) {
-                gnuplot.setCommonYlabel("Distance (deg)");
+                gnuplot.setCommonYlabel("Distance (\\U+00B0)");
             } else {
-                gnuplot.setCommonYlabel("Azimuth (deg)");
+                gnuplot.setCommonYlabel("Azimuth (\\U+00B0)");
             }
         }
 
-        private void binStackPlotContent(Trace obsStack, Trace mainSynStack, Trace refSynStack1, Trace refSynStack2, double y) throws IOException {
+        private void binStackPlotContent(Trace obsStack, Trace mainSynStack, Trace refSynStack1, Trace refSynStack2, double numStacked, double y) throws IOException {
             String fileName = y + "." + component + ".txt";
             outputBinStackTxt(obsStack, mainSynStack, refSynStack1, refSynStack2, fileName);
 
@@ -559,26 +578,22 @@ public class BasicBinnedStackCreator extends Operation {
             if (byAzimuth == true && flipAzimuth == true && 180 <= y) {
                 y -= 360;
             }
+            double lineWidth = (widthFactor > 0.0) ? numStacked * widthFactor : 1.0;
 
             String obsUsingString = String.format("1:($2/%.3e+%.2f)", obsAmp, y);
-            gnuplot.addLine(fileName, obsUsingString, BasicPlotAid.SHIFTED_APPEARANCE,
-                    (firstPlot ? "observed" : ""));
+            gnuplot.addLine(fileName, obsUsingString, BasicPlotAid.SHIFTED_APPEARANCE.withLinewidth(lineWidth), "");
             if (mainSynStyle != 0) {
                 String mainSynUsingString = String.format("1:($3/%.3e+%.2f)", synAmp, y);
-                gnuplot.addLine(fileName, mainSynUsingString, BasicPlotAid.switchSyntheticAppearance(mainSynStyle),
-                        (firstPlot ? mainSynName : ""));
+                gnuplot.addLine(fileName, mainSynUsingString, BasicPlotAid.switchSyntheticAppearance(mainSynStyle).withLinewidth(lineWidth), "");
             }
             if (refSynStyle1 != 0) {
                 String refSynUsingString1 = String.format("1:($4/%.3e+%.2f)", synAmp, y);
-                gnuplot.addLine(fileName, refSynUsingString1, BasicPlotAid.switchSyntheticAppearance(refSynStyle1),
-                        (firstPlot ? refSynName1 : ""));
+                gnuplot.addLine(fileName, refSynUsingString1, BasicPlotAid.switchSyntheticAppearance(refSynStyle1).withLinewidth(lineWidth), "");
             }
             if (refSynStyle2 != 0) {
                 String refSynUsingString2 = String.format("1:($5/%.3e+%.2f)", synAmp, y);
-                gnuplot.addLine(fileName, refSynUsingString2, BasicPlotAid.switchSyntheticAppearance(refSynStyle2),
-                        (firstPlot ? refSynName2 : ""));
+                gnuplot.addLine(fileName, refSynUsingString2, BasicPlotAid.switchSyntheticAppearance(refSynStyle2).withLinewidth(lineWidth), "");
             }
-            firstPlot = false;
         }
 
         /**

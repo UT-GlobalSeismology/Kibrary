@@ -71,6 +71,14 @@ public class DataEntry implements Comparable<DataEntry> {
         return obCompare != 0 ? obCompare : component.compareTo(o.component);
     }
 
+    public double computeEpicentralDistanceDeg() {
+        return Math.toDegrees(event.getEventData().getCmtPosition().computeEpicentralDistanceRad(observer.getPosition()));
+    }
+
+    public double computeAzimuthDeg() {
+        return Math.toDegrees(event.getEventData().getCmtPosition().computeAzimuthRad(observer.getPosition()));
+    }
+
     public GlobalCMTID getEvent() {
         return event;
     }

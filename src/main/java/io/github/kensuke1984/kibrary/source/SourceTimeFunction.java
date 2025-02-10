@@ -5,94 +5,99 @@ import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.IntStream;
 
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.OptionGroup;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
 import org.apache.commons.math3.complex.Complex;
-import org.apache.commons.math3.transform.DftNormalization;
-import org.apache.commons.math3.transform.FastFourierTransformer;
 
+import io.github.kensuke1984.kibrary.Summon;
+import io.github.kensuke1984.kibrary.math.FourierTransform;
 import io.github.kensuke1984.kibrary.math.Trace;
+import io.github.kensuke1984.kibrary.util.DatasetAid;
+import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.spc.SPCFileAid;
 
 /**
  * Source time function. <br>
  * <p>
  * You have to multiply<br>
- * Source time function: stf[0], .. stf[NP-1] <br>
+ * Source time function: stf[0], .. stf[NP] <br>
  * on <br>
- * Waveform in frequency domain: U[1].. U[NP], respectively. See
- * {@link #convolve(Complex[])}
+ * Waveform in frequency domain: U[0].. U[NP], respectively. See {@link #convolve(Complex[])}
  *
  * @author Kensuke Konishi
  * @since a long time ago
  */
 public class SourceTimeFunction {
 
-    static final FastFourierTransformer fft = new FastFourierTransformer(DftNormalization.STANDARD);
-
     /**
      * Number of steps in frequency domain (counting only positive frequency part).
      */
     private final int np;
     /**
-     * Number of data points in time domain.
+     * Time length of whole STF waveform [s]. Its reciprocal will be the size of frequency steps.
      */
-    private final int npts;
+    private final double tlen;
     /**
-     * Sampling frequency [Hz].
-     */
-    private final double samplingHz;
-    /**
-     * Source time function in frequency domain. Length is np.
+     * Source time function in frequency domain. Length is np + 1.
      */
     private Complex[] sourceTimeFunction;
 
     /**
      * @param np (int) Number of steps in frequency domain (only positive frequency part).
-     *                   Should not exceed npts/2; points above that will be ignored.
-     * @param npts (int) Number of data points in time domain. Must be a power of 2.
-     * @param samplingHz (double) Sampling frequency [Hz].
+     * @param tlen (double) Time length of whole STF waveform [s]. Its reciprocal will be the size of frequency steps.
      */
-    protected SourceTimeFunction(int np, int npts, double samplingHz) {
-        if (npts != Integer.highestOneBit(npts)) throw new IllegalArgumentException("npts must be a power of 2.");
-        int nnp = npts / 2;
-        if (np > nnp) System.err.println("!CAUTION: np=" + np + " is larger than npts/2=" + nnp + ", using only points up to " + nnp + ".");
+    SourceTimeFunction(int np, double tlen) {
         this.np = np;
-        this.npts = npts;
-        this.samplingHz = samplingHz;
+        this.tlen = tlen;
     }
 
     /**
-     * ASYMMETRIC Triangle source time function
-     * @param np           the number of steps in frequency domain
-     * @param tlen         [s] time length
-     * @param samplingHz   [Hz]
-     * @param halfDuration [s] of the source
-     * @return SourceTimeFunction
+     * @param sourceTimeFunction (Complex[]) Source time function in frequency domain. Length is np + 1.
+     * @param tlen (double) Time length of whole STF waveform [s]. Its reciprocal will be the size of frequency steps.
+     */
+    SourceTimeFunction(Complex[] sourceTimeFunction, double tlen) {
+        this.np = sourceTimeFunction.length - 1;
+        this.tlen = tlen;
+        this.sourceTimeFunction = sourceTimeFunction;
+    }
+
+    /**
+     * ASYMMETRIC triangle source time function.
+     *
+     * @param np (int) Number of steps in frequency domain (only positive frequency part).
+     * @param tlen (double) Time length of STF [s]. Its reciprocal will be the size of frequency steps.
+     * @param halfDuration1 (double) Half duration [s] of the source.
+     * @param halfDuration2 (double) Half duration [s] of the source.
+     * @return ({@link} SourceTimeFunction) Created STF.
      *
      * @author lina
      */
-    public static SourceTimeFunction asymmetricTriangleSourceTimeFunction(int np, double tlen, double samplingHz,
-            double halfDuration1, double halfDuration2) {
-        int npts = SPCFileAid.findNpts(tlen, samplingHz);
-        SourceTimeFunction sourceTimeFunction = new SourceTimeFunction(np, npts, samplingHz);
-        sourceTimeFunction.sourceTimeFunction = new Complex[np];
+    static SourceTimeFunction asymmetricTriangleSourceTimeFunction(int np, double tlen, double halfDuration1, double halfDuration2) {
+        SourceTimeFunction sourceTimeFunction = new SourceTimeFunction(np, tlen);
+        sourceTimeFunction.sourceTimeFunction = new Complex[np + 1];
         double deltaF = 1.0 / tlen;
         double h = 2. /(halfDuration1 + halfDuration2);
-        for (int i = 0; i < np; i++) {
-             double omega = (i + 1) * 2. * Math.PI * deltaF;
+        sourceTimeFunction.sourceTimeFunction[0] = Complex.ONE;
+        for (int i = 1; i < np + 1; i++) {
+             double omega = i * 2. * Math.PI * deltaF;
              sourceTimeFunction.sourceTimeFunction[i]
-                     =new Complex(1.*h/omega/omega*(1./halfDuration1 + 1./halfDuration2 - Math.cos(omega*halfDuration1)/halfDuration1 - Math.cos(omega*halfDuration2)/halfDuration2),
+                     = new Complex(1.*h/omega/omega*(1./halfDuration1 + 1./halfDuration2 - Math.cos(omega*halfDuration1)/halfDuration1 - Math.cos(omega*halfDuration2)/halfDuration2),
                              -1.*h/omega/omega*(Math.sin(omega*halfDuration1)/halfDuration1 - Math.sin(omega*halfDuration2)/halfDuration2));
         }
         return sourceTimeFunction;
     }
 
     /**
-     * Triangle source time function
+     * Triangle source time function.
      * <p>
      * The width is determined by the half duration &tau;. <br>
      * f(t) = 1/&tau;<sup>2</sup> t + 1/&tau; (-&tau; &le; t &le; 0), -1/&tau;
@@ -101,54 +106,52 @@ public class SourceTimeFunction {
      * Source time function F(&omega;) = (2-2cos(2&pi;&omega;&tau;))
      * /(2&pi;&omega;&tau;)<sup>2</sup>
      *
-     * @param np           the number of steps in frequency domain
-     * @param tlen         [s] time length
-     * @param samplingHz   [Hz]
-     * @param halfDuration [s] of the source
-     * @return SourceTimeFunction
+     * @param np (int) Number of steps in frequency domain (only positive frequency part).
+     * @param tlen (double) Time length of STF [s]. Its reciprocal will be the size of frequency steps.
+     * @param halfDuration (double) Half duration [s] of the source.
+     * @return ({@link} SourceTimeFunction) Created STF.
      */
-    public static final SourceTimeFunction triangleSourceTimeFunction(int np, double tlen, double samplingHz, double halfDuration) {
-        int npts = SPCFileAid.findNpts(tlen, samplingHz);
-        SourceTimeFunction sourceTimeFunction = new SourceTimeFunction(np, npts, samplingHz);
-        sourceTimeFunction.sourceTimeFunction = new Complex[np];
+    static final SourceTimeFunction triangleSourceTimeFunction(int np, double tlen, double halfDuration) {
+        SourceTimeFunction sourceTimeFunction = new SourceTimeFunction(np, tlen);
+        sourceTimeFunction.sourceTimeFunction = new Complex[np + 1];
         final double deltaF = 1.0 / tlen;
         final double constant = 2 * Math.PI * deltaF * halfDuration;
-        for (int i = 0; i < np; i++) {
-            double omegaTau = (i + 1) * constant;
+        sourceTimeFunction.sourceTimeFunction[0] = Complex.ONE;
+        for (int i = 1; i < np + 1; i++) {
+            double omegaTau = i * constant;
             sourceTimeFunction.sourceTimeFunction[i] = new Complex((2 - 2 * Math.cos(omegaTau)) / omegaTau / omegaTau);
         }
         return sourceTimeFunction;
     }
 
     /**
-     * Boxcar source time function
+     * Boxcar source time function.
      * <p>
      * The width is determined by the half duration &tau;. <br>
      * f(t) = 1/(2&times;&tau;) (-&tau; &le; t &le; &tau;), 0 (t &lt; -&tau;,
      * &tau; &lt; t) <br>
      * Source time function F(&omega;) = sin(2&pi;&omega;&tau;)/(2&pi;&omega;&tau;);
      *
-     * @param np           the number of steps in frequency domain
-     * @param tlen         [s] time length
-     * @param samplingHz   [Hz]
-     * @param halfDuration [s] of the source
-     * @return SourceTimeFunction
+     * @param np (int) Number of steps in frequency domain (only positive frequency part).
+     * @param tlen (double) Time length of STF [s]. Its reciprocal will be the size of frequency steps.
+     * @param halfDuration (double) Half duration [s] of the source.
+     * @return ({@link} SourceTimeFunction) Created STF.
      */
-    public static final SourceTimeFunction boxcarSourceTimeFunction(int np, double tlen, double samplingHz, double halfDuration) {
-        int npts = SPCFileAid.findNpts(tlen, samplingHz);
-        SourceTimeFunction sourceTimeFunction = new SourceTimeFunction(np, npts, samplingHz);
-        sourceTimeFunction.sourceTimeFunction = new Complex[np];
+    public static final SourceTimeFunction boxcarSourceTimeFunction(int np, double tlen, double halfDuration) {
+        SourceTimeFunction sourceTimeFunction = new SourceTimeFunction(np, tlen);
+        sourceTimeFunction.sourceTimeFunction = new Complex[np + 1];
         final double deltaF = 1.0 / tlen;
         final double constant = 2 * Math.PI * deltaF * halfDuration;
-        for (int i = 0; i < np; i++) {
-            double omegaTau = (i + 1) * constant;
+        sourceTimeFunction.sourceTimeFunction[0] = Complex.ONE;
+        for (int i = 1; i < np + 1; i++) {
+            double omegaTau = i * constant;
             sourceTimeFunction.sourceTimeFunction[i] = new Complex(Math.sin(omegaTau) / omegaTau);
         }
         return sourceTimeFunction;
     }
 
     /**
-     * Smoothed ramp source time function
+     * Smoothed ramp source time function.
      * <p>
      * The width is determined by the half duration &tau;. <br>
      * f(t) = (1-tanh<sup>2</sup>(2t/&tau;))/&tau; (-&tau; &le; t &le; &tau;), 0
@@ -156,51 +159,49 @@ public class SourceTimeFunction {
      * Source time function F(&omega;) = (&pi;<sup>2</sup>
      * &omega;&tau;/2)/sinh(&pi;<sup>2</sup>&omega;&tau;/2)<br>
      *
-     * @param np           the number of steps in frequency domain
-     * @param tlen         [s] time length
-     * @param samplingHz   [Hz]
-     * @param halfDuration [s] of the source
-     * @return SourceTimeFunction
+     * @param np (int) Number of steps in frequency domain (only positive frequency part).
+     * @param tlen (double) Time length of STF [s]. Its reciprocal will be the size of frequency steps.
+     * @param halfDuration (double) Half duration [s] of the source.
+     * @return ({@link} SourceTimeFunction) Created STF.
      */
-    public static final SourceTimeFunction smoothedRampSourceTimeFunction(int np, double tlen, double samplingHz, double halfDuration) {
-        int npts = SPCFileAid.findNpts(tlen, samplingHz);
-        SourceTimeFunction sourceTimeFunction = new SourceTimeFunction(np, npts, samplingHz);
-        sourceTimeFunction.sourceTimeFunction = new Complex[np];
-        final double deltaF = 1.0 / tlen; // omega
+    static final SourceTimeFunction smoothedRampSourceTimeFunction(int np, double tlen, double halfDuration) {
+        SourceTimeFunction sourceTimeFunction = new SourceTimeFunction(np, tlen);
+        sourceTimeFunction.sourceTimeFunction = new Complex[np + 1];
+        final double deltaF = 1.0 / tlen;
         final double constant = 2 * Math.PI * deltaF * halfDuration / 4 * Math.PI;
-        for (int i = 0; i < np; i++) {
-            double omegaTau = (i + 1) * constant;
+        sourceTimeFunction.sourceTimeFunction[0] = Complex.ONE;
+        for (int i = 1; i < np + 1; i++) {
+            double omegaTau = i * constant;
             sourceTimeFunction.sourceTimeFunction[i] = new Complex(omegaTau / Math.sinh(omegaTau));
         }
         return sourceTimeFunction;
     }
 
     /**
-     * @param outPath Path for a file.
-     * @param options for writing the file
-     * @throws IOException if the source time function is not computed, then an error
-     *                     occurs
+     * @param outPath (Path) Output file.
+     * @param options (OpenOption...) Options for write.
+     * @throws IOException If the source time function is not computed, an error occurs.
      */
-    public void writeSourceTimeFunction(Path outPath, OpenOption... options) throws IOException {
+    void write(Path outPath, OpenOption... options) throws IOException {
         Objects.requireNonNull(sourceTimeFunction, "Source time function is not computed yet.");
 
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, options))) {
-            pw.println("#np npts samplingHz");
-            pw.println(np + " " + npts + " " + samplingHz);
+            pw.println("#np tlen");
+            pw.println(np + " " + tlen);
+            pw.println("#real complex");
             for (int i = 0; i < sourceTimeFunction.length; i++)
                 pw.println(sourceTimeFunction[i].getReal() + " " + sourceTimeFunction[i].getImaginary());
         }
     }
 
-    public static SourceTimeFunction readSourceTimeFunction(Path sourcePath) throws IOException {
+    static SourceTimeFunction read(Path sourcePath) throws IOException {
         List<String> lines = Files.readAllLines(sourcePath);
         String[] parts = lines.get(1).split("\\s+");
         int np = Integer.parseInt(parts[0]);
-        int npts = Integer.parseInt(parts[1]);
-        double samplingHz = Double.parseDouble(parts[2]);
-        Complex[] function = IntStream.range(0, np).mapToObj(i -> toComplex(lines.get(i + 2))).toArray(Complex[]::new);
+        double tlen = Double.parseDouble(parts[1]);
+        Complex[] function = IntStream.range(0, np + 1).mapToObj(i -> toComplex(lines.get(i + 3))).toArray(Complex[]::new);
 
-        SourceTimeFunction stf = new SourceTimeFunction(np, npts, samplingHz);
+        SourceTimeFunction stf = new SourceTimeFunction(np, tlen);
         stf.sourceTimeFunction = function;
         return stf;
     }
@@ -224,53 +225,132 @@ public class SourceTimeFunction {
             throw new IllegalArgumentException("Input data length is invalid: " + data.length + " " + (np + 1));
         if (parallel) {
             return IntStream.range(0, np + 1).parallel()
-                    .mapToObj(i -> i == 0 ? data[i] : data[i].multiply(sourceTimeFunction[i - 1])).toArray(Complex[]::new);
+                    .mapToObj(i -> data[i].multiply(sourceTimeFunction[i])).toArray(Complex[]::new);
         } else {
             return IntStream.range(0, np + 1)
-                    .mapToObj(i -> i == 0 ? data[i] : data[i].multiply(sourceTimeFunction[i - 1])).toArray(Complex[]::new);
+                    .mapToObj(i -> data[i].multiply(sourceTimeFunction[i])).toArray(Complex[]::new);
         }
     }
 
     /**
+     * Get source time function in time domain.
      * x axis: time [s], y axis: amplitude
-     * After considering that conjugate F[i] = F[N-i],
-     *
-     * @return trace of Source time function in time domain
+     * Converted after considering that conjugate F[i] = F[N-i].
+     * @return ({@link Trace}) Source time function in time domain.
      */
-    public Trace getSourceTimeFunctionInTimeDomain() {
+    Trace getSourceTimeFunctionInTimeDomain(double samplingHz) {
         Objects.requireNonNull(sourceTimeFunction, "Source time function is not set yet.");
 
+        int npts = SPCFileAid.findNpts(tlen, samplingHz);
         double[] time = new double[npts];
         Arrays.setAll(time, i -> i / samplingHz);
 
         Complex[] stf = new Complex[np + 1];
-        stf[0] = Complex.ZERO;
-        for (int i = 0; i < np; i++) stf[i+1] = sourceTimeFunction[i];
-        double[] stfInTime = Arrays.stream(SPCFileAid.convertToTimeDomain(stf, np, npts))
+        for (int i = 0; i < np + 1; i++) stf[i] = sourceTimeFunction[i];
+        double[] stfInTime = Arrays.stream(FourierTransform.convertToTimeDomain(stf, np, npts))
                 .mapToDouble(Complex::getReal).map(d -> d * samplingHz).toArray();
         return new Trace(time, stfInTime);
     }
 
-    public void setSourceTimeFunction(Complex[] function) {
-        this.sourceTimeFunction = function;
+    public int getNp() {
+        return np;
     }
 
-    public static void main(String[] args) {
-        int np = 32768;
-        double tlen = 3276.8;
-        double samplingHz = 20.;
-        double halfDuration = 3.;
+    public double getTlen() {
+        return tlen;
+    }
 
-        SourceTimeFunction boxcar = SourceTimeFunction.boxcarSourceTimeFunction(np, tlen, samplingHz, halfDuration);
-        SourceTimeFunction triangle = SourceTimeFunction.triangleSourceTimeFunction(np, tlen, samplingHz, halfDuration);
-        SourceTimeFunction triangleA = SourceTimeFunction.asymmetricTriangleSourceTimeFunction(np, tlen, samplingHz, halfDuration, halfDuration);
+    public Complex[] getSourceTimeFunction() {
+        return sourceTimeFunction;
+    }
 
-        Trace trace1 = boxcar.getSourceTimeFunctionInTimeDomain();
-        Trace trace2 = triangle.getSourceTimeFunctionInTimeDomain();
-        Trace trace3 = triangleA.getSourceTimeFunctionInTimeDomain();
-        for (int i = 0; i < trace1.getLength(); i++)
-            if (trace1.getXAt(i) < 30)
-                System.out.println(trace1.getXAt(i) + " " + trace1.getYAt(i) + " " + trace2.getYAt(i) + " " + trace3.getYAt(i));
+    void setSourceTimeFunction(Complex[] sourceTimeFunction) {
+        this.sourceTimeFunction = sourceTimeFunction;
+    }
+
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    /**
+     * Create a source time function file under the working folder.
+     * @param args Options.
+     * @throws IOException
+     */
+    public static void main(String[] args) throws IOException {
+        Options options = defineOptions();
+        try {
+            run(Summon.parseArgs(options, args));
+        } catch (ParseException e) {
+            Summon.showUsage(options);
+        }
+    }
+
+    /**
+     * To be called from {@link Summon}.
+     * @return options
+     */
+    public static Options defineOptions() {
+        Options options = Summon.defaultOptions();
+
+        // input
+        OptionGroup inputOption = new OptionGroup();
+        inputOption.addOption(Option.builder("i").longOpt("id").hasArg().argName("eventID")
+                .desc("Global CMT ID.").build());
+        inputOption.addOption(Option.builder("h").longOpt("halfDuration").hasArg().argName("halfDuration")
+                .desc("Half duration [s] of the source.").build());
+        inputOption.setRequired(true);
+        options.addOptionGroup(inputOption);
+
+        options.addOption(Option.builder("f").longOpt("function").hasArg().argName("functionType")
+                .desc("Type of source time function, from {1:boxcar, 2:triangle, 4:auto}. (4)").build());
+        options.addOption(Option.builder("n").longOpt("np").hasArg().argName("np")
+                .desc("Number of steps in frequency domain (counting only positive frequency part). (512)").build());
+        options.addOption(Option.builder("t").longOpt("tlen").hasArg().argName("tlen")
+                .desc("Time length of whole STF waveform [s]. Its reciprocal will be the size of frequency steps. (3276.8)").build());
+
+        // output
+        options.addOption(Option.builder("T").longOpt("tag").hasArg().argName("fileTag")
+                .desc("A tag to include in output file name.").build());
+        options.addOption(Option.builder("O").longOpt("omitDate")
+                .desc("Omit date string in output file name.").build());
+
+        return options;
+    }
+
+    /**
+     * To be called from {@link Summon}.
+     * @param cmdLine options
+     * @throws IOException
+     */
+    public static void run(CommandLine cmdLine) throws IOException {
+        String fileTag = cmdLine.hasOption("T") ? cmdLine.getOptionValue("T") : null;
+        boolean appendFileDate = !cmdLine.hasOption("O");
+
+        SourceTimeFunctionType type = cmdLine.hasOption("f") ?
+                SourceTimeFunctionType.ofNumber(Integer.parseInt(cmdLine.getOptionValue("f"))) : SourceTimeFunctionType.AUTO;
+        int np = cmdLine.hasOption("n") ? Integer.parseInt(cmdLine.getOptionValue("n")) : 512;
+        double tlen = cmdLine.hasOption("t") ? Double.parseDouble(cmdLine.getOptionValue("t")) : 3276.8;
+
+        if (cmdLine.hasOption("i")) {
+            GlobalCMTID event = new GlobalCMTID(cmdLine.getOptionValue("i"));
+            SourceTimeFunctionHandler stfHandler = new SourceTimeFunctionHandler(type, null, null, null);
+            Path outputPath = DatasetAid.generateOutputFilePath(Paths.get(""), event.toString(), fileTag, false, null, ".stf");
+            stfHandler.createSourceTimeFunction(np, tlen, event).write(outputPath);
+
+        } else if (cmdLine.hasOption("h")) {
+            double halfDuration = Double.parseDouble(cmdLine.getOptionValue("h"));
+            Path outputPath = DatasetAid.generateOutputFilePath(Paths.get(""), "testSTF", fileTag, appendFileDate, null, ".stf");
+            switch (type) {
+            case BOXCAR:
+                boxcarSourceTimeFunction(np, tlen, halfDuration).write(outputPath);
+                break;
+            case TRIANGLE:
+                triangleSourceTimeFunction(np, tlen, halfDuration).write(outputPath);
+                break;
+            default:
+                throw new IllegalArgumentException("STF type " + type + " not allowed.");
+            }
+        }
     }
 
 }

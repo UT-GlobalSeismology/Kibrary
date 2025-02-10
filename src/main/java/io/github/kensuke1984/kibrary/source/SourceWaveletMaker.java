@@ -2,6 +2,7 @@ package io.github.kensuke1984.kibrary.source;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -12,24 +13,29 @@ import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
 
+import org.apache.commons.math3.complex.Complex;
 import org.apache.commons.math3.linear.RealVector;
 
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.correction.StaticCorrectionData;
 import io.github.kensuke1984.kibrary.correction.StaticCorrectionDataFile;
+import io.github.kensuke1984.kibrary.math.FourierTransform;
 import io.github.kensuke1984.kibrary.math.Trace;
+import io.github.kensuke1984.kibrary.timewindow.Timewindow;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
+import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.ThreadAid;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.sac.SACFileAccess;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
+import io.github.kensuke1984.kibrary.util.spc.SPCFileAid;
 
 /**
- *
+ * Operation to create source wavelets by stacking waveforms along a certain phase for each event.
  *
  * CAUTION: Time windows shold be the same length for all records of the same event, taken for a single phase.
  *
@@ -37,6 +43,8 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  * @since 2024/6/14
  */
 public class SourceWaveletMaker extends Operation {
+
+    private static final double TAPER_LENGTH_PERCENT = 15.0;
 
     private final Property property;
     /**
@@ -65,6 +73,11 @@ public class SourceWaveletMaker extends Operation {
      */
     private Path timewindowPath;
     /**
+     * Time length that the time window includes before main phase arrival [s].
+     * If the value is 5 (not -5), each time window starts 5 sec before the main phase arrival.
+     */
+    private double frontShift;
+    /**
      * Path of a root folder containing observed dataset.
      */
     private Path obsPath;
@@ -90,7 +103,14 @@ public class SourceWaveletMaker extends Operation {
      */
     private Path staticCorrectionPath;
 
-
+    /**
+     * Time length of output STFs [s], must be (a power of 2)/samplingHz.
+     */
+    private double tlen;
+    /**
+     * Number of steps in frequency domain, should not exceed tlen*samplingHz/2.
+     */
+    private int np;
 
     private Set<TimewindowData> sourceTimewindowSet;
     private Set<StaticCorrectionData> staticCorrectionSet;
@@ -119,6 +139,8 @@ public class SourceWaveletMaker extends Operation {
             pw.println("#components ");
             pw.println("##Path of a time window file, must be set.");
             pw.println("#timewindowPath selectedTimewindow.dat");
+            pw.println("##(double) Time length before phase arrival in time window [s]. (20)");
+            pw.println("#frontShift ");
             pw.println("##Path of a root folder containing observed dataset. (.)");
             pw.println("#obsPath ");
             pw.println("##Path of a root folder containing synthetic dataset. (.)");
@@ -131,6 +153,10 @@ public class SourceWaveletMaker extends Operation {
             pw.println("#dataEntryPath selectedEntry.lst");
             pw.println("##Path of a static correction file, if static correction time-shift shall be applied.");
             pw.println("#staticCorrectionPath staticCorrection.dat");
+            pw.println("##Time length of output STFs [s], must be (a power of 2)/sacSamplingHz. (3276.8)");
+            pw.println("#tlen ");
+            pw.println("##(int) Number of points to compute in frequency domain, should not exceed tlen*sacSamplingHz/2. (512)");
+            pw.println("#np ");
         }
         System.err.println(outPath + " is created.");
     }
@@ -148,6 +174,7 @@ public class SourceWaveletMaker extends Operation {
                 .map(SACComponent::valueOf).collect(Collectors.toSet());
 
         timewindowPath = property.parsePath("timewindowPath", null, true, workPath);
+        frontShift = property.parseDouble("frontShift", "20");
         obsPath = property.parsePath("obsPath", ".", true, workPath);
         synPath = property.parsePath("synPath", ".", true, workPath);
         convolved = property.parseBoolean("convolved", "true");
@@ -159,6 +186,9 @@ public class SourceWaveletMaker extends Operation {
         if (property.containsKey("staticCorrectionPath")) {
             staticCorrectionPath = property.parsePath("staticCorrectionPath", null, true, workPath);
         }
+
+        tlen = property.parseDouble("tlen", "3276.8");
+        np = property.parseInt("np", "512");
     }
 
     @Override
@@ -190,9 +220,11 @@ public class SourceWaveletMaker extends Operation {
     private class Worker extends DatasetAid.FilteredDatasetWorker {
         RealVector sumVector;
         int num = 0;
+        double halfDuration;
 
         private Worker(GlobalCMTID eventID) {
             super(eventID, obsPath, synPath, convolved, sacSamplingHz, sourceTimewindowSet);
+            halfDuration = eventID.getEventData().getHalfDuration();
         }
 
         @Override
@@ -206,7 +238,7 @@ public class SourceWaveletMaker extends Operation {
                 return;
             }
 
-            // apply static correction
+            // retrieve static correction
             double shift = 0.;
             if (!staticCorrectionSet.isEmpty()) {
                 StaticCorrectionData correction = StaticCorrectionData.findForTimeWindow(staticCorrectionSet, timeWindow);
@@ -218,19 +250,25 @@ public class SourceWaveletMaker extends Operation {
                 shift = correction.getTimeshift();
             }
 
-            // prepare observed trace
-            Trace obsTrace = obsSac.createTrace().cutWindow(timeWindow.shift(-shift), sacSamplingHz);
-            //TODO integrate
+            // use window [arrival - halfDuration, arrival + 3 * halfDuration]
+            double startTime = timeWindow.getStartTime() + frontShift - halfDuration;
+            double endTime = timeWindow.getStartTime() + frontShift + 3 * halfDuration;
+            Timewindow stfWindow = new Timewindow(startTime, endTime);
 
-            Trace synTrace = synSac.createTrace().cutWindow(timeWindow, sacSamplingHz);
-            //TODO integrate
+            // prepare observed trace, integrated to get displacement waveform
+            Trace obsTrace = obsSac.createTrace().cutWindow(stfWindow.shift(-shift), sacSamplingHz);
+            obsTrace = obsTrace.integrate();
 
-            // compute signed amplitude of synthetic (If wavelet is on negative side, this amplitude is negative.)
+            // prepare synthetic trace, integrated to get displacement waveform
+            Trace synTrace = synSac.createTrace().cutWindow(stfWindow, sacSamplingHz);
+            synTrace = synTrace.integrate();
+
+            // compute signed max amplitude of synthetic (If wavelet is on negative side, this amplitude is negative.)
             double synMin = synTrace.getMinY();
             double synMax = synTrace.getMaxY();
             double synAmp = (-synMin > synMax) ? synMin : synMax;
 
-            // divide observed trace by amplitude of synthetic
+            // divide observed trace by signed max amplitude of synthetic (This should result on positive side for most cases.)
             RealVector normalizedVector = obsTrace.multiply(1 / synAmp).getYVector();
 
             // stack
@@ -251,28 +289,56 @@ public class SourceWaveletMaker extends Operation {
 
         @Override
         public void finalWork() {
-            // divide by the number of timewindows added to get average
-            double[] yArray = sumVector.mapDivide(num).toArray();
+            // divide by the number of timewindows added to get average, and half duration to normalize the amplitude
+            double[] yArray = sumVector.mapDivide(num).mapDivide(halfDuration).toArray();
+            // taper
+            yArray = FourierTransform.taper(yArray, TAPER_LENGTH_PERCENT, true);
 
             // create X axis (time)
             double[] xArray = new double[sumVector.getDimension()];
             for (int i = 0; i < sumVector.getDimension(); i++) {
                 xArray[i] = i / sacSamplingHz;
             }
-
             // form Trace
             Trace waveletTrace = new Trace(xArray, yArray);
-
             // write
-            Path waveletPath = outPath.resolve(eventID + ".txt");
+            Path waveletTimePath = outPath.resolve(eventID + "_time.txt");
             try {
-                waveletTrace.write(waveletPath);
+                waveletTrace.write(waveletTimePath);
             } catch (IOException e) {
                 e.printStackTrace();
+            }
+
+            // zero-pad, with wavelet placed at the center of the time series
+            //   Here, arrival + halfDuration is set at center.
+            int npts = SPCFileAid.findNpts(tlen, sacSamplingHz);
+            int shiftNpts = (int) MathAid.roundForPrecision(2 * halfDuration * sacSamplingHz);
+            double[] paddedArray = new double[npts];
+            for (int i = 0; i < yArray.length; i++) {
+                paddedArray[npts / 2 - shiftNpts + i] = yArray[i];
+            }
+
+            // convert to frequency domain
+            Complex[] complexWave = FourierTransform.convertToFrequencyDomain(paddedArray, np);
+
+            for (int i = 0; i < complexWave.length; i++) {
+                // divide sampling frequency [Hz] so that the FFT matches with the Fourier transform
+                complexWave[i] = complexWave[i].divide(sacSamplingHz);
+                // time-shift so that the wavelet is at time zero
+                // This is done by reversing sign of odd-number index entries.
+                if (i % 2 == 1) complexWave[i] = complexWave[i].multiply(-1.0);
+            }
+
+            // output
+            SourceTimeFunction sourceTimeFunction = new SourceTimeFunction(complexWave, tlen);
+            Path waveletPath = outPath.resolve(eventID + ".stf");
+            try {
+                sourceTimeFunction.write(waveletPath);
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
             }
         }
 
     }
 
 }
-

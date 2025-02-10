@@ -18,6 +18,7 @@ import io.github.kensuke1984.kibrary.inversion.WeightingHandler;
 import io.github.kensuke1984.kibrary.math.MatrixFile;
 import io.github.kensuke1984.kibrary.math.VectorFile;
 import io.github.kensuke1984.kibrary.perturbation.PerturbationComparison;
+import io.github.kensuke1984.kibrary.source.SourceTimeFunction;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowSubtract;
 import io.github.kensuke1984.kibrary.util.data.DataEntryIntersection;
@@ -72,8 +73,9 @@ enum Brooklyn {
     EventHistogram(18, EventHistogram.class),
     LobbyCleanup(19, LobbyCleanup.class),
     // Synthetic  20
-    SPCFileAccess(21, SPCFileAccess.class),
-    SACFileAccess(22, SACFileAccess.class),
+    SPCFileAccess(20, SPCFileAccess.class),
+    SACFileAccess(21, SACFileAccess.class),
+    SourceTimeFunction(22, SourceTimeFunction.class),
     // Filtered 30
     TimewindowDataFile(31, TimewindowDataFile.class),
     StaticCorrectionDataFile(32, StaticCorrectionDataFile.class),

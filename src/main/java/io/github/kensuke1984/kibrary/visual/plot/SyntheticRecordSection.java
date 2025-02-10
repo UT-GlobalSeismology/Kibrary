@@ -449,11 +449,11 @@ public class SyntheticRecordSection extends Operation {
             if (minDistance > maxDistance || minTime > maxTime) return;
             int startDistance = (int) Math.floor(minDistance / GRAPH_SIZE_INTERVAL) * GRAPH_SIZE_INTERVAL - Y_AXIS_RIM;
             int endDistance = (int) Math.ceil(maxDistance / GRAPH_SIZE_INTERVAL) * GRAPH_SIZE_INTERVAL + Y_AXIS_RIM;
-            gnuplot.setCommonYrange(startDistance, endDistance);
+            if (!byAzimuth) gnuplot.setCommonYrange(startDistance, endDistance);
             gnuplot.setCommonXrange(minTime - TIME_RIM, maxTime + TIME_RIM);
 
             // add travel time curves
-            if (displayPhases != null) {
+            if (displayPhases != null && !byAzimuth) {
                 BasicPlotAid.plotTravelTimeCurve(timeTool, displayPhases, shadeCurve, alignPhases, reductionSlowness,
                         startDistance, endDistance, null, dateString, eventPath, component, gnuplot);
             }
@@ -474,15 +474,15 @@ public class SyntheticRecordSection extends Operation {
 
             gnuplot.setCommonTitle(eventName);
             if (alignPhases != null) {
-                gnuplot.setCommonXlabel("Time aligned on " + String.join(",", alignPhases) + "-phase arrival (s)");
+                gnuplot.setCommonXlabel("Time from " + String.join(",", alignPhases) + "-phase arrival (s)");
             } else {
                 gnuplot.setCommonXlabel("Reduced time (T - " + reductionSlowness + " Δ) (s)");
             }
             if (!byAzimuth) {
-                gnuplot.setCommonYlabel("Distance (deg)");
+                gnuplot.setCommonYlabel("Distance (\\U+00B0)");
                 gnuplot.addLabel("station network azimuth", "graph", 1.0, 1.0);
             } else {
-                gnuplot.setCommonYlabel("Azimuth (deg)");
+                gnuplot.setCommonYlabel("Azimuth (\\U+00B0)");
                 gnuplot.addLabel("station network distance", "graph", 1.0, 1.0);
             }
         }
