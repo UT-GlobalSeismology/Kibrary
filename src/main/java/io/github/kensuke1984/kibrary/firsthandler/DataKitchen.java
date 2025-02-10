@@ -54,6 +54,10 @@ public class DataKitchen extends Operation {
     private boolean appendFolderDate;
 
     /**
+     * The root folder containing event folders which have downloaded SAC files to be processed.
+     */
+    private Path lobbyPath;
+    /**
      * Which catalog to use. {0: CMT, 1: PDE}
      */
     private int catalog;
@@ -99,6 +103,8 @@ public class DataKitchen extends Operation {
             pw.println("#folderTag ");
             pw.println("##(boolean) Whether to append date string at end of output folder name. (true)");
             pw.println("#appendFolderDate false");
+            pw.println("##Path of a root folder containing input dataset. (.)");
+            pw.println("#lobbyPath ");
             pw.println("##The catalog to use, from {cmt, pde}. (cmt)");
             pw.println("#catalog  CANT CHANGE NOW"); // TODO
             pw.println("##Lower limit of epicentral distance range [deg], inclusive; [0:upperDistance). (0)");
@@ -138,6 +144,7 @@ public class DataKitchen extends Operation {
         if (property.containsKey("folderTag")) folderTag = property.parseStringSingle("folderTag", null);
         appendFolderDate = property.parseBoolean("appendFolderDate", "true");
 
+        lobbyPath = property.parsePath("lobbyPath", ".", true, workPath);
         switch (property.parseString("catalog", "cmt")) { // TODO
             case "cmt":
             case "CMT":
@@ -176,7 +183,7 @@ public class DataKitchen extends Operation {
 
     @Override
     public void run() throws IOException {
-        Set<EventFolder> eventDirs = DatasetAid.eventFolderSet(workPath);
+        Set<EventFolder> eventDirs = DatasetAid.eventFolderSet(lobbyPath);
         if (!DatasetAid.checkNum(eventDirs.size(), "event", "events")) {
             return;
         }

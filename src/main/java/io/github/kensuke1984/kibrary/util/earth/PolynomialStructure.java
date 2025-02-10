@@ -290,6 +290,87 @@ public final class PolynomialStructure {
     }
 
     /**
+     * Set function of a certain parameter to an arbitrary layer.
+     * This returns a new instance; the original instance is unchanged.
+     *
+     * @param r1 (double) Lower radius of layer to set.
+     * @param r2 (double) Upper radius of layer to set.
+     * @param variable (VariableType) The parameter to set.
+     * @param function (PolynomialFunction) Function to set.
+     * @return ({@link PolynomialStructure}) A new structure with function set.
+     *
+     * @author otsuru
+     * @since 2025/2/2
+     */
+    public PolynomialStructure withFunction(double r1, double r2, VariableType variable, PolynomialFunction function) {
+        // look up whether r1 and r2 are existing boundaries or not
+        boolean foundR1 = false;
+        boolean foundR2 = false;
+        for (double r : rMin) {
+            if (Precision.equals(r1, r, R_EPSILON)) foundR1 = true;
+            if (Precision.equals(r2, r, R_EPSILON)) foundR2 = true;
+        }
+
+        // add r1 and r2 as boundaries if they were not already
+        PolynomialStructure originalStructure = this;
+        if (!foundR1) originalStructure = originalStructure.withBoundaries(r1);
+        if (!foundR2) originalStructure = originalStructure.withBoundaries(r2);
+
+        // get values of structureNew
+        int nZoneNew = originalStructure.getNZone();
+        int nCoreZoneNew = originalStructure.getNCoreZone();
+        double[] rMinNew = originalStructure.getRmin();
+        double[] rMaxNew = originalStructure.getRmax();
+        PolynomialFunction[] rhoNew = originalStructure.getRho();
+        PolynomialFunction[] vpvNew = originalStructure.getVpv();
+        PolynomialFunction[] vphNew = originalStructure.getVph();
+        PolynomialFunction[] vsvNew = originalStructure.getVsv();
+        PolynomialFunction[] vshNew = originalStructure.getVsh();
+        PolynomialFunction[] etaNew = originalStructure.getEta();
+        double[] qMuNew = originalStructure.getQMu();
+        double[] qKappaNew = originalStructure.getQKappa();
+
+        // multiply the functions of the corresponding zones
+        int iZoneR1 = originalStructure.zoneOf(r1);
+        int iZoneR2 = originalStructure.zoneOf(r2);
+        for (int iZone = iZoneR1; iZone < iZoneR2; iZone++) {
+            switch(variable) {
+            case RHO:
+                rhoNew[iZone] = function;
+                break;
+            case Vp:
+                vpvNew[iZone] = function;
+                vphNew[iZone] = function;
+                break;
+            case Vpv:
+                vpvNew[iZone] = function;
+                break;
+            case Vph:
+                vphNew[iZone] = function;
+                break;
+            case Vs:
+                vsvNew[iZone] = function;
+                vshNew[iZone] = function;
+                break;
+            case Vsv:
+                vsvNew[iZone] = function;
+                break;
+            case Vsh:
+                vshNew[iZone] = function;
+                break;
+            case ETA:
+                etaNew[iZone] = function;
+                break;
+            default:
+                throw new IllegalArgumentException("Illegal variable type: " + variable);
+            }
+        }
+
+        return new PolynomialStructure(nZoneNew, nCoreZoneNew, rMinNew, rMaxNew,
+                rhoNew, vpvNew, vphNew, vsvNew, vshNew, etaNew, qMuNew, qKappaNew);
+    }
+
+    /**
      * Add perturbation of a certain parameter to an arbitrary layer.
      * This returns a new instance; the original instance is unchanged.
      *
@@ -404,7 +485,7 @@ public final class PolynomialStructure {
      * @param r (double) Radius [km].
      * @return (double) A value x to the input r for polynomial functions.
      */
-    private double xFor(double r) {
+    double xFor(double r) {
         return r / planetRadius();
     }
 
@@ -435,34 +516,47 @@ public final class PolynomialStructure {
 
     /**
      * Get value of a specified parameter at a given radius.
-     * @param variable (VariableType) the type of variable to obtain. Only RHO, Vpv, Vph, Vsv, Vsh, ETA, Qmu, Qkappa are allowed.
-     * @param r (double) radius [km]
-     * @return (double) value of the parameter at the given radius
+     * @param variable (VariableType) The type of variable to obtain. Only RHO, Vpv, Vph, Vsv, Vsh, ETA, Qmu, Qkappa are allowed.
+     * @param r (double) Radius [km].
+     * @return (double) Value of the parameter at the given radius.
      *
      * @author otsuru
      * @since 2022/4/11
      */
     public double getAtRadius(VariableType variable, double r) {
         switch(variable) {
-        case RHO:
-            return rho[zoneOf(r)].value(xFor(r));
-        case Vpv:
-            return vpv[zoneOf(r)].value(xFor(r));
-        case Vph:
-            return vph[zoneOf(r)].value(xFor(r));
-        case Vsv:
-            return vsv[zoneOf(r)].value(xFor(r));
-        case Vsh:
-            return vsh[zoneOf(r)].value(xFor(r));
-        case ETA:
-            return eta[zoneOf(r)].value(xFor(r));
-        case Qmu:
-            return qMu[zoneOf(r)];
-        case Qkappa:
-            return qKappa[zoneOf(r)];
-        default:
-//            return getMediumAt(r).get(type);
-            throw new IllegalArgumentException("Illegal parameter type");
+        case RHO: return rho[zoneOf(r)].value(xFor(r));
+        case Vpv: return vpv[zoneOf(r)].value(xFor(r));
+        case Vph: return vph[zoneOf(r)].value(xFor(r));
+        case Vsv: return vsv[zoneOf(r)].value(xFor(r));
+        case Vsh: return vsh[zoneOf(r)].value(xFor(r));
+        case ETA: return eta[zoneOf(r)].value(xFor(r));
+        case Qmu: return qMu[zoneOf(r)];
+        case Qkappa: return qKappa[zoneOf(r)];
+        default: throw new IllegalArgumentException("Illegal parameter type: " + variable);
+        }
+    }
+
+    /**
+     * Get derivative value of a specified parameter at a given radius.
+     * @param variable (VariableType) The type of variable to obtain for. Only RHO, Vpv, Vph, Vsv, Vsh, ETA, Qmu, Qkappa are allowed.
+     * @param r (double) Radius [km].
+     * @return (double) Derivative value of the parameter at the given radius.
+     *
+     * @author otsuru
+     * @since 2025/2/2
+     */
+    public double getDerivativeAtRadius(VariableType variable, double r) {
+        switch(variable) {
+        case RHO: return rho[zoneOf(r)].polynomialDerivative().value(xFor(r));
+        case Vpv: return vpv[zoneOf(r)].polynomialDerivative().value(xFor(r));
+        case Vph: return vph[zoneOf(r)].polynomialDerivative().value(xFor(r));
+        case Vsv: return vsv[zoneOf(r)].polynomialDerivative().value(xFor(r));
+        case Vsh: return vsh[zoneOf(r)].polynomialDerivative().value(xFor(r));
+        case ETA: return eta[zoneOf(r)].polynomialDerivative().value(xFor(r));
+        case Qmu: return 0.0;
+        case Qkappa: return 0.0;
+        default: throw new IllegalArgumentException("Illegal parameter type: " + variable);
         }
     }
 

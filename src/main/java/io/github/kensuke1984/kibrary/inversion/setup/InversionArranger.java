@@ -94,6 +94,7 @@ public class InversionArranger extends Operation {
             pw.println("##Path of a weighting properties file, must be set.");
             pw.println("#weightingPropertiesPath weighting.properties");
             pw.println("##When reusing an AtA file, set its path.");
+            pw.println("##  When setting this, make sure all factors of AtA are the same, especially amplitude weighting!!");
             pw.println("#reuseAtaPath ata.lst");
             pw.println("##(boolean) Fill 0 to empty partial waveforms. (false)");
             pw.println("#fillEmptyPartial ");
@@ -142,6 +143,7 @@ public class InversionArranger extends Operation {
         double numIndependent = assembler.getNumIndependent();
         double dNorm = assembler.getD().getNorm();
         double obsNorm = assembler.getObs().getNorm();
+        System.err.println("Normalized variance of input waveforms is " + assembler.getNormalizedVariance());
 
         // prepare output folder
         Path outPath = DatasetAid.createOutputFolder(workPath, "inversion", folderTag, appendFolderDate, null);
