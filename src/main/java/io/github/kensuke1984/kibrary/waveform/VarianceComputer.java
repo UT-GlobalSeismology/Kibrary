@@ -105,7 +105,6 @@ public class VarianceComputer {
         double normalizedVariance = MathAid.computeVariance(d, obs);
         System.err.println("Npts of whole waveform is " + obs.getDimension());
         System.err.println("Normalized variance is " + normalizedVariance);
-
     }
 
     /**
