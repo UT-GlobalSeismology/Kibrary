@@ -122,6 +122,7 @@ public class LetMeInvert extends Operation {
             pw.println("##Path of a weighting properties file, must be set.");
             pw.println("#weightingPropertiesPath weighting.properties");
             pw.println("##When reusing an AtA file, set its path.");
+            pw.println("##  When setting this, make sure all factors of AtA are the same, especially amplitude weighting!!");
             pw.println("#reuseAtaPath ata.lst");
             pw.println("##(boolean) Fill 0 to empty partial waveforms. (false)");
             pw.println("#fillEmptyPartial ");

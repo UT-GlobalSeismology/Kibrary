@@ -6,11 +6,19 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
+import org.apache.commons.math3.linear.Array2DRowRealMatrix;
+import org.apache.commons.math3.linear.MatrixUtils;
+import org.apache.commons.math3.linear.RealMatrix;
+import org.apache.commons.math3.util.Precision;
 
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.elastic.VariableType;
-import io.github.kensuke1984.kibrary.math.LinearRange;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 
 /**
@@ -50,8 +58,10 @@ public class PolynomialStructurePerturber extends Operation {
      */
     private String structureName;
 
+    private double lowerTieInRadius;
     private double lowerRadius;
     private double upperRadius;
+    private double upperTieInRadius;
     private VariableType variable;
     private double percent;
 
@@ -81,10 +91,14 @@ public class PolynomialStructurePerturber extends Operation {
             pw.println("#structurePath ");
             pw.println("##Name of a structure model you want to use. (PREM)");
             pw.println("#structureName ");
-            pw.println("##(double) Lower radius of layer to perturb; [0:upperRadius). (3480)");
+            pw.println("##(double) Tie-in radius beneath layer to perturb; [0:lowerRadius]. (3480)");
+            pw.println("#lowerTieInRadius ");
+            pw.println("##(double) Lower radius of layer to perturb; [lowerTieInRadius:upperRadius]. (3480)");
             pw.println("#lowerRadius ");
-            pw.println("##(double) Upper radius of layer to perturb; (lowerRadius:). (3580)");
+            pw.println("##(double) Upper radius of layer to perturb; [lowerRadius:upperTieInRadius]. (3580)");
             pw.println("#upperRadius ");
+            pw.println("##(double) Tie-in radius above layer to perturb; [upperRadius:). (3680)");
+            pw.println("#upperTieInRadius ");
             pw.println("##Variable to perturb, from {RHO,Vp,Vpv,Vph,Vs,Vsv,Vsh,ETA,Qmu,Qkappa}. (Vs)");
             pw.println("#variable ");
             pw.println("##(double) Size of perturbation [%]. (2)");
@@ -110,9 +124,14 @@ public class PolynomialStructurePerturber extends Operation {
             structureName = property.parseString("structureName", "PREM");
         }
 
+        lowerTieInRadius = property.parseDouble("lowerTieInRadius", "3480");
         lowerRadius = property.parseDouble("lowerRadius", "3480");
         upperRadius = property.parseDouble("upperRadius", "3580");
-        LinearRange.checkValidity("Radius", lowerRadius, upperRadius, 0.0);
+        upperTieInRadius = property.parseDouble("upperTieInRadius", "3680");
+        if (0.0 > lowerTieInRadius) throw new IllegalArgumentException("Does not satisfy 0 <= lowerTieInRadius.");
+        if (lowerTieInRadius > lowerRadius) throw new IllegalArgumentException("Does not satisfy lowerTieInRadius <= lowerRadius.");
+        if (lowerRadius > upperRadius) throw new IllegalArgumentException("Does not satisfy lowerRadius <= upperRadius.");
+        if (upperRadius > upperTieInRadius) throw new IllegalArgumentException("Does not satisfy upperRadius <= upperTieInRadius.");
 
         variable = VariableType.valueOf(property.parseString("variable", "Vs"));
         percent = property.parseDouble("percent", "2");
@@ -123,10 +142,114 @@ public class PolynomialStructurePerturber extends Operation {
        // set structure
        PolynomialStructure structure = PolynomialStructure.setupFromFileOrName(structurePath, structureName);
 
-       structure = structure.withPerturbation(lowerRadius, upperRadius, variable, percent);
+       // list up each individual variable for Vp and Vs
+       List<VariableType> variableList = transformVariable(variable);
+       // decide factor
+       double factor = 1.0 + percent / 100.0;
+
+       if (lowerTieInRadius < lowerRadius) {
+           if (variable == VariableType.Qkappa || variable == VariableType.Qmu) {
+               throw new IllegalArgumentException("Qkappa and Qmu cannot be tied in.");
+
+           } else {
+               // get x values
+               double x0 = structure.xFor(lowerTieInRadius);
+               double x1 = structure.xFor(lowerRadius);
+               // crete x matrix
+               double[] row0 = {1.0,  x0,  x0 * x0,  x0 * x0 * x0};
+               double[] row1 = {0.0, 1.0, 2.0 * x0, 3.0 * x0 * x0};
+               double[] row2 = {1.0,  x1,  x1 * x1,  x1 * x1 * x1};
+               double[] row3 = {0.0, 1.0, 2.0 * x1, 3.0 * x1 * x1};
+               RealMatrix xMatrix = new Array2DRowRealMatrix(4, 4);
+               xMatrix.setRow(0, row0);
+               xMatrix.setRow(1, row1);
+               xMatrix.setRow(2, row2);
+               xMatrix.setRow(3, row3);
+               // compute inverse
+               RealMatrix inverseMatrix = MatrixUtils.inverse(xMatrix).transpose();
+
+               // compute and set new function for each individual variable
+               for (VariableType currentVariable : variableList) {
+                   // get y values
+                   double y0 = structure.getAtRadius(currentVariable, lowerTieInRadius);
+                   double y0p = structure.getDerivativeAtRadius(currentVariable, lowerTieInRadius);
+                   double y1 = structure.getAtRadius(currentVariable, lowerRadius) * factor;
+                   double y1p = structure.getDerivativeAtRadius(currentVariable, lowerRadius) * factor;
+                   // create y vector
+                   double[] yArray = {y0, y0p, y1, y1p};
+                   // compute coefficients
+                   double[] coefArray = inverseMatrix.preMultiply(yArray);
+                   coefArray = Arrays.stream(coefArray).map(v -> Precision.round(v, 4)).toArray();
+                   // set new function
+                   PolynomialFunction function = new PolynomialFunction(coefArray);
+                   structure = structure.withFunction(lowerTieInRadius, lowerRadius, currentVariable, function);
+               }
+           }
+       }
+
+       if (lowerRadius < upperRadius) {
+           structure = structure.withPerturbation(lowerRadius, upperRadius, variable, percent);
+       }
+
+       if (upperRadius < upperTieInRadius) {
+           if (variable == VariableType.Qkappa || variable == VariableType.Qmu) {
+               throw new IllegalArgumentException("Qkappa and Qmu cannot be tied in.");
+
+           } else {
+               // get x values
+               double x0 = structure.xFor(upperRadius);
+               double x1 = structure.xFor(upperTieInRadius);
+               // crete x matrix
+               double[] row0 = {1.0,  x0,  x0 * x0,  x0 * x0 * x0};
+               double[] row1 = {0.0, 1.0, 2.0 * x0, 3.0 * x0 * x0};
+               double[] row2 = {1.0,  x1,  x1 * x1,  x1 * x1 * x1};
+               double[] row3 = {0.0, 1.0, 2.0 * x1, 3.0 * x1 * x1};
+               RealMatrix xMatrix = new Array2DRowRealMatrix(4, 4);
+               xMatrix.setRow(0, row0);
+               xMatrix.setRow(1, row1);
+               xMatrix.setRow(2, row2);
+               xMatrix.setRow(3, row3);
+               // compute inverse
+               RealMatrix inverseMatrix = MatrixUtils.inverse(xMatrix).transpose();
+
+               // compute and set new function for each individual variable
+               for (VariableType currentVariable : variableList) {
+                   // get y values
+                   double y0 = structure.getAtRadius(currentVariable, upperRadius) * factor;
+                   double y0p = structure.getDerivativeAtRadius(currentVariable, upperRadius) * factor;
+                   double y1 = structure.getAtRadius(currentVariable, upperTieInRadius);
+                   double y1p = structure.getDerivativeAtRadius(currentVariable, upperTieInRadius);
+                   // create y vector
+                   double[] yArray = {y0, y0p, y1, y1p};
+                   // compute coefficients
+                   double[] coefArray = inverseMatrix.preMultiply(yArray);
+                   coefArray = Arrays.stream(coefArray).map(v -> Precision.round(v, 4)).toArray();
+                   // set new function
+                   PolynomialFunction function = new PolynomialFunction(coefArray);
+                   structure = structure.withFunction(upperRadius, upperTieInRadius, currentVariable, function);
+               }
+           }
+       }
 
        Path outputPath = DatasetAid.generateOutputFilePath(workPath, nameRoot, fileTag, appendFileDate, null, ".structure");
        PolynomialStructureFile.write(structure, outputPath);
+   }
+
+   private List<VariableType> transformVariable(VariableType variable) {
+       List<VariableType> variableList = new ArrayList<>();
+       switch (variable) {
+       case Vp:
+           variableList.add(VariableType.Vpv);
+           variableList.add(VariableType.Vph);
+           break;
+       case Vs:
+           variableList.add(VariableType.Vsv);
+           variableList.add(VariableType.Vsh);
+           break;
+       default:
+           variableList.add(variable);
+       }
+       return variableList;
    }
 
 }

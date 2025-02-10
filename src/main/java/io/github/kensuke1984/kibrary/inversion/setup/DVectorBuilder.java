@@ -176,7 +176,7 @@ public final class DVectorBuilder {
 
     /**
      * Builds and returns the d vector.
-     * It will be weighed as Wd = [weight diagonal matrix](obsVector - synVector).
+     * It will be weighted as Wd = [weight diagonal matrix](obsVector - synVector).
      * @param weighting (Weighting)
      * @return (RealVector) Wd
      */
