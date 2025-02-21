@@ -369,7 +369,7 @@ public class CrossSectionWorker {
         Path annotationPath = outPath.resolve("rAnnotation.txt");
         Path gmtPath = outPath.resolve(plotFileNameRoot + "Section.sh");
 
-        ScalarMapShellscript.writeCpMaster(cpMasterPath, cpStyle);
+        ScalarMapShellscript.writeCpMaster(cpMasterPath, cpStyle, true);
         if (maskExists) {
             ScalarMapShellscript.writeCpMask(cpMaskPath, maskThreshold);
         }
@@ -469,7 +469,7 @@ public class CrossSectionWorker {
             }
             pw.println("#------- Scale");
             pw.println("gmt psscale -Ccp.cpt " + (scalarType.isNonNegative() ? "-G0/$MP " : "")
-                    + "-DjCB+jCB+w12/0.8+h -B$MP+l\"" + ScalarType.createScaleLabel(variable, scalarType) + "\"");
+                    + "-DjCB+jCB+w12/0.8+h -B$MP+l\"" + ScalarType.createScaleLabel(variable, scalarType, 75) + "\"");
             pw.println("#gmt psscale -Ccp.cpt " + (scalarType.isNonNegative() ? "-G0/$MP " : "")
                     + "-DjCB+jCB+w12/0.8+h -B$MP+l\"" + ScalarType.createScaleLabel_TeX(variable, scalarType) + "\"");
             pw.println("");

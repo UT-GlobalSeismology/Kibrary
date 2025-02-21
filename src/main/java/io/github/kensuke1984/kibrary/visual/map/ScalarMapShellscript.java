@@ -82,6 +82,7 @@ public class ScalarMapShellscript {
      * 2: red-orange-white-skyblue-purple
      */
     private int cpStyle = 1;
+    private boolean forSlides = false;
 
     ScalarMapShellscript(VariableType variable, ScalarType scalarType, double[] radii, double[] boundaries,
             String mapRegion, double positionInterval, double scale, int nPanelsPerRow) {
@@ -137,22 +138,29 @@ public class ScalarMapShellscript {
         this.cpStyle = cpStyle;
     }
 
+    void setForSlides(boolean forSlides) {
+        this.forSlides = forSlides;
+    }
+
     /**
      * Write cp_master file, grid shellscript, and map shellscript.
      * @param outPath (Path) Directory where output files should be written.
      * @throws IOException
      */
     void write(Path outPath) throws IOException {
-        writeCpMaster(outPath.resolve("cp_master.cpt"), cpStyle);
+        writeCpMaster(outPath.resolve("cp_master.cpt"), cpStyle, forSlides);
         if (maskExists) writeCpMask(outPath.resolve("cp_mask.cpt"), maskThreshold);
         writeGridMaker(outPath.resolve(plotFileNameRoot + "Grid.sh"));
         writeMakeMap(outPath.resolve(plotFileNameRoot + "Map.sh"));
     }
 
-    static void writeCpMaster(Path outputPath, int cpStyle) throws IOException {
+    static void writeCpMaster(Path outputPath, int cpStyle, boolean forSlides) throws IOException {
+        int styleCode = (forSlides ? cpStyle * 10 + 1 : cpStyle * 10);
+
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath))) {
-            switch(cpStyle) {
+            switch(styleCode) {
             case 0:
+            case 1:
                 // red-yellow-white-skyblue-turquoise
                 pw.println("-3.5 129 14  30 -3.088235294117647 129 14  30");
                 pw.println("-3.088235294117647 158 15  9 -2.6764705882352944 158 15  9");
@@ -175,7 +183,30 @@ public class ScalarMapShellscript {
                 pw.println("F       17 46  85");
                 pw.println("N       255 255 255");
                 break;
-            case 1:
+            case 10:
+                // orange-yellow-white-cyan-skyblue
+                pw.println("-4.00 127  25   5  -3.75 127  25   5");
+                pw.println("-3.75 161  55  14  -3.25 161  55  14");
+                pw.println("-3.25 199  91  28  -2.75 199  91  28");
+                pw.println("-2.75 217 127  53  -2.25 217 127  53");
+                pw.println("-2.25 230 164  83  -1.75 230 164  83");
+                pw.println("-1.75 240 201 115  -1.25 240 201 115");
+                pw.println("-1.25 245 227 159  -0.75 245 227 159");
+                pw.println("-0.75 250 244 200  -0.25 250 244 200");
+                pw.println("-0.25 253 253 253  0.25 253 253 253");
+                pw.println("0.25 234 248 248   0.75 234 248 248");
+                pw.println("0.75 200 242 243   1.25 200 242 243");
+                pw.println("1.25 158 221 232   1.75 158 221 232");
+                pw.println("1.75 124 195 225   2.25 124 195 225");
+                pw.println("2.25  83 159 199   2.75  83 159 199");
+                pw.println("2.75  49 121 168   3.25  49 121 168");
+                pw.println("3.25  37  91 153   3.75  37  91 153");
+                pw.println("3.75  27  65 140   4.00  27  65 140");
+                pw.println("B       153  43   7");
+                pw.println("F        27  65 140");
+                pw.println("N       255 255 255");
+                break;
+            case 11:
                 // orange-yellow-white-cyan-skyblue
                 pw.println("-4.00 127  25   5  -3.75 127  25   5");
                 pw.println("-3.75 161  55  14  -3.25 161  55  14");
@@ -198,7 +229,8 @@ public class ScalarMapShellscript {
                 pw.println("F        27  65 140");
                 pw.println("N       255 255 255");
                 break;
-            case 2:
+            case 20:
+            case 21:
                 // red-orange-white-skyblue-purple
                 pw.println("-4.00 102   5   6  -3.75 102   5   6");
                 pw.println("-3.75 145  12   7  -3.25 145  12   7");
@@ -275,11 +307,11 @@ public class ScalarMapShellscript {
             pw.println("gmt set PS_PAGE_ORIENTATION landscape");
             pw.println("gmt set MAP_DEFAULT_PEN black");
             pw.println("gmt set MAP_TITLE_OFFSET 0p");
-            pw.println("gmt set FORMAT_GEO_MAP D");
-            pw.println("gmt set FONT 40");
-            pw.println("gmt set FONT_TITLE 50");
-            pw.println("gmt set FONT_ANNOT 40");
-            pw.println("gmt set FONT_LABEL 50p,Helvetica,black");
+            if (forSlides) pw.println("gmt set FORMAT_GEO_MAP D");
+            pw.println("gmt set FONT " + (forSlides ? "40" : "30"));
+            pw.println("gmt set FONT_TITLE " + (forSlides ? "50" : "40"));
+            pw.println("gmt set FONT_ANNOT " + (forSlides ? "40" : "30"));
+            pw.println("gmt set FONT_LABEL " + (forSlides ? "50" : "40") + "p,Helvetica,black");
             pw.println("");
             pw.println("#------- Map parameters");
             pw.println("R='-R" + mapRegion + "'");
@@ -321,8 +353,12 @@ public class ScalarMapShellscript {
             pw.println("gmt subplot end");
             pw.println("");
             pw.println("#------- Scale");
-            pw.println("gmt psscale -Ccp.cpt -DJCB+w12/0.8+h -Y-2 -B$MP+l\"" + ScalarType.createScaleLabel(variable, scalarType) + "\"");
-            pw.println("#gmt psscale -Ccp.cpt -DJCB+w12/0.8+h -Y-2 -B$MP+l\"" + ScalarType.createScaleLabel_TeX(variable, scalarType) + "\"");
+            int scaleWidth = (forSlides ? 12 : 10);
+            int slashSize = (forSlides ? 75 : 60);
+            pw.println("gmt psscale -Ccp.cpt -DJCB+w" + scaleWidth + "/0.8+h -Y-2 -B$MP+l\""
+                        + ScalarType.createScaleLabel(variable, scalarType, slashSize) + "\"");
+            pw.println("#gmt psscale -Ccp.cpt -DJCB+w" + scaleWidth + "/0.8+h -Y-2 -B$MP+l\""
+                        + ScalarType.createScaleLabel_TeX(variable, scalarType) + "\"");
             pw.println("");
             pw.println("#------- Finalize");
             pw.println("gmt end");

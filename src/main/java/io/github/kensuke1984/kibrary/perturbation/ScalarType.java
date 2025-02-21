@@ -68,9 +68,10 @@ public enum ScalarType {
      * Create label of scale bar for GMT figures, formatted to write in GMT scripts.
      * @param variable ({@link VariableType}) Variable that the figure is for.
      * @param scalarType ({@link ScalarType}) Scalar type that the figure is for.
+     * @param slashSize (int) Size of slash.
      * @return (String) Label of scale bar to write in GMT scripts.
      */
-    public static String createScaleLabel(VariableType variable, ScalarType scalarType) {
+    public static String createScaleLabel(VariableType variable, ScalarType scalarType, int slashSize) {
         String paramName;
         switch (variable) {
         case RHO: paramName = "@~r@~"; break;
@@ -103,13 +104,13 @@ public enum ScalarType {
         switch (scalarType) {
         case ABSOLUTE: return paramName + (!unit.isEmpty() ? (" (" + unit + ")") : "");
         case DELTA: return "@~d@~" + paramName + (!unit.isEmpty() ? (" (" + unit + ")") : "");
-        case PERCENT: return "@~d@~" + paramName + "@- @:75:/@::@-" + paramName + " (%)";
-        case PERCENT_DIFFERENCE: return "@~d@~" + paramName + "@- @:75:/@::@-" + paramName + " Difference (%)";
-        case PERCENT_RATIO: return "@~d@~" + paramName + "@- @:75:/@::@-" + paramName + " Ratio";
+        case PERCENT: return "@~d@~" + paramName + "@- @:" + slashSize + ":/@::@-" + paramName + " (%)";
+        case PERCENT_DIFFERENCE: return "@~d@~" + paramName + "@- @:" + slashSize + ":/@::@-" + paramName + " Difference (%)";
+        case PERCENT_RATIO: return "@~d@~" + paramName + "@- @:" + slashSize + ":/@::@-" + paramName + " Ratio";
         case KERNEL_Z: case KERNEL_R: case KERNEL_T: return "Sensitivity (normalized)";
-        case PARTIAL_Z: return "@%12%\\266@%%u@-Z@-@- @:75:/@::@-@%12%\\266@%%" + paramName + " (normalized)";
-        case PARTIAL_R: return "@%12%\\266@%%u@-R@-@- @:75:/@::@-@%12%\\266@%%" + paramName + " (normalized)";
-        case PARTIAL_T: return "@%12%\\266@%%u@-T@-@- @:75:/@::@-@%12%\\266@%%" + paramName + " (normalized)";
+        case PARTIAL_Z: return "@%12%\\266@%%u@-Z@-@- @:" + slashSize + ":/@::@-@%12%\\266@%%" + paramName + " (normalized)";
+        case PARTIAL_R: return "@%12%\\266@%%u@-R@-@- @:" + slashSize + ":/@::@-@%12%\\266@%%" + paramName + " (normalized)";
+        case PARTIAL_T: return "@%12%\\266@%%u@-T@-@- @:" + slashSize + ":/@::@-@%12%\\266@%%" + paramName + " (normalized)";
         default: throw new IllegalArgumentException("Unsupported scalar type.");
         }
     }
