@@ -177,17 +177,17 @@ public class ScalarMapShellscript {
                 break;
             case 1:
                 // orange-yellow-white-cyan-skyblue
-                pw.println("-4.00 153  43   7  -3.75 153  43   7");
-                pw.println("-3.75 179  70  16  -3.25 179  70  16");
-                pw.println("-3.25 204 103  30  -2.75 204 103  30");
-                pw.println("-2.75 220 140  54  -2.25 220 140  54");
-                pw.println("-2.25 230 175  80  -1.75 230 175  80");
-                pw.println("-1.75 240 209 108  -1.25 240 209 108");
-                pw.println("-1.25 245 231 135  -0.75 245 231 135");
-                pw.println("-0.75 250 245 175  -0.25 250 245 175");
+                pw.println("-4.00 127  25   5  -3.75 127  25   5");
+                pw.println("-3.75 161  55  14  -3.25 161  55  14");
+                pw.println("-3.25 199  91  28  -2.75 199  91  28");
+                pw.println("-2.75 217 127  53  -2.25 217 127  53");
+                pw.println("-2.25 230 163  80  -1.75 230 163  80");
+                pw.println("-1.75 240 198 108  -1.25 240 198 108");
+                pw.println("-1.25 245 223 142  -0.75 245 223 142");
+                pw.println("-0.75 250 240 175  -0.25 250 240 175");
                 pw.println("-0.25 253 253 253  0.25 253 253 253");
                 pw.println("0.25 221 248 248   0.75 221 248 248");
-                pw.println("0.75 187 238 240   1.25 187 238 240");
+                pw.println("0.75 189 241 243   1.25 189 241 243");
                 pw.println("1.25 153 220 232   1.75 153 220 232");
                 pw.println("1.75 121 194 225   2.25 121 194 225");
                 pw.println("2.25  83 159 199   2.75  83 159 199");
@@ -274,8 +274,9 @@ public class ScalarMapShellscript {
             pw.println("gmt set PS_MEDIA 6000x6000");
             pw.println("gmt set PS_PAGE_ORIENTATION landscape");
             pw.println("gmt set MAP_DEFAULT_PEN black");
-            pw.println("gmt set MAP_TITLE_OFFSET 1p");
-            pw.println("gmt set FONT 50");
+            pw.println("gmt set MAP_TITLE_OFFSET 0p");
+            pw.println("gmt set FORMAT_GEO_MAP D");
+            pw.println("gmt set FONT 40");
             pw.println("gmt set FONT_TITLE 50");
             pw.println("gmt set FONT_ANNOT 40");
             pw.println("gmt set FONT_LABEL 50p,Helvetica,black");
