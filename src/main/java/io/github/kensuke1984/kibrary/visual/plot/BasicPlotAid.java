@@ -29,7 +29,7 @@ class BasicPlotAid {
 
     static final GnuplotLineAppearance UNSHIFTED_APPEARANCE = new GnuplotLineAppearance(2, GnuplotColorName.gray, 1);
     static final GnuplotLineAppearance SHIFTED_APPEARANCE = new GnuplotLineAppearance(1, GnuplotColorName.black, 1);
-    static final GnuplotLineAppearance RED_APPEARANCE = new GnuplotLineAppearance(1, GnuplotColorName.red, 1);
+    static final GnuplotLineAppearance RED_APPEARANCE = new GnuplotLineAppearance(1, GnuplotColorName.orange_red, 1);
     static final GnuplotLineAppearance GREEN_APPEARANCE = new GnuplotLineAppearance(1, GnuplotColorName.web_green, 1);
     static final GnuplotLineAppearance BLUE_APPEARANCE = new GnuplotLineAppearance(1, GnuplotColorName.web_blue, 1);
     static final GnuplotLineAppearance RESIDUAL_APPEARANCE = new GnuplotLineAppearance(1, GnuplotColorName.skyblue, 1);

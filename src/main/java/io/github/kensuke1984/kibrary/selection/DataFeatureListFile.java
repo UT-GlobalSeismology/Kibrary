@@ -31,7 +31,9 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
  * <li> absolute ratio: (maximum absolute amplitude in synthetic waveform)/(maximum absolute amplitude in observed waveform) </li>
  * <li> normalized variance: (variance of differential waveform)/(variance of observed waveform) </li>
  * <li> correlation coefficient of observed and synthetic waveforms </li>
- * <li> S/N ratio </li>
+ * <li> Sobs/Nobs norm ratio </li>
+ * <li> Sobs/Nobs ratio </li>
+ * <li> Ssyn/Nobs ratio </li>
  * </ul>
  *
  * @author ?
@@ -48,7 +50,7 @@ public class DataFeatureListFile {
 
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath, options))) {
             pw.println("#station, network, lat, lon, event, component, startTime, endTime, phases, "
-                    + "posSideRatio, negSideRatio, absRatio, variance, correlation, S/N, selected");
+                    + "variance, correlation, posSideRatio, negSideRatio, absRatio, S/N, obsS/N, synS/N, selected");
             featureSet.stream().sorted(Comparator.comparing(DataFeature::getTimewindow)).forEach(pw::println);
         }
     }
@@ -65,9 +67,9 @@ public class DataFeatureListFile {
             TimewindowData timewindow = new TimewindowData(Double.parseDouble(parts[6]), Double.parseDouble(parts[7]), observer,
                     new GlobalCMTID(parts[4]), SACComponent.valueOf(parts[5]), phases);
 
-            DataFeature feature = new DataFeature(timewindow, Double.parseDouble(parts[12]),
-                    Double.parseDouble(parts[13]), Double.parseDouble(parts[9]), Double.parseDouble(parts[10]),
-                    Double.parseDouble(parts[11]), Double.parseDouble(parts[14]), Boolean.parseBoolean(parts[15]));
+            DataFeature feature = new DataFeature(timewindow, Double.parseDouble(parts[9]), Double.parseDouble(parts[10]),
+                    Double.parseDouble(parts[11]), Double.parseDouble(parts[12]), Double.parseDouble(parts[13]),
+                    Double.parseDouble(parts[14]), Double.parseDouble(parts[15]), Double.parseDouble(parts[16]), Boolean.parseBoolean(parts[17]));
 
             featureSet.add(feature);
         }

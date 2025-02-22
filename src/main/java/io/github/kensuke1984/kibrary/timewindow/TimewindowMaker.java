@@ -246,8 +246,8 @@ public class TimewindowMaker extends Operation {
     }
 
     private static Set<Phase> phaseSet(String arg) {
-        return (arg == null || arg.isEmpty()) ? Collections.emptySet()
-                : Arrays.stream(arg.split("\\s+")).map(Phase::create).collect(Collectors.toSet());
+        return (arg == null || arg.isEmpty()) ? Collections.emptySet() :
+                Arrays.stream(arg.split("\\s+")).map(Phase::create).collect(Collectors.toSet());
     }
 
     @Override

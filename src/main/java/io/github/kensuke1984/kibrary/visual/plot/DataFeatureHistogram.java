@@ -405,7 +405,7 @@ public class DataFeatureHistogram extends Operation {
                TimewindowData timewindow = new TimewindowData(startTime, endTime,
                        synID.getObserver(), synID.getGlobalCMTID(), synID.getSacComponent(), synID.getPhases());
                // snRatio cannot be decided, so set 0
-               DataFeature feature = DataFeature.create(timewindow, obsU, synU, 0, selected);
+               DataFeature feature = DataFeature.create(timewindow, obsU, synU, 0, 0, 0, selected);
                featureSet.add(feature);
            } else {
                // if improvement window exists, cut to that window
@@ -426,7 +426,7 @@ public class DataFeatureHistogram extends Operation {
                    TimewindowData timewindow = new TimewindowData(startTime, endTime,
                            synID.getObserver(), synID.getGlobalCMTID(), synID.getSacComponent(), synID.getPhases());
                    // snRatio cannot be decided, so set 0
-                   DataFeature feature = DataFeature.create(timewindow, obsU, synU, 0, selected);
+                   DataFeature feature = DataFeature.create(timewindow, obsU, synU, 0, 0, 0, selected);
                    featureSet.add(feature);
                }
            }

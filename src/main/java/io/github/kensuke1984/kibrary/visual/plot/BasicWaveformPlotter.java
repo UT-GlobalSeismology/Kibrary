@@ -21,6 +21,9 @@ import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotColorName;
 import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotFile;
 import io.github.kensuke1984.kibrary.math.CircularRange;
 import io.github.kensuke1984.kibrary.math.LinearRange;
+import io.github.kensuke1984.kibrary.selection.DataFeature;
+import io.github.kensuke1984.kibrary.selection.DataFeatureListFile;
+import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.timewindow.TravelTimeInformation;
 import io.github.kensuke1984.kibrary.timewindow.TravelTimeInformationFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
@@ -87,6 +90,10 @@ public class BasicWaveformPlotter extends Operation {
      * Path of a travel time information file.
      */
     private Path travelTimePath;
+    /**
+     * Path of a data feature list file.
+     */
+    private Path dataFeaturePath;
 
     /**
      * Events to work for. If this is empty, work for all events in workPath.
@@ -125,6 +132,10 @@ public class BasicWaveformPlotter extends Operation {
      * Set of information of travel times.
      */
     private Set<TravelTimeInformation> travelTimeInfoSet;
+    /**
+     * Set of data features.
+     */
+    private Set<DataFeature> dataFeatureSet;
 
     /**
      * @param args (String[]) Arguments: none to create a property file, path of property file to run it.
@@ -154,6 +165,8 @@ public class BasicWaveformPlotter extends Operation {
             pw.println("#refBasicPath2 ");
             pw.println("##Path of a travel time information file, if plotting travel times.");
             pw.println("#travelTimePath travelTime.inf");
+            pw.println("##Path of a data feature list file, if displaying data statistics.");
+            pw.println("#dataFeaturePath dataFeature.lst");
             pw.println("##GlobalCMTIDs of events to work for, listed using spaces. To use all events, leave this unset.");
             pw.println("#tendEvents ");
             pw.println("##(boolean) Whether to export individual files for each component. (true)");
@@ -216,6 +229,8 @@ public class BasicWaveformPlotter extends Operation {
             refBasicPath2 = property.parsePath("refBasicPath2", ".", true, workPath);
         if (property.containsKey("travelTimePath"))
             travelTimePath = property.parsePath("travelTimePath", null, true, workPath);
+        if (property.containsKey("dataFeaturePath"))
+            dataFeaturePath = property.parsePath("dataFeaturePath", null, true, workPath);
 
         if (property.containsKey("tendEvents")) {
             tendEvents = Arrays.stream(property.parseStringArray("tendEvents", null)).map(GlobalCMTID::new)
@@ -288,6 +303,13 @@ public class BasicWaveformPlotter extends Operation {
         // read travel time information
         if (travelTimePath != null) {
             travelTimeInfoSet = TravelTimeInformationFile.read(travelTimePath);
+        }
+
+        // read data feature file
+        if (dataFeaturePath != null) {
+            dataFeatureSet = DataFeatureListFile.read(dataFeaturePath).stream()
+                    .filter(feature -> components.contains(feature.getTimewindow().getComponent()))
+                    .collect(Collectors.toSet());
         }
 
         for (GlobalCMTID event : events) {
@@ -398,6 +420,24 @@ public class BasicWaveformPlotter extends Operation {
                                 gnuplot.addLabel(entry.getKey().toString(), "first", entry.getValue(), "graph", 0.95, GnuplotColorName.violet);
                             }
                         });
+            }
+
+            // add data feature statistics
+            if (dataFeatureSet != null) {
+                List<DataFeature> features = dataFeatureSet.stream()
+                        .filter(feature -> feature.getTimewindow().toDataEntry().equals(synID.toDataEntry())
+                                && Math.abs(feature.getTimewindow().getStartTime() - synID.getStartTime()) < TimewindowData.TIME_EPSILON)
+                        .collect(Collectors.toList());
+                if (features.size() != 1) throw new IllegalStateException("0 or more than 1 data features for " + synID);
+                DataFeature feature = features.get(0);
+
+                gnuplot.addLabel("Variance: " + feature.getVariance(), "graph", 0.78, 0.90);
+                gnuplot.addLabel("Correlation: " + feature.getCorrelation(), "graph", 0.78, 0.80);
+                gnuplot.addLabel("Amp. ratio: " + feature.getAbsRatio(), "graph", 0.78, 0.70);
+                gnuplot.addLabel("S/N: " + feature.getSNRatio(), "graph", 0.78, 0.40);
+                gnuplot.addLabel("obsS/N: " + feature.getObsSNRatio(), "graph", 0.78, 0.30);
+                gnuplot.addLabel("synS/N: " + feature.getSynSNRatio(), "graph", 0.78, 0.20);
+                gnuplot.addLabel(feature.isSelected() ? "O" : "X", "graph", 0.78, 0.10);
             }
 
             // this is not done for the last obsID because we don't want an extra blank page to be created
