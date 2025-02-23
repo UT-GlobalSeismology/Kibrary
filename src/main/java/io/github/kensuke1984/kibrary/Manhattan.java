@@ -28,8 +28,8 @@ import io.github.kensuke1984.kibrary.selection.DataSelection;
 import io.github.kensuke1984.kibrary.selection.RaypathSelection;
 import io.github.kensuke1984.kibrary.source.SourceTimeFunctionConvolver;
 import io.github.kensuke1984.kibrary.source.SourceWaveletMaker;
+import io.github.kensuke1984.kibrary.timewindow.TimeWindowMaker;
 import io.github.kensuke1984.kibrary.timewindow.TimeWindowMerge;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowMaker;
 import io.github.kensuke1984.kibrary.util.DatasetMerge;
 import io.github.kensuke1984.kibrary.util.data.VirtualDatasetMaker;
 import io.github.kensuke1984.kibrary.util.earth.ModelStructureConverter;
@@ -97,7 +97,7 @@ enum Manhattan {
     VirtualDatasetMaker(25, VirtualDatasetMaker.class),
     // Filtered 30
     FilterDivider(30, FilterDivider.class),
-    TimewindowMaker(31, TimewindowMaker.class),
+    TimeWindowMaker(31, TimeWindowMaker.class),
     FujiStaticCorrection(32, FujiStaticCorrection.class),
     DataSelection(33, DataSelection.class),
     SourceWaveletMaker(34, SourceWaveletMaker.class),

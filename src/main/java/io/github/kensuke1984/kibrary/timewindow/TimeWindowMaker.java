@@ -70,7 +70,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACFileName;
  * @author Kensuke Konishi
  * @since a long time ago
  */
-public class TimewindowMaker extends Operation {
+public class TimeWindowMaker extends Operation {
 
     private final Property property;
     /**
@@ -214,7 +214,7 @@ public class TimewindowMaker extends Operation {
         System.err.println(outPath + " is created.");
     }
 
-    public TimewindowMaker(Property property) throws IOException {
+    public TimeWindowMaker(Property property) throws IOException {
         this.property = (Property) property.clone();
     }
 
