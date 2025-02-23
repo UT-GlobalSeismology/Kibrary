@@ -154,7 +154,7 @@ public class TimewindowMaker extends Operation {
     private boolean useDuplicatePhases;
 
     private Set<DataEntry> entrySet;
-    private Set<TimewindowData> timewindowSet = Collections.synchronizedSet(new HashSet<>());
+    private Set<TimeWindowData> timeWindowSet = Collections.synchronizedSet(new HashSet<>());
     private Set<TravelTimeInformation> travelTimeSet = Collections.synchronizedSet(new HashSet<>());
 
     /**
@@ -285,10 +285,10 @@ public class TimewindowMaker extends Operation {
         System.err.println();
 
         // output
-        if (timewindowSet.isEmpty()) {
+        if (timeWindowSet.isEmpty()) {
             System.err.println("No timewindows are created.");
         } else {
-            TimewindowDataFile.write(timewindowSet, outTimewindowPath);
+            TimewindowDataFile.write(timeWindowSet, outTimewindowPath);
         }
         TravelTimeInformationFile.write(usePhases, avoidPhases, travelTimeSet, outTravelTimePath);
     }
@@ -362,7 +362,7 @@ public class TimewindowMaker extends Operation {
         double[] avoidPhaseTimes = avoidArrivals.stream().mapToDouble(Arrival::getTime).toArray();
 
         // create windows
-        Timewindow[] windows;
+        TimeWindow[] windows;
         if (allowSplitWindows) {
             // create windows allowing them to be split
             windows = createWindowsAllowingSplits(usePhaseTimes, avoidPhaseTimes);
@@ -387,8 +387,8 @@ public class TimewindowMaker extends Operation {
         }
 
         // window fix and check
-        List<TimewindowData> windowList = Arrays.stream(windows)
-                .map(window -> new TimewindowData(window.getStartTime(), window.getEndTime(), observer, event, component,
+        List<TimeWindowData> windowList = Arrays.stream(windows)
+                .map(window -> new TimeWindowData(window.getStartTime(), window.getEndTime(), observer, event, component,
                         findContainedPhases(window, useArrivals)))
                 .filter(tw -> tw.getLength() > minLength).collect(Collectors.toList());
         if (windowList.size() == 0) {
@@ -397,7 +397,7 @@ public class TimewindowMaker extends Operation {
         }
 
         // add final result
-        timewindowSet.addAll(windowList);
+        timeWindowSet.addAll(windowList);
         travelTimeSet.add(new TravelTimeInformation(event, observer, useArrivals, avoidArrivals));
 
     }
@@ -407,21 +407,21 @@ public class TimewindowMaker extends Operation {
      * If time windows of avoidPhases overlap the time windows of usePhases, the time window will be cut.
      * @param usePhaseTimes (double[]) Travel times of phases to be used, must be in order.
      * @param avoidPhaseTimes (double[]) Travel times of phases not to be included, must be in order.
-     * @return ({@link Timewindow}[]) Created time windows. If nothing remains after eliminating avoidWindows, null.
+     * @return ({@link TimeWindow}[]) Created time windows. If nothing remains after eliminating avoidWindows, null.
      * @author anselme
      */
-    private Timewindow[] createWindowsAllowingSplits(double[] usePhaseTimes, double[] avoidPhaseTimes) {
+    private TimeWindow[] createWindowsAllowingSplits(double[] usePhaseTimes, double[] avoidPhaseTimes) {
         // create windows of usePhases
-        Timewindow[] windows = Arrays.stream(usePhaseTimes)
-                .mapToObj(time -> new Timewindow(time - frontShift, time + rearShift))
-                .sorted().toArray(Timewindow[]::new);
+        TimeWindow[] windows = Arrays.stream(usePhaseTimes)
+                .mapToObj(time -> new TimeWindow(time - frontShift, time + rearShift))
+                .sorted().toArray(TimeWindow[]::new);
         windows = mergeWindows(windows);
         // when avoidPhases do not exist
         if (avoidPhaseTimes.length == 0) return windows;
         // create windows of avoidPhases
-        Timewindow[] avoidWindows = Arrays.stream(avoidPhaseTimes)
-                .mapToObj(time -> new Timewindow(time - avoidFrontShift, time + avoidRearShift))
-                .sorted().toArray(Timewindow[]::new);
+        TimeWindow[] avoidWindows = Arrays.stream(avoidPhaseTimes)
+                .mapToObj(time -> new TimeWindow(time - avoidFrontShift, time + avoidRearShift))
+                .sorted().toArray(TimeWindow[]::new);
         avoidWindows = mergeWindows(avoidWindows);
         // cut avoidWindows out of useWindows
         return considerAvoidPhases(windows, avoidWindows);
@@ -433,20 +433,20 @@ public class TimewindowMaker extends Operation {
      * @param initialPhaseTime (double) Travel time of first usePhase.
      * @param finalPhaseTime (double) Travel time of last usePhase.
      * @param avoidPhaseTimes (double[]) Travel times of avoidPhases, must be in order.
-     * @return ({@link Timewindow}[]) Array containing the single created time window.
+     * @return ({@link TimeWindow}[]) Array containing the single created time window.
      *          If nothing remains after eliminating avoidWindows, null.
      * @author rei
      */
-    private Timewindow[] createSingleWindow(double initialPhaseTime, double finalPhaseTime, double[] avoidPhaseTimes) {
+    private TimeWindow[] createSingleWindow(double initialPhaseTime, double finalPhaseTime, double[] avoidPhaseTimes) {
         // create window containing all usePhases
-        Timewindow[] window = new Timewindow[1];
-        window[0] = new Timewindow(initialPhaseTime - frontShift, finalPhaseTime + rearShift);
+        TimeWindow[] window = new TimeWindow[1];
+        window[0] = new TimeWindow(initialPhaseTime - frontShift, finalPhaseTime + rearShift);
         // when avoidPhases do not exist
         if (avoidPhaseTimes.length == 0) return window;
         // create windows of avoidPhases
-        Timewindow[] avoidWindows = Arrays.stream(avoidPhaseTimes)
-                .mapToObj(time -> new Timewindow(time - avoidFrontShift, time + avoidRearShift))
-                .sorted().toArray(Timewindow[]::new);
+        TimeWindow[] avoidWindows = Arrays.stream(avoidPhaseTimes)
+                .mapToObj(time -> new TimeWindow(time - avoidFrontShift, time + avoidRearShift))
+                .sorted().toArray(TimeWindow[]::new);
         avoidWindows = mergeWindows(avoidWindows);
         // cut avoidWindows out of the window
         // Note that the result still has only one timewindow.
@@ -455,16 +455,16 @@ public class TimewindowMaker extends Operation {
 
     /**
      * If there are any overlapping time windows, merge them.
-     * @param windows ({@link Timewindow}[]) Time windows to be merged, must be in order by start time.
-     * @return ({@link Timewindow}[]) Time windows containing all the input windows in order.
+     * @param windows ({@link TimeWindow}[]) Time windows to be merged, must be in order by start time.
+     * @return ({@link TimeWindow}[]) Time windows containing all the input windows in order.
      */
-    private static Timewindow[] mergeWindows(Timewindow[] windows) {
+    private static TimeWindow[] mergeWindows(TimeWindow[] windows) {
         if (windows.length == 1)
             return windows;
-        List<Timewindow> windowList = new ArrayList<>();
-        Timewindow windowA = windows[0];
+        List<TimeWindow> windowList = new ArrayList<>();
+        TimeWindow windowA = windows[0];
         for (int i = 1; i < windows.length; i++) {
-            Timewindow windowB = windows[i];
+            TimeWindow windowB = windows[i];
             if (windowA.overlaps(windowB)) {
                 windowA = windowA.merge(windowB);
             } else {
@@ -474,43 +474,43 @@ public class TimewindowMaker extends Operation {
             if (i == windows.length - 1)
                 windowList.add(windowA);
         }
-        return windowList.toArray(new Timewindow[windowList.size()]);
+        return windowList.toArray(new TimeWindow[windowList.size()]);
     }
 
     /**
      * Eliminate time windows of avoidPhases from time windows of usePhases.
      * If a time window of avoidPhases fits inside a time window of usePhases, only the first usable part is selected.
-     * @param useWindows ({@link Timewindow}[]) Time windows to use, must be in order by start time.
-     * @param avoidWindows ({@link Timewindow}[]) Time windows to avoid, must be in order by start time.
-     * @return ({@link Timewindow}[]) Time windows to use. If nothing remains, null.
+     * @param useWindows ({@link TimeWindow}[]) Time windows to use, must be in order by start time.
+     * @param avoidWindows ({@link TimeWindow}[]) Time windows to avoid, must be in order by start time.
+     * @return ({@link TimeWindow}[]) Time windows to use. If nothing remains, null.
      */
-    private static Timewindow[] considerAvoidPhases(Timewindow[] useWindows, Timewindow[] avoidWindows) {
-        List<Timewindow> resultWindows = new ArrayList<>();
-        for (Timewindow window : useWindows) {
-            for (Timewindow avoidWindow : avoidWindows) {
+    private static TimeWindow[] considerAvoidPhases(TimeWindow[] useWindows, TimeWindow[] avoidWindows) {
+        List<TimeWindow> resultWindows = new ArrayList<>();
+        for (TimeWindow window : useWindows) {
+            for (TimeWindow avoidWindow : avoidWindows) {
                 window = cutWindow(window, avoidWindow);
                 if (window == null) break;
             }
             if (window != null) resultWindows.add(window);
         }
 
-        return resultWindows.size() == 0 ? null : resultWindows.toArray(new Timewindow[0]);
+        return resultWindows.size() == 0 ? null : resultWindows.toArray(new TimeWindow[0]);
     }
 
     /**
-     * Eliminate avoidTimewindow from useTimewindow.
-     * If avoidTimewindow fits inside useTimewindow, the first usable part is selected.
-     * @param useWindow ({@link Timewindow}) Time window to use.
-     * @param avoidWindow ({@link Timewindow}) Time window to avoid.
-     * @return ({@link Timewindow}) Time window to use. If nothing remains, null.
+     * Eliminate avoidWindow from useWindow.
+     * If avoidWindow fits inside useWindow, the first usable part is selected.
+     * @param useWindow ({@link TimeWindow}) Time window to use.
+     * @param avoidWindow ({@link TimeWindow}) Time window to avoid.
+     * @return ({@link TimeWindow}) Time window to use. If nothing remains, null.
      */
-    private static Timewindow cutWindow(Timewindow useWindow, Timewindow avoidWindow) {
+    private static TimeWindow cutWindow(TimeWindow useWindow, TimeWindow avoidWindow) {
         if (!useWindow.overlaps(avoidWindow)) return useWindow;
         if (avoidWindow.startTime <= useWindow.startTime) {
             return useWindow.endTime <= avoidWindow.endTime ? null :
-                    new Timewindow(avoidWindow.endTime, useWindow.endTime);
+                    new TimeWindow(avoidWindow.endTime, useWindow.endTime);
         } else {
-            return new Timewindow(useWindow.startTime, avoidWindow.startTime);
+            return new TimeWindow(useWindow.startTime, avoidWindow.startTime);
         }
     }
 
@@ -520,7 +520,7 @@ public class TimewindowMaker extends Operation {
      * @return
      * @author anselme
      */
-    private Phase[] findContainedPhases(Timewindow window, List<Arrival> useArrivals) {
+    private Phase[] findContainedPhases(TimeWindow window, List<Arrival> useArrivals) {
         Set<Phase> phases = new HashSet<>();
         for (Arrival arrival : useArrivals) {
             double time = arrival.getTime();

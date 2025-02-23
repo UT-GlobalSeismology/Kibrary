@@ -27,8 +27,8 @@ import io.github.kensuke1984.kibrary.math.Trace;
 import io.github.kensuke1984.kibrary.source.SourceTimeFunction;
 import io.github.kensuke1984.kibrary.source.SourceTimeFunctionHandler;
 import io.github.kensuke1984.kibrary.source.SourceTimeFunctionType;
-import io.github.kensuke1984.kibrary.timewindow.Timewindow;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
+import io.github.kensuke1984.kibrary.timewindow.TimeWindow;
+import io.github.kensuke1984.kibrary.timewindow.TimeWindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.MathAid;
@@ -208,9 +208,9 @@ public class PartialsAssembler3D extends Operation {
 
     private int nThreads;
     /**
-     * Timewindows to work for.
+     * Time windows to work for.
      */
-    private Set<TimewindowData> timewindowSet;
+    private Set<TimeWindowData> timeWindowSet;
     private Set<FullPosition> voxelPositionSet;
     private Map<GlobalCMTID, SourceTimeFunction> sourceTimeFunctions;
     private ButterworthFilter filter;
@@ -380,11 +380,11 @@ public class PartialsAssembler3D extends Operation {
         // information about output partial types
         System.err.println(variableTypes.stream().map(Object::toString).collect(Collectors.joining(" ", "Computing for ", "")));
 
-        // read timewindow file and select based on component and entries
-        timewindowSet = TimewindowDataFile.readAndSelect(timewindowPath, dataEntryPath, components);
+        // read time window file and select based on component and entries
+        timeWindowSet = TimewindowDataFile.readAndSelect(timewindowPath, dataEntryPath, components);
 
-        Set<GlobalCMTID> eventSet = timewindowSet.stream().map(TimewindowData::getGlobalCMTID).collect(Collectors.toSet());
-        Set<Observer> observerSet = timewindowSet.stream().map(TimewindowData::getObserver).collect(Collectors.toSet());
+        Set<GlobalCMTID> eventSet = timeWindowSet.stream().map(TimeWindowData::getGlobalCMTID).collect(Collectors.toSet());
+        Set<Observer> observerSet = timeWindowSet.stream().map(TimeWindowData::getObserver).collect(Collectors.toSet());
 
         // check that all necessary FP and BP folders exist
         checkSPCExistence(eventSet, observerSet);
@@ -439,8 +439,8 @@ public class PartialsAssembler3D extends Operation {
 
     private void workForEvent(GlobalCMTID event) throws IOException {
         // collect observers paired with this event
-        Set<Observer> observersForEvent = timewindowSet.stream()
-                .filter(info -> info.getGlobalCMTID().equals(event)).map(TimewindowData::getObserver)
+        Set<Observer> observersForEvent = timeWindowSet.stream()
+                .filter(info -> info.getGlobalCMTID().equals(event)).map(TimeWindowData::getObserver)
                 .collect(Collectors.toSet());
         if (observersForEvent.isEmpty())
             return;
@@ -454,7 +454,7 @@ public class PartialsAssembler3D extends Operation {
             List<List<SPCFileName>> fpNames = collectSPCFileNames(fpModelPath, variableType);
 
             for (Observer observer : observersForEvent) {
-                Set<TimewindowData> correspondingTimewindows = timewindowSet.stream()
+                Set<TimeWindowData> correspondingTimeWindows = timeWindowSet.stream()
                         .filter(info -> info.getGlobalCMTID().equals(event) && info.getObserver().equals(observer)).collect(Collectors.toSet());
 
                 // list of BP spc files, collected for each pixel
@@ -470,9 +470,9 @@ public class PartialsAssembler3D extends Operation {
                 for (int i = 0; i < fpNames.size(); i++) {
                     PartialComputation pc = null;
                     if (bpCatalogMode) {
-                        pc = new PartialComputation(fpNames.get(i), correspondingTimewindows, event, observer, variableType);
+                        pc = new PartialComputation(fpNames.get(i), correspondingTimeWindows, event, observer, variableType);
                     } else {
-                        pc = new PartialComputation(fpNames.get(i), bpNames.get(i), correspondingTimewindows, event, observer, variableType);
+                        pc = new PartialComputation(fpNames.get(i), bpNames.get(i), correspondingTimeWindows, event, observer, variableType);
                     }
                     execs.execute(pc);
                 }
@@ -550,7 +550,7 @@ public class PartialsAssembler3D extends Operation {
         private List<SPCFileAccess> fpFiles = new ArrayList<>();
         private List<SPCFileName> bpNames;
         private List<SPCFileAccess> bpFiles = new ArrayList<>();
-        private Set<TimewindowData> timewindows;
+        private Set<TimeWindowData> timeWindows;
         private GlobalCMTID event;
         private Observer observer;
         private VariableType variableType;
@@ -563,16 +563,16 @@ public class PartialsAssembler3D extends Operation {
          * Constructor for non-BPCatalogMode.
          * @param fpNames
          * @param bpNames
-         * @param timewindows
+         * @param timeWindows
          * @param event
          * @param observer
          * @param variableType
          */
-        private PartialComputation(List<SPCFileName> fpNames, List<SPCFileName> bpNames, Set<TimewindowData> timewindows,
+        private PartialComputation(List<SPCFileName> fpNames, List<SPCFileName> bpNames, Set<TimeWindowData> timeWindows,
                 GlobalCMTID event, Observer observer, VariableType variableType) {
             this.fpNames = fpNames;
             this.bpNames = bpNames;
-            this.timewindows = timewindows;
+            this.timeWindows = timeWindows;
             this.event = event;
             this.observer = observer;
             this.variableType = variableType;
@@ -582,15 +582,15 @@ public class PartialsAssembler3D extends Operation {
         /**
          * Constructor for BPCatalogMode.
          * @param fpNames
-         * @param timewindows
+         * @param timeWindows
          * @param event
          * @param observer
          * @param variableType
          */
-        private PartialComputation(List<SPCFileName> fpNames, Set<TimewindowData> timewindows,
+        private PartialComputation(List<SPCFileName> fpNames, Set<TimeWindowData> timeWindows,
                 GlobalCMTID event, Observer observer, VariableType variableType) {
             this.fpNames = fpNames;
-            this.timewindows = timewindows;
+            this.timeWindows = timeWindows;
             this.event = event;
             this.observer = observer;
             this.variableType = variableType;
@@ -694,7 +694,7 @@ public class PartialsAssembler3D extends Operation {
                 threedPartialMaker.setStructure(qStructure);
 
             // assemble partial derivatives for waveform at i-th depth
-            Set<SACComponent> neededComponents = timewindows.stream().map(TimewindowData::getComponent).collect(Collectors.toSet());
+            Set<SACComponent> neededComponents = timeWindows.stream().map(TimeWindowData::getComponent).collect(Collectors.toSet());
             for (int ibody = 0, nbody = fpFiles.get(0).nbody(); ibody < nbody; ibody++) {
                 FullPosition voxelPosition = fpFiles.get(0).getReceiverPosition().toFullPosition(fpFiles.get(0).getBodyR()[ibody]);
                 if (voxelPositionSet != null && voxelPositionSet.contains(voxelPosition) == false)
@@ -703,7 +703,7 @@ public class PartialsAssembler3D extends Operation {
                 for (SACComponent component : neededComponents) {
                     double[] partial = threedPartialMaker.createPartial(component, ibody, variableType, false);
 
-                    timewindows.stream().filter(timewindow -> timewindow.getComponent() == component).forEach(window -> {
+                    timeWindows.stream().filter(timewindow -> timewindow.getComponent() == component).forEach(window -> {
                         Trace cutTrace = cutAndFilter(partial, window);
                         PartialID partialID = new PartialID(observer, event, component, finalSamplingHz, cutTrace.getMinX(),
                                 cutTrace.getLength(), 1 / highFreq, 1 / lowFreq, window.getPhases(),
@@ -715,10 +715,10 @@ public class PartialsAssembler3D extends Operation {
             }
         }
 
-        private Trace cutAndFilter(double[] partial, Timewindow timewindow) {
+        private Trace cutAndFilter(double[] partial, TimeWindow timeWindow) {
             // cut to long window for filtering
-            int iStart = (int) (timewindow.getStartTime() * partialSamplingHz) - ext;
-            int iEnd = (int) (timewindow.getEndTime() * partialSamplingHz) + ext;
+            int iStart = (int) (timeWindow.getStartTime() * partialSamplingHz) - ext;
+            int iEnd = (int) (timeWindow.getEndTime() * partialSamplingHz) + ext;
             double[] cutPartial = new double[iEnd - iStart];
             // if cutstart < 0 (i.e. before event time), zero-pad the beginning part
             Arrays.parallelSetAll(cutPartial, i -> (i + iStart < 0 ? 0 : partial[i + iStart]));
@@ -726,10 +726,10 @@ public class PartialsAssembler3D extends Operation {
             // filter
             double[] filteredPartial = filter.applyFilter(cutPartial);
 
-            // cut and resample in timewindow
+            // cut and resample in time window
             double[] xs = IntStream.range(0, iEnd - iStart).mapToDouble(i -> (i + iStart) / partialSamplingHz).toArray();
             Trace filteredTrace = new Trace(xs, filteredPartial);
-            return filteredTrace.resampleInWindow(timewindow, partialSamplingHz, finalSamplingHz);
+            return filteredTrace.resampleInWindow(timeWindow, partialSamplingHz, finalSamplingHz);
         }
 
         private boolean forSamePixel(SPCFileAccess spc1, SPCFileAccess spc2) {

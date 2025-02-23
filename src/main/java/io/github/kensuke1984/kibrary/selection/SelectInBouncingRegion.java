@@ -11,7 +11,7 @@ import edu.sc.seis.TauP.SphericalCoords;
 import edu.sc.seis.TauP.TauModelException;
 import edu.sc.seis.TauP.TauP_Time;
 import edu.sc.seis.TauP.TimeDist;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
+import io.github.kensuke1984.kibrary.timewindow.TimeWindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
@@ -27,8 +27,8 @@ public class SelectInBouncingRegion {
 		double latmax = 12;
 		
 		try {
-			Set<TimewindowData> timewindows = TimewindowDataFile.read(timewindowPath);
-			Set<TimewindowData> selectedWindows = selectRegion(timewindows, lonmin, lonmax, latmin, latmax);
+			Set<TimeWindowData> timewindows = TimewindowDataFile.read(timewindowPath);
+			Set<TimeWindowData> selectedWindows = selectRegion(timewindows, lonmin, lonmax, latmin, latmax);
 			Path outpath = Paths.get("timewindows" + GadgetAid.getTemporaryString() + ".dat");
 			TimewindowDataFile.write(selectedWindows, outpath);
 		} catch (IOException e) {
@@ -37,12 +37,12 @@ public class SelectInBouncingRegion {
 
 	}
 	
-	public static Set<TimewindowData> selectRegion(Set<TimewindowData> timewindows, double lonmin, double lonmax, double latmin, double latmax) {
-		Set<TimewindowData> selectedWindows = new HashSet<>();
+	public static Set<TimeWindowData> selectRegion(Set<TimeWindowData> timewindows, double lonmin, double lonmax, double latmin, double latmax) {
+		Set<TimeWindowData> selectedWindows = new HashSet<>();
 		try {
 			TauP_Time timetool = new TauP_Time("prem");
 			timetool.parsePhaseList("ScS");
-			for (TimewindowData window : timewindows) {
+			for (TimeWindowData window : timewindows) {
 				FullPosition eloc = window.getGlobalCMTID().getEventData().getCmtPosition();
 				timetool.setSourceDepth(6371. - eloc.getR());
 				double distance = Math.toDegrees(eloc.computeEpicentralDistanceRad(window.getObserver().getPosition()));

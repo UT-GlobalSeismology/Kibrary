@@ -14,7 +14,7 @@ import java.util.stream.Collectors;
 
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
+import io.github.kensuke1984.kibrary.timewindow.TimeWindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
@@ -114,7 +114,7 @@ public class StaticCorrectionForger extends Operation {
     public void run() throws IOException {
 
         // gather all timewindows to be processed
-        Set<TimewindowData> timewindowSet = TimewindowDataFile.read(timewindowPath)
+        Set<TimeWindowData> timeWindowSet = TimewindowDataFile.read(timewindowPath)
                 .stream().filter(window -> components.contains(window.getComponent())).collect(Collectors.toSet());
 
         // read reference static correction data
@@ -122,7 +122,7 @@ public class StaticCorrectionForger extends Operation {
 
         // forge static corrections for new dataset
         Set<StaticCorrectionData> forgedStaticCorrectionSet = new HashSet<>();
-        for (TimewindowData window : timewindowSet) {
+        for (TimeWindowData window : timeWindowSet) {
 
             // choose reference static correction data based on event and observer
             List<StaticCorrectionData> refStaticCorrectionsTmp = refStaticCorrectionSet.stream()
@@ -130,11 +130,11 @@ public class StaticCorrectionForger extends Operation {
                     .collect(Collectors.toList());
 
             if (refStaticCorrectionsTmp.size() == 0) {
-                // if static correction for a timewindow does not exist, skip
+                // if static correction for a time window does not exist, skip
                 System.err.println("Found no static correction for window " + window + " , skipping.");
                 continue;
             } else if (refStaticCorrectionsTmp.size() > 1) {
-                // if more than one static correction exists for a timewindow, choose one
+                // if more than one static correction exists for a time window, choose one
                 System.err.println("Caution: found more than 1 static correction for window " + window);
             }
             StaticCorrectionData refStaticCorrection = refStaticCorrectionsTmp.get(0);

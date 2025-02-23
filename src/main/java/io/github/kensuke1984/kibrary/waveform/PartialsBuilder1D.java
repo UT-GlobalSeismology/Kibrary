@@ -27,7 +27,7 @@ import io.github.kensuke1984.kibrary.math.Trace;
 import io.github.kensuke1984.kibrary.source.SourceTimeFunction;
 import io.github.kensuke1984.kibrary.source.SourceTimeFunctionHandler;
 import io.github.kensuke1984.kibrary.source.SourceTimeFunctionType;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
+import io.github.kensuke1984.kibrary.timewindow.TimeWindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.MathAid;
@@ -169,9 +169,9 @@ public class PartialsBuilder1D extends Operation {
     private boolean causal;
 
     /**
-     * Timewindows to work for.
+     * Time windows to work for.
      */
-    private Set<TimewindowData> timewindowSet;
+    private Set<TimeWindowData> timeWindowSet;
     private Map<GlobalCMTID, SourceTimeFunction> sourceTimeFunctions;
     private ButterworthFilter filter;
     /**
@@ -309,11 +309,11 @@ public class PartialsBuilder1D extends Operation {
         // information about output partial types
         System.err.println(variableTypes.stream().map(Object::toString).collect(Collectors.joining(" ", "Computing for ", "")));
 
-        // read timewindow file and select based on component and entries
-        timewindowSet = TimewindowDataFile.readAndSelect(timewindowPath, dataEntryPath, components);
+        // read time window file and select based on component and entries
+        timeWindowSet = TimewindowDataFile.readAndSelect(timewindowPath, dataEntryPath, components);
 
         // collect events
-        Set<GlobalCMTID> eventSet = timewindowSet.stream().map(TimewindowData::getGlobalCMTID).collect(Collectors.toSet());
+        Set<GlobalCMTID> eventSet = timeWindowSet.stream().map(TimeWindowData::getGlobalCMTID).collect(Collectors.toSet());
 
         // set source time functions
         SourceTimeFunctionHandler stfHandler = new SourceTimeFunctionHandler(sourceTimeFunctionType,
@@ -374,9 +374,9 @@ public class PartialsBuilder1D extends Operation {
                 return;
             }
 
-            Set<Observer> correspondingObservers = timewindowSet.stream()
-                    .filter(timewindow -> timewindow.getGlobalCMTID().equals(event))
-                    .map(TimewindowData::getObserver).collect(Collectors.toSet());
+            Set<Observer> correspondingObservers = timeWindowSet.stream()
+                    .filter(timeWindow -> timeWindow.getGlobalCMTID().equals(event))
+                    .map(TimeWindowData::getObserver).collect(Collectors.toSet());
 
             for (Observer observer : correspondingObservers) {
                 for (VariableType variableType : variableTypes) {
@@ -399,17 +399,17 @@ public class PartialsBuilder1D extends Operation {
             SPCFileAccess psvSPCFile = (usableSPCMode != SPCFileAid.UsableSPCMode.SH) ? findAndProcessSPCFile(observer, variableType, SPCMode.PSV) : null;
 
             // collect corresponding timewindows
-            Set<TimewindowData> correspondingTimewindows = timewindowSet.stream()
+            Set<TimeWindowData> correspondingTimeWindows = timeWindowSet.stream()
                     .filter(timewindow -> timewindow.getGlobalCMTID().equals(event) && timewindow.getObserver().equals(observer))
                     .collect(Collectors.toSet());
 
-            for (TimewindowData timewindow : correspondingTimewindows) {
+            for (TimeWindowData timeWindow : correspondingTimeWindows) {
                 if (usableSPCMode == SPCFileAid.UsableSPCMode.SH) {
-                    buildPartialWaveform(shSPCFile, timewindow, variableType);
+                    buildPartialWaveform(shSPCFile, timeWindow, variableType);
                 } else if (usableSPCMode == SPCFileAid.UsableSPCMode.PSV) {
-                    buildPartialWaveform(psvSPCFile, timewindow, variableType);
+                    buildPartialWaveform(psvSPCFile, timeWindow, variableType);
                 } else {
-                    buildPartialWaveform(shSPCFile, psvSPCFile, timewindow, variableType);
+                    buildPartialWaveform(shSPCFile, psvSPCFile, timeWindow, variableType);
                 }
             }
         }
@@ -439,7 +439,7 @@ public class PartialsBuilder1D extends Operation {
             }
         }
 
-        private void buildPartialWaveform(SPCFileAccess spcFile, TimewindowData timewindow, VariableType variableType) {
+        private void buildPartialWaveform(SPCFileAccess spcFile, TimeWindowData timeWindow, VariableType variableType) {
             for (int k = 0; k < spcFile.nbody(); k++) {
                 double currentBodyR = spcFile.getBodyR()[k];
                 if (layerRadii != null) {
@@ -450,15 +450,15 @@ public class PartialsBuilder1D extends Operation {
                     if (!exists)
                         continue;
                 }
-                double[] ut = spcFile.getSpcBodyList().get(k).getSpcElement(timewindow.getComponent()).getTimeseries();
+                double[] ut = spcFile.getSpcBodyList().get(k).getSpcElement(timeWindow.getComponent()).getTimeseries();
 
                 // apply filter
                 double[] filteredUt = filter.applyFilter(ut);
 
-                cutAndWrite(filteredUt, timewindow, currentBodyR, variableType);
+                cutAndWrite(filteredUt, timeWindow, currentBodyR, variableType);
             }
         }
-        private void buildPartialWaveform(SPCFileAccess shSPCFile, SPCFileAccess psvSPCFile, TimewindowData timewindow, VariableType variableType) {
+        private void buildPartialWaveform(SPCFileAccess shSPCFile, SPCFileAccess psvSPCFile, TimeWindowData timeWindow, VariableType variableType) {
             for (int k = 0; k < shSPCFile.nbody(); k++) {
                 if (!Precision.equals(shSPCFile.getBodyR()[k], psvSPCFile.getBodyR()[k], FullPosition.RADIUS_EPSILON)) {
                     throw new RuntimeException("SH and PSV bodyR differ " + shSPCFile.getBodyR()[k] + " " + psvSPCFile.getBodyR()[k]);
@@ -472,8 +472,8 @@ public class PartialsBuilder1D extends Operation {
                     if (!exists)
                         continue;
                 }
-                double[] shUt = shSPCFile.getSpcBodyList().get(k).getSpcElement(timewindow.getComponent()).getTimeseries();
-                double[] psvUt = psvSPCFile.getSpcBodyList().get(k).getSpcElement(timewindow.getComponent()).getTimeseries();
+                double[] shUt = shSPCFile.getSpcBodyList().get(k).getSpcElement(timeWindow.getComponent()).getTimeseries();
+                double[] psvUt = psvSPCFile.getSpcBodyList().get(k).getSpcElement(timeWindow.getComponent()).getTimeseries();
 
                 if (shUt.length != psvUt.length)
                     throw new RuntimeException("sh and psv timeseries do not have the same length " + shUt.length + " " + psvUt.length);
@@ -485,18 +485,18 @@ public class PartialsBuilder1D extends Operation {
                 for (int it = 0; it < filteredSHUt.length; it++)
                     summedUt[it] = filteredSHUt[it] + filteredPSVUt[it];
 
-                cutAndWrite(summedUt, timewindow, currentBodyR, variableType);
+                cutAndWrite(summedUt, timeWindow, currentBodyR, variableType);
             }
         }
 
-        private void cutAndWrite(double[] filteredUt, TimewindowData timewindow, double bodyR, VariableType variableType) {
+        private void cutAndWrite(double[] filteredUt, TimeWindowData timeWindow, double bodyR, VariableType variableType) {
             double[] xs = IntStream.range(0, filteredUt.length).mapToDouble(i -> i / partialSamplingHz).toArray();
             Trace filteredTrace = new Trace(xs, filteredUt);
-            Trace resampledTrace = filteredTrace.resampleInWindow(timewindow, partialSamplingHz, finalSamplingHz);
+            Trace resampledTrace = filteredTrace.resampleInWindow(timeWindow, partialSamplingHz, finalSamplingHz);
 
-            PartialID partialID = new PartialID(timewindow.getObserver(), event, timewindow.getComponent(), finalSamplingHz,
-                    timewindow.getStartTime(), resampledTrace.getLength(), 1 / highFreq, 1 / lowFreq,
-                    timewindow.getPhases(), sourceTimeFunctionType != SourceTimeFunctionType.NONE,
+            PartialID partialID = new PartialID(timeWindow.getObserver(), event, timeWindow.getComponent(), finalSamplingHz,
+                    timeWindow.getStartTime(), resampledTrace.getLength(), 1 / highFreq, 1 / lowFreq,
+                    timeWindow.getPhases(), sourceTimeFunctionType != SourceTimeFunctionType.NONE,
                     ParameterType.LAYER, variableType, new FullPosition(0, 0, bodyR), resampledTrace.getY());
             partialIDs.add(partialID);
         }

@@ -34,8 +34,8 @@ import io.github.kensuke1984.kibrary.math.FourierTransform;
 import io.github.kensuke1984.kibrary.math.HilbertTransform;
 import io.github.kensuke1984.kibrary.math.Interpolation;
 import io.github.kensuke1984.kibrary.math.Trace;
-import io.github.kensuke1984.kibrary.timewindow.Timewindow;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
+import io.github.kensuke1984.kibrary.timewindow.TimeWindow;
+import io.github.kensuke1984.kibrary.timewindow.TimeWindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.MathAid;
@@ -166,8 +166,8 @@ public class ActualWaveformCompiler extends Operation {
     private double noisePower;
 
     private int finalFreqSamplingHz;
-    private Set<TimewindowData> sourceTimeWindowSet;
-    private Set<TimewindowData> refTimewindowSet;
+    private Set<TimeWindowData> sourceTimeWindowSet;
+    private Set<TimeWindowData> refTimeWindowSet;
     private Set<StaticCorrectionData> staticCorrectionSet;
     private Set<StaticCorrectionData> mantleCorrectionSet;
     /**
@@ -334,12 +334,12 @@ public class ActualWaveformCompiler extends Operation {
         }
 
         if (timewindowRefPath != null)
-            refTimewindowSet = TimewindowDataFile.read(timewindowRefPath)
+            refTimeWindowSet = TimewindowDataFile.read(timewindowRefPath)
                     .stream().filter(window -> components.contains(window.getComponent())).collect(Collectors.toSet());
 
-        Set<GlobalCMTID> eventSet = sourceTimeWindowSet.stream().map(TimewindowData::getGlobalCMTID).collect(Collectors.toSet());
-        Set<Observer> observerSet = sourceTimeWindowSet.stream().map(TimewindowData::getObserver).collect(Collectors.toSet());
-        Set<DataEntry> entrySet = sourceTimeWindowSet.stream().map(TimewindowData::toDataEntry).collect(Collectors.toSet());
+        Set<GlobalCMTID> eventSet = sourceTimeWindowSet.stream().map(TimeWindowData::getGlobalCMTID).collect(Collectors.toSet());
+        Set<Observer> observerSet = sourceTimeWindowSet.stream().map(TimeWindowData::getObserver).collect(Collectors.toSet());
+        Set<DataEntry> entrySet = sourceTimeWindowSet.stream().map(TimeWindowData::toDataEntry).collect(Collectors.toSet());
 
         Path outPath = DatasetAid.createOutputFolder(workPath, "compiled", folderTag, appendFolderDate, null);
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
@@ -376,7 +376,7 @@ public class ActualWaveformCompiler extends Operation {
         System.err.println(" " + numberOfPairs.get() + " pairs of observed and synthetic waveforms are output.");
     }
 
-    private double[] cutDataSac(SACFileAccess sac, Timewindow window) {
+    private double[] cutDataSac(SACFileAccess sac, TimeWindow window) {
         Trace trace = sac.createTrace();
         return trace.resampleInWindow(window, sacSamplingHz, finalSamplingHz).getY();
     }
@@ -556,7 +556,7 @@ public class ActualWaveformCompiler extends Operation {
         }
 
         @Override
-        public void actualWork(TimewindowData timeWindow, SACFileAccess obsSac, SACFileAccess synSac) {
+        public void actualWork(TimeWindowData timeWindow, SACFileAccess obsSac, SACFileAccess synSac) {
             Observer observer = timeWindow.getObserver();
             SACComponent component = timeWindow.getComponent();
 
@@ -604,20 +604,20 @@ public class ActualWaveformCompiler extends Operation {
                 shift += sc.getTimeshift();
             }
 
-            TimewindowData windowRef = null;
+            TimeWindowData windowRef = null;
             int nptsRef = 0;
-            if (refTimewindowSet != null) {
-                List<TimewindowData> tmpwindows = refTimewindowSet.stream().filter(tw ->
+            if (refTimeWindowSet != null) {
+                List<TimeWindowData> tmpWindows = refTimeWindowSet.stream().filter(tw ->
                         tw.getGlobalCMTID().equals(timeWindow.getGlobalCMTID())
                         && tw.getObserver().equals(timeWindow.getObserver())
                         && tw.getComponent().equals(timeWindow.getComponent())).collect(Collectors.toList());
-                if (tmpwindows.size() != 1) {
+                if (tmpWindows.size() != 1) {
                     System.err.println();
                     System.err.println("!! Reference time window does not exist, skipping: " + timeWindow);
                     return;
                 }
                 else {
-                    windowRef = tmpwindows.get(0);
+                    windowRef = tmpWindows.get(0);
                 }
 
                 nptsRef = (int) ((windowRef.getEndTime() - windowRef.getStartTime()) * finalSamplingHz);

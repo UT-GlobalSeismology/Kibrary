@@ -22,8 +22,8 @@ import io.github.kensuke1984.kibrary.correction.StaticCorrectionData;
 import io.github.kensuke1984.kibrary.correction.StaticCorrectionDataFile;
 import io.github.kensuke1984.kibrary.math.FourierTransform;
 import io.github.kensuke1984.kibrary.math.Trace;
-import io.github.kensuke1984.kibrary.timewindow.Timewindow;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
+import io.github.kensuke1984.kibrary.timewindow.TimeWindow;
+import io.github.kensuke1984.kibrary.timewindow.TimeWindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.MathAid;
@@ -112,7 +112,7 @@ public class SourceWaveletMaker extends Operation {
      */
     private int np;
 
-    private Set<TimewindowData> sourceTimewindowSet;
+    private Set<TimeWindowData> sourceTimewindowSet;
     private Set<StaticCorrectionData> staticCorrectionSet;
 
     /**
@@ -196,7 +196,7 @@ public class SourceWaveletMaker extends Operation {
         // read timewindow file and select based on component and entries
         sourceTimewindowSet = TimewindowDataFile.readAndSelect(timewindowPath, dataEntryPath, components);
         // collect all events that exist in the time window set
-        Set<GlobalCMTID> eventSet = sourceTimewindowSet.stream().map(TimewindowData::getGlobalCMTID).collect(Collectors.toSet());
+        Set<GlobalCMTID> eventSet = sourceTimewindowSet.stream().map(TimeWindowData::getGlobalCMTID).collect(Collectors.toSet());
 
         // read static corrections
         staticCorrectionSet = (staticCorrectionPath == null ? Collections.emptySet() :
@@ -228,7 +228,7 @@ public class SourceWaveletMaker extends Operation {
         }
 
         @Override
-        public void actualWork(TimewindowData timeWindow, SACFileAccess obsSac, SACFileAccess synSac) {
+        public void actualWork(TimeWindowData timeWindow, SACFileAccess obsSac, SACFileAccess synSac) {
 
             // check SAC file end time
             if (timeWindow.getEndTime() > obsSac.getValue(SACHeaderEnum.E)
@@ -253,7 +253,7 @@ public class SourceWaveletMaker extends Operation {
             // use window [arrival - halfDuration, arrival + 3 * halfDuration]
             double startTime = timeWindow.getStartTime() + frontShift - halfDuration;
             double endTime = timeWindow.getStartTime() + frontShift + 3 * halfDuration;
-            Timewindow stfWindow = new Timewindow(startTime, endTime);
+            TimeWindow stfWindow = new TimeWindow(startTime, endTime);
 
             // prepare observed trace, integrated to get displacement waveform
             Trace obsTrace = obsSac.createTrace().cutWindow(stfWindow.shift(-shift), sacSamplingHz);

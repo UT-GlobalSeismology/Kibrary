@@ -15,7 +15,7 @@ import java.util.stream.Collectors;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.math.Trace;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
+import io.github.kensuke1984.kibrary.timewindow.TimeWindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.data.Observer;
@@ -26,7 +26,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACFileName;
 
 /**
  * Maker of static correction suggested by Nozomu Takeuchi.
- * It seeks up-and-down two peaks in given {@link TimewindowData} for each path.
+ * It seeks up-and-down two peaks in given {@link TimeWindowData} for each path.
  * <p>
  * Values of the correction is by the average time of arrivals and amplitudes of those peaks.
  * <p>
@@ -76,7 +76,7 @@ public class TakeuchiStaticCorrection extends Operation {
      */
     private double sacSamplingHz;
 
-    private Set<TimewindowData> sourceTimewindowSet;
+    private Set<TimeWindowData> sourceTimewindowSet;
     private Set<StaticCorrectionData> staticCorrectionSet = Collections.synchronizedSet(new HashSet<>());
 
     /**
@@ -171,13 +171,13 @@ public class TakeuchiStaticCorrection extends Operation {
         String observerID = obsName.getObserverID();
         GlobalCMTID id = obsName.getGlobalCMTID();
         SACComponent component = obsName.getComponent();
-        Set<TimewindowData> timeWindowSet = sourceTimewindowSet.stream()
+        Set<TimeWindowData> timeWindowSet = sourceTimewindowSet.stream()
                 .filter(info -> info.getObserver().toString().equals(observerID))
                 .filter(info -> info.getGlobalCMTID().equals(id))
                 .filter(info -> info.getComponent() == component).collect(Collectors.toSet());
         if (timeWindowSet.size() != 1) throw new RuntimeException(timewindowPath + " is invalid.");
 
-        TimewindowData timeWindow = timeWindowSet.iterator().next();
+        TimeWindowData timeWindow = timeWindowSet.iterator().next();
         SACFileAccess obsSac = obsName.read();
         SACFileAccess synSac = synName.read();
         Observer station = obsSac.getObserver();

@@ -28,8 +28,8 @@ import io.github.kensuke1984.kibrary.correction.StaticCorrectionData;
 import io.github.kensuke1984.kibrary.correction.StaticCorrectionDataFile;
 import io.github.kensuke1984.kibrary.math.LinearRange;
 import io.github.kensuke1984.kibrary.math.Trace;
-import io.github.kensuke1984.kibrary.timewindow.Timewindow;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
+import io.github.kensuke1984.kibrary.timewindow.TimeWindow;
+import io.github.kensuke1984.kibrary.timewindow.TimeWindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
@@ -152,10 +152,10 @@ public class DataSelection extends Operation {
     private boolean requirePhase;
     private boolean excludeSurfaceWave;
 
-    private Set<TimewindowData> sourceTimeWindowSet;
+    private Set<TimeWindowData> sourceTimeWindowSet;
     private Set<StaticCorrectionData> staticCorrectionSet;
     private Set<DataFeature> dataFeatureSet = Collections.synchronizedSet(new HashSet<>());
-    private Set<TimewindowData> goodTimeWindowSet = Collections.synchronizedSet(new HashSet<>());
+    private Set<TimeWindowData> goodTimeWindowSet = Collections.synchronizedSet(new HashSet<>());
 
     /**
      * @param args (String[]) Arguments: none to create a property file, path of property file to run it.
@@ -274,7 +274,7 @@ public class DataSelection extends Operation {
         sourceTimeWindowSet = TimewindowDataFile.read(timewindowPath)
                 .stream().filter(window -> components.contains(window.getComponent())).collect(Collectors.toSet());
         // collect all events that exist in the time window set
-        Set<GlobalCMTID> eventSet = sourceTimeWindowSet.stream().map(TimewindowData::getGlobalCMTID).collect(Collectors.toSet());
+        Set<GlobalCMTID> eventSet = sourceTimeWindowSet.stream().map(TimeWindowData::getGlobalCMTID).collect(Collectors.toSet());
 
         // read static corrections
         staticCorrectionSet = (staticCorrectionPath == null ? Collections.emptySet() :
@@ -302,13 +302,13 @@ public class DataSelection extends Operation {
     }
 
     /**
-     * @param sac        {@link SACFileAccess} to cut
-     * @param timeWindow time window
-     * @return new Trace for the timewindow [tStart:tEnd]
+     * @param sac ({@link SACFileAccess}) SAC file to cut out from.
+     * @param timeWindow ({@link TimeWindow}) Time window to cut out.
+     * @return ({@link Trace}) Waveform cut out for the time window.
      */
-    private RealVector cutSAC(SACFileAccess sac, Timewindow timewindow) {
+    private RealVector cutSAC(SACFileAccess sac, TimeWindow timeWindow) {
         Trace trace = sac.createTrace();
-        return trace.cutWindow(timewindow, sacSamplingHz).getYVector();
+        return trace.cutWindow(timeWindow, sacSamplingHz).getYVector();
     }
 
     private boolean check(DataFeature feature) throws IOException {
@@ -390,7 +390,7 @@ public class DataSelection extends Operation {
         }
 
         @Override
-        public void actualWork(TimewindowData timeWindow, SACFileAccess obsSac, SACFileAccess synSac) {
+        public void actualWork(TimeWindowData timeWindow, SACFileAccess obsSac, SACFileAccess synSac) {
             SACComponent component = timeWindow.getComponent();
 
             // check SAC file end time
@@ -413,19 +413,19 @@ public class DataSelection extends Operation {
                 if (excludeSurfaceWave) {
                     Trace synTrace = synSac.createTrace();
                     SurfaceWaveDetector detector = new SurfaceWaveDetector(synTrace, 20.);
-                    Timewindow surfacewaveWindow = detector.getSurfaceWaveWindow();
+                    TimeWindow surfaceWaveWindow = detector.getSurfaceWaveWindow();
 
-                    if (surfacewaveWindow != null) {
+                    if (surfaceWaveWindow != null) {
                         double endTime = timeWindow.getEndTime();
                         double startTime = timeWindow.getStartTime();
-                        if (startTime >= surfacewaveWindow.getStartTime() && endTime <= surfacewaveWindow.getEndTime())
+                        if (startTime >= surfaceWaveWindow.getStartTime() && endTime <= surfaceWaveWindow.getEndTime())
                             return;
-                        if (endTime > surfacewaveWindow.getStartTime() && startTime < surfacewaveWindow.getStartTime())
-                            endTime = surfacewaveWindow.getStartTime();
-                        if (startTime < surfacewaveWindow.getEndTime() && endTime > surfacewaveWindow.getEndTime())
-                            startTime = surfacewaveWindow.getEndTime();
+                        if (endTime > surfaceWaveWindow.getStartTime() && startTime < surfaceWaveWindow.getStartTime())
+                            endTime = surfaceWaveWindow.getStartTime();
+                        if (startTime < surfaceWaveWindow.getEndTime() && endTime > surfaceWaveWindow.getEndTime())
+                            startTime = surfaceWaveWindow.getEndTime();
 
-                        timeWindow = new TimewindowData(startTime, endTime, timeWindow.getObserver(),
+                        timeWindow = new TimeWindowData(startTime, endTime, timeWindow.getObserver(),
                                 timeWindow.getGlobalCMTID(), timeWindow.getComponent(), timeWindow.getPhases());
                     }
                 }

@@ -20,8 +20,8 @@ import org.apache.commons.math3.util.Precision;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.math.Trace;
-import io.github.kensuke1984.kibrary.timewindow.Timewindow;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
+import io.github.kensuke1984.kibrary.timewindow.TimeWindow;
+import io.github.kensuke1984.kibrary.timewindow.TimeWindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.ThreadAid;
@@ -115,7 +115,7 @@ public class FujiStaticCorrection extends Operation {
     private double searchRange;
     private boolean medianTime;
 
-    private Set<TimewindowData> sourceTimeWindowSet;
+    private Set<TimeWindowData> sourceTimeWindowSet;
     private Set<StaticCorrectionData> staticCorrectionSet = Collections.synchronizedSet(new HashSet<>());
 
     /**
@@ -189,7 +189,7 @@ public class FujiStaticCorrection extends Operation {
         sourceTimeWindowSet = TimewindowDataFile.read(timewindowPath)
                 .stream().filter(window -> components.contains(window.getComponent())).collect(Collectors.toSet());
         // collect all events that exist in the time window set
-        Set<GlobalCMTID> eventSet = sourceTimeWindowSet.stream().map(TimewindowData::getGlobalCMTID).collect(Collectors.toSet());
+        Set<GlobalCMTID> eventSet = sourceTimeWindowSet.stream().map(TimeWindowData::getGlobalCMTID).collect(Collectors.toSet());
 
         ExecutorService es = ThreadAid.createFixedThreadPool();
         System.err.println("Working for " + eventSet.size() + " events.");
@@ -258,7 +258,7 @@ public class FujiStaticCorrection extends Operation {
      * @param window time window
      * @return ratio of maximum values
      */
-    private double computeMaxRatio(SACFileAccess obsSac, SACFileAccess synSac, double shift, Timewindow window) {
+    private double computeMaxRatio(SACFileAccess obsSac, SACFileAccess synSac, double shift, TimeWindow window) {
         double delta = 1 / sacSamplingHz;
 
         double startSec = window.getStartTime();
@@ -286,7 +286,7 @@ public class FujiStaticCorrection extends Operation {
      * @param window
      * @return
      */
-    private double computeP2PRatio(SACFileAccess obsSac, SACFileAccess synSac, double shift, Timewindow window) {
+    private double computeP2PRatio(SACFileAccess obsSac, SACFileAccess synSac, double shift, TimeWindow window) {
         // peak-to-peak amplitude of synthetic time window
         Trace synTrace = synSac.createTrace().cutWindow(window, sacSamplingHz);
         double synP2P = synTrace.getMaxY() - synTrace.getMinY();
@@ -306,7 +306,7 @@ public class FujiStaticCorrection extends Operation {
      * @param window time window
      * @return value for time shift
      */
-    private double computeTimeshiftForBestCorrelation(SACFileAccess obsSac, SACFileAccess synSac, Timewindow window) {
+    private double computeTimeshiftForBestCorrelation(SACFileAccess obsSac, SACFileAccess synSac, TimeWindow window) {
         double delta = 1 / sacSamplingHz;
 
         double startSec = window.getStartTime();
@@ -341,7 +341,7 @@ public class FujiStaticCorrection extends Operation {
         return Precision.round(timeshift, 2);
     }
 
-    private double computeTimeshiftForBestCorrelation_peak(SACFileAccess obsSac, SACFileAccess synSac, Timewindow window) {
+    private double computeTimeshiftForBestCorrelation_peak(SACFileAccess obsSac, SACFileAccess synSac, TimeWindow window) {
         double delta = 1 / sacSamplingHz;
 
         double startSec = window.getStartTime();
@@ -436,7 +436,7 @@ public class FujiStaticCorrection extends Operation {
         }
 
         @Override
-        public void actualWork(TimewindowData timeWindow, SACFileAccess obsSac, SACFileAccess synSac) {
+        public void actualWork(TimeWindowData timeWindow, SACFileAccess obsSac, SACFileAccess synSac) {
             Observer observer = timeWindow.getObserver();
             SACComponent component = timeWindow.getComponent();
 

@@ -3,7 +3,7 @@ package io.github.kensuke1984.kibrary.util.addons;
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.correction.StaticCorrectionData;
 import io.github.kensuke1984.kibrary.correction.StaticCorrectionDataFile;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
+import io.github.kensuke1984.kibrary.timewindow.TimeWindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
@@ -29,7 +29,7 @@ public class StationAverageTimeshift {
 		Path timewindowPath = Paths.get(args[1]);
 
 		Set<StaticCorrectionData> corrections = StaticCorrectionDataFile.read(staticCorrectionPath);
-		Set<TimewindowData> timewindows = TimewindowDataFile.read(timewindowPath);
+		Set<TimeWindowData> timewindows = TimewindowDataFile.read(timewindowPath);
 
 		Map<Observer, Double> stationAverages = new HashMap<Observer, Double>();
 		Map<Observer, Integer> stationCount = new HashMap<Observer, Integer>();
@@ -39,7 +39,7 @@ public class StationAverageTimeshift {
 		Map<HorizontalPosition, Integer> histogramCount = new HashMap<>();
 		Map<HorizontalPosition, Double> histogramRatio = new HashMap<>();
 		
-		for (TimewindowData tw : timewindows) {
+		for (TimeWindowData tw : timewindows) {
 			boolean contin = true;
 			for (Phase p : tw.getPhases()) {
 				if (p.equals(Phase.S) || p.equals(Phase.s))
@@ -88,7 +88,7 @@ public class StationAverageTimeshift {
 			}
 		}
 		
-		for (TimewindowData tw : timewindows) {
+		for (TimeWindowData tw : timewindows) {
 			boolean contin = true;
 			for (Phase p : tw.getPhases()) {
 				if (p.equals(Phase.S) || p.equals(Phase.s))

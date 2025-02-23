@@ -7,8 +7,8 @@ import java.util.stream.Collectors;
 import org.apache.commons.math3.util.Precision;
 
 import io.github.kensuke1984.anisotime.Phase;
-import io.github.kensuke1984.kibrary.timewindow.Timewindow;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
+import io.github.kensuke1984.kibrary.timewindow.TimeWindow;
+import io.github.kensuke1984.kibrary.timewindow.TimeWindowData;
 import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
@@ -64,30 +64,30 @@ public class StaticCorrectionData implements Comparable<StaticCorrectionData> {
 
     /**
      * When a time window for a synthetic is [start : end],
-     * then use a window of [start-timeshift : end-timeshift] in the corresponding observed one.
+     * then use a window of [start-timeShift : end-timeShift] in the corresponding observed one.
      * For example, if you want to align a phase which arrives at Ts in synthetic and at To in observed, the time shift will be Ts-To.
      * <p>
      * Amplitude ratio is observed / synthetic. Observed should be divided by this value.
      * <p>
      * synStartTime is used only for identification when your dataset contains multiple time windows in one waveform.
      *
-     * @param observer        for shift
-     * @param eventID        for shift
-     * @param component      for shift
-     * @param synStartTime   for identification
-     * @param timeShift      value Synthetic [t1, t2], Observed [t1-timeShift,
-     *                       t2-timeShift]
-     * @param amplitudeRatio Observed / Synthetic, an observed waveform will be divided by this value.
+     * @param observer ({@link Observer})
+     * @param eventID ({@link GlobalCMTID})
+     * @param component ({@link SACComponent})
+     * @param synStartTime (double) Start time of time window; to be used for identification.
+     * @param timeShift (double) Time shift for observed waveform. Synthetic - observed arrival time.
+     * @param amplitudeRatio (double) Factor to divide observed waveform. Observed / synthetic amplitude.
+     * @param phases (Phase[]) Phases in time window.
      */
     public StaticCorrectionData(Observer observer, GlobalCMTID eventID, SACComponent component, double synStartTime,
             double timeShift, double amplitudeRatio, Phase[] phases) {
         this.observer = observer;
         this.eventID = eventID;
         this.component = component;
-        this.synStartTime = Precision.round(synStartTime, Timewindow.DECIMALS);
-        this.timeShift = Precision.round(timeShift, Timewindow.DECIMALS);
-        this.amplitudeRatio = Precision.round(amplitudeRatio, AMPLITUDE_DECIMALS);
+        this.synStartTime = Precision.round(synStartTime, TimeWindow.DECIMALS);
         this.phases = phases;
+        this.timeShift = Precision.round(timeShift, TimeWindow.DECIMALS);
+        this.amplitudeRatio = Precision.round(amplitudeRatio, AMPLITUDE_DECIMALS);
     }
 
     /**
@@ -95,7 +95,7 @@ public class StaticCorrectionData implements Comparable<StaticCorrectionData> {
      * @param t (TimewindowData) Time window to judge.
      * @return (boolean) Whether this static correction matches the data entry of the time window.
      */
-    public boolean matchesEntryOfWindow(TimewindowData t) {
+    public boolean matchesEntryOfWindow(TimeWindowData t) {
         return (t.getObserver().equals(observer) && t.getGlobalCMTID().equals(eventID) && t.getComponent() == component);
     }
 
@@ -103,10 +103,10 @@ public class StaticCorrectionData implements Comparable<StaticCorrectionData> {
      * Find the static correction data corresponding to the specified time window.
      * When multiple static corrections for the same data entry exists, the one with the closest start time is selected.
      * @param staticCorrectionSet (Set of {@link StaticCorrectionData}) Set of static correction data to find from.
-     * @param window ({@link TimewindowData}) Time window to find correction for.
+     * @param window ({@link TimeWindowData}) Time window to find correction for.
      * @return ({@link StaticCorrectionData}) Static correction data for the given time window. Returns null when none is found.
      */
-    public static StaticCorrectionData findForTimeWindow(Set<StaticCorrectionData> staticCorrectionSet, TimewindowData window) {
+    public static StaticCorrectionData findForTimeWindow(Set<StaticCorrectionData> staticCorrectionSet, TimeWindowData window) {
         List<StaticCorrectionData> corrs = staticCorrectionSet.stream().filter(s -> s.matchesEntryOfWindow(window)).collect(Collectors.toList());
 
         if (corrs.size() > 1) {
@@ -179,8 +179,8 @@ public class StaticCorrectionData implements Comparable<StaticCorrectionData> {
     @Override
     public String toString() {
         return observer.toPaddedInfoString() + " " + eventID.toPaddedString() + " " + component + " "
-                + MathAid.padToString(synStartTime, Timewindow.TYPICAL_MAX_INTEGER_DIGITS, Timewindow.DECIMALS, false) + " "
-                + TimewindowData.phasesAsString(phases) + " " + timeShift + " " + amplitudeRatio;
+                + MathAid.padToString(synStartTime, TimeWindow.TYPICAL_MAX_INTEGER_DIGITS, TimeWindow.DECIMALS, false) + " "
+                + TimeWindowData.phasesAsString(phases) + " " + timeShift + " " + amplitudeRatio;
     }
 
 }

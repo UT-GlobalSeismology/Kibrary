@@ -13,7 +13,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
+import io.github.kensuke1984.kibrary.timewindow.TimeWindowData;
 import io.github.kensuke1984.kibrary.util.data.DataEntry;
 import io.github.kensuke1984.kibrary.util.data.DataEntryListFile;
 import io.github.kensuke1984.kibrary.util.data.Observer;
@@ -296,10 +296,10 @@ public final class DatasetAid {
         private Path synEventPath;
         private boolean convolved;
         private double sacSamplingHz;
-        private Set<TimewindowData> sourceTimeWindowSet;
+        private Set<TimeWindowData> sourceTimeWindowSet;
 
         public FilteredDatasetWorker(GlobalCMTID eventID, Path obsPath, Path synPath, boolean convolved,
-                double sacSamplingHz, Set<TimewindowData> sourceTimeWindowSet) {
+                double sacSamplingHz, Set<TimeWindowData> sourceTimeWindowSet) {
             this.eventID = eventID;
             obsEventPath = obsPath.resolve(eventID.toString());
             synEventPath = synPath.resolve(eventID.toString());
@@ -314,7 +314,7 @@ public final class DatasetAid {
          * @param obsSac
          * @param synSac
          */
-        public abstract void actualWork(TimewindowData timeWindow, SACFileAccess obsSac, SACFileAccess synSac);
+        public abstract void actualWork(TimeWindowData timeWindow, SACFileAccess obsSac, SACFileAccess synSac);
 
         @Override
         public void run() {
@@ -328,10 +328,10 @@ public final class DatasetAid {
             }
 
             // pick out time windows of this event
-            Set<TimewindowData> timeWindows = sourceTimeWindowSet.stream()
+            Set<TimeWindowData> timeWindows = sourceTimeWindowSet.stream()
                     .filter(info -> info.getGlobalCMTID().equals(eventID)).collect(Collectors.toSet());
 
-            for (TimewindowData timeWindow : timeWindows) {
+            for (TimeWindowData timeWindow : timeWindows) {
                 Observer observer = timeWindow.getObserver();
                 SACComponent component = timeWindow.getComponent();
 

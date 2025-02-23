@@ -3,7 +3,7 @@ package io.github.kensuke1984.kibrary.util.statistics;
 import io.github.kensuke1984.kibrary.correction.StaticCorrectionData;
 import io.github.kensuke1984.kibrary.correction.StaticCorrectionDataFile;
 import io.github.kensuke1984.kibrary.correction.TakeuchiStaticCorrection;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
+import io.github.kensuke1984.kibrary.timewindow.TimeWindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.addons.Phases;
 import io.github.kensuke1984.kibrary.util.data.Observer;
@@ -29,7 +29,7 @@ public class AmplitudePolarDistribution {
 		Path timewindowPath = Paths.get(args[1]);
 		
 		Set<StaticCorrectionData> takeuchiCorrections = StaticCorrectionDataFile.read(staticCorrectionPath);
-		Set<TimewindowData> timewindows = TimewindowDataFile.read(timewindowPath);
+		Set<TimeWindowData> timewindows = TimewindowDataFile.read(timewindowPath);
 		
 		Path outpath = Paths.get("amplitudePolarDistribution.txt");
 		
@@ -55,7 +55,7 @@ public class AmplitudePolarDistribution {
 				Observer station = correction.getObserver();
 				SACComponent component = correction.getComponent();
 				double startTime = correction.getSynStartTime();
-				Set<TimewindowData> tmpTimewindows = timewindows.parallelStream().filter(tw -> tw.getGlobalCMTID().equals(id)
+				Set<TimeWindowData> tmpTimewindows = timewindows.parallelStream().filter(tw -> tw.getGlobalCMTID().equals(id)
 						&& tw.getObserver().equals(station)
 						&& tw.getComponent() == component
 						&& tw.getStartTime() == startTime)

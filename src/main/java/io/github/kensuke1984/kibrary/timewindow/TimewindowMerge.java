@@ -45,7 +45,7 @@ public class TimewindowMerge extends Operation {
     /**
      * Paths of input time window files.
      */
-    private List<Path> timewindowPaths = new ArrayList<>();
+    private List<Path> timeWindowPaths = new ArrayList<>();
 
     /**
      * @param args (String[]) Arguments: none to create a property file, path of property file to run it.
@@ -90,14 +90,14 @@ public class TimewindowMerge extends Operation {
         for (int i = 1; i <= MAX_NUM; i++) {
             String timewindowKey = "timewindowPath" + i;
             if (property.containsKey(timewindowKey)) {
-                timewindowPaths.add(property.parsePath(timewindowKey, null, true, workPath));
+                timeWindowPaths.add(property.parsePath(timewindowKey, null, true, workPath));
             }
         }
     }
 
     @Override
     public void run() throws IOException {
-        int fileNum = timewindowPaths.size();
+        int fileNum = timeWindowPaths.size();
         if (fileNum == 0) {
             System.err.println("!! No input files found.");
             return;
@@ -107,15 +107,15 @@ public class TimewindowMerge extends Operation {
         }
 
         // read time windows from all input files
-        Set<TimewindowData> timewindows = new HashSet<>();
-        for (Path timewindowPath : timewindowPaths) {
-            Set<TimewindowData> srcTimewindows = TimewindowDataFile.read(timewindowPath);
-            timewindows.addAll(srcTimewindows);
+        Set<TimeWindowData> timeWindows = new HashSet<>();
+        for (Path timeWindowPath : timeWindowPaths) {
+            Set<TimeWindowData> srcTimeWindows = TimewindowDataFile.read(timeWindowPath);
+            timeWindows.addAll(srcTimeWindows);
         }
 
         // output merged file
         Path outputPath = DatasetAid.generateOutputFilePath(workPath, "timewindow", fileTag, appendFileDate, null, ".dat");
-        TimewindowDataFile.write(timewindows, outputPath);
+        TimewindowDataFile.write(timeWindows, outputPath);
     }
 
 }

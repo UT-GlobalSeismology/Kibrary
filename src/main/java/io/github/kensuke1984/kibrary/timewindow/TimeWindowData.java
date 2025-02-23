@@ -15,7 +15,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
  * Time window data for an (event, observer, component) data pair.
  * <p>
  * Contains information of {@link GlobalCMTID}, {@link Observer}, {@link SACComponent}, and {@link Phase}s,
- * in addition to the start and end times specified in {@link Timewindow}.
+ * in addition to the start and end times specified in {@link TimeWindow}.
  *
  * <p>
  * This class is <b>IMMUTABLE</b>.
@@ -23,7 +23,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
  * @author Kensuke Konishi
  * @since a long time ago
  */
-public class TimewindowData extends Timewindow {
+public class TimeWindowData extends TimeWindow {
 
     /**
      * Observer.
@@ -42,7 +42,7 @@ public class TimewindowData extends Timewindow {
      */
     private final Phase[] phases;
 
-    public TimewindowData(double startTime, double endTime, Observer observer, GlobalCMTID eventID,
+    public TimeWindowData(double startTime, double endTime, Observer observer, GlobalCMTID eventID,
             SACComponent component, Phase[] phases) {
         super(startTime, endTime);
         this.eventID = eventID;
@@ -66,7 +66,7 @@ public class TimewindowData extends Timewindow {
         if (this == obj) return true;
         if (!super.equals(obj)) return false;
         if (getClass() != obj.getClass()) return false;
-        TimewindowData other = (TimewindowData) obj;
+        TimeWindowData other = (TimeWindowData) obj;
         if (component != other.component) return false;
         if (eventID == null) {
             if (other.eventID != null) return false;
@@ -78,9 +78,9 @@ public class TimewindowData extends Timewindow {
     }
 
     @Override
-    public int compareTo(Timewindow o) {
-        if (!(o instanceof TimewindowData)) return super.compareTo(o);
-        TimewindowData ot = (TimewindowData) o;
+    public int compareTo(TimeWindow o) {
+        if (!(o instanceof TimeWindowData)) return super.compareTo(o);
+        TimeWindowData ot = (TimeWindowData) o;
         int sta = getObserver().compareTo(ot.getObserver());
         if (sta != 0) return sta;
         int id = getGlobalCMTID().compareTo(ot.getGlobalCMTID());

@@ -80,16 +80,16 @@ public class TimewindowIntersection  {
         boolean phase = cmdLine.hasOption("ph") ? true : false;
         boolean component = cmdLine.hasOption("c") ? true : false;
 
-        Set<TimewindowData> windows1 = TimewindowDataFile.read(inputPath1);
-        Set<TimewindowData> windows2 = TimewindowDataFile.read(inputPath2);
+        Set<TimeWindowData> windows1 = TimewindowDataFile.read(inputPath1);
+        Set<TimeWindowData> windows2 = TimewindowDataFile.read(inputPath2);
 
-        Set<TimewindowData> outWindows1 = new HashSet<>();
-        Set<TimewindowData> outWindows2 = new HashSet<>();
+        Set<TimeWindowData> outWindows1 = new HashSet<>();
+        Set<TimeWindowData> outWindows2 = new HashSet<>();
 
         // take intersections
-        for (TimewindowData window1 : windows1) {
+        for (TimeWindowData window1 : windows1) {
             boolean exitIntersect = false;
-            for (TimewindowData window2 : windows2) {
+            for (TimeWindowData window2 : windows2) {
                 if (window1.getGlobalCMTID().equals(window2.getGlobalCMTID()) && window1.getObserver().equals(window2.getObserver())) {
                     if (phase && !window1.getPhases().equals(window2.getPhases())) continue;
                     if (component && !window1.getComponent().equals(window2.getComponent())) continue;

@@ -34,7 +34,7 @@ import io.github.afeborgeaud.tomotool.topoModel.TK10;
 import io.github.afeborgeaud.tomotool.utilities.ReadUtils;
 import io.github.afeborgeaud.tomotool.utilities.Utils;
 import io.github.kensuke1984.kibrary.correction.StaticCorrectionData;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
+import io.github.kensuke1984.kibrary.timewindow.TimeWindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
@@ -274,7 +274,7 @@ public class Compute {
 
 
     public static void test(Path timewindowPath) throws IOException, TauModelException {
-        Set<TimewindowData> timewindows = TimewindowDataFile.read(timewindowPath);
+        Set<TimeWindowData> timewindows = TimewindowDataFile.read(timewindowPath);
         timewindows = timewindows.stream().limit(10).collect(Collectors.toSet());
 
         //Select raypaths
@@ -331,7 +331,7 @@ public class Compute {
     }
 
     public static void compute_phase_differential(Path timewindowPath, String threeDmodel, String phaseRefName, String phaseName) throws IOException {
-        Set<TimewindowData> timewindows = TimewindowDataFile.read(timewindowPath);
+        Set<TimeWindowData> timewindows = TimewindowDataFile.read(timewindowPath);
 
         //Select raypaths
         List<RaypathInformation> raypathInformations = timewindows.stream()
@@ -398,7 +398,7 @@ public class Compute {
 
     public static void compute_phase_differential(Path timewindowPath, String threeDmodel, String phaseRefName,
             String phaseName, boolean switchMantle, boolean switchTopo) throws IOException {
-        Set<TimewindowData> timewindows = TimewindowDataFile.read(timewindowPath);
+        Set<TimeWindowData> timewindows = TimewindowDataFile.read(timewindowPath);
 
         //Select raypaths
         List<RaypathInformation> raypathInformations = timewindows.stream()
@@ -472,7 +472,7 @@ public class Compute {
 
     }
 
-    public static void compute_phase_differential(List<TimewindowData> timewindows, Seismic3Dmodel seismic3Dmodel
+    public static void compute_phase_differential(List<TimeWindowData> timewindows, Seismic3Dmodel seismic3Dmodel
             , String phaseRefName, String phaseName, boolean switchMantle, boolean switchTopo) throws IOException {
 
         //Select raypaths
@@ -643,7 +643,7 @@ public class Compute {
     }
 
     public static void compute_phase(Path timewindowPath, String threeDmodel, String phaseName, boolean switchMantle, boolean switchTopo) throws IOException {
-        Set<TimewindowData> timewindows = TimewindowDataFile.read(timewindowPath);
+        Set<TimeWindowData> timewindows = TimewindowDataFile.read(timewindowPath);
 
         //Select raypaths
         List<RaypathInformation> raypathInformations = timewindows.stream()
@@ -712,7 +712,7 @@ public class Compute {
 
     }
 
-    public static List<TraveltimeData> compute_phase(List<TimewindowData> timewindows, Seismic3Dmodel seismic3Dmodel,
+    public static List<TraveltimeData> compute_phase(List<TimeWindowData> timewindows, Seismic3Dmodel seismic3Dmodel,
             String phaseName) throws IOException {
         List<RaypathInformation> raypathInformations = timewindows.stream()
                 .map(tw -> new RaypathInformation(tw.getObserver(), tw.getGlobalCMTID()))

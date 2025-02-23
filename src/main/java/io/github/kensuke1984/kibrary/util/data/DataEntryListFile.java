@@ -23,7 +23,7 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
 import io.github.kensuke1984.kibrary.Summon;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
+import io.github.kensuke1984.kibrary.timewindow.TimeWindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
@@ -172,7 +172,7 @@ public class DataEntryListFile {
         if (cmdLine.hasOption("d")) {
             entrySet = collectFromDataset(Paths.get(cmdLine.getOptionValue("d")), components);
         } else if (cmdLine.hasOption("t")) {
-            Set<TimewindowData> timeWindows = TimewindowDataFile.read(Paths.get(cmdLine.getOptionValue("t")));
+            Set<TimeWindowData> timeWindows = TimewindowDataFile.read(Paths.get(cmdLine.getOptionValue("t")));
             entrySet = timeWindows.stream().filter(timewindow -> components.contains(timewindow.getComponent()))
                     .map(timeWindow -> new DataEntry(timeWindow.getGlobalCMTID(), timeWindow.getObserver(), timeWindow.getComponent()))
                     .collect(Collectors.toSet());

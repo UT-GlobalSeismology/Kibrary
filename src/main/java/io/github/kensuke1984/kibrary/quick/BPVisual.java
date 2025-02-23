@@ -13,7 +13,7 @@ import org.apache.commons.math3.complex.Complex;
 
 import io.github.kensuke1984.kibrary.filter.BandPassFilter;
 import io.github.kensuke1984.kibrary.filter.ButterworthFilter;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
+import io.github.kensuke1984.kibrary.timewindow.TimeWindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.addons.Phases;
 import io.github.kensuke1984.kibrary.util.data.Observer;
@@ -30,7 +30,7 @@ public class BPVisual {
     final int samplingHz = 20;
 
     private Path timewindowPath;
-    private Set<TimewindowData> timewindows;
+    private Set<TimeWindowData> timewindows;
     private Path workingDir;
 
     private int ext;
@@ -82,7 +82,7 @@ public class BPVisual {
                 for (int j = 0; j < spcComponents.length; j++) {
                     double[] bpserie = spcComponents[j].getTimeseries();
                     Complex[] bpspectrum = spcComponents[j].getValueInFrequencyDomain();
-                    for (TimewindowData info : timewindows) {
+                    for (TimeWindowData info : timewindows) {
                         Observer station = info.getObserver();
                         GlobalCMTID event = info.getGlobalCMTID();
 
@@ -137,7 +137,7 @@ public class BPVisual {
      * @param property
      * @return
      */
-    private Complex[] cutPartial(double[] u, TimewindowData timewindowInformation) {
+    private Complex[] cutPartial(double[] u, TimeWindowData timewindowInformation) {
         int cutstart = (int) (timewindowInformation.getStartTime() * partialSamplingHz) - ext;
         // cutstartが振り切れた場合0 からにする
         if (cutstart < 0)
@@ -149,7 +149,7 @@ public class BPVisual {
         return cut;
     }
 
-    private double[] sampleOutput(Complex[] u, TimewindowData timewindowInformation) {
+    private double[] sampleOutput(Complex[] u, TimeWindowData timewindowInformation) {
         // 書きだすための波形
         int outnpts = (int) ((timewindowInformation.getEndTime() - timewindowInformation.getStartTime())
                 * finalSamplingHz);

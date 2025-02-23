@@ -21,7 +21,7 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
 import io.github.kensuke1984.kibrary.Summon;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
+import io.github.kensuke1984.kibrary.timewindow.TimeWindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
@@ -155,9 +155,9 @@ public final class ObserverListFile {
             Set<DataEntry> entries = DataEntryListFile.readAsSet(Paths.get(cmdLine.getOptionValue("e")));
             observerSet = entries.stream().map(DataEntry::getObserver).collect(Collectors.toSet());
         } else if (cmdLine.hasOption("t")) {
-            Set<TimewindowData> timeWindows =  TimewindowDataFile.read(Paths.get(cmdLine.getOptionValue("t")));
+            Set<TimeWindowData> timeWindows =  TimewindowDataFile.read(Paths.get(cmdLine.getOptionValue("t")));
             observerSet = timeWindows.stream().filter(timeWindow -> components.contains(timeWindow.getComponent()))
-                    .map(TimewindowData::getObserver).collect(Collectors.toSet());
+                    .map(TimeWindowData::getObserver).collect(Collectors.toSet());
         } else if (cmdLine.hasOption("b")) {
             List<BasicID> basicIDs =  BasicIDFile.read(Paths.get(cmdLine.getOptionValue("b")), false);
             observerSet = basicIDs.stream().filter(id -> components.contains(id.getSacComponent()))

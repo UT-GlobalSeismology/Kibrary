@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
+import io.github.kensuke1984.kibrary.timewindow.TimeWindowData;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
@@ -17,13 +17,13 @@ public class Bins2D {
 	private double dAzimuth;
 	private double dDistance;
 	
-	public Bins2D(GlobalCMTID event, double dAzimuth, double dDistance, Set<TimewindowData> timewindows) {
+	public Bins2D(GlobalCMTID event, double dAzimuth, double dDistance, Set<TimeWindowData> timewindows) {
 		bins = new HashMap<>();
 		this.event = event;
 		this.dAzimuth = dAzimuth;
 		this.dDistance = dDistance;
 		
-		for (TimewindowData timewindow : timewindows) {
+		for (TimeWindowData timewindow : timewindows) {
 			Observer station = timewindow.getObserver();
 			FullPosition eventLocation = event.getEventData().getCmtPosition();
 			double distance = station.getPosition().computeEpicentralDistanceRad(eventLocation)
@@ -58,7 +58,7 @@ public class Bins2D {
 		return new DistanceAzimuth(distance, azimuth);
 	}
 	
-	public DistanceAzimuth getBinPosition(TimewindowData timewindow) {
+	public DistanceAzimuth getBinPosition(TimeWindowData timewindow) {
 		Observer station = timewindow.getObserver();
 		FullPosition eventLocation = event.getEventData().getCmtPosition();
 		double distance = station.getPosition().computeEpicentralDistanceRad(eventLocation)

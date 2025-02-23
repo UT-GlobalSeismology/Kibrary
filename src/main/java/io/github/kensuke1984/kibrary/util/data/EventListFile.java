@@ -20,7 +20,7 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
 import io.github.kensuke1984.kibrary.Summon;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
+import io.github.kensuke1984.kibrary.timewindow.TimeWindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
@@ -177,8 +177,8 @@ public class EventListFile {
             Set<DataEntry> entries = DataEntryListFile.readAsSet(Paths.get(cmdLine.getOptionValue("e")));
             eventSet = entries.stream().map(DataEntry::getEvent).collect(Collectors.toSet());
         } else if (cmdLine.hasOption("t")) {
-            Set<TimewindowData> timeWindows =  TimewindowDataFile.read(Paths.get(cmdLine.getOptionValue("t")));
-            eventSet = timeWindows.stream().map(TimewindowData::getGlobalCMTID).collect(Collectors.toSet());
+            Set<TimeWindowData> timeWindows =  TimewindowDataFile.read(Paths.get(cmdLine.getOptionValue("t")));
+            eventSet = timeWindows.stream().map(TimeWindowData::getGlobalCMTID).collect(Collectors.toSet());
         } else if (cmdLine.hasOption("b")) {
             List<BasicID> basicIDs =  BasicIDFile.read(Paths.get(cmdLine.getOptionValue("b")), false);
             eventSet = basicIDs.stream().map(BasicID::getGlobalCMTID).collect(Collectors.toSet());

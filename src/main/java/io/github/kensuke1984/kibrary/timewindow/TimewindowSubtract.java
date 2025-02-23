@@ -68,11 +68,11 @@ public class TimewindowSubtract {
         boolean appendFileDate = !cmdLine.hasOption("O");
         Path outputPath = DatasetAid.generateOutputFilePath(Paths.get(""), "timewindow", fileTag, appendFileDate, null, ".dat");
 
-        Set<TimewindowData> originalWindows = TimewindowDataFile.read(originalPath);
-        Set<TimewindowData> subtractWindows = TimewindowDataFile.read(subtractPath);
+        Set<TimeWindowData> originalWindows = TimewindowDataFile.read(originalPath);
+        Set<TimeWindowData> subtractWindows = TimewindowDataFile.read(subtractPath);
 
-        Set<TimewindowData> outWindows = new HashSet<>();
-        for (TimewindowData window : originalWindows) {
+        Set<TimeWindowData> outWindows = new HashSet<>();
+        for (TimeWindowData window : originalWindows) {
             if (!subtractWindows.contains(window))
                 outWindows.add(window);
         }

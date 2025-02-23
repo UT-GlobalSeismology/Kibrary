@@ -8,7 +8,7 @@ import io.github.kensuke1984.kibrary.filter.ButterworthFilter;
 import io.github.kensuke1984.kibrary.filter.LowPassFilter;
 import io.github.kensuke1984.kibrary.math.HilbertTransform;
 import io.github.kensuke1984.kibrary.math.Trace;
-import io.github.kensuke1984.kibrary.timewindow.Timewindow;
+import io.github.kensuke1984.kibrary.timewindow.TimeWindow;
 
 public class SurfaceWaveDetector {
 	private Trace trace;
@@ -17,7 +17,7 @@ public class SurfaceWaveDetector {
 	private Trace twoBitsTrace;
 	private int[] upBits;
 	private int[] downBits;
-	private Timewindow timewindow;
+	private TimeWindow timewindow;
 	private final static double dt = 0.05;
 	
 	public SurfaceWaveDetector(Trace trace, double minPeriod) {
@@ -30,7 +30,7 @@ public class SurfaceWaveDetector {
 		
 		int[] points = detect();
 		if (points != null)
-			timewindow = new Timewindow(points[0] * dt, points[1] * dt);
+			timewindow = new TimeWindow(points[0] * dt, points[1] * dt);
 	}
 	
 	private int[] detect() {
@@ -153,7 +153,7 @@ public class SurfaceWaveDetector {
 		return indexesOfLongestUp;
 	}
 	
-	public Timewindow getSurfaceWaveWindow() {
+	public TimeWindow getSurfaceWaveWindow() {
 		return timewindow;
 	}
 	

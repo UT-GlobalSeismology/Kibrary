@@ -70,7 +70,7 @@ public class TravelTimeInformationFile {
                 for (Phase phase : useList) {
                     Double travelTime = info.timeOf(phase);
                     if (travelTime != null) {
-                        pw.print(" " + MathAid.padToString(travelTime, Timewindow.TYPICAL_MAX_INTEGER_DIGITS, Timewindow.DECIMALS, false));
+                        pw.print(" " + MathAid.padToString(travelTime, TimeWindow.TYPICAL_MAX_INTEGER_DIGITS, TimeWindow.DECIMALS, false));
                     } else {
                         pw.print(" -");
                     }
@@ -78,7 +78,7 @@ public class TravelTimeInformationFile {
                 for (Phase phase : avoidList) {
                     Double travelTime = info.timeOf(phase);
                     if (travelTime != null) {
-                        pw.print(" " + MathAid.padToString(travelTime, Timewindow.TYPICAL_MAX_INTEGER_DIGITS, Timewindow.DECIMALS, false));
+                        pw.print(" " + MathAid.padToString(travelTime, TimeWindow.TYPICAL_MAX_INTEGER_DIGITS, TimeWindow.DECIMALS, false));
                     } else {
                         pw.print(" -");
                     }

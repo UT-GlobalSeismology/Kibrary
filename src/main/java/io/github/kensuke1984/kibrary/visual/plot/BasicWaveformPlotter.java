@@ -309,7 +309,7 @@ public class BasicWaveformPlotter extends Operation {
         // read data feature file
         if (dataFeaturePath != null) {
             dataFeatureSet = DataFeatureListFile.read(dataFeaturePath).stream()
-                    .filter(feature -> components.contains(feature.getTimewindow().getComponent()))
+                    .filter(feature -> components.contains(feature.getTimeWindow().getComponent()))
                     .collect(Collectors.toSet());
         }
 
@@ -426,8 +426,8 @@ public class BasicWaveformPlotter extends Operation {
             // add data feature statistics
             if (dataFeatureSet != null) {
                 List<DataFeature> features = dataFeatureSet.stream()
-                        .filter(feature -> feature.getTimewindow().toDataEntry().equals(synID.toDataEntry())
-                                && feature.getTimewindow().overlaps(synID.toTimeWindow()))
+                        .filter(feature -> feature.getTimeWindow().toDataEntry().equals(synID.toDataEntry())
+                                && feature.getTimeWindow().overlaps(synID.toTimeWindow()))
                         .collect(Collectors.toList());
                 if (features.size() != 1) throw new IllegalStateException("0 or more than 1 data features for " + synID);
                 DataFeature feature = features.get(0);

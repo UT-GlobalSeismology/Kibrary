@@ -9,7 +9,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import io.github.afeborgeaud.tomotool.topoModel.TK10;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
+import io.github.kensuke1984.kibrary.timewindow.TimeWindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
@@ -46,7 +46,7 @@ public class Test {
     }
 
     private static void testFromTimewindow(Path timewindowPath) throws IOException {
-        Set<TimewindowData> timewindows = TimewindowDataFile.read(timewindowPath);
+        Set<TimeWindowData> timewindows = TimewindowDataFile.read(timewindowPath);
         List<RaypathInformation> raypathInformations = timewindows.stream().limit(3)
                 .map(tw -> new RaypathInformation(tw.getObserver(), tw.getGlobalCMTID()))
                 .collect(Collectors.toList());
