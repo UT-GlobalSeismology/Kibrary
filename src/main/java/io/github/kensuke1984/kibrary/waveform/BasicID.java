@@ -301,6 +301,15 @@ public class BasicID {
         return new DataEntry(eventID, observer, component);
     }
 
+    /**
+     * @return ({@link Timewindow}) Time window for this ID.
+     * @since 2025/2/23
+     * @author otsuru
+     */
+    public Timewindow toTimeWindow() {
+        return new Timewindow(startTime, computeEndTime());
+    }
+
     @Override
     public String toString() {
         String basicString = observer.toPaddedInfoString() + " " + eventID.toPaddedString() + " " + component + " " + type + " "

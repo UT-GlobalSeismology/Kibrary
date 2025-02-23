@@ -307,10 +307,10 @@ public class ActualWaveformCompiler extends Operation {
         // read static correction data
         if (correctTime || amplitudeCorrectionType > 0) {
             Set<StaticCorrectionData> tmpset = StaticCorrectionDataFile.read(staticCorrectionPath);
-            // choose only static corrections that have a pair timewindow
+            // choose only static corrections that have a matching timewindow
             staticCorrectionSet = tmpset.stream()
                     .filter(c -> sourceTimeWindowSet.parallelStream()
-                            .map(t -> c.isForTimewindow(t)).distinct().collect(Collectors.toSet()).contains(true))
+                            .map(t -> c.matchesEntryOfWindow(t)).distinct().collect(Collectors.toSet()).contains(true))
                     .collect(Collectors.toSet());
 
             if (amplitudeCorrectionType == 2) {
@@ -374,22 +374,6 @@ public class ActualWaveformCompiler extends Operation {
         BasicIDFile.write(spcImIDs, spcImPath);
 
         System.err.println(" " + numberOfPairs.get() + " pairs of observed and synthetic waveforms are output.");
-    }
-
-    /**
-     * @param window
-     * @author anselme
-     * @return
-     */
-    private StaticCorrectionData getMantleCorrection(TimewindowData window) {
-        List<StaticCorrectionData> corrs = mantleCorrectionSet.stream().filter(s -> s.isForTimewindow(window)).collect(Collectors.toList());
-        if (corrs.size() > 1) {
-            throw new RuntimeException("Found more than 1 mantle correction for window " + window);
-        } else if (corrs.size() == 0) {
-            return null;
-        } else {
-            return corrs.get(0);
-        }
     }
 
     private double[] cutDataSac(SACFileAccess sac, Timewindow window) {
@@ -594,9 +578,6 @@ public class ActualWaveformCompiler extends Operation {
             double minPeriod = obsSac.getValue(SACHeaderEnum.USER0) == -12345 ? 0 : obsSac.getValue(SACHeaderEnum.USER0);
             double maxPeriod = obsSac.getValue(SACHeaderEnum.USER1) == -12345 ? 0 : obsSac.getValue(SACHeaderEnum.USER1);
 
-            //TODO delete following line by using Trace.resampleInWindow()
-            int npts = (int) MathAid.floor((timeWindow.getEndTime() - timeWindow.getStartTime()) * finalSamplingHz) + 1;
-
             double startTime = timeWindow.getStartTime();
             double shift = 0;
             double ratio = 1;
@@ -614,7 +595,7 @@ public class ActualWaveformCompiler extends Operation {
                 }
             }
             if (correctMantle) {
-                StaticCorrectionData sc = getMantleCorrection(timeWindow);
+                StaticCorrectionData sc = StaticCorrectionData.findForTimeWindow(mantleCorrectionSet, timeWindow);
                 if (sc == null) {
                     System.err.println();
                     System.err.println("!! No mantle correction data, skipping: " + timeWindow);
@@ -642,12 +623,15 @@ public class ActualWaveformCompiler extends Operation {
                 nptsRef = (int) ((windowRef.getEndTime() - windowRef.getStartTime()) * finalSamplingHz);
             }
 
-            double[] obsData = null;
-            if (addNoise)
-                obsData = cutDataSacAddNoise(obsSac, startTime - shift, npts);
-            else
-                obsData = cutDataSac(obsSac, timeWindow.shift(-shift));
             double[] synData = cutDataSac(synSac, timeWindow);
+            int npts = synData.length;
+
+            double[] obsData = null;
+            if (addNoise) {
+                obsData = cutDataSacAddNoise(obsSac, startTime - shift, npts);
+            } else {
+                obsData = cutDataSac(obsSac, timeWindow.shift(-shift));
+            }
 
             // check
             RealVector obsVec = new ArrayRealVector(obsData);

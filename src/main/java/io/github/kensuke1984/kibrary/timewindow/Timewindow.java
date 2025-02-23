@@ -57,7 +57,7 @@ public class Timewindow implements Comparable<Timewindow> {
      * @param timeWindow ({@link Timewindow}) Time window to check.
      * @return (boolean) Whether the time windows overlap.
      */
-    boolean overlaps(Timewindow timeWindow) {
+    public boolean overlaps(Timewindow timeWindow) {
         return timeWindow.startTime <= endTime && startTime <= timeWindow.endTime;
     }
 

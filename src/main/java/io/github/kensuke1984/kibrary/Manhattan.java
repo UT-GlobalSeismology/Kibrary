@@ -16,6 +16,7 @@ import io.github.kensuke1984.kibrary.firsthandler.DataKitchen;
 import io.github.kensuke1984.kibrary.fusion.AdaptiveGridDesigner;
 import io.github.kensuke1984.kibrary.fusion.CoarseGridDesigner;
 import io.github.kensuke1984.kibrary.fusion.PartialsFuser;
+import io.github.kensuke1984.kibrary.inversion.GeometryWeighter;
 import io.github.kensuke1984.kibrary.inversion.LetMeInvert;
 import io.github.kensuke1984.kibrary.inversion.setup.InversionArranger;
 import io.github.kensuke1984.kibrary.inversion.solve.InversionSolver;
@@ -115,6 +116,7 @@ enum Manhattan {
     VoxelManualDesigner(51,VoxelManualDesigner.class),
     CoarseGridDesigner(52, CoarseGridDesigner.class),
     AdaptiveGridDesigner(53, AdaptiveGridDesigner.class),
+    GeometryWeighter(58, GeometryWeighter.class),
     // Partial 60
     OneDPartialDSMSetup(60, OneDPartialDSMSetup.class),
     ThreeDPartialDSMSetup(61, ThreeDPartialDSMSetup.class),

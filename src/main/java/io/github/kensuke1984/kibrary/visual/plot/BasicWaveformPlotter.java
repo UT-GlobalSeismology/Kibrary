@@ -23,7 +23,6 @@ import io.github.kensuke1984.kibrary.math.CircularRange;
 import io.github.kensuke1984.kibrary.math.LinearRange;
 import io.github.kensuke1984.kibrary.selection.DataFeature;
 import io.github.kensuke1984.kibrary.selection.DataFeatureListFile;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.timewindow.TravelTimeInformation;
 import io.github.kensuke1984.kibrary.timewindow.TravelTimeInformationFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
@@ -40,8 +39,10 @@ import io.github.kensuke1984.kibrary.waveform.BasicIDPairUp;
  * For each event, a pdf file with waveforms for all observers will be created.
  * In each plot, the original observed waveform, the shifted observed waveform,
  * the synthetic waveform, and the residual waveform can be plotted.
- * Vertical lines of travel times can be displayed if a {@link TravelTimeInformationFile} is set as input.
  * Additional basic waveform folders can be given when plotting multiple synthetic seismograms.
+ * <p>
+ * Vertical lines of travel times can be displayed if a {@link TravelTimeInformationFile} is set as input.
+ * Waveform statistics can be displayed if a {@link DataFeatureListFile} is set as input. {@link DataFeature}s with overlapping time windows are used.
  * <p>
  * Text files of waveform data will be created in event folders under their corresponding basic waveform folders.
  * Output pdf files and their corresponding plt files will be created in event directories under workPath.
@@ -426,7 +427,7 @@ public class BasicWaveformPlotter extends Operation {
             if (dataFeatureSet != null) {
                 List<DataFeature> features = dataFeatureSet.stream()
                         .filter(feature -> feature.getTimewindow().toDataEntry().equals(synID.toDataEntry())
-                                && Math.abs(feature.getTimewindow().getStartTime() - synID.getStartTime()) < TimewindowData.TIME_EPSILON)
+                                && feature.getTimewindow().overlaps(synID.toTimeWindow()))
                         .collect(Collectors.toList());
                 if (features.size() != 1) throw new IllegalStateException("0 or more than 1 data features for " + synID);
                 DataFeature feature = features.get(0);
