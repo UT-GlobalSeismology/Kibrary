@@ -15,14 +15,14 @@ import java.util.stream.Stream;
 
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.timewindow.TimeWindowData;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
+import io.github.kensuke1984.kibrary.timewindow.TimeWindowDataFile;
 
 public class Phases {
 		public static void main(String[] args) {
 			Set<TimeWindowData> timewindows = null;
 			if (args.length == 1) {
 				try {
-					timewindows = TimewindowDataFile.read(Paths.get(args[0]));
+					timewindows = TimeWindowDataFile.read(Paths.get(args[0]));
 				} catch (IOException e) {
 					e.printStackTrace();
 				}

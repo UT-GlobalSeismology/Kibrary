@@ -19,8 +19,8 @@ import io.github.kensuke1984.kibrary.math.MatrixFile;
 import io.github.kensuke1984.kibrary.math.VectorFile;
 import io.github.kensuke1984.kibrary.perturbation.PerturbationComparison;
 import io.github.kensuke1984.kibrary.source.SourceTimeFunction;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowSubtract;
+import io.github.kensuke1984.kibrary.timewindow.TimeWindowDataFile;
+import io.github.kensuke1984.kibrary.timewindow.TimeWindowSubtract;
 import io.github.kensuke1984.kibrary.util.data.DataEntryIntersection;
 import io.github.kensuke1984.kibrary.util.data.DataEntryListFile;
 import io.github.kensuke1984.kibrary.util.data.EventListFile;
@@ -77,9 +77,9 @@ enum Brooklyn {
     SACFileAccess(21, SACFileAccess.class),
     SourceTimeFunction(22, SourceTimeFunction.class),
     // Filtered 30
-    TimewindowDataFile(31, TimewindowDataFile.class),
+    TimewWindowDataFile(31, TimeWindowDataFile.class),
     StaticCorrectionDataFile(32, StaticCorrectionDataFile.class),
-    TimewindowSubtract(37, TimewindowSubtract.class),
+    TimeWindowSubtract(37, TimeWindowSubtract.class),
     // Compiled 40
     BasicIDFile(40, BasicIDFile.class),
     VarianceComputer(41, VarianceComputer.class),

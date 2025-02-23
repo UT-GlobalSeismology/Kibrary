@@ -16,7 +16,7 @@ import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.math.Trace;
 import io.github.kensuke1984.kibrary.timewindow.TimeWindowData;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
+import io.github.kensuke1984.kibrary.timewindow.TimeWindowDataFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
@@ -30,7 +30,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACFileName;
  * <p>
  * Values of the correction is by the average time of arrivals and amplitudes of those peaks.
  * <p>
- * Start time for identification is a start time in the given {@link TimewindowDataFile}.
+ * Start time for identification is a start time in the given {@link TimeWindowDataFile}.
  *
  * @author Kensuke Konishi
  * @since a long time ago
@@ -76,7 +76,7 @@ public class TakeuchiStaticCorrection extends Operation {
      */
     private double sacSamplingHz;
 
-    private Set<TimeWindowData> sourceTimewindowSet;
+    private Set<TimeWindowData> sourceTimeWindowSet;
     private Set<StaticCorrectionData> staticCorrectionSet = Collections.synchronizedSet(new HashSet<>());
 
     /**
@@ -102,7 +102,7 @@ public class TakeuchiStaticCorrection extends Operation {
             pw.println("##SacComponents to be used, listed using spaces. (Z R T)");
             pw.println("#components ");
             pw.println("##Path of a time window file, must be set.");
-            pw.println("#timewindowPath timewindow.dat");
+            pw.println("#timewindowPath timeWindow.dat");
             pw.println("##Path of a root directory containing observed dataset. (.)");
             pw.println("#obsPath ");
             pw.println("##Path of a root directory containing synthetic dataset. (.)");
@@ -137,7 +137,7 @@ public class TakeuchiStaticCorrection extends Operation {
     @Override
     public void run() throws IOException {
         // gather all time windows to be processed
-        sourceTimewindowSet = TimewindowDataFile.read(timewindowPath)
+        sourceTimeWindowSet = TimeWindowDataFile.read(timewindowPath)
                 .stream().filter(window -> components.contains(window.getComponent())).collect(Collectors.toSet());
 
         Set<SACFileName> nameSet;
@@ -171,7 +171,7 @@ public class TakeuchiStaticCorrection extends Operation {
         String observerID = obsName.getObserverID();
         GlobalCMTID id = obsName.getGlobalCMTID();
         SACComponent component = obsName.getComponent();
-        Set<TimeWindowData> timeWindowSet = sourceTimewindowSet.stream()
+        Set<TimeWindowData> timeWindowSet = sourceTimeWindowSet.stream()
                 .filter(info -> info.getObserver().toString().equals(observerID))
                 .filter(info -> info.getGlobalCMTID().equals(id))
                 .filter(info -> info.getComponent() == component).collect(Collectors.toSet());

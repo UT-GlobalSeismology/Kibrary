@@ -17,14 +17,14 @@ import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.MathAid;
 
 /**
- * Merges {@link TimewindowDataFile}s.
+ * Merges {@link TimeWindowDataFile}s.
  *
  * TODO merge windows of same entry
  *
  * @author otsuru
  * @since 2022/12/13
  */
-public class TimewindowMerge extends Operation {
+public class TimeWindowMerge extends Operation {
 
     private static final int MAX_NUM = 10;
 
@@ -71,13 +71,13 @@ public class TimewindowMerge extends Operation {
             pw.println("##########  Up to " + MAX_NUM + " files can be managed. Any index may be left blank.");
             for (int i = 1; i <= MAX_NUM; i++) {
                 pw.println("##" + MathAid.ordinalNumber(i) + " file.");
-                pw.println("#timewindowPath" + i + " timewindow.dat");
+                pw.println("#timewindowPath" + i + " timeWindow.dat");
             }
         }
         System.err.println(outPath + " is created.");
     }
 
-    public TimewindowMerge(Property property) throws IOException {
+    public TimeWindowMerge(Property property) throws IOException {
         this.property = (Property) property.clone();
     }
 
@@ -88,9 +88,9 @@ public class TimewindowMerge extends Operation {
         appendFileDate = property.parseBoolean("appendFileDate", "true");
 
         for (int i = 1; i <= MAX_NUM; i++) {
-            String timewindowKey = "timewindowPath" + i;
-            if (property.containsKey(timewindowKey)) {
-                timeWindowPaths.add(property.parsePath(timewindowKey, null, true, workPath));
+            String timeWindowKey = "timewindowPath" + i;
+            if (property.containsKey(timeWindowKey)) {
+                timeWindowPaths.add(property.parsePath(timeWindowKey, null, true, workPath));
             }
         }
     }
@@ -109,13 +109,13 @@ public class TimewindowMerge extends Operation {
         // read time windows from all input files
         Set<TimeWindowData> timeWindows = new HashSet<>();
         for (Path timeWindowPath : timeWindowPaths) {
-            Set<TimeWindowData> srcTimeWindows = TimewindowDataFile.read(timeWindowPath);
+            Set<TimeWindowData> srcTimeWindows = TimeWindowDataFile.read(timeWindowPath);
             timeWindows.addAll(srcTimeWindows);
         }
 
         // output merged file
-        Path outputPath = DatasetAid.generateOutputFilePath(workPath, "timewindow", fileTag, appendFileDate, null, ".dat");
-        TimewindowDataFile.write(timeWindows, outputPath);
+        Path outputPath = DatasetAid.generateOutputFilePath(workPath, "timeWindow", fileTag, appendFileDate, null, ".dat");
+        TimeWindowDataFile.write(timeWindows, outputPath);
     }
 
 }

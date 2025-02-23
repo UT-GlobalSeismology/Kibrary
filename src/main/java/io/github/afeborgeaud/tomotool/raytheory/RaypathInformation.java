@@ -8,7 +8,7 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
+import io.github.kensuke1984.kibrary.timewindow.TimeWindowDataFile;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
@@ -68,7 +68,7 @@ public class RaypathInformation {
      * @throws IOException
      */
     public static List<RaypathInformation> readRaypathFromTimewindows(Path timewindowPath) throws IOException {
-        return TimewindowDataFile.read(timewindowPath).stream()
+        return TimeWindowDataFile.read(timewindowPath).stream()
             .map(window -> new RaypathInformation(window.getObserver(), window.getGlobalCMTID()))
             .collect(Collectors.toList());
     }

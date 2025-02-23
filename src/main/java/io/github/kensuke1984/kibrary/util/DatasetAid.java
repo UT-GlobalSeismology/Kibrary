@@ -286,7 +286,7 @@ public final class DatasetAid {
     }
 
     /**
-     * An abstract class that can be used to execute tasks in filtered datasets for a set of timewindows.
+     * An abstract class that can be used to execute tasks in filtered datasets for a set of time windows.
      * @author otsuru
      * @since 2022/6/20
      */

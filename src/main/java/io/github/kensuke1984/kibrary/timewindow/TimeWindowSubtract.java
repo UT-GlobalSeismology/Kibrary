@@ -21,7 +21,7 @@ import io.github.kensuke1984.kibrary.util.DatasetAid;
  * @since a long time ago
  * @version 2022/8/29 moved & renamed from quick.Subtractwindow to timewindow.TimewindowSubtract.
  */
-public class TimewindowSubtract {
+public class TimeWindowSubtract {
 
     /**
      * Removes time windows of a time window file from those of another.
@@ -44,9 +44,9 @@ public class TimewindowSubtract {
     public static Options defineOptions() {
         Options options = Summon.defaultOptions();
         // input
-        options.addOption(Option.builder("a").longOpt("original").hasArg().argName("originalTimewindowFile").required()
+        options.addOption(Option.builder("a").longOpt("original").hasArg().argName("originalTimeWindowFile").required()
                 .desc("Path of original time window file.").build());
-        options.addOption(Option.builder("b").longOpt("subtract").hasArg().argName("subtractTimewindowFile").required()
+        options.addOption(Option.builder("b").longOpt("subtract").hasArg().argName("subtractTimeWindowFile").required()
                 .desc("Path of time window file to be subtracted.").build());
         // output
         options.addOption(Option.builder("T").longOpt("tag").hasArg().argName("fileTag")
@@ -66,17 +66,17 @@ public class TimewindowSubtract {
         Path subtractPath = Paths.get(cmdLine.getOptionValue("b"));
         String fileTag = cmdLine.hasOption("T") ? cmdLine.getOptionValue("T") : null;
         boolean appendFileDate = !cmdLine.hasOption("O");
-        Path outputPath = DatasetAid.generateOutputFilePath(Paths.get(""), "timewindow", fileTag, appendFileDate, null, ".dat");
+        Path outputPath = DatasetAid.generateOutputFilePath(Paths.get(""), "timeWindow", fileTag, appendFileDate, null, ".dat");
 
-        Set<TimeWindowData> originalWindows = TimewindowDataFile.read(originalPath);
-        Set<TimeWindowData> subtractWindows = TimewindowDataFile.read(subtractPath);
+        Set<TimeWindowData> originalWindows = TimeWindowDataFile.read(originalPath);
+        Set<TimeWindowData> subtractWindows = TimeWindowDataFile.read(subtractPath);
 
         Set<TimeWindowData> outWindows = new HashSet<>();
         for (TimeWindowData window : originalWindows) {
             if (!subtractWindows.contains(window))
                 outWindows.add(window);
         }
-        TimewindowDataFile.write(outWindows, outputPath);
+        TimeWindowDataFile.write(outWindows, outputPath);
     }
 
 }

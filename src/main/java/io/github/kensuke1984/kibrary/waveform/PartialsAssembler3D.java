@@ -29,7 +29,7 @@ import io.github.kensuke1984.kibrary.source.SourceTimeFunctionHandler;
 import io.github.kensuke1984.kibrary.source.SourceTimeFunctionType;
 import io.github.kensuke1984.kibrary.timewindow.TimeWindow;
 import io.github.kensuke1984.kibrary.timewindow.TimeWindowData;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
+import io.github.kensuke1984.kibrary.timewindow.TimeWindowDataFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.data.Observer;
@@ -54,7 +54,7 @@ import io.github.kensuke1984.kibrary.voxel.VoxelInformationFile;
  * from SPC files created by shfp、shbp、psvfp, and psvbp.
  * Output is written in the format of {@link PartialIDFile}.
  * <p>
- * Timewindows in the input {@link TimewindowDataFile} that satisfy the following criteria will be worked for:
+ * Time windows in the input {@link TimeWindowDataFile} that satisfy the following criteria will be worked for:
  * <ul>
  * <li> the component is included in the components specified in the property file </li>
  * <li> the (event, observer, component)-pair is included in the input data entry file, if it is specified </li>
@@ -112,7 +112,7 @@ public class PartialsAssembler3D extends Operation {
     private Set<SACComponent> components;
 
     /**
-     * Path of a timewindow file.
+     * Path of a time window file.
      */
     private Path timewindowPath;
     /**
@@ -253,8 +253,8 @@ public class PartialsAssembler3D extends Operation {
             pw.println("#appendFolderDate false");
             pw.println("##SacComponents to be used. (Z R T)");
             pw.println("#components ");
-            pw.println("##Path of a timewindow data file, must be set.");
-            pw.println("#timewindowPath timewindow.dat");
+            pw.println("##Path of a time window data file, must be set.");
+            pw.println("#timewindowPath timeWindow.dat");
             pw.println("##Path of a data entry list file, if you want to select raypaths.");
             pw.println("#dataEntryPath selectedEntry.lst");
             pw.println("##Path of a voxel information file, if you want to select the voxels to compute for.");
@@ -381,7 +381,7 @@ public class PartialsAssembler3D extends Operation {
         System.err.println(variableTypes.stream().map(Object::toString).collect(Collectors.joining(" ", "Computing for ", "")));
 
         // read time window file and select based on component and entries
-        timeWindowSet = TimewindowDataFile.readAndSelect(timewindowPath, dataEntryPath, components);
+        timeWindowSet = TimeWindowDataFile.readAndSelect(timewindowPath, dataEntryPath, components);
 
         Set<GlobalCMTID> eventSet = timeWindowSet.stream().map(TimeWindowData::getGlobalCMTID).collect(Collectors.toSet());
         Set<Observer> observerSet = timeWindowSet.stream().map(TimeWindowData::getObserver).collect(Collectors.toSet());
@@ -703,7 +703,7 @@ public class PartialsAssembler3D extends Operation {
                 for (SACComponent component : neededComponents) {
                     double[] partial = threedPartialMaker.createPartial(component, ibody, variableType, false);
 
-                    timeWindows.stream().filter(timewindow -> timewindow.getComponent() == component).forEach(window -> {
+                    timeWindows.stream().filter(timeWindow -> timeWindow.getComponent() == component).forEach(window -> {
                         Trace cutTrace = cutAndFilter(partial, window);
                         PartialID partialID = new PartialID(observer, event, component, finalSamplingHz, cutTrace.getMinX(),
                                 cutTrace.getLength(), 1 / highFreq, 1 / lowFreq, window.getPhases(),

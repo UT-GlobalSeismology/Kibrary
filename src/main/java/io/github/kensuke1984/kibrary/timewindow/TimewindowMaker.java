@@ -62,10 +62,10 @@ import io.github.kensuke1984.kibrary.util.sac.SACFileName;
  * and abandons overlapped parts between these.
  * Arrival times are computed by TauP.
  * <p>
- * Time window information is written in binary format in "timewindow*.dat".
- * Data entries that could not produce time windows are written in "invalidTimewindow*.txt".
+ * Time window information is written in binary format in "timeWindow*.dat".
+ * Data entries that could not produce time windows are written in "invalidTimeWindow*.txt".
  * Travel time information is written in "travelTime*.inf".
- * See {@link TimewindowDataFile}.
+ * See {@link TimeWindowDataFile}.
  *
  * @author Kensuke Konishi
  * @since a long time ago
@@ -253,9 +253,9 @@ public class TimewindowMaker extends Operation {
     @Override
     public void run() throws IOException {
         String dateString = GadgetAid.getTemporaryString();
-        Path outTimewindowPath = DatasetAid.generateOutputFilePath(workPath, "timewindow", fileTag, appendFileDate, dateString, ".dat");
+        Path outTimeWindowPath = DatasetAid.generateOutputFilePath(workPath, "timeWindow", fileTag, appendFileDate, dateString, ".dat");
         Path outTravelTimePath = DatasetAid.generateOutputFilePath(workPath, "travelTime", fileTag, appendFileDate, dateString, ".inf");
-        outInvalidPath = DatasetAid.generateOutputFilePath(workPath, "invalidTimewindow", fileTag, appendFileDate, dateString, ".txt");
+        outInvalidPath = DatasetAid.generateOutputFilePath(workPath, "invalidTimeWindow", fileTag, appendFileDate, dateString, ".txt");
         System.err.println("Invalid files, if any, will be listed in " + outInvalidPath);
 
         // read input file
@@ -286,9 +286,9 @@ public class TimewindowMaker extends Operation {
 
         // output
         if (timeWindowSet.isEmpty()) {
-            System.err.println("No timewindows are created.");
+            System.err.println("No time windows are created.");
         } else {
-            TimewindowDataFile.write(timeWindowSet, outTimewindowPath);
+            TimeWindowDataFile.write(timeWindowSet, outTimeWindowPath);
         }
         TravelTimeInformationFile.write(usePhases, avoidPhases, travelTimeSet, outTravelTimePath);
     }
@@ -392,7 +392,7 @@ public class TimewindowMaker extends Operation {
                         findContainedPhases(window, useArrivals)))
                 .filter(tw -> tw.getLength() > minLength).collect(Collectors.toList());
         if (windowList.size() == 0) {
-            writeInvalid(entry, "Timewindow too short.");
+            writeInvalid(entry, "Time window too short.");
             return;
         }
 
@@ -449,7 +449,7 @@ public class TimewindowMaker extends Operation {
                 .sorted().toArray(TimeWindow[]::new);
         avoidWindows = mergeWindows(avoidWindows);
         // cut avoidWindows out of the window
-        // Note that the result still has only one timewindow.
+        // Note that the result still has only one time window.
         return considerAvoidPhases(window, avoidWindows);
     }
 

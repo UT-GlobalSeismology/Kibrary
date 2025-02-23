@@ -68,7 +68,7 @@ import io.github.kensuke1984.kibrary.external.TauPPhase;
 import io.github.kensuke1984.kibrary.external.TauPTimeReader;
 import io.github.kensuke1984.kibrary.math.Trace;
 import io.github.kensuke1984.kibrary.timewindow.TimeWindowData;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
+import io.github.kensuke1984.kibrary.timewindow.TimeWindowDataFile;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.ThreadAid;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
@@ -327,7 +327,7 @@ public class PhaseEnvelope {
                 e.printStackTrace();
             }
         }, 10, TimeUnit.HOURS);
-        TimewindowDataFile.write(infoset, outputPath);
+        TimeWindowDataFile.write(infoset, outputPath);
     }
 
     private double[][][] computePhaseEnvelope(SACFileName obsname, SACFileName synname) {

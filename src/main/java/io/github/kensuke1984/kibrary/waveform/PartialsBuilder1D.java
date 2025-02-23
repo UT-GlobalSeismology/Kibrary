@@ -28,7 +28,7 @@ import io.github.kensuke1984.kibrary.source.SourceTimeFunction;
 import io.github.kensuke1984.kibrary.source.SourceTimeFunctionHandler;
 import io.github.kensuke1984.kibrary.source.SourceTimeFunctionType;
 import io.github.kensuke1984.kibrary.timewindow.TimeWindowData;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
+import io.github.kensuke1984.kibrary.timewindow.TimeWindowDataFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.ThreadAid;
@@ -50,7 +50,7 @@ import io.github.kensuke1984.kibrary.voxel.ParameterType;
  * from SPC files created by sshshi and sshpsvi, or sshsh and sshpsv.
  * Output is written in the format of {@link PartialIDFile}.
  * <p>
- * Timewindows in the input {@link TimewindowDataFile} that satisfy the following criteria will be worked for:
+ * Time windows in the input {@link TimeWindowDataFile} that satisfy the following criteria will be worked for:
  * <ul>
  * <li> the component is included in the components specified in the property file </li>
  * <li> the (event, observer, component)-pair is included in the input data entry file, if it is specified </li>
@@ -97,7 +97,7 @@ public class PartialsBuilder1D extends Operation {
     private Set<SACComponent> components;
 
     /**
-     * Path of a timewindow file.
+     * Path of a time window file.
      */
     private Path timewindowPath;
     /**
@@ -206,8 +206,8 @@ public class PartialsBuilder1D extends Operation {
             pw.println("#appendFolderDate false");
             pw.println("##SacComponents to be used. (Z R T)");
             pw.println("#components ");
-            pw.println("##Path of a timewindow data file, must be set.");
-            pw.println("#timewindowPath timewindow.dat");
+            pw.println("##Path of a time window data file, must be set.");
+            pw.println("#timewindowPath timeWindow.dat");
             pw.println("##Path of a data entry list file, if you want to select raypaths.");
             pw.println("#dataEntryPath selectedEntry.lst");
             pw.println("##(double[]) Layer radii, listed using spaces, if you want to select layers to compute for.");
@@ -310,7 +310,7 @@ public class PartialsBuilder1D extends Operation {
         System.err.println(variableTypes.stream().map(Object::toString).collect(Collectors.joining(" ", "Computing for ", "")));
 
         // read time window file and select based on component and entries
-        timeWindowSet = TimewindowDataFile.readAndSelect(timewindowPath, dataEntryPath, components);
+        timeWindowSet = TimeWindowDataFile.readAndSelect(timewindowPath, dataEntryPath, components);
 
         // collect events
         Set<GlobalCMTID> eventSet = timeWindowSet.stream().map(TimeWindowData::getGlobalCMTID).collect(Collectors.toSet());
@@ -398,9 +398,9 @@ public class PartialsBuilder1D extends Operation {
             SPCFileAccess shSPCFile = (usableSPCMode != SPCFileAid.UsableSPCMode.PSV) ? findAndProcessSPCFile(observer, variableType, SPCMode.SH) : null;
             SPCFileAccess psvSPCFile = (usableSPCMode != SPCFileAid.UsableSPCMode.SH) ? findAndProcessSPCFile(observer, variableType, SPCMode.PSV) : null;
 
-            // collect corresponding timewindows
+            // collect corresponding time windows
             Set<TimeWindowData> correspondingTimeWindows = timeWindowSet.stream()
-                    .filter(timewindow -> timewindow.getGlobalCMTID().equals(event) && timewindow.getObserver().equals(observer))
+                    .filter(timeWindow -> timeWindow.getGlobalCMTID().equals(event) && timeWindow.getObserver().equals(observer))
                     .collect(Collectors.toSet());
 
             for (TimeWindowData timeWindow : correspondingTimeWindows) {

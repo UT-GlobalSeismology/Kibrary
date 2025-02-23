@@ -4,7 +4,7 @@ import io.github.kensuke1984.kibrary.correction.StaticCorrectionData;
 import io.github.kensuke1984.kibrary.correction.StaticCorrectionDataFile;
 import io.github.kensuke1984.kibrary.correction.TakeuchiStaticCorrection;
 import io.github.kensuke1984.kibrary.timewindow.TimeWindowData;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
+import io.github.kensuke1984.kibrary.timewindow.TimeWindowDataFile;
 import io.github.kensuke1984.kibrary.util.addons.Phases;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
@@ -29,7 +29,7 @@ public class AmplitudePolarDistribution {
 		Path timewindowPath = Paths.get(args[1]);
 		
 		Set<StaticCorrectionData> takeuchiCorrections = StaticCorrectionDataFile.read(staticCorrectionPath);
-		Set<TimeWindowData> timewindows = TimewindowDataFile.read(timewindowPath);
+		Set<TimeWindowData> timewindows = TimeWindowDataFile.read(timewindowPath);
 		
 		Path outpath = Paths.get("amplitudePolarDistribution.txt");
 		

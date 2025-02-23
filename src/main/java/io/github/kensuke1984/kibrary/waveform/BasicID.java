@@ -34,7 +34,7 @@ import io.github.kensuke1984.kibrary.util.sac.WaveformType;
  * <li> number of points </li>
  * <li> sampling Hz </li>
  * <li> whether waveform is either convolved or observed </li>
- * <li> phases contained in timewindow </li>
+ * <li> phases contained in time window </li>
  * </ul>
  * <p>
  * Caution: A BasicID instance may or may not hold waveform data, dependeing on whether it has already been set.

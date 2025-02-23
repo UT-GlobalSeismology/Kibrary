@@ -12,7 +12,7 @@ import edu.sc.seis.TauP.TauModelException;
 import edu.sc.seis.TauP.TauP_Time;
 import edu.sc.seis.TauP.TimeDist;
 import io.github.kensuke1984.kibrary.timewindow.TimeWindowData;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
+import io.github.kensuke1984.kibrary.timewindow.TimeWindowDataFile;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 
@@ -27,10 +27,10 @@ public class SelectInBouncingRegion {
 		double latmax = 12;
 		
 		try {
-			Set<TimeWindowData> timewindows = TimewindowDataFile.read(timewindowPath);
+			Set<TimeWindowData> timewindows = TimeWindowDataFile.read(timewindowPath);
 			Set<TimeWindowData> selectedWindows = selectRegion(timewindows, lonmin, lonmax, latmin, latmax);
 			Path outpath = Paths.get("timewindows" + GadgetAid.getTemporaryString() + ".dat");
-			TimewindowDataFile.write(selectedWindows, outpath);
+			TimeWindowDataFile.write(selectedWindows, outpath);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

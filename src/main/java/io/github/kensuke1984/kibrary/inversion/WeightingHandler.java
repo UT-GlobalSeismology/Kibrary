@@ -34,7 +34,7 @@ import io.github.kensuke1984.kibrary.waveform.BasicID;
  * Class to decide weighting to be applied to A matrix and d vector in Am=d.
  * To be applied as the W matrix in WAm=Wd.
  * It is assumed to be a diagonal matrix, so the diagonal components are stored as a vector.
- * A weighting time-series is set for each timewindow.
+ * A weighting time-series is set for each time window.
  *
  * CAUTION: {@link RealVector} is not immutable, so be careful when handing it over to other methods without deep-copying!
  *
@@ -111,7 +111,7 @@ public class WeightingHandler {
             pw.println("#reciprocalType OBS");
             pw.println("##Use amplitude of a specific component when multiplying reciprocal, from {Z, R, T}.");
             pw.println("#standardComponent ");
-            pw.println("##(boolean) Whether to weigh the number of timewindows of each component. (false)");
+            pw.println("##(boolean) Whether to weigh the number of time windows of each component. (false)");
             pw.println("#balanceComponent true");
             pw.println("##(double) Factor to multiply to Z component. (1.0)");
             pw.println("#factorForZComponent ");
@@ -201,7 +201,7 @@ public class WeightingHandler {
     public RealVector[] weightWaveforms(DVectorBuilder dVector) {
         RealVector[] weightingVectors = new ArrayRealVector[dVector.getNTimeWindow()];
 
-        // count number of timewindows for each component
+        // count number of time windows for each component
         int numZ = 0, numR = 0, numT = 0;
         for (int i = 0; i < dVector.getNTimeWindow(); i++) {
             switch (dVector.getObsID(i).getSacComponent()) {
@@ -211,7 +211,7 @@ public class WeightingHandler {
             }
         }
 
-        //~compute weight for each timewindow
+        //~compute weight for each time window
         for (int i = 0; i < dVector.getNTimeWindow(); i++) {
             double weighting = 1.0;
 
@@ -250,7 +250,7 @@ public class WeightingHandler {
                 weighting *= Math.sqrt(weightMaps.get(k).get(entry));
             }
 
-            //~create vector with the value 'weighting' for the whole timewindow
+            //~create vector with the value 'weighting' for the whole time window
             double[] weightingArray = new double[dVector.getObsVec(i).getDimension()];
             for (int j = 0; j < weightingArray.length; j++) {
                 weightingArray[j] = weighting;

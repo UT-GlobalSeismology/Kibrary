@@ -75,8 +75,8 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
  * @since a long time ago
  * @version 2021/11/2 Renamed from timewindow.TimewindowInformationFile to timewindow.TimewindowDataFile.
  */
-public final class TimewindowDataFile {
-    private TimewindowDataFile() {}
+public final class TimeWindowDataFile {
+    private TimeWindowDataFile() {}
 
     /**
      * Number of bytes used for information of one time window.
@@ -153,10 +153,10 @@ public final class TimewindowDataFile {
     }
 
     /**
-     * Read time window data from a binary format {@link TimewindowDataFile}
+     * Read time window data from a binary format {@link TimeWindowDataFile}
      * and select those to use based on {@link DataEntry}s and {@link SACComponent}s.
      *
-     * @param inputPath (Path) The {@link TimewindowDataFile} to read.
+     * @param inputPath (Path) The {@link TimeWindowDataFile} to read.
      * @param dataEntryPath (Path) The {@link DataEntryListFile} for selection.
      * @param components (Set of {@link SACComponent}) Components to use.
      * @return (<b>unmodifiable</b> Set of {@link TimeWindowData}) Time windows that are read.
@@ -172,12 +172,12 @@ public final class TimewindowDataFile {
             Set<DataEntry> entrySet = DataEntryListFile.readAsSet(dataEntryPath);
 
             // read time windows and select based on component and entries
-            timeWindowSet = TimewindowDataFile.read(inputPath).stream()
+            timeWindowSet = TimeWindowDataFile.read(inputPath).stream()
                     .filter(window -> components.contains(window.getComponent()) && entrySet.contains(window.toDataEntry()))
                     .collect(Collectors.toSet());
         } else {
             // read time windows and select based on component
-            timeWindowSet = TimewindowDataFile.read(inputPath).stream()
+            timeWindowSet = TimeWindowDataFile.read(inputPath).stream()
                     .filter(window -> components.contains(window.getComponent()))
                     .collect(Collectors.toSet());
         }
@@ -186,9 +186,9 @@ public final class TimewindowDataFile {
     }
 
     /**
-     * Read time window data from a binary format {@link TimewindowDataFile}.
+     * Read time window data from a binary format {@link TimeWindowDataFile}.
      *
-     * @param inputPath (Path) The {@link TimewindowDataFile} to read.
+     * @param inputPath (Path) The {@link TimeWindowDataFile} to read.
      * @return (<b>unmodifiable</b> Set of {@link TimeWindowData}) Time windows that are read.
      * @throws IOException if an I/O error occurs
      * @author Kensuke Konishi
@@ -229,10 +229,10 @@ public final class TimewindowDataFile {
             for (int i = 0; i < nWindow; i++)
                 dis.read(bytes[i]);
 
-            Set<TimeWindowData> timewindowSet = Arrays.stream(bytes).map(b -> create(b, observers, events, phases))
+            Set<TimeWindowData> timeWindowSet = Arrays.stream(bytes).map(b -> create(b, observers, events, phases))
                     .collect(Collectors.toSet());
-            DatasetAid.printNumInput(timewindowSet.size(), "time window", "time windows", inputPath);
-            return Collections.unmodifiableSet(timewindowSet);
+            DatasetAid.printNumInput(timeWindowSet.size(), "time window", "time windows", inputPath);
+            return Collections.unmodifiableSet(timeWindowSet);
         }
     }
 
@@ -242,7 +242,7 @@ public final class TimewindowDataFile {
      * @param bytes    byte array
      * @param observers station array
      * @param events      id array
-     * @return TimewindowInformation
+     * @return ({@link TimeWindowData})
      * @author anselme add phase information
      */
     private static TimeWindowData create(byte[] bytes, Observer[] observers, GlobalCMTID[] events, Phase[] phases) {
@@ -287,7 +287,7 @@ public final class TimewindowDataFile {
     public static Options defineOptions() {
         Options options = Summon.defaultOptions();
         // input
-        options.addOption(Option.builder("t").longOpt("timewindow").hasArg().argName("timewindowFile")
+        options.addOption(Option.builder("t").longOpt("timeWindow").hasArg().argName("timeWindowFile")
                 .desc("Path of time window file.").build());
         // output
         options.addOption(Option.builder("n").longOpt("number")
@@ -321,7 +321,7 @@ public final class TimewindowDataFile {
         }
 
         // read time window file
-        Set<TimeWindowData> windows = TimewindowDataFile.read(filePath);
+        Set<TimeWindowData> windows = TimeWindowDataFile.read(filePath);
         if (cmdLine.hasOption("n")) return;
 
         // set output

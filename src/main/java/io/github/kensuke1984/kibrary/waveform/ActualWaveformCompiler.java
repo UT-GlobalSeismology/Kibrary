@@ -36,7 +36,7 @@ import io.github.kensuke1984.kibrary.math.Interpolation;
 import io.github.kensuke1984.kibrary.math.Trace;
 import io.github.kensuke1984.kibrary.timewindow.TimeWindow;
 import io.github.kensuke1984.kibrary.timewindow.TimeWindowData;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
+import io.github.kensuke1984.kibrary.timewindow.TimeWindowDataFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.ThreadAid;
@@ -55,7 +55,7 @@ import io.github.kensuke1984.kibrary.util.sac.WaveformType;
  * Operation that exports dataset containing observed and synthetic waveforms. <br>
  * Output is written in the format of {@link BasicIDFile}.
  * <p>
- * Time windows in the input {@link TimewindowDataFile} that satisfy the following criteria will be worked for:
+ * Time windows in the input {@link TimeWindowDataFile} that satisfy the following criteria will be worked for:
  * <ul>
  * <li> the component is included in the components specified in the property file </li>
  * <li> the (event, observer, component)-pair is included in the input data entry file, if it is specified </li>
@@ -210,7 +210,7 @@ public class ActualWaveformCompiler extends Operation {
             pw.println("##SacComponents to be used, listed using spaces. (Z R T)");
             pw.println("#components ");
             pw.println("##Path of a time window file, must be set.");
-            pw.println("#timewindowPath selectedTimewindow.dat");
+            pw.println("#timewindowPath selectedTimeWindow.dat");
             pw.println("##Path of a time window file for a reference phase used to correct spectral amplitude, can be ignored.");
             pw.println("#timewindowRefPath ");
             pw.println("##Path of a root folder containing observed dataset. (.)");
@@ -301,13 +301,13 @@ public class ActualWaveformCompiler extends Operation {
 
     @Override
     public void run() throws IOException {
-        // read timewindow file and select based on component and entries
-        sourceTimeWindowSet = TimewindowDataFile.readAndSelect(timewindowPath, dataEntryPath, components);
+        // read time window file and select based on component and entries
+        sourceTimeWindowSet = TimeWindowDataFile.readAndSelect(timewindowPath, dataEntryPath, components);
 
         // read static correction data
         if (correctTime || amplitudeCorrectionType > 0) {
             Set<StaticCorrectionData> tmpset = StaticCorrectionDataFile.read(staticCorrectionPath);
-            // choose only static corrections that have a matching timewindow
+            // choose only static corrections that have a matching time window
             staticCorrectionSet = tmpset.stream()
                     .filter(c -> sourceTimeWindowSet.parallelStream()
                             .map(t -> c.matchesEntryOfWindow(t)).distinct().collect(Collectors.toSet()).contains(true))
@@ -334,7 +334,7 @@ public class ActualWaveformCompiler extends Operation {
         }
 
         if (timewindowRefPath != null)
-            refTimeWindowSet = TimewindowDataFile.read(timewindowRefPath)
+            refTimeWindowSet = TimeWindowDataFile.read(timewindowRefPath)
                     .stream().filter(window -> components.contains(window.getComponent())).collect(Collectors.toSet());
 
         Set<GlobalCMTID> eventSet = sourceTimeWindowSet.stream().map(TimeWindowData::getGlobalCMTID).collect(Collectors.toSet());

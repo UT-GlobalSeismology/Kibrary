@@ -376,7 +376,7 @@ public class BasicWaveformPlotter extends Operation {
             // set xrange
             gnuplot.setXrange(synID.getStartTime() - FRONT_MARGIN, synID.getStartTime() - FRONT_MARGIN + timeLength);
 
-            // display data of timewindow
+            // display data of time window
             gnuplot.addLabel(obsID.getObserver().toPaddedInfoString() + " " + obsID.getSacComponent().toString(), "graph", 0.01, 0.95);
             gnuplot.addLabel(obsID.getGlobalCMTID().toString(), "graph", 0.01, 0.85);
             gnuplot.addLabel("dist: " + MathAid.roundToString(obsID.toDataEntry().computeEpicentralDistanceDeg(), 2)

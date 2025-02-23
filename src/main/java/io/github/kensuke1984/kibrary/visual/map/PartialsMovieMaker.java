@@ -358,7 +358,7 @@ public class PartialsMovieMaker extends Operation {
                                     .findFirst().get();
                         }
 
-                        // for each timewindow
+                        // for each time window
                         for (double startTime : startTimes) {
                             List<PartialID> partialsForWindow = partialsForEntry.stream()
                                     .filter(partial -> partial.getStartTime() == startTime).collect(Collectors.toList());

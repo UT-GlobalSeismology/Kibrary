@@ -16,15 +16,15 @@ import io.github.kensuke1984.kibrary.util.GadgetAid;
 
 
 /**
- * Pick up time windows which have same events and observers of 2 specified time window files.
+ * Pick up time windows for the same events and observers of 2 specified time window files.
  *
  * @author Rei
  * @since 2022/10/6
  */
-public class TimewindowIntersection  {
+public class TimeWindowIntersection  {
 
     /**
-     * Removes time windows of a time window file from those of another.
+     * Pick up time windows for the same events and observers.
      *
      * @param args [information file name]
      * @throws IOException if an I/O error occurs
@@ -45,14 +45,14 @@ public class TimewindowIntersection  {
     public static Options defineOptions() {
         Options options = Summon.defaultOptions();
         // input
-        options.addOption(Option.builder("i1").longOpt("input1").hasArg().argName("inputTimewindowFile1").required()
+        options.addOption(Option.builder("i1").longOpt("input1").hasArg().argName("inputTimeWindowFile1").required()
                 .desc("The time window file to be intersected").build());
-        options.addOption(Option.builder("i2").longOpt("input2").hasArg().argName("inputTimewindowFile2").required()
+        options.addOption(Option.builder("i2").longOpt("input2").hasArg().argName("inputTimeWindowFile2").required()
                 .desc("Another time window file to be intersected").build());
         // output
-        options.addOption(Option.builder("o1").longOpt("output1").hasArg().argName("outputTimewindowFile1")
+        options.addOption(Option.builder("o1").longOpt("output1").hasArg().argName("outputTimeWindowFile1")
                 .desc("Set path of output time window file1").build());
-        options.addOption(Option.builder("o2").longOpt("output2").hasArg().argName("outputTimewindowFile2")
+        options.addOption(Option.builder("o2").longOpt("output2").hasArg().argName("outputTimeWindowFile2")
                 .desc("Set path of output time window file2").build());
 
         options.addOption(Option.builder("ph").longOpt("phase").hasArg().argName("phase")
@@ -73,15 +73,15 @@ public class TimewindowIntersection  {
         Path inputPath2 = Paths.get(cmdLine.getOptionValue("i2"));
 
         Path outputPath1 = cmdLine.hasOption("o1") ? Paths.get(cmdLine.getOptionValue("o1"))
-                : Paths.get("timewindow1_" + GadgetAid.getTemporaryString() + ".dat");
+                : Paths.get("timeWindow1_" + GadgetAid.getTemporaryString() + ".dat");
         Path outputPath2 = cmdLine.hasOption("o2") ? Paths.get(cmdLine.getOptionValue("o2"))
-                : Paths.get("timewindow2_" + GadgetAid.getTemporaryString() + ".dat");
+                : Paths.get("timeWindow2_" + GadgetAid.getTemporaryString() + ".dat");
 
         boolean phase = cmdLine.hasOption("ph") ? true : false;
         boolean component = cmdLine.hasOption("c") ? true : false;
 
-        Set<TimeWindowData> windows1 = TimewindowDataFile.read(inputPath1);
-        Set<TimeWindowData> windows2 = TimewindowDataFile.read(inputPath2);
+        Set<TimeWindowData> windows1 = TimeWindowDataFile.read(inputPath1);
+        Set<TimeWindowData> windows2 = TimeWindowDataFile.read(inputPath2);
 
         Set<TimeWindowData> outWindows1 = new HashSet<>();
         Set<TimeWindowData> outWindows2 = new HashSet<>();
@@ -105,8 +105,8 @@ public class TimewindowIntersection  {
             throw new RuntimeException("Falled to make intersections");
 
         // output
-        TimewindowDataFile.write(outWindows1, outputPath1);
-        TimewindowDataFile.write(outWindows2, outputPath2);
+        TimeWindowDataFile.write(outWindows1, outputPath1);
+        TimeWindowDataFile.write(outWindows2, outputPath2);
     }
 
 }

@@ -22,7 +22,7 @@ import org.apache.commons.cli.ParseException;
 
 import io.github.kensuke1984.kibrary.Summon;
 import io.github.kensuke1984.kibrary.timewindow.TimeWindowData;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
+import io.github.kensuke1984.kibrary.timewindow.TimeWindowDataFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.InformationFileReader;
@@ -90,7 +90,7 @@ public final class ObserverListFile {
      * Reads observer information from an input source
      * and creates an observer list file under the working folder.
      * The input source may be SAC files in event directories under a dataset folder,
-     * a timewindow file, or a basic ID file.
+     * a time window file, or a basic ID file.
      * @param args Options.
      * @throws IOException if an I/O error occurs
      */
@@ -155,7 +155,7 @@ public final class ObserverListFile {
             Set<DataEntry> entries = DataEntryListFile.readAsSet(Paths.get(cmdLine.getOptionValue("e")));
             observerSet = entries.stream().map(DataEntry::getObserver).collect(Collectors.toSet());
         } else if (cmdLine.hasOption("t")) {
-            Set<TimeWindowData> timeWindows =  TimewindowDataFile.read(Paths.get(cmdLine.getOptionValue("t")));
+            Set<TimeWindowData> timeWindows =  TimeWindowDataFile.read(Paths.get(cmdLine.getOptionValue("t")));
             observerSet = timeWindows.stream().filter(timeWindow -> components.contains(timeWindow.getComponent()))
                     .map(TimeWindowData::getObserver).collect(Collectors.toSet());
         } else if (cmdLine.hasOption("b")) {

@@ -23,7 +23,7 @@ import io.github.kensuke1984.kibrary.math.LinearRange;
 import io.github.kensuke1984.kibrary.selection.DataFeature;
 import io.github.kensuke1984.kibrary.selection.DataFeatureListFile;
 import io.github.kensuke1984.kibrary.timewindow.TimeWindowData;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
+import io.github.kensuke1984.kibrary.timewindow.TimeWindowDataFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.data.DataEntry;
@@ -60,7 +60,7 @@ import io.github.kensuke1984.kibrary.waveform.BasicIDPairUp;
  * </ul>
  * {@link BasicID}s in the 'main' {@link BasicIDFile} will be counted in the 'main' list.
  * If an 'extra' {@link BasicIDFile} is provided, {@link BasicID}s in there will be counted in the 'extra' list.
- * If a {@link TimewindowDataFile} containing information of 'improvement windows' is provided,
+ * If a {@link TimeWindowDataFile} containing information of 'improvement windows' is provided,
  * normalized variance, amplitude ratio, and cross correlation values will be computed within those windows.
  * Otherwise, they will be computed for the whole length included in the {@link BasicIDFile}.
  *
@@ -104,7 +104,7 @@ public class DataFeatureHistogram extends Operation {
      */
     private Path extraBasicPath;
     /**
-     * Path of a timewindow data file of improvement windows.
+     * Path of a time window data file of improvement windows.
      */
     private Path improvementWindowPath;
     /**
@@ -213,9 +213,9 @@ public class DataFeatureHistogram extends Operation {
             pw.println("#mainBasicPath ");
             pw.println("##Path of an additional basic waveform folder, if any (e.g. data not used in inversion).");
             pw.println("#extraBasicPath ");
-            pw.println("##Path of a timewindow data file of improvement windows, if you want to use those windows.");
+            pw.println("##Path of a time window data file of improvement windows, if you want to use those windows.");
             pw.println("##  This is only used when basic ID and waveform files are used, not a data feature file.");
-            pw.println("#improvementWindowPath timewindow.dat");
+            pw.println("#improvementWindowPath timeWindow.dat");
             pw.println("##########Common settings.");
             pw.println("##Path of a data entry list file, if you want to select raypaths.");
             pw.println("#dataEntryPath selectedEntry.lst");
@@ -335,7 +335,7 @@ public class DataFeatureHistogram extends Operation {
        Set<DataFeature> featureSet;
        Set<DataFeature> extraFeatureSet = null;
        if (dataFeaturePath != null) {
-           // the DataFeatureListFile includes information of whether the timewindow is selected, so use that to filter the features
+           // the DataFeatureListFile includes information of whether the time window is selected, so use that to filter the features
            Set<DataFeature> tempFeatureSet = DataFeatureListFile.read(dataFeaturePath).stream()
                    .filter(feature -> components.contains(feature.getTimeWindow().getComponent()))
                    .filter((dataEntryPath == null) ? (feature -> true) : (feature -> entrySet.contains(feature.getTimeWindow().toDataEntry())))
@@ -346,7 +346,7 @@ public class DataFeatureHistogram extends Operation {
            // read the improvement windows if the file is given
            Set<TimeWindowData> improvementWindowSet = null;
            if (improvementWindowPath != null) {
-               improvementWindowSet = TimewindowDataFile.read(improvementWindowPath);
+               improvementWindowSet = TimeWindowDataFile.read(improvementWindowPath);
            }
 
            // read the main data features from the main basic folder
@@ -402,10 +402,10 @@ public class DataFeatureHistogram extends Operation {
                // Start time of synthetic waveform must be used, since it is the correct one when time shift is applied.
                double startTime = synID.getStartTime();
                double endTime = synID.computeEndTime();
-               TimeWindowData timewindow = new TimeWindowData(startTime, endTime,
+               TimeWindowData timeWindow = new TimeWindowData(startTime, endTime,
                        synID.getObserver(), synID.getGlobalCMTID(), synID.getSacComponent(), synID.getPhases());
                // snRatio cannot be decided, so set 0
-               DataFeature feature = DataFeature.create(timewindow, obsU, synU, 0, 0, 0, selected);
+               DataFeature feature = DataFeature.create(timeWindow, obsU, synU, 0, 0, 0, selected);
                featureSet.add(feature);
            } else {
                // if improvement window exists, cut to that window
@@ -564,7 +564,7 @@ public class DataFeatureHistogram extends Operation {
        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(scriptPath))) {
            pw.println("set term pngcairo enhanced font 'Helvetica,20'");
            pw.println("set xlabel '" + xLabel + "'");
-           pw.println("set ylabel '#timewindows'");
+           pw.println("set ylabel '# time windows'");
            pw.println("set xrange [" + minimum + ":" + maximum + "]");
            pw.println("#set yrange [0:1000]");
            pw.println("set xtics " + xtics + " nomirror");

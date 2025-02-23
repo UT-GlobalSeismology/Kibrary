@@ -1,7 +1,7 @@
 package io.github.kensuke1984.kibrary.selection;
 
 import io.github.kensuke1984.kibrary.timewindow.TimeWindowData;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
+import io.github.kensuke1984.kibrary.timewindow.TimeWindowDataFile;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
@@ -36,7 +36,7 @@ public class DividePerAzimuth {
 	
 	public DividePerAzimuth(Path timewindowInformationPath, Path workPath, int nSlices) {
 		try {
-			this.info = TimewindowDataFile.read(timewindowInformationPath);
+			this.info = TimeWindowDataFile.read(timewindowInformationPath);
 			setAverageEventPosition();
 			setRotation();
 			setAzimuthRange();
@@ -50,7 +50,7 @@ public class DividePerAzimuth {
 	
 	public DividePerAzimuth(Path timewindowInformationPath, Path workPath) {
 		try {
-			this.info = TimewindowDataFile.read(timewindowInformationPath);
+			this.info = TimeWindowDataFile.read(timewindowInformationPath);
 			setAverageEventPosition();
 			setRotation();
 			setAzimuthRange();
@@ -177,7 +177,7 @@ public class DividePerAzimuth {
 			if (onePart.size() > 0) {
 				Path outputPath = dpa.workPath.resolve(Paths.get(name));
 				System.err.println("Write " + onePart.size() + " timewindows in " + name);
-				TimewindowDataFile.write(onePart, outputPath, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+				TimeWindowDataFile.write(onePart, outputPath, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
 			}
 		}
 	}

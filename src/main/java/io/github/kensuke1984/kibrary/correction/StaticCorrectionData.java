@@ -92,7 +92,7 @@ public class StaticCorrectionData implements Comparable<StaticCorrectionData> {
 
     /**
      * Judges whether this static correction is for the data entry of the given time window.
-     * @param t (TimewindowData) Time window to judge.
+     * @param t ({@link TimeWindowData}) Time window to judge.
      * @return (boolean) Whether this static correction matches the data entry of the time window.
      */
     public boolean matchesEntryOfWindow(TimeWindowData t) {

@@ -15,17 +15,17 @@ import java.util.stream.Collectors;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.timewindow.TimeWindowData;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
+import io.github.kensuke1984.kibrary.timewindow.TimeWindowDataFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 
 /**
- * Operation to set static correction data based on time shift values of other timewindows.
+ * Operation to set static correction data based on time shift values of other time windows.
  * <p>
  * This can be used, for example, when you want to correct S-phase travel times of R component waveforms
  * using time shift values of their corresponding T component waveforms.
  * <p>
- * Timewindows in the input {@link TimewindowDataFile} that satisfy the following criteria will be worked for:
+ * Time windows in the input {@link TimeWindowDataFile} that satisfy the following criteria will be worked for:
  * <ul>
  * <li> the component is included in the components specified in the property file </li>
  * <li> time shift data for the (event, observer)-pair, regardless of component and startTime, is included in the input static correction file </li>
@@ -55,7 +55,7 @@ public class StaticCorrectionForger extends Operation {
     private Set<SACComponent> components;
 
     /**
-     * Path of a timewindow data file.
+     * Path of a time window data file.
      */
     private Path timewindowPath;
     /**
@@ -85,8 +85,8 @@ public class StaticCorrectionForger extends Operation {
             pw.println("#appendFileDate false");
             pw.println("##SacComponents to be used, listed using spaces. (Z R T)");
             pw.println("#components ");
-            pw.println("##Path of a timewindow file, must be set.");
-            pw.println("#timewindowPath timewindow.dat");
+            pw.println("##Path of a time window file, must be set.");
+            pw.println("#timewindowPath timeWindow.dat");
             pw.println("##Path of a reference static correction file, must be set.");
             pw.println("#refStaticCorrectionPath staticCorrection.dat");
         }
@@ -113,8 +113,8 @@ public class StaticCorrectionForger extends Operation {
     @Override
     public void run() throws IOException {
 
-        // gather all timewindows to be processed
-        Set<TimeWindowData> timeWindowSet = TimewindowDataFile.read(timewindowPath)
+        // gather all time windows to be processed
+        Set<TimeWindowData> timeWindowSet = TimeWindowDataFile.read(timewindowPath)
                 .stream().filter(window -> components.contains(window.getComponent())).collect(Collectors.toSet());
 
         // read reference static correction data

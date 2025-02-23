@@ -21,7 +21,7 @@ import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.elastic.VariableType;
 import io.github.kensuke1984.kibrary.timewindow.TimeWindowData;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
+import io.github.kensuke1984.kibrary.timewindow.TimeWindowDataFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
@@ -66,7 +66,7 @@ public class TimePartialsAssembler extends Operation {
     private double finalSamplingHz;
 
     /**
-     * Path of a timewindow information file
+     * Path of a time window information file
      */
     private Path timewindowPath;
     /**
@@ -122,7 +122,7 @@ public class TimePartialsAssembler extends Operation {
             pw.println("##(double) Value of sampling Hz in output files, must be a factor of sacSamplingHz (1)");
             pw.println("#finalSamplingHz ");
             pw.println("##Path of a time window file, must be set");
-            pw.println("#timewindowPath timewindow.dat");
+            pw.println("#timewindowPath timeWindow.dat");
             pw.println("##Path of a data entry list file, if you want to select raypaths");
             pw.println("#dataEntryPath selectedEntry.lst");
             pw.println("##Path of the time partials directory, must be set");
@@ -176,7 +176,7 @@ public class TimePartialsAssembler extends Operation {
         final int N_THREADS = Runtime.getRuntime().availableProcessors();
 //      final int N_THREADS = 1;
         writeLog("Running " + N_THREADS + " threads");
-        collectTimewindowInformation();
+        collectTimeWindowInformation();
 
         // sacdataを何ポイントおきに取り出すか
         step = (int) (partialSamplingHz / finalSamplingHz);
@@ -190,25 +190,25 @@ public class TimePartialsAssembler extends Operation {
     }
 
     /**
-     * Reads timewindow information include observer and GCMTid
+     * Reads time window information include observer and GCMTid
      *
      * @throws IOException if any
      */
-    private void collectTimewindowInformation() throws IOException {
+    private void collectTimeWindowInformation() throws IOException {
         // タイムウインドウの情報を読み取る。
-        System.err.println("Reading timewindow information");
+        System.err.println("Reading time window information");
         if (dataEntryPath != null) {
             // read entry set to be used for selection
             Set<DataEntry> entrySet = DataEntryListFile.readAsSet(dataEntryPath);
 
             // read time windows and select based on component and entries
-            timeWindowSet = TimewindowDataFile.read(timewindowPath)
+            timeWindowSet = TimeWindowDataFile.read(timewindowPath)
                     .stream().filter(window -> components.contains(window.getComponent()) &&
                             entrySet.contains(new DataEntry(window.getGlobalCMTID(), window.getObserver(), window.getComponent())))
                     .collect(Collectors.toSet());
         } else {
             // read time windows and select based on component
-            timeWindowSet = TimewindowDataFile.read(timewindowPath)
+            timeWindowSet = TimeWindowDataFile.read(timewindowPath)
                     .stream().filter(window -> components.contains(window.getComponent()))
                     .collect(Collectors.toSet());
         }
@@ -326,7 +326,7 @@ public class TimePartialsAssembler extends Operation {
                         System.err.println(window.getObserver().getPosition());
                     });
                     System.err.println(station.getPosition());
-                    System.err.println("Ignoring empty timewindow " + sacname + " " + station);
+                    System.err.println("Ignoring empty time window " + sacname + " " + station);
                     continue;
                 }
 

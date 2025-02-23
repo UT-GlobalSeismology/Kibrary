@@ -37,8 +37,8 @@ public class TravelTimeInformationFile {
 
     /**
      * Writes a file with information of travel times.
-     * @param usePhases (Set of Phase) Phases that are used in timewindow.
-     * @param avoidPhases (Set of Phase) Phases that are avoided in timewindow.
+     * @param usePhases (Set of Phase) Phases that are used in time window.
+     * @param avoidPhases (Set of Phase) Phases that are avoided in time window.
      * @param informationSet (Set of {@link TravelTimeInformation}) Travel time information.
      * @param outputPath (Path) Output file.
      * @param options (OpenOption...) Options for write.

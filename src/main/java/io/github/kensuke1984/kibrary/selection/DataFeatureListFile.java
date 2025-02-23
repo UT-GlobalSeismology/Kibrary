@@ -24,7 +24,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 /**
  * File containing information of data features. Ascii-format.
  * <p>
- * The following values are output for each timewindow.
+ * The following values are output for each time window.
  * <ul>
  * <li> maximum ratio: (maximum value in synthetic waveform)/(maximum value in observed waveform)</li>
  * <li> minimum ratio: (minimum value in synthetic waveform)/(minimum value in observed waveform) </li>

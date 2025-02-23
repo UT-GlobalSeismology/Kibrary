@@ -22,7 +22,7 @@ import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.math.Trace;
 import io.github.kensuke1984.kibrary.timewindow.TimeWindow;
 import io.github.kensuke1984.kibrary.timewindow.TimeWindowData;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
+import io.github.kensuke1984.kibrary.timewindow.TimeWindowDataFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.ThreadAid;
 import io.github.kensuke1984.kibrary.util.data.Observer;
@@ -34,7 +34,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
 /**
  * Operation that computes values of Static correction after Fuji <i>et al</i>., (2010).
  * <p>
- * Time windows in the input {@link TimewindowDataFile} that satisfy the following criteria will be worked for:
+ * Time windows in the input {@link TimeWindowDataFile} that satisfy the following criteria will be worked for:
  * <ul>
  * <li> the component is included in the components specified in the property file </li>
  * <li> observed waveform data exists for the (event, observer, component)-pair </li>
@@ -141,7 +141,7 @@ public class FujiStaticCorrection extends Operation {
             pw.println("##SacComponents to be used, listed using spaces. (Z R T)");
             pw.println("#components ");
             pw.println("##Path of a time window file, must be set.");
-            pw.println("#timewindowPath timewindow.dat");
+            pw.println("#timewindowPath timeWindow.dat");
             pw.println("##Path of a root directory containing observed dataset. (.)");
             pw.println("#obsPath ");
             pw.println("##Path of a root directory containing synthetic dataset. (.)");
@@ -186,7 +186,7 @@ public class FujiStaticCorrection extends Operation {
     @Override
     public void run() throws IOException {
         // gather all time windows to be processed
-        sourceTimeWindowSet = TimewindowDataFile.read(timewindowPath)
+        sourceTimeWindowSet = TimeWindowDataFile.read(timewindowPath)
                 .stream().filter(window -> components.contains(window.getComponent())).collect(Collectors.toSet());
         // collect all events that exist in the time window set
         Set<GlobalCMTID> eventSet = sourceTimeWindowSet.stream().map(TimeWindowData::getGlobalCMTID).collect(Collectors.toSet());
@@ -264,13 +264,13 @@ public class FujiStaticCorrection extends Operation {
         double startSec = window.getStartTime();
         double endSec = window.getEndTime();
 
-        // create synthetic timewindow
+        // create synthetic time window
         double[] syn = cutSac(synSac, startSec, endSec);
         // which point gives the maximum value
         int maxPoint = getMaxPoint(syn);
         double maxSyn = syn[maxPoint];
 
-        // create observed timewindow
+        // create observed time window
         double[] obs = cutSac(obsSac, startSec - shift + maxPoint * delta - searchRange,
                 startSec - shift + maxPoint * delta + searchRange);
         double maxObs = maxSyn < 0 ? Arrays.stream(obs).min().getAsDouble() : Arrays.stream(obs).max().getAsDouble();
@@ -312,7 +312,7 @@ public class FujiStaticCorrection extends Operation {
         double startSec = window.getStartTime();
         double endSec = window.getEndTime();
 
-        // create synthetic timewindow
+        // create synthetic time window
         double[] syn = cutSac(synSac, startSec, endSec);
 
         // which point gives the maximum value
@@ -328,10 +328,10 @@ public class FujiStaticCorrection extends Operation {
             startSec = endtime - 15;
         }
 
-        // recreate synthetic timewindow
+        // recreate synthetic time window
         syn = cutSac(synSac, startSec, endtime);
 
-        // create observed timewindow
+        // create observed time window
         double obsStartSec = startSec - searchRange;
         double obsEndSec = endtime + searchRange;
         double[] obs = cutSac(obsSac, obsStartSec, obsEndSec);
@@ -347,7 +347,7 @@ public class FujiStaticCorrection extends Operation {
         double startSec = window.getStartTime();
         double endSec = window.getEndTime();
 
-        // create synthetic timewindow
+        // create synthetic time window
         double[] syn = cutSac(synSac, startSec, endSec);
 
         // which point gives the maximum value
@@ -355,10 +355,10 @@ public class FujiStaticCorrection extends Operation {
 
         double endtime = startSec + maxPoint * synSac.getValue(SACHeaderEnum.DELTA);
 
-        // recreate synthetic timewindow
+        // recreate synthetic time window
         syn = cutSac(synSac, startSec, endtime);
 
-        // create observed timewindow
+        // create observed time window
         double obsStartSec = startSec - searchRange;
         double obsEndSec = endtime + searchRange;
         double[] obs = cutSac(obsSac, obsStartSec, obsEndSec);
@@ -453,7 +453,7 @@ public class FujiStaticCorrection extends Operation {
                 double shift = 0;
                 if (!medianTime) shift = computeTimeshiftForBestCorrelation(obsSac, synSac, timeWindow);
                 else shift = computeTimeshiftForBestCorrelation_peak(obsSac, synSac, timeWindow);
-//                double ratio = computeMaxRatio(obsSac, synSac, shift, timewindow);
+//                double ratio = computeMaxRatio(obsSac, synSac, shift, time window);
                 double ratio = computeP2PRatio(obsSac, synSac, 0.0, timeWindow);
                 StaticCorrectionData correction = new StaticCorrectionData(observer, eventID, component,
                         timeWindow.getStartTime(), shift, ratio, timeWindow.getPhases());

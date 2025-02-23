@@ -18,7 +18,7 @@ import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.correction.StaticCorrectionData;
 import io.github.kensuke1984.kibrary.correction.StaticCorrectionDataFile;
 import io.github.kensuke1984.kibrary.timewindow.TimeWindowData;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
+import io.github.kensuke1984.kibrary.timewindow.TimeWindowDataFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 
@@ -120,7 +120,7 @@ public class MantleCorrection {
     }
 
     private void set() throws IOException {
-        timewindows = TimewindowDataFile.read(inputPath);
+        timewindows = TimeWindowDataFile.read(inputPath);
 
         //set 3D seismic model
         switch (threeDmodel) {

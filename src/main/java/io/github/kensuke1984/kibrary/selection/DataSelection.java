@@ -30,7 +30,7 @@ import io.github.kensuke1984.kibrary.math.LinearRange;
 import io.github.kensuke1984.kibrary.math.Trace;
 import io.github.kensuke1984.kibrary.timewindow.TimeWindow;
 import io.github.kensuke1984.kibrary.timewindow.TimeWindowData;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
+import io.github.kensuke1984.kibrary.timewindow.TimeWindowDataFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.MathAid;
@@ -44,7 +44,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  * Operation that selects satisfactory observed and synthetic data
  * based on amplitude ratio, correlation, and/or variance.
  * <p>
- * Time windows in the input {@link TimewindowDataFile} that satisfy the following criteria will be worked for:
+ * Time windows in the input {@link TimeWindowDataFile} that satisfy the following criteria will be worked for:
  * <ul>
  * <li> the component is included in the components specified in the property file </li>
  * <li> observed waveform data exists for the (event, observer, component)-pair </li>
@@ -56,8 +56,8 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  * <p>
  * When a {@link StaticCorrectionDataFile} is given as input, time shifts will be applied to each time window.
  * <p>
- * Selected time windows will be written in binary format in "selectedTimewindow*.dat".
- * See {@link TimewindowDataFile}.
+ * Selected time windows will be written in binary format in "selectedTimeWindow*.dat".
+ * See {@link TimeWindowDataFile}.
  * <p>
  * Information of data features used in data selection will be written in ascii format in "dataFeature*.lst".
  * See {@link DataFeatureListFile}.
@@ -180,7 +180,7 @@ public class DataSelection extends Operation {
             pw.println("##Sac components to be used, listed using spaces. (Z R T)");
             pw.println("#components ");
             pw.println("##Path of a time window file, must be set.");
-            pw.println("#timewindowPath timewindow.dat");
+            pw.println("#timewindowPath timeWindow.dat");
             pw.println("##Path of a root folder containing observed dataset. (.)");
             pw.println("#obsPath ");
             pw.println("##Path of a root folder containing synthetic dataset. (.)");
@@ -213,7 +213,7 @@ public class DataSelection extends Operation {
             pw.println("#lowerObsSNRatio ");
             pw.println("##(double) Threshold of Ssyn/Nobs ratio (lower limit), inclusive; [0:). (0)");
             pw.println("#lowerSynSNRatio ");
-            pw.println("##(boolean) Whether to require phases to be included in timewindow. (true)");
+            pw.println("##(boolean) Whether to require phases to be included in time window. (true)");
             pw.println("#requirePhase ");
             pw.println("##(boolean) Whether to exclude surface wave. (false)");
             pw.println("#excludeSurfaceWave ");
@@ -271,7 +271,7 @@ public class DataSelection extends Operation {
     @Override
     public void run() throws IOException {
         // gather all time windows to be processed
-        sourceTimeWindowSet = TimewindowDataFile.read(timewindowPath)
+        sourceTimeWindowSet = TimeWindowDataFile.read(timewindowPath)
                 .stream().filter(window -> components.contains(window.getComponent())).collect(Collectors.toSet());
         // collect all events that exist in the time window set
         Set<GlobalCMTID> eventSet = sourceTimeWindowSet.stream().map(TimeWindowData::getGlobalCMTID).collect(Collectors.toSet());
@@ -296,8 +296,8 @@ public class DataSelection extends Operation {
         // output
         String dateString = GadgetAid.getTemporaryString();
         Path outputFeaturePath = DatasetAid.generateOutputFilePath(workPath, "dataFeature", fileTag, appendFileDate, dateString, ".lst");
-        Path outputSelectedPath = DatasetAid.generateOutputFilePath(workPath, "selectedTimewindow", fileTag, appendFileDate, dateString, ".dat");
-        if (goodTimeWindowSet.size() > 0) TimewindowDataFile.write(goodTimeWindowSet, outputSelectedPath);
+        Path outputSelectedPath = DatasetAid.generateOutputFilePath(workPath, "selectedTimeWindow", fileTag, appendFileDate, dateString, ".dat");
+        if (goodTimeWindowSet.size() > 0) TimeWindowDataFile.write(goodTimeWindowSet, outputSelectedPath);
         if (dataFeatureSet.size() > 0) DataFeatureListFile.write(dataFeatureSet, outputFeaturePath);
     }
 

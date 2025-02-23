@@ -24,7 +24,7 @@ import io.github.kensuke1984.kibrary.math.FourierTransform;
 import io.github.kensuke1984.kibrary.math.Trace;
 import io.github.kensuke1984.kibrary.timewindow.TimeWindow;
 import io.github.kensuke1984.kibrary.timewindow.TimeWindowData;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
+import io.github.kensuke1984.kibrary.timewindow.TimeWindowDataFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.ThreadAid;
@@ -112,7 +112,7 @@ public class SourceWaveletMaker extends Operation {
      */
     private int np;
 
-    private Set<TimeWindowData> sourceTimewindowSet;
+    private Set<TimeWindowData> sourceTimeWindowSet;
     private Set<StaticCorrectionData> staticCorrectionSet;
 
     /**
@@ -138,7 +138,7 @@ public class SourceWaveletMaker extends Operation {
             pw.println("##SacComponents to be used, listed using spaces. (Z R T)");
             pw.println("#components ");
             pw.println("##Path of a time window file, must be set.");
-            pw.println("#timewindowPath selectedTimewindow.dat");
+            pw.println("#timewindowPath selectedTimeWindow.dat");
             pw.println("##(double) Time length before phase arrival in time window [s]. (20)");
             pw.println("#frontShift ");
             pw.println("##Path of a root folder containing observed dataset. (.)");
@@ -193,10 +193,10 @@ public class SourceWaveletMaker extends Operation {
 
     @Override
     public void run() throws IOException {
-        // read timewindow file and select based on component and entries
-        sourceTimewindowSet = TimewindowDataFile.readAndSelect(timewindowPath, dataEntryPath, components);
+        // read time window file and select based on component and entries
+        sourceTimeWindowSet = TimeWindowDataFile.readAndSelect(timewindowPath, dataEntryPath, components);
         // collect all events that exist in the time window set
-        Set<GlobalCMTID> eventSet = sourceTimewindowSet.stream().map(TimeWindowData::getGlobalCMTID).collect(Collectors.toSet());
+        Set<GlobalCMTID> eventSet = sourceTimeWindowSet.stream().map(TimeWindowData::getGlobalCMTID).collect(Collectors.toSet());
 
         // read static corrections
         staticCorrectionSet = (staticCorrectionPath == null ? Collections.emptySet() :
@@ -223,7 +223,7 @@ public class SourceWaveletMaker extends Operation {
         double halfDuration;
 
         private Worker(GlobalCMTID eventID) {
-            super(eventID, obsPath, synPath, convolved, sacSamplingHz, sourceTimewindowSet);
+            super(eventID, obsPath, synPath, convolved, sacSamplingHz, sourceTimeWindowSet);
             halfDuration = eventID.getEventData().getHalfDuration();
         }
 
@@ -289,7 +289,7 @@ public class SourceWaveletMaker extends Operation {
 
         @Override
         public void finalWork() {
-            // divide by the number of timewindows added to get average, and half duration to normalize the amplitude
+            // divide by the number of time windows added to get average, and half duration to normalize the amplitude
             double[] yArray = sumVector.mapDivide(num).mapDivide(halfDuration).toArray();
             // taper
             yArray = FourierTransform.taper(yArray, TAPER_LENGTH_PERCENT, true);

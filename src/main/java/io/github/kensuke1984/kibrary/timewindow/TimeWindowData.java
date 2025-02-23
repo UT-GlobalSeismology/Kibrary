@@ -103,7 +103,7 @@ public class TimeWindowData extends TimeWindow {
     }
 
     /**
-     * @return (Phase array) Phases included in this timewindow.
+     * @return (Phase array) Phases included in this time window.
      * @author anselme
      */
     public Phase[] getPhases() {

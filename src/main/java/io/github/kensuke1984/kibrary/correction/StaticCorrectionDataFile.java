@@ -65,7 +65,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
  *
  * <p>
  * Observers that satisfy {@link Observer#equals(Object)} are considered to be same observers,
- * and one position (latitude, longitude) is chosen to be output in the timewindow file.
+ * and one position (latitude, longitude) is chosen to be output in the time window file.
  *
  * <p>
  * When the main method of this class is executed,

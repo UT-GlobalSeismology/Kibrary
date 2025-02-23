@@ -17,7 +17,7 @@ import io.github.kensuke1984.kibrary.Summon;
 import io.github.kensuke1984.kibrary.inversion.WeightingHandler;
 import io.github.kensuke1984.kibrary.inversion.setup.DVectorBuilder;
 import io.github.kensuke1984.kibrary.timewindow.TimeWindowData;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
+import io.github.kensuke1984.kibrary.timewindow.TimeWindowDataFile;
 import io.github.kensuke1984.kibrary.util.MathAid;
 
 /**
@@ -83,7 +83,7 @@ public class VarianceComputer {
 
         // cut out improvement windows if the file is given
         if (cmdLine.hasOption("p")) {
-            Set<TimeWindowData> improvementWindowSet = TimewindowDataFile.read(Paths.get(cmdLine.getOptionValue("p")));
+            Set<TimeWindowData> improvementWindowSet = TimeWindowDataFile.read(Paths.get(cmdLine.getOptionValue("p")));
             System.err.println("Cutting out improvement window from waveform data");
             basicIDs = cutOutImprovementWindows(basicIDs, improvementWindowSet);
         }
