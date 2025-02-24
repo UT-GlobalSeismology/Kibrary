@@ -6,6 +6,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -19,7 +20,6 @@ import edu.sc.seis.TauP.TauModelException;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.external.TauPPierceWrapper;
-import io.github.kensuke1984.kibrary.math.CircularRange;
 import io.github.kensuke1984.kibrary.math.LinearRange;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.MathAid;
@@ -37,6 +37,7 @@ import io.github.kensuke1984.kibrary.voxel.VoxelInformationFile;
  * @since 2025/2/23
  */
 public class GeometryWeighter extends Operation {
+    private static final int DECIMALS = 3;
 
     private final Property property;
     /**
@@ -78,8 +79,10 @@ public class GeometryWeighter extends Operation {
      */
     private String turningPointPhase;
 
-    private LinearRange distanceRange;
-    private CircularRange azimuthRange;
+    private double lowerDistance;
+    private double upperDistance;
+    private double lowerAzimuth;
+    private double upperAzimuth;
     /**
      * Map region in the form lonMin/lonMax/latMin/latMax, when it is set manually.
      */
@@ -90,6 +93,13 @@ public class GeometryWeighter extends Operation {
      */
     private List<HorizontalPosition> voxelPositions;
     private double[] latitudes;
+
+    private int nPlotDistance;
+    private int nPlotAzimuth;
+    private double[] plotDistanceBounds;
+    private double[] plotAzimuthBounds;
+    private int[] plotDistanceIndices;
+    private int[] plotAzimuthIndices;
 
     /**
      * @param args (String[]) Arguments: none to create a property file, path of property file to run it.
@@ -135,7 +145,7 @@ public class GeometryWeighter extends Operation {
             pw.println("#upperDistance ");
             pw.println("##(double) Lower limit of range of azimuth to map [deg]; [-180:360], inclusive. (0)");
             pw.println("#lowerAzimuth ");
-            pw.println("##(double) Upper limit of range of azimuth to map [deg]; [-180:360], exclusive. (360)");
+            pw.println("##(double) Upper limit of range of azimuth to map [deg]; [-180:360], exclusive. (180)");
             pw.println("#upperAzimuth ");
             pw.println("##To specify the map region, set it in the form lonMin/lonMax/latMin/latMax.");
             pw.println("#mapRegion -180/180/-90/90");
@@ -167,12 +177,12 @@ public class GeometryWeighter extends Operation {
         structureName = property.parseString("structureName", "prem");
         turningPointPhase = property.parseString("turningPointPhase", "ScS");
 
-        double lowerDistance = property.parseDouble("lowerDistance", "0");
-        double upperDistance = property.parseDouble("upperDistance", "180");
-        distanceRange = new LinearRange("Distance", lowerDistance, upperDistance, 0.0, 180.0);
-        double lowerAzimuth = property.parseDouble("lowerAzimuth", "0");
-        double upperAzimuth = property.parseDouble("upperAzimuth", "360");
-        azimuthRange = new CircularRange("Azimuth", lowerAzimuth, upperAzimuth, -180.0, 360.0);
+        lowerDistance = property.parseDouble("lowerDistance", "0");
+        upperDistance = property.parseDouble("upperDistance", "180");
+        LinearRange.checkValidity("Distance", lowerDistance, upperDistance, 0.0, 180.0);
+        lowerAzimuth = property.parseDouble("lowerAzimuth", "0");
+        upperAzimuth = property.parseDouble("upperAzimuth", "180");
+        LinearRange.checkValidity("Azimuth", lowerAzimuth, upperAzimuth, -180.0, 360.0);
         if (property.containsKey("mapRegion")) mapRegion = property.parseString("mapRegion", null);
     }
 
@@ -186,6 +196,9 @@ public class GeometryWeighter extends Operation {
             VoxelInformationFile vif = new VoxelInformationFile(voxelPath);
             voxelPositions = vif.getHorizontalPositions();
             latitudes = voxelPositions.stream().mapToDouble(HorizontalPosition::getLatitude).distinct().sorted().toArray();
+        } else {
+            voxelPositions = new ArrayList<>();
+            voxelPositions.add(new HorizontalPosition(0, 0));
         }
 
         // compute turning point azimuth using TauPPierce
@@ -201,7 +214,7 @@ public class GeometryWeighter extends Operation {
         int nDistanceBin = (int) MathAid.ceil(360 / distanceInterval);
         int azimuthDomainWidth = expandAzimuth ? 360 : 180;
         int nAzimuthBin = (int) MathAid.ceil(azimuthDomainWidth / azimuthInterval);
-        int nVoxelBin = (voxelPositions != null ? voxelPositions.size() : 1);
+        int nVoxelBin = (voxelPath != null ? voxelPositions.size() : 1);
         int[][][] numberOfRecords = new int[nDistanceBin][nAzimuthBin][nVoxelBin];
         Map<DataEntry, Integer> iDistanceMap = new HashMap<>();
         Map<DataEntry, Integer> iAzimuthMap = new HashMap<>();
@@ -229,7 +242,7 @@ public class GeometryWeighter extends Operation {
 
             int iDistance = (int) (epicentralDistance / distanceInterval);
             int iAzimuth = (int) (azimuth / azimuthInterval);
-            int iVoxel = (voxelPositions != null ? findIVoxel(turnPosition) : 0);
+            int iVoxel = (voxelPath != null ? findIVoxel(turnPosition) : 0);
             numberOfRecords[iDistance][iAzimuth][iVoxel]++;
 
             iDistanceMap.put(entry, iDistance);
@@ -250,14 +263,15 @@ public class GeometryWeighter extends Operation {
         }
 
         // output
+        defineBounds(nDistanceBin, nAzimuthBin, azimuthDomainWidth);
         Path outPath = DatasetAid.createOutputFolder(Paths.get(""), "geometry", folderTag, appendFolderDate, null);
         Path txtPath = outPath.resolve("geometryHistogram.txt");
         Path geometryScriptPath = outPath.resolve("geometryHistogram.sh");
         Path weightedScriptPath = outPath.resolve("weightedHistogram.sh");
         Path weightPath = outPath.resolve("entryWeight.lst");
-        writeHistogramData(txtPath, distanceInterval, azimuthInterval, numberOfRecords, weights);
-        createMapScript(geometryScriptPath, txtPath.getFileName(), nDistanceBin, nAzimuthBin, false);
-        createMapScript(weightedScriptPath, txtPath.getFileName(), nDistanceBin, nAzimuthBin, true);
+        writeHistogramData(txtPath, numberOfRecords, weights);
+        createMapScript(geometryScriptPath, txtPath.getFileName(), false);
+        createMapScript(weightedScriptPath, txtPath.getFileName(), true);
         EntryWeightListFile.write(weightMap, weightPath);
     }
 
@@ -282,27 +296,6 @@ public class GeometryWeighter extends Operation {
             if (Math.abs(value - x) < Math.abs(tmpValue - x)) tmpValue = value;
         }
         return tmpValue;
-    }
-
-    private void writeHistogramData(Path txtPath, double distanceInterval, double azimuthInterval,
-            int[][][] numberOfRecords, double[][][] weights) throws IOException {
-        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(txtPath))) {
-            for (int i = 0; i < numberOfRecords.length; i++) {
-                for (int j = 0; j < numberOfRecords[i].length; j++) {
-                    double distance = i * distanceInterval;
-                    double azimuth = j * azimuthInterval;
-
-                    if (distanceRange.check(distance) && azimuthRange.check(azimuth)) {
-                        for (int k = 0; k < numberOfRecords[i][j].length; k++) {
-                            pw.println(String.format("%.2f %.2f %.2f %.2f %d %.1f", distance, azimuth,
-                                    voxelPositions.get(k).getLatitude(), voxelPositions.get(k).getLongitude(),
-                                    numberOfRecords[i][j][k], numberOfRecords[i][j][k] * weights[i][j][k]));
-                        }
-                    }
-
-                }
-            }
-        }
     }
 
     private static double[][][] decideWeights(int[][][] numberOfRecords) {
@@ -333,7 +326,7 @@ public class GeometryWeighter extends Operation {
                     if (numberOfRecords[i][j][k] > 0) {
                         double x = numberOfRecords[i][j][k] / average;
                         double weight = (1.0 - Math.exp(-3.0 * x)) / (1.0 - Math.exp(-3.0)) / x;
-                        weights[i][j][k] = Precision.round(weight, 3);
+                        weights[i][j][k] = Precision.round(weight, DECIMALS);
                     } else {
                         weights[i][j][k] = 0.0;
                     }
@@ -344,30 +337,74 @@ public class GeometryWeighter extends Operation {
         return weights;
     }
 
-    private void createMapScript(Path scriptPath, Path txtPath, int nDistanceBin, int nAzimuthBin, boolean weighted) throws IOException {
-        int nRow = 0;
-        double[] distanceBounds = new double[nDistanceBin + 1];
+    private void defineBounds(int nDistanceBin, int nAzimuthBin, int azimuthDomainWidth) {
+        nPlotDistance = 0;
+        nPlotAzimuth = 0;
+        plotDistanceBounds = new double[nDistanceBin + 1];
+        plotAzimuthBounds = new double[nAzimuthBin + 1];
+        plotDistanceIndices = new int[nDistanceBin];
+        plotAzimuthIndices = new int[nAzimuthBin];
+
+        // record all distance bins needed in the plot
         for (int i = 0; i < nDistanceBin; i++) {
-            double distance = i * distanceInterval;
-            if (distanceRange.check(distance)) {
-                if (nRow == 0) distanceBounds[0] = Precision.round(distance, 2);
-                nRow++;
-                distanceBounds[nRow] = Precision.round(distance + distanceInterval, 2);
-            }
-        }
-        int nColumn = 0;
-        double[] azimuthBounds = new double[nAzimuthBin + 1];
-        for (int j = 0; j < nAzimuthBin; j++) {
-            double azimuth = j * azimuthInterval;
-            if (azimuthRange.check(azimuth)) {
-                if (nColumn == 0) azimuthBounds[0] = Precision.round(azimuth, 2);
-                nColumn++;
-                azimuthBounds[nColumn] = Precision.round(azimuth + azimuthInterval, 2);
+            double distance = Precision.round(i * distanceInterval, DECIMALS);
+            double nextDistance = Precision.round(distance + distanceInterval, DECIMALS);
+            if (lowerDistance < nextDistance && distance < upperDistance) {
+                plotDistanceIndices[nPlotDistance] = i;
+                if (nPlotDistance == 0) plotDistanceBounds[0] = distance;
+                nPlotDistance++;
+                plotDistanceBounds[nPlotDistance] = nextDistance;
             }
         }
 
+        // figure out which domain the minimum and maximum azimuths are in
+        int minLoop = (int) MathAid.floor(lowerAzimuth / azimuthDomainWidth);
+        int maxLoop = (int) MathAid.ceil(upperAzimuth / azimuthDomainWidth) - 1;
+        // record all azimuth bins needed in the plot
+        for (int loop = minLoop; loop <= maxLoop; loop++) {
+            for (int j = 0; j < nAzimuthBin; j++) {
+                double azimuth = Precision.round(j * azimuthInterval + loop * azimuthDomainWidth, DECIMALS);
+                double nextAzimuth = Precision.round(azimuth + azimuthInterval, DECIMALS);
+                if (lowerAzimuth < nextAzimuth && azimuth < upperAzimuth) {
+                    plotAzimuthIndices[nPlotAzimuth] = j;
+                    if (nPlotAzimuth == 0) plotAzimuthBounds[0] = azimuth;
+                    nPlotAzimuth++;
+                    plotAzimuthBounds[nPlotAzimuth] = nextAzimuth;
+                }
+                if (nPlotAzimuth == nAzimuthBin) break;
+            }
+            if (nPlotAzimuth == nAzimuthBin) break;
+        }
+    }
+
+    private void writeHistogramData(Path txtPath, int[][][] numberOfRecords, double[][][] weights) throws IOException {
+        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(txtPath))) {
+            for (int p = 0; p < nPlotDistance; p++) {
+                int i = plotDistanceIndices[p];
+                for (int q = 0; q < nPlotAzimuth; q++) {
+                    int j = plotAzimuthIndices[q];
+
+                    for (int k = 0; k < voxelPositions.size(); k++) {
+                        pw.println(MathAid.padToString(plotDistanceBounds[p], 3, DECIMALS, false) + " "
+                                + MathAid.padToString(plotAzimuthBounds[q], 4, DECIMALS, false) + " "
+                                + voxelPositions.get(k).toString() + " "
+                                + numberOfRecords[i][j][k] + " " + (numberOfRecords[i][j][k] * weights[i][j][k]));
+                    }
+
+                }
+            }
+        }
+    }
+
+    private void createMapScript(Path scriptPath, Path txtPath, boolean weighted) throws IOException {
         // decide map region
-        if (mapRegion == null) mapRegion = decideMapRegion(voxelPositions);
+        if (mapRegion == null) {
+            if (voxelPath != null) {
+                mapRegion = decideMapRegion(voxelPositions);
+            } else {
+                mapRegion = "-1/1/-1/1";
+            }
+        }
 
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(scriptPath))) {
             pw.println("#!/bin/sh");
@@ -397,12 +434,12 @@ public class GeometryWeighter extends Operation {
             pw.println("gmt begin " + scriptPath.getFileName().toString().replace(".sh", "") + " eps,pdf,png");
             pw.println("");
             pw.println("#------- Panels");
-            pw.println("gmt subplot begin " + nRow + "x" + nColumn + " -Fs10/0 -M0/0 -Y10 $B $J $R");
+            pw.println("gmt subplot begin " + nPlotDistance + "x" + nPlotAzimuth + " -Fs10/0 -M0/0 -Y10 $B $J $R");
             pw.println("");
 
             int iBlock = 0;
-            for (int i = 0; i < nRow; i++) {
-                for (int j = 0; j < nColumn; j++) {
+            for (int p = 0; p < nPlotDistance; p++) {
+                for (int q = 0; q < nPlotAzimuth; q++) {
                     iBlock++;
                     int startLine = voxelPositions.size() * (iBlock - 1) + 1;
                     int endLine = voxelPositions.size() * iBlock;
@@ -413,15 +450,15 @@ public class GeometryWeighter extends Operation {
                     pw.println("  awk '{print $3, $4, $" + nZ + "}' | \\");
                     pw.println("  gmt psxy -: -Ss$SIZE -Ccp.cpt -Wthinnest");
 
-                    if (i == 0 && j == 0) {
-                        pw.println("  echo " + MathAid.simplestString(azimuthBounds[0]) + " | gmt pstext -N -F+cTL+jBC -D0/5p");
-                        pw.println("  echo " + MathAid.simplestString(distanceBounds[0]) + " | gmt pstext -N -F+cTL+jMR -D-5p/0");
+                    if (p == 0 && q == 0) {
+                        pw.println("  echo " + MathAid.simplestString(plotAzimuthBounds[0]) + " | gmt pstext -N -F+cTL+jBC -D0/5p");
+                        pw.println("  echo " + MathAid.simplestString(plotDistanceBounds[0]) + " | gmt pstext -N -F+cTL+jMR -D-5p/0");
                     }
-                    if (i == 0) {
-                        pw.println("  echo " + MathAid.simplestString(azimuthBounds[j + 1]) + " | gmt pstext -N -F+cTR+jBC -D0/5p");
+                    if (p == 0) {
+                        pw.println("  echo " + MathAid.simplestString(plotAzimuthBounds[q + 1]) + " | gmt pstext -N -F+cTR+jBC -D0/5p");
                     }
-                    if (j == 0) {
-                        pw.println("  echo " + MathAid.simplestString(distanceBounds[i + 1]) + " | gmt pstext -N -F+cBL+jMR -D-5p/0");
+                    if (q == 0) {
+                        pw.println("  echo " + MathAid.simplestString(plotDistanceBounds[p + 1]) + " | gmt pstext -N -F+cBL+jMR -D-5p/0");
                     }
                 }
             }
