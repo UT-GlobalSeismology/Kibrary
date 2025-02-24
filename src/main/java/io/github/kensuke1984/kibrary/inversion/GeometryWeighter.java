@@ -80,6 +80,10 @@ public class GeometryWeighter extends Operation {
 
     private LinearRange distanceRange;
     private CircularRange azimuthRange;
+    /**
+     * Map region in the form lonMin/lonMax/latMin/latMax, when it is set manually.
+     */
+    private String mapRegion;
 
     /**
      * Horizontal positions of center points of voxels.
@@ -133,6 +137,8 @@ public class GeometryWeighter extends Operation {
             pw.println("#lowerAzimuth ");
             pw.println("##(double) Upper limit of range of azimuth to map [deg]; [-180:360], exclusive. (360)");
             pw.println("#upperAzimuth ");
+            pw.println("##To specify the map region, set it in the form lonMin/lonMax/latMin/latMax.");
+            pw.println("#mapRegion -180/180/-90/90");
         }
         System.err.println(outPath + " is created.");
     }
@@ -167,6 +173,7 @@ public class GeometryWeighter extends Operation {
         double lowerAzimuth = property.parseDouble("lowerAzimuth", "0");
         double upperAzimuth = property.parseDouble("upperAzimuth", "360");
         azimuthRange = new CircularRange("Azimuth", lowerAzimuth, upperAzimuth, -180.0, 360.0);
+        if (property.containsKey("mapRegion")) mapRegion = property.parseString("mapRegion", null);
     }
 
     @Override
@@ -245,27 +252,31 @@ public class GeometryWeighter extends Operation {
         // output
         Path outPath = DatasetAid.createOutputFolder(Paths.get(""), "geometry", folderTag, appendFolderDate, null);
         Path txtPath = outPath.resolve("geometryHistogram.txt");
+        Path geometryScriptPath = outPath.resolve("geometryHistogram.sh");
+        Path weightedScriptPath = outPath.resolve("weightedHistogram.sh");
         Path weightPath = outPath.resolve("entryWeight.lst");
         writeHistogramData(txtPath, distanceInterval, azimuthInterval, numberOfRecords, weights);
+        createMapScript(geometryScriptPath, txtPath.getFileName(), nDistanceBin, nAzimuthBin, false);
+        createMapScript(weightedScriptPath, txtPath.getFileName(), nDistanceBin, nAzimuthBin, true);
         EntryWeightListFile.write(weightMap, weightPath);
     }
 
     private int findIVoxel(HorizontalPosition turnPosition) {
         // decide latitude
-        double latitude = findClosest(turnPosition.getLatitude(), latitudes);
+        double latitude = findClosestValue(turnPosition.getLatitude(), latitudes);
 
         // extract longitudes on that latitude
         double[] longitudes = voxelPositions.stream().filter(pos -> pos.getLatitude() == latitude)
                 .mapToDouble(HorizontalPosition::getLongitude).distinct().sorted().toArray();
         // decide longitude
-        double longitude = findClosest(turnPosition.getLongitude(), longitudes);
+        double longitude = findClosestValue(turnPosition.getLongitude(), longitudes);
 
         // find index of voxel position
         HorizontalPosition position = new HorizontalPosition(latitude, longitude);
         return voxelPositions.indexOf(position);
     }
 
-    private static double findClosest(double x, double[] values) {
+    private static double findClosestValue(double x, double[] values) {
         double tmpValue = values[0];
         for (double value : values) {
             if (Math.abs(value - x) < Math.abs(tmpValue - x)) tmpValue = value;
@@ -278,16 +289,17 @@ public class GeometryWeighter extends Operation {
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(txtPath))) {
             for (int i = 0; i < numberOfRecords.length; i++) {
                 for (int j = 0; j < numberOfRecords[i].length; j++) {
-                    for (int k = 0; k < numberOfRecords[i][j].length; k++) {
+                    double distance = i * distanceInterval;
+                    double azimuth = j * azimuthInterval;
 
-                        double distance = i * distanceInterval;
-                        double azimuth = j * azimuthInterval;
-                        if (distanceRange.check(distance) && azimuthRange.check(azimuth)) {
-                            pw.println(String.format("%.2f %.2f %d %d %.1f", distance, azimuth, k,
+                    if (distanceRange.check(distance) && azimuthRange.check(azimuth)) {
+                        for (int k = 0; k < numberOfRecords[i][j].length; k++) {
+                            pw.println(String.format("%.2f %.2f %.2f %.2f %d %.1f", distance, azimuth,
+                                    voxelPositions.get(k).getLatitude(), voxelPositions.get(k).getLongitude(),
                                     numberOfRecords[i][j][k], numberOfRecords[i][j][k] * weights[i][j][k]));
                         }
-
                     }
+
                 }
             }
         }
@@ -330,6 +342,133 @@ public class GeometryWeighter extends Operation {
             }
         }
         return weights;
+    }
+
+    private void createMapScript(Path scriptPath, Path txtPath, int nDistanceBin, int nAzimuthBin, boolean weighted) throws IOException {
+        int nRow = 0;
+        double[] distanceBounds = new double[nDistanceBin + 1];
+        for (int i = 0; i < nDistanceBin; i++) {
+            double distance = i * distanceInterval;
+            if (distanceRange.check(distance)) {
+                if (nRow == 0) distanceBounds[0] = Precision.round(distance, 2);
+                nRow++;
+                distanceBounds[nRow] = Precision.round(distance + distanceInterval, 2);
+            }
+        }
+        int nColumn = 0;
+        double[] azimuthBounds = new double[nAzimuthBin + 1];
+        for (int j = 0; j < nAzimuthBin; j++) {
+            double azimuth = j * azimuthInterval;
+            if (azimuthRange.check(azimuth)) {
+                if (nColumn == 0) azimuthBounds[0] = Precision.round(azimuth, 2);
+                nColumn++;
+                azimuthBounds[nColumn] = Precision.round(azimuth + azimuthInterval, 2);
+            }
+        }
+
+        // decide map region
+        if (mapRegion == null) mapRegion = decideMapRegion(voxelPositions);
+
+        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(scriptPath))) {
+            pw.println("#!/bin/sh");
+            pw.println("");
+            pw.println("#------- GMT options");
+            pw.println("gmt set COLOR_MODEL RGB");
+            pw.println("gmt set COLOR_BACKGROUND white");
+            pw.println("gmt set COLOR_FOREGROUND darkred");
+            pw.println("gmt set PS_MEDIA 1500x1500");
+            pw.println("gmt set PS_PAGE_ORIENTATION landscape");
+            pw.println("gmt set MAP_FRAME_TYPE plain");
+            pw.println("gmt set MAP_DEFAULT_PEN black");
+            pw.println("gmt set MAP_TITLE_OFFSET 1p");
+            pw.println("gmt set FONT 30");
+            pw.println("");
+            pw.println("#------- Map parameters");
+            pw.println("R='-R" + mapRegion + "'");
+            pw.println("J='-JQ10'");
+            pw.println("B='-Blrbt'");
+            pw.println("SIZE=0.5");
+            pw.println("");
+            pw.println("#------- Color palette");
+            pw.println("gmt makecpt -Q -Cturbo -G0.15/0.95 -T0/4 > cp.cpt");
+            pw.println("");
+
+            pw.println("#------- Begin main plot");
+            pw.println("gmt begin " + scriptPath.getFileName().toString().replace(".sh", "") + " eps,pdf,png");
+            pw.println("");
+            pw.println("#------- Panels");
+            pw.println("gmt subplot begin " + nRow + "x" + nColumn + " -Fs10/0 -M0/0 -Y10 $B $J $R");
+            pw.println("");
+
+            int iBlock = 0;
+            for (int i = 0; i < nRow; i++) {
+                for (int j = 0; j < nColumn; j++) {
+                    iBlock++;
+                    int startLine = voxelPositions.size() * (iBlock - 1) + 1;
+                    int endLine = voxelPositions.size() * iBlock;
+                    int nZ = weighted ? 6 : 5;
+                    pw.println("gmt subplot set");
+                    pw.println("  gmt pscoast -Wthinner,black -A500");
+                    pw.println("  cat " + txtPath + " | sed -n " + startLine + "," + endLine + "p | \\");
+                    pw.println("  awk '{print $3, $4, $" + nZ + "}' | \\");
+                    pw.println("  gmt psxy -: -Ss$SIZE -Ccp.cpt -Wthinnest");
+
+                    if (i == 0 && j == 0) {
+                        pw.println("  echo " + MathAid.simplestString(azimuthBounds[0]) + " | gmt pstext -N -F+cTL+jBC -D0/5p");
+                        pw.println("  echo " + MathAid.simplestString(distanceBounds[0]) + " | gmt pstext -N -F+cTL+jMR -D-5p/0");
+                    }
+                    if (i == 0) {
+                        pw.println("  echo " + MathAid.simplestString(azimuthBounds[j + 1]) + " | gmt pstext -N -F+cTR+jBC -D0/5p");
+                    }
+                    if (j == 0) {
+                        pw.println("  echo " + MathAid.simplestString(distanceBounds[i + 1]) + " | gmt pstext -N -F+cBL+jMR -D-5p/0");
+                    }
+                }
+            }
+            pw.println("gmt subplot end");
+            pw.println("");
+            pw.println("#------- Scale");
+            pw.println("  echo \"Turning point azimuth (@.)\" | gmt pstext -N -F+cTC+jBC -D0/50p");
+            pw.println("  echo \"Epicentral distance (@.)\" | gmt pstext -N -F+cML+jBC+a90 -D-50p/0");
+            pw.println("gmt psscale -Ccp.cpt -DJCB+w15/0.6+h+e -Q -B+l\"# time window\"");
+            pw.println("");
+            pw.println("#------- Finalize");
+            pw.println("gmt end");
+            pw.println("");
+
+            pw.println("#-------- Clear");
+            pw.println("rm -rf gmt.conf gmt.history");
+            pw.println("echo \"Done!\"");
+        }
+    }
+
+    /**
+     * Decides a rectangular region of a map that is sufficient to map all given positions.
+     * @param positions (Set of {@link HorizontalPosition}) Positions that need to be included in map region.
+     * @return (String) Rectangular region in form "lonMin/lonMax/latMin/latMax".
+     */
+    private static String decideMapRegion(List<? extends HorizontalPosition> positions) {
+        if (positions.size() == 0) throw new IllegalArgumentException("No positions are given");
+        // whether to use [0:360) instead of [-180:180)
+        boolean crossDateLine = HorizontalPosition.crossesDateLine(positions);
+        // map to latitude and longitude values
+        double[] latitudes = positions.stream().mapToDouble(HorizontalPosition::getLatitude).toArray();
+        double[] longitudes = positions.stream().mapToDouble(pos -> pos.getLongitude(crossDateLine)).toArray();
+        // find min and max latitude and longitude
+        double latMin = Arrays.stream(latitudes).min().getAsDouble();
+        double latMax = Arrays.stream(latitudes).max().getAsDouble();
+        double lonMin = Arrays.stream(longitudes).min().getAsDouble();
+        double lonMax = Arrays.stream(longitudes).max().getAsDouble();
+        // expand the region a bit more
+        double mapRim = HorizontalPosition.findLatitudeInterval(positions);
+        latMin = MathAid.floor(latMin - mapRim);
+        latMax = MathAid.ceil(latMax + mapRim);
+        lonMin = MathAid.floor(lonMin - mapRim);
+        lonMax = MathAid.ceil(lonMax + mapRim);
+        if (latMin < -90) latMin = -90;
+        if (latMax > 90) latMax = 90;
+        // return as String
+        return (int) lonMin + "/" + (int) lonMax + "/" + (int) latMin + "/" + (int) latMax;
     }
 
 }
