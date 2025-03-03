@@ -202,39 +202,6 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
     }
 
     /**
-     * 元点loc0と入力locとの大円上の中点を求める 半径は考慮しない locとloc0のなす震央距離を⊿
-     * loc0を北極に持って行ったときのlocの経度をphi1 とすると、点(r, ⊿/2, 0)
-     * をｚ軸周りにphi１回転して、loc0を北極から元の位置に戻す作業をすればいい
-     *
-     * @param position {@link HorizontalPosition} of target
-     * @return {@link HorizontalPosition} of the center between the position and
-     * this
-     */
-    public HorizontalPosition computeMidpoint(HorizontalPosition position) {
-        double delta = computeEpicentralDistanceRad(position); // locとthis との震央距離
-        // System.out.println("delta: " + delta);
-        // theta = ⊿/2の zx平面上の点
-        XYZ midXYZ = new RThetaPhi(1, delta * 0.5, 0).toCartesian();
-        // locの点
-        XYZ locXYZ = position.toXYZ(Earth.EARTH_RADIUS);
-        // thisをzx面上に戻したときのloc
-        locXYZ = locXYZ.rotateaboutZ(-1 * getPhi());
-        // loc0を北極に
-        locXYZ = locXYZ.rotateaboutY(-1 * getTheta());
-        RThetaPhi locRTP = locXYZ.toSphericalCoordinate();
-        // その時の phi1
-        double phi1 = locRTP.getPhi();
-        // System.out.println("phi1 " + phi1);
-        midXYZ = midXYZ.rotateaboutZ(phi1);
-        midXYZ = midXYZ.rotateaboutY(getTheta());
-        midXYZ = midXYZ.rotateaboutZ(getPhi());
-        RThetaPhi midRTP = midXYZ.toSphericalCoordinate();
-        // System.out.println(midRTP);
-        return new HorizontalPosition(Latitude.valueForTheta(midRTP.getTheta()), Math.toDegrees(midRTP.getPhi()));
-        // System.out.println(midLoc);
-    }
-
-    /**
      * d = 2・N・ψ
      * <p>
      * ここに， 地点1の緯度φ1，経度λ1，地点2の緯度φ2，経度λ2のときの直交座標地を それぞれ （x1，y1，z1），（x2，y2，z2）

@@ -31,7 +31,11 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.voxel.VoxelInformationFile;
 
 /**
- * Weight data based on (bounce point, distance, azimuth)-pair bins.
+ * Weight data based on (turning point, distance, azimuth)-pair bins.
+ * <b>
+ * For turning point position and azimuth,
+ * the first turning point of the phase that arrives first among the specified phases will be used.
+ * Mid-points of diffraction are counted as turning points.
  *
  * @author otsuru
  * @since 2025/2/23
@@ -71,13 +75,13 @@ public class GeometryWeighter extends Operation {
     private boolean expandAzimuth;
 
     /**
-     * Name of structure to use for calculating turning point.
+     * Name of structure to use for computing turning points.
      */
     private String structureName;
     /**
-     * Phase to use when computing turning point.
+     * Phases to use when computing turning points.
      */
-    private String turningPointPhase;
+    private String[] turningPointPhases;
 
     private double lowerDistance;
     private double upperDistance;
@@ -134,10 +138,10 @@ public class GeometryWeighter extends Operation {
             pw.println("##(boolean) Whether to expand azimuth range to [0:360), not overlapping onto [0:180) range. (false)");
             pw.println("#expandAzimuth ");
             pw.println("##########Parameters for turning point computation##########");
-            pw.println("##(String) Name of structure to use for calculating turning point. (prem)");
+            pw.println("##(String) Name of structure to use for computing turning points. (prem)");
             pw.println("#structureName ");
-            pw.println("##Phase to compute turning point for. (ScS)");
-            pw.println("#turningPointPhase ");
+            pw.println("##Phases to compute turning points for, listed using spaces. (ScS)");
+            pw.println("#turningPointPhases ");
             pw.println("##########Parameters for map##########");
             pw.println("##(double) Lower limit of range of epicentral distance to map [deg], inclusive; [0:upperDistance). (0)");
             pw.println("#lowerDistance ");
@@ -175,7 +179,7 @@ public class GeometryWeighter extends Operation {
         expandAzimuth = property.parseBoolean("expandAzimuth", "false");
 
         structureName = property.parseString("structureName", "prem");
-        turningPointPhase = property.parseString("turningPointPhase", "ScS");
+        turningPointPhases = property.parseStringArray("turningPointPhases", "ScS");
 
         lowerDistance = property.parseDouble("lowerDistance", "0");
         upperDistance = property.parseDouble("upperDistance", "180");
@@ -204,7 +208,7 @@ public class GeometryWeighter extends Operation {
         // compute turning point azimuth using TauPPierce
         TauPPierceWrapper pierceTool = null;
         try {
-            pierceTool = new TauPPierceWrapper(structureName, turningPointPhase);
+            pierceTool = new TauPPierceWrapper(structureName, turningPointPhases);
             pierceTool.compute(entrySet);
         } catch (TauModelException e) {
             throw new RuntimeException(e);
@@ -233,7 +237,7 @@ public class GeometryWeighter extends Operation {
                 // When there are multiple bottoming points for a raypath, the first one is used.
                 // Any phase (except for "p" or "s") should have a bottoming point, so a non-existence is not considered.
                 azimuth = pierceTool.get(entry, 0).computeTurningAzimuthDeg(0);
-                turnPosition = pierceTool.get(entry, 0).findTurningPoint(0);
+                turnPosition = pierceTool.get(entry, 0).findTurningPoint(0, true, true, false, false);
             } else {
                 System.err.println("Cannot compute turning point for " + entry + ", skipping.");
                 continue;
@@ -273,6 +277,9 @@ public class GeometryWeighter extends Operation {
         createMapScript(geometryScriptPath, txtPath.getFileName(), false);
         createMapScript(weightedScriptPath, txtPath.getFileName(), true);
         EntryWeightListFile.write(weightMap, weightPath);
+
+        System.err.println("To plot maps, please enter " + outPath
+                + "/ and run " + geometryScriptPath.getFileName() + " and " + weightedScriptPath.getFileName());
     }
 
     private int findIVoxel(HorizontalPosition turnPosition) {
@@ -406,6 +413,9 @@ public class GeometryWeighter extends Operation {
             }
         }
 
+        // decide panel width
+        int panelWidth = (int) Math.ceil(40.0 / nPlotAzimuth);
+
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(scriptPath))) {
             pw.println("#!/bin/sh");
             pw.println("");
@@ -421,10 +431,11 @@ public class GeometryWeighter extends Operation {
             pw.println("gmt set FONT 30");
             pw.println("");
             pw.println("#------- Map parameters");
+            pw.println("WIDTH=" + panelWidth);
+            pw.println("SIZE=" + (panelWidth / 20.0));
             pw.println("R='-R" + mapRegion + "'");
-            pw.println("J='-JQ10'");
+            pw.println("J=\"-JQ$WIDTH\"");
             pw.println("B='-Blrbt'");
-            pw.println("SIZE=0.5");
             pw.println("");
             pw.println("#------- Color palette");
             pw.println("gmt makecpt -Q -Cturbo -G0.15/0.95 -T0/4 > cp.cpt");
@@ -434,7 +445,7 @@ public class GeometryWeighter extends Operation {
             pw.println("gmt begin " + scriptPath.getFileName().toString().replace(".sh", "") + " eps,pdf,png");
             pw.println("");
             pw.println("#------- Panels");
-            pw.println("gmt subplot begin " + nPlotDistance + "x" + nPlotAzimuth + " -Fs10/0 -M0/0 -Y10 $B $J $R");
+            pw.println("gmt subplot begin " + nPlotDistance + "x" + nPlotAzimuth + " -Fs$WIDTH/0 -M0/0 -X10 -Y10 $B $J $R");
             pw.println("");
 
             int iBlock = 0;
@@ -451,8 +462,8 @@ public class GeometryWeighter extends Operation {
                     pw.println("  gmt psxy -: -Ss$SIZE -Ccp.cpt -Wthinnest");
 
                     if (p == 0 && q == 0) {
-                        pw.println("  echo " + MathAid.simplestString(plotAzimuthBounds[0]) + " | gmt pstext -N -F+cTL+jBC -D0/5p");
-                        pw.println("  echo " + MathAid.simplestString(plotDistanceBounds[0]) + " | gmt pstext -N -F+cTL+jMR -D-5p/0");
+                        pw.println("  echo " + MathAid.simplestString(plotAzimuthBounds[0]) + " | gmt pstext -N -F+cTL+jBL -D0/5p");
+                        pw.println("  echo " + MathAid.simplestString(plotDistanceBounds[0]) + " | gmt pstext -N -F+cTL+jTR -D-5p/0");
                     }
                     if (p == 0) {
                         pw.println("  echo " + MathAid.simplestString(plotAzimuthBounds[q + 1]) + " | gmt pstext -N -F+cTR+jBC -D0/5p");
@@ -466,8 +477,8 @@ public class GeometryWeighter extends Operation {
             pw.println("");
             pw.println("#------- Scale");
             pw.println("  echo \"Turning point azimuth (@.)\" | gmt pstext -N -F+cTC+jBC -D0/50p");
-            pw.println("  echo \"Epicentral distance (@.)\" | gmt pstext -N -F+cML+jBC+a90 -D-50p/0");
-            pw.println("gmt psscale -Ccp.cpt -DJCB+w15/0.6+h+e -Q -B+l\"# time window\"");
+            pw.println("  echo \"Epicentral distance (@.)\" | gmt pstext -N -F+cML+jBC+a90 -D-70p/0");
+            pw.println("gmt psscale -Ccp.cpt -DJCB+w15/0.6+h+e0.5 -Q -B+l\"# time window\"");
             pw.println("");
             pw.println("#------- Finalize");
             pw.println("gmt end");

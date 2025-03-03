@@ -202,7 +202,7 @@ public class DataSelection extends Operation {
             pw.println("##(double) Lower threshold of normalized variance, inclusive; [0:maxVariance). (0)");
             pw.println("#lowerVariance ");
             pw.println("##(double) Upper threshold of normalized variance, exclusive; (minVariance:). (2)");
-            pw.println("#upperVariance ");
+            pw.println("#upperVariance 2.5");
             pw.println("##(double) Lower threshold of amplitude ratio, inclusive; [0:maxRatio). (0.5)");
             pw.println("#lowerRatio ");
             pw.println("##(double) Upper threshold of amplitude ratio, exclusive; (minRatio:). (2)");
@@ -210,9 +210,9 @@ public class DataSelection extends Operation {
             pw.println("##(double) Threshold of Sobs/Nobs norm ratio (lower limit), inclusive; [0:). (0)");
             pw.println("#lowerSNRatio ");
             pw.println("##(double) Threshold of Sobs/Nobs ratio (lower limit), inclusive; [0:). (0)");
-            pw.println("#lowerObsSNRatio ");
+            pw.println("#lowerObsSNRatio 1.2");
             pw.println("##(double) Threshold of Ssyn/Nobs ratio (lower limit), inclusive; [0:). (0)");
-            pw.println("#lowerSynSNRatio ");
+            pw.println("#lowerSynSNRatio 1.4");
             pw.println("##(boolean) Whether to require phases to be included in time window. (true)");
             pw.println("#requirePhase ");
             pw.println("##(boolean) Whether to exclude surface wave. (false)");

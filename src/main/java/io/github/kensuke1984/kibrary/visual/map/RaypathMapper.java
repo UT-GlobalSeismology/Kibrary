@@ -138,6 +138,8 @@ public class RaypathMapper extends Operation {
     private String insideFileName;
     private String outsideFileName;
     private String turningPointFileName;
+    private String diffStartPointFileName;
+    private String diffEndPointFileName;
     private String pixelFileName;
     private Path gmtPath;
 
@@ -189,7 +191,7 @@ public class RaypathMapper extends Operation {
             pw.println("#lowerPierceRadius ");
             pw.println("##(double) Upper radius to compute pierce points for [km]. (3880)");
             pw.println("#upperPierceRadius ");
-            pw.println("##(String) Name of structure to use for calculating pierce points. (prem)");
+            pw.println("##(String) Name of structure to use for computing pierce points. (prem)");
             pw.println("#structureName ");
             pw.println("##########Settings for mapping.");
             pw.println("##Mode of coloring of raypaths, from {0: single color, 1: color by phase, 2: bin by distance,");
@@ -288,6 +290,8 @@ public class RaypathMapper extends Operation {
         insideFileName = "raypathInside.lst";
         outsideFileName = "raypathOutside.lst";
         turningPointFileName = "turningPoint.lst";
+        diffStartPointFileName = "diffStartPoint.lst";
+        diffEndPointFileName = "diffEndPoint.lst";
         pixelFileName = "pixel.lst";
     }
 
@@ -389,6 +393,8 @@ public class RaypathMapper extends Operation {
 
         List<Raypath> allRaypaths = pierceTool.getAll();
         List<String> turningPointLines = new ArrayList<>();
+        List<String> diffStartPointLines = new ArrayList<>();
+        List<String> diffEndPointLines = new ArrayList<>();
         List<String> insideLines = new ArrayList<>();
         List<String> outsideLines = new ArrayList<>();
         for (Raypath raypath : allRaypaths) {
@@ -396,8 +402,13 @@ public class RaypathMapper extends Operation {
             List<Raypath> insideSegments = raypath.clipInsideLayer(lowerPierceRadius, upperPierceRadius);
             insideSegments.forEach(segment -> insideLines.add(lineFor(raypath, segment)));
             // add all bottom turning points inside layer
-            insideSegments.stream().flatMap(segment -> segment.findTurningPoints().stream())
+            insideSegments.stream().flatMap(segment -> segment.findTurningPoints(true, false, false, false).stream())
                     .forEach(pos -> turningPointLines.add(pos.toHorizontalPosition().toString()));
+            // add all diffraction starting/ending points inside layer
+            insideSegments.stream().flatMap(segment -> segment.findTurningPoints(false, false, true, false).stream())
+                    .forEach(pos -> diffStartPointLines.add(pos.toHorizontalPosition().toString()));
+            insideSegments.stream().flatMap(segment -> segment.findTurningPoints(false, false, false, true).stream())
+            .forEach(pos -> diffEndPointLines.add(pos.toHorizontalPosition().toString()));
             // add all raypath segments outside layer
             List<Raypath> outsideSegments = raypath.clipOutsideLayer(lowerPierceRadius, upperPierceRadius);
             outsideSegments.forEach(segment -> outsideLines.add(lineFor(raypath, segment)));
@@ -406,6 +417,8 @@ public class RaypathMapper extends Operation {
         System.err.println("Computation of raypath segments for " + allRaypaths.size() + " raypaths succeeded.");
 
         Files.write(outPath.resolve(turningPointFileName), turningPointLines);
+        Files.write(outPath.resolve(diffStartPointFileName), diffStartPointLines);
+        Files.write(outPath.resolve(diffEndPointFileName), diffEndPointLines);
         Files.write(outPath.resolve(insideFileName), insideLines);
         Files.write(outPath.resolve(outsideFileName), outsideLines);
     }
@@ -431,7 +444,7 @@ public class RaypathMapper extends Operation {
                 + (int) MathAid.floor(raypath.getBackAzimuthDeg());
         // Turning point azimuth can be obtained only when turning point has been computed for.
         // The first turning point on the raypath is used.
-        if (raypath.findTurningPoint(0) != null) {
+        if (raypath.findTurningPoint(0, true, true, false, false) != null) {
             line = line + " " + (int) MathAid.floor(raypath.computeTurningAzimuthDeg(0));
         }
         return line;
@@ -547,6 +560,10 @@ public class RaypathMapper extends Operation {
             if (cutAtPiercePoint && drawTurningPoints) {
                 pw.println("awk '{print $1, $2}' " + turningPointFileName
                         + " | gmt psxy -: -Sx0.3 -Wthinnest,black" + rayTransparencyOption);
+                pw.println("awk '{print $1, $2}' " + diffStartPointFileName
+                        + " | gmt psxy -: -Sc0.25 -Wthinnest,black" + rayTransparencyOption);
+                pw.println("awk '{print $1, $2}' " + diffEndPointFileName
+                        + " | gmt psxy -: -Ss0.3 -Wthinnest,black" + rayTransparencyOption);
                 pw.println("");
             }
 
@@ -690,6 +707,8 @@ public class RaypathMapper extends Operation {
                 .map(observer -> observer.getPosition()).forEach(positions::add);
         if (cutAtPiercePoint) {
             List<String> turningPointLines = Files.readAllLines(outPath.resolve(turningPointFileName));
+            turningPointLines.addAll(Files.readAllLines(outPath.resolve(diffStartPointFileName)));
+            turningPointLines.addAll(Files.readAllLines(outPath.resolve(diffEndPointFileName)));
             for (String line : turningPointLines) {
                 String[] parts = line.trim().split("\\s+");
                 positions.add(new HorizontalPosition(Double.parseDouble(parts[0]), Double.parseDouble(parts[1])));

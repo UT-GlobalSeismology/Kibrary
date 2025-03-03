@@ -34,6 +34,9 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
  * depending on the geometries of each raypath.
  * <p>
  * A data entry list file must be provided as input. A new data entry list file will be created as the output.
+ * <p>
+ * For turning point position, checks whether there are any turning points (including diffraction start and end points) within the specified range.
+ * For turning point azimuth, the first turning point of the phase that arrives first among the specified phases will be used.
  *
  * @author otsuru
  * @since 2022/1/4
@@ -107,13 +110,13 @@ public class RaypathSelection extends Operation {
     private CircularRange backAzimuthRange;
     private CircularRange turningAzimuthRange;
     /**
-     * Name of structure to use for calculating turning point.
+     * Name of structure to use for computing turning points.
      */
     private String structureName;
     /**
-     * Phase to use when computing turning point.
+     * Phases to use when computing turning points.
      */
-    private String turningPointPhase;
+    private String[] turningPointPhases;
 
     /**
      * Whether criteria for turning point position exists.
@@ -214,10 +217,10 @@ public class RaypathSelection extends Operation {
             pw.println("##(double) Upper limit of turning point azimuth range [deg], exclusive; [-180:360]. (360)");
             pw.println("#upperTurningAzimuth ");
             pw.println("##########When criteria for turning points are set, the following is used:##########");
-            pw.println("##(String) Name of structure to use for calculating turning point. (prem)");
+            pw.println("##(String) Name of structure to use for computing turning points. (prem)");
             pw.println("#structureName ");
-            pw.println("##Phase to compute turning point for. (ScS)");
-            pw.println("#turningPointPhase ");
+            pw.println("##Phases to compute turning points for, listed using spaces. (ScS)");
+            pw.println("#turningPointPhases ");
         }
         System.err.println(outPath + " is created.");
     }
@@ -296,7 +299,7 @@ public class RaypathSelection extends Operation {
         turningAzimuthRange = new CircularRange("Turning point azimuth", lowerTurningAzimuth, upperTurningAzimuth, -180.0, 360.0);
 
         structureName = property.parseString("structureName", "prem");
-        turningPointPhase = property.parseString("turningPointPhase", "ScS");
+        turningPointPhases = property.parseStringArray("turningPointPhases", "ScS");
     }
 
     @Override
@@ -308,7 +311,7 @@ public class RaypathSelection extends Operation {
         TauPPierceWrapper pierceTool = null;
         if (selectTurningPosition || selectTurningAzimuth) {
             try {
-                pierceTool = new TauPPierceWrapper(structureName, turningPointPhase);
+                pierceTool = new TauPPierceWrapper(structureName, turningPointPhases);
                 pierceTool.compute(entrySet);
             } catch (TauModelException e) {
                 throw new RuntimeException(e);
@@ -371,11 +374,13 @@ public class RaypathSelection extends Operation {
                 boolean turningAzimuthCheck = false;
                 // conduct check when raypath of the specified phaseName exists; otherwise, false
                 if (pierceTool.hasRaypaths(entry)) {
+                    // When there are multiple raypaths or turning points, checks if there is any within the specified range.
+                    turningPositionCheck = pierceTool.get(entry).stream()
+                            .flatMap(ray -> ray.findTurningPoints(true, true, true, true).stream())
+                            .anyMatch(pos -> pos.isInRange(turningLatitudeRange, turningLongitudeRange));
                     // When there are several raypaths for a given phase name, the first arrival is chosen.
                     // When there are multiple bottoming points for a raypath, the first one is used.
                     // Any phase (except for "p" or "s") should have a bottoming point, so a non-existence is not considered.
-                    FullPosition turningPosition = pierceTool.get(entry, 0).findTurningPoint(0);
-                    turningPositionCheck = turningPosition.isInRange(turningLatitudeRange, turningLongitudeRange);
                     double turningAzimuth = pierceTool.get(entry, 0).computeTurningAzimuthDeg(0);
                     turningAzimuthCheck = turningAzimuthRange.check(turningAzimuth);
                 }
