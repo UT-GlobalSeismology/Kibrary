@@ -20,6 +20,7 @@ import org.apache.commons.math3.util.Precision;
 
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
+import io.github.kensuke1984.kibrary.Test_temp;
 import io.github.kensuke1984.kibrary.elastic.VariableType;
 import io.github.kensuke1984.kibrary.filter.BandPassFilter;
 import io.github.kensuke1984.kibrary.filter.ButterworthFilter;
@@ -99,7 +100,7 @@ public class PartialsBuilder1D extends Operation {
     /**
      * Path of a time window file.
      */
-    private Path timewindowPath;
+    private Path timeWindowPath;
     /**
      * Path of a data entry list file.
      */
@@ -207,7 +208,7 @@ public class PartialsBuilder1D extends Operation {
             pw.println("##SacComponents to be used. (Z R T)");
             pw.println("#components ");
             pw.println("##Path of a time window data file, must be set.");
-            pw.println("#timewindowPath timeWindow.dat");
+            pw.println("#timeWindowPath timeWindow.dat");
             pw.println("##Path of a data entry list file, if you want to select raypaths.");
             pw.println("#dataEntryPath selectedEntry.lst");
             pw.println("##(double[]) Layer radii, listed using spaces, if you want to select layers to compute for.");
@@ -262,7 +263,8 @@ public class PartialsBuilder1D extends Operation {
         components = Arrays.stream(property.parseStringArray("components", "Z R T"))
                 .map(SACComponent::valueOf).collect(Collectors.toSet());
 
-        timewindowPath = property.parsePath("timewindowPath", null, true, workPath);
+        timeWindowPath = Test_temp.getTimeWindowPath_temp(property, workPath);  //TODO delete (This is here for backward compatibility.)
+//      timeWindowPath = property.parsePath("timeWindowPath", null, true, workPath);
         if (property.containsKey("dataEntryPath")) {
             dataEntryPath = property.parsePath("dataEntryPath", null, true, workPath);
         }
@@ -310,7 +312,7 @@ public class PartialsBuilder1D extends Operation {
         System.err.println(variableTypes.stream().map(Object::toString).collect(Collectors.joining(" ", "Computing for ", "")));
 
         // read time window file and select based on component and entries
-        timeWindowSet = TimeWindowDataFile.readAndSelect(timewindowPath, dataEntryPath, components);
+        timeWindowSet = TimeWindowDataFile.readAndSelect(timeWindowPath, dataEntryPath, components);
 
         // collect events
         Set<GlobalCMTID> eventSet = timeWindowSet.stream().map(TimeWindowData::getGlobalCMTID).collect(Collectors.toSet());

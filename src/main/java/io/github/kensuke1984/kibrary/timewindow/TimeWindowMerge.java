@@ -71,7 +71,7 @@ public class TimeWindowMerge extends Operation {
             pw.println("##########  Up to " + MAX_NUM + " files can be managed. Any index may be left blank.");
             for (int i = 1; i <= MAX_NUM; i++) {
                 pw.println("##" + MathAid.ordinalNumber(i) + " file.");
-                pw.println("#timewindowPath" + i + " timeWindow.dat");
+                pw.println("#timeWindowPath" + i + " timeWindow.dat");
             }
         }
         System.err.println(outPath + " is created.");
@@ -88,7 +88,7 @@ public class TimeWindowMerge extends Operation {
         appendFileDate = property.parseBoolean("appendFileDate", "true");
 
         for (int i = 1; i <= MAX_NUM; i++) {
-            String timeWindowKey = "timewindowPath" + i;
+            String timeWindowKey = "timeWindowPath" + i;
             if (property.containsKey(timeWindowKey)) {
                 timeWindowPaths.add(property.parsePath(timeWindowKey, null, true, workPath));
             }

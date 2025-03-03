@@ -20,6 +20,7 @@ import java.util.stream.Stream;
 
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
+import io.github.kensuke1984.kibrary.Test_temp;
 import io.github.kensuke1984.kibrary.elastic.VariableType;
 import io.github.kensuke1984.kibrary.filter.BandPassFilter;
 import io.github.kensuke1984.kibrary.filter.ButterworthFilter;
@@ -114,7 +115,7 @@ public class PartialsAssembler3D extends Operation {
     /**
      * Path of a time window file.
      */
-    private Path timewindowPath;
+    private Path timeWindowPath;
     /**
      * Path of a data entry list file.
      */
@@ -254,7 +255,7 @@ public class PartialsAssembler3D extends Operation {
             pw.println("##SacComponents to be used. (Z R T)");
             pw.println("#components ");
             pw.println("##Path of a time window data file, must be set.");
-            pw.println("#timewindowPath timeWindow.dat");
+            pw.println("#timeWindowPath timeWindow.dat");
             pw.println("##Path of a data entry list file, if you want to select raypaths.");
             pw.println("#dataEntryPath selectedEntry.lst");
             pw.println("##Path of a voxel information file, if you want to select the voxels to compute for.");
@@ -318,7 +319,8 @@ public class PartialsAssembler3D extends Operation {
         components = Arrays.stream(property.parseStringArray("components", "Z R T"))
                 .map(SACComponent::valueOf).collect(Collectors.toSet());
 
-        timewindowPath = property.parsePath("timewindowPath", null, true, workPath);
+        timeWindowPath = Test_temp.getTimeWindowPath_temp(property, workPath);  //TODO delete (This is here for backward compatibility.)
+//      timeWindowPath = property.parsePath("timeWindowPath", null, true, workPath);
         if (property.containsKey("dataEntryPath")) {
             dataEntryPath = property.parsePath("dataEntryPath", null, true, workPath);
         }
@@ -381,7 +383,7 @@ public class PartialsAssembler3D extends Operation {
         System.err.println(variableTypes.stream().map(Object::toString).collect(Collectors.joining(" ", "Computing for ", "")));
 
         // read time window file and select based on component and entries
-        timeWindowSet = TimeWindowDataFile.readAndSelect(timewindowPath, dataEntryPath, components);
+        timeWindowSet = TimeWindowDataFile.readAndSelect(timeWindowPath, dataEntryPath, components);
 
         Set<GlobalCMTID> eventSet = timeWindowSet.stream().map(TimeWindowData::getGlobalCMTID).collect(Collectors.toSet());
         Set<Observer> observerSet = timeWindowSet.stream().map(TimeWindowData::getObserver).collect(Collectors.toSet());
@@ -519,7 +521,7 @@ public class PartialsAssembler3D extends Operation {
                 .collect(Collectors.toSet());
         if (fpNonExistingEvents.size() > 0) {
             fpNonExistingEvents.forEach(event -> System.err.println(event));
-            throw new IllegalStateException("FP files are not enough for " + timewindowPath);
+            throw new IllegalStateException("FP files are not enough for " + timeWindowPath);
         }
         if (!bpCatalogMode) {
             Set<Observer> bpNonExistingObservers = observerSet.stream()
@@ -527,7 +529,7 @@ public class PartialsAssembler3D extends Operation {
                     .collect(Collectors.toSet());
             if (bpNonExistingObservers.size() > 0) {
                 bpNonExistingObservers.forEach(observer -> System.err.println(observer));
-                throw new IllegalStateException("BP files are not enough for " + timewindowPath);
+                throw new IllegalStateException("BP files are not enough for " + timeWindowPath);
             }
         }
     }

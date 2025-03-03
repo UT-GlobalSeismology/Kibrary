@@ -58,7 +58,7 @@ public class TakeuchiStaticCorrection extends Operation {
     /**
      * The time window data file to work for.
      */
-    private Path timewindowPath;
+    private Path timeWindowPath;
     /**
      * Folder containing observed data.
      */
@@ -102,7 +102,7 @@ public class TakeuchiStaticCorrection extends Operation {
             pw.println("##SacComponents to be used, listed using spaces. (Z R T)");
             pw.println("#components ");
             pw.println("##Path of a time window file, must be set.");
-            pw.println("#timewindowPath timeWindow.dat");
+            pw.println("#timeWindowPath timeWindow.dat");
             pw.println("##Path of a root directory containing observed dataset. (.)");
             pw.println("#obsPath ");
             pw.println("##Path of a root directory containing synthetic dataset. (.)");
@@ -127,7 +127,7 @@ public class TakeuchiStaticCorrection extends Operation {
         components = Arrays.stream(property.parseStringArray("components", "Z R T"))
                 .map(SACComponent::valueOf).collect(Collectors.toSet());
 
-        timewindowPath = property.parsePath("timewindowPath", null, true, workPath);
+        timeWindowPath = property.parsePath("timeWindowPath", null, true, workPath);
         obsPath = property.parsePath("obsPath", ".", true, workPath);
         synPath = property.parsePath("synPath", ".", true, workPath);
         convolved = property.parseBoolean("convolved", "true");
@@ -137,7 +137,7 @@ public class TakeuchiStaticCorrection extends Operation {
     @Override
     public void run() throws IOException {
         // gather all time windows to be processed
-        sourceTimeWindowSet = TimeWindowDataFile.read(timewindowPath)
+        sourceTimeWindowSet = TimeWindowDataFile.read(timeWindowPath)
                 .stream().filter(window -> components.contains(window.getComponent())).collect(Collectors.toSet());
 
         Set<SACFileName> nameSet;
@@ -175,7 +175,7 @@ public class TakeuchiStaticCorrection extends Operation {
                 .filter(info -> info.getObserver().toString().equals(observerID))
                 .filter(info -> info.getGlobalCMTID().equals(id))
                 .filter(info -> info.getComponent() == component).collect(Collectors.toSet());
-        if (timeWindowSet.size() != 1) throw new RuntimeException(timewindowPath + " is invalid.");
+        if (timeWindowSet.size() != 1) throw new RuntimeException(timeWindowPath + " is invalid.");
 
         TimeWindowData timeWindow = timeWindowSet.iterator().next();
         SACFileAccess obsSac = obsName.read();

@@ -1,6 +1,7 @@
 package io.github.kensuke1984.kibrary;
 
 import java.io.IOException;
+import java.nio.file.Path;
 
 import edu.sc.seis.TauP.TauModelException;
 import io.github.kensuke1984.kibrary.util.earth.Earth;
@@ -17,5 +18,12 @@ public class Test_temp {
         System.err.println(Earth.computeMidpoint(pos1, pos0));
         System.err.println(Earth.computeMidpoint(pos1, pos2));
 
+    }
+
+    public static Path getTimeWindowPath_temp(Property property, Path workPath) throws IOException {
+        if (property.containsKey("timewindowPath"))
+            return property.parsePath("timewindowPath", null, true, workPath);
+        else
+            return property.parsePath("timeWindowPath", null, true, workPath);
     }
 }

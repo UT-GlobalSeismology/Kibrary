@@ -19,6 +19,7 @@ import org.apache.commons.math3.util.Precision;
 
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
+import io.github.kensuke1984.kibrary.Test_temp;
 import io.github.kensuke1984.kibrary.math.Trace;
 import io.github.kensuke1984.kibrary.timewindow.TimeWindow;
 import io.github.kensuke1984.kibrary.timewindow.TimeWindowData;
@@ -87,7 +88,7 @@ public class FujiStaticCorrection extends Operation {
     /**
      * The time window data file to work for.
      */
-    private Path timewindowPath;
+    private Path timeWindowPath;
     /**
      * Folder containing observed data.
      */
@@ -141,7 +142,7 @@ public class FujiStaticCorrection extends Operation {
             pw.println("##SacComponents to be used, listed using spaces. (Z R T)");
             pw.println("#components ");
             pw.println("##Path of a time window file, must be set.");
-            pw.println("#timewindowPath timeWindow.dat");
+            pw.println("#timeWindowPath timeWindow.dat");
             pw.println("##Path of a root directory containing observed dataset. (.)");
             pw.println("#obsPath ");
             pw.println("##Path of a root directory containing synthetic dataset. (.)");
@@ -172,7 +173,8 @@ public class FujiStaticCorrection extends Operation {
         components = Arrays.stream(property.parseStringArray("components", "Z R T"))
                 .map(SACComponent::valueOf).collect(Collectors.toSet());
 
-        timewindowPath = property.parsePath("timewindowPath", null, true, workPath);
+        timeWindowPath = Test_temp.getTimeWindowPath_temp(property, workPath);  //TODO delete (This is here for backward compatibility.)
+//        timeWindowPath = property.parsePath("timeWindowPath", null, true, workPath);
         obsPath = property.parsePath("obsPath", ".", true, workPath);
         synPath = property.parsePath("synPath", ".", true, workPath);
         convolved = property.parseBoolean("convolved", "true");
@@ -186,7 +188,7 @@ public class FujiStaticCorrection extends Operation {
     @Override
     public void run() throws IOException {
         // gather all time windows to be processed
-        sourceTimeWindowSet = TimeWindowDataFile.read(timewindowPath)
+        sourceTimeWindowSet = TimeWindowDataFile.read(timeWindowPath)
                 .stream().filter(window -> components.contains(window.getComponent())).collect(Collectors.toSet());
         // collect all events that exist in the time window set
         Set<GlobalCMTID> eventSet = sourceTimeWindowSet.stream().map(TimeWindowData::getGlobalCMTID).collect(Collectors.toSet());

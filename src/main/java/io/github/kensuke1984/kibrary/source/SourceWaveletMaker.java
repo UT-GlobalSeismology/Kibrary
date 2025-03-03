@@ -18,6 +18,7 @@ import org.apache.commons.math3.linear.RealVector;
 
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
+import io.github.kensuke1984.kibrary.Test_temp;
 import io.github.kensuke1984.kibrary.correction.StaticCorrectionData;
 import io.github.kensuke1984.kibrary.correction.StaticCorrectionDataFile;
 import io.github.kensuke1984.kibrary.math.FourierTransform;
@@ -71,7 +72,7 @@ public class SourceWaveletMaker extends Operation {
     /**
      * Path of a time window information file.
      */
-    private Path timewindowPath;
+    private Path timeWindowPath;
     /**
      * Time length that the time window includes before main phase arrival [s].
      * If the value is 5 (not -5), each time window starts 5 sec before the main phase arrival.
@@ -138,7 +139,7 @@ public class SourceWaveletMaker extends Operation {
             pw.println("##SacComponents to be used, listed using spaces. (Z R T)");
             pw.println("#components ");
             pw.println("##Path of a time window file, must be set.");
-            pw.println("#timewindowPath selectedTimeWindow.dat");
+            pw.println("#timeWindowPath selectedTimeWindow.dat");
             pw.println("##(double) Time length before phase arrival in time window [s]. (20)");
             pw.println("#frontShift ");
             pw.println("##Path of a root folder containing observed dataset. (.)");
@@ -173,7 +174,8 @@ public class SourceWaveletMaker extends Operation {
         components = Arrays.stream(property.parseStringArray("components", "Z R T"))
                 .map(SACComponent::valueOf).collect(Collectors.toSet());
 
-        timewindowPath = property.parsePath("timewindowPath", null, true, workPath);
+        timeWindowPath = Test_temp.getTimeWindowPath_temp(property, workPath);  //TODO delete (This is here for backward compatibility.)
+//      timeWindowPath = property.parsePath("timeWindowPath", null, true, workPath);
         frontShift = property.parseDouble("frontShift", "20");
         obsPath = property.parsePath("obsPath", ".", true, workPath);
         synPath = property.parsePath("synPath", ".", true, workPath);
@@ -194,7 +196,7 @@ public class SourceWaveletMaker extends Operation {
     @Override
     public void run() throws IOException {
         // read time window file and select based on component and entries
-        sourceTimeWindowSet = TimeWindowDataFile.readAndSelect(timewindowPath, dataEntryPath, components);
+        sourceTimeWindowSet = TimeWindowDataFile.readAndSelect(timeWindowPath, dataEntryPath, components);
         // collect all events that exist in the time window set
         Set<GlobalCMTID> eventSet = sourceTimeWindowSet.stream().map(TimeWindowData::getGlobalCMTID).collect(Collectors.toSet());
 

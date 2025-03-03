@@ -68,7 +68,7 @@ public class TimePartialsAssembler extends Operation {
     /**
      * Path of a time window information file
      */
-    private Path timewindowPath;
+    private Path timeWindowPath;
     /**
      * Path of a data entry file
      */
@@ -122,7 +122,7 @@ public class TimePartialsAssembler extends Operation {
             pw.println("##(double) Value of sampling Hz in output files, must be a factor of sacSamplingHz (1)");
             pw.println("#finalSamplingHz ");
             pw.println("##Path of a time window file, must be set");
-            pw.println("#timewindowPath timeWindow.dat");
+            pw.println("#timeWindowPath timeWindow.dat");
             pw.println("##Path of a data entry list file, if you want to select raypaths");
             pw.println("#dataEntryPath selectedEntry.lst");
             pw.println("##Path of the time partials directory, must be set");
@@ -152,7 +152,7 @@ public class TimePartialsAssembler extends Operation {
         if (partialSamplingHz % finalSamplingHz != 0)
             throw new IllegalArgumentException("Must choose a finalSamplingHz that divides " + partialSamplingHz);
 
-        timewindowPath = property.parsePath("timewindowPath", null, true, workPath);
+        timeWindowPath = property.parsePath("timeWindowPath", null, true, workPath);
         if (property.containsKey("dataEntryPath")) {
             dataEntryPath = property.parsePath("dataEntryPath", null, true, workPath);
         }
@@ -202,13 +202,13 @@ public class TimePartialsAssembler extends Operation {
             Set<DataEntry> entrySet = DataEntryListFile.readAsSet(dataEntryPath);
 
             // read time windows and select based on component and entries
-            timeWindowSet = TimeWindowDataFile.read(timewindowPath)
+            timeWindowSet = TimeWindowDataFile.read(timeWindowPath)
                     .stream().filter(window -> components.contains(window.getComponent()) &&
                             entrySet.contains(new DataEntry(window.getGlobalCMTID(), window.getObserver(), window.getComponent())))
                     .collect(Collectors.toSet());
         } else {
             // read time windows and select based on component
-            timeWindowSet = TimeWindowDataFile.read(timewindowPath)
+            timeWindowSet = TimeWindowDataFile.read(timeWindowPath)
                     .stream().filter(window -> components.contains(window.getComponent()))
                     .collect(Collectors.toSet());
         }
@@ -219,7 +219,7 @@ public class TimePartialsAssembler extends Operation {
             observerSet.add(t.getObserver());
         });
 
-        writeLog(timeWindowSet.size() + " time windows are found in " + timewindowPath + ". " + eventSet.size()
+        writeLog(timeWindowSet.size() + " time windows are found in " + timeWindowPath + ". " + eventSet.size()
                 + " events and " + observerSet.size() + " stations.");
     }
 

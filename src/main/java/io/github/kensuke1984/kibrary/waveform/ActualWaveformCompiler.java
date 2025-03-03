@@ -25,6 +25,7 @@ import org.apache.commons.math3.linear.RealVector;
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
+import io.github.kensuke1984.kibrary.Test_temp;
 import io.github.kensuke1984.kibrary.correction.FujiStaticCorrection;
 import io.github.kensuke1984.kibrary.correction.StaticCorrectionData;
 import io.github.kensuke1984.kibrary.correction.StaticCorrectionDataFile;
@@ -101,11 +102,11 @@ public class ActualWaveformCompiler extends Operation {
     /**
      * Path of a time window information file.
      */
-    private Path timewindowPath;
+    private Path timeWindowPath;
     /**
      * Path of a time window information file for a reference phase use to correct spectral amplitude.
      */
-    private Path timewindowRefPath;
+    private Path timeWindowRefPath;
     /**
      * Path of a root folder containing observed dataset.
      */
@@ -210,9 +211,9 @@ public class ActualWaveformCompiler extends Operation {
             pw.println("##SacComponents to be used, listed using spaces. (Z R T)");
             pw.println("#components ");
             pw.println("##Path of a time window file, must be set.");
-            pw.println("#timewindowPath selectedTimeWindow.dat");
+            pw.println("#timeWindowPath selectedTimeWindow.dat");
             pw.println("##Path of a time window file for a reference phase used to correct spectral amplitude, can be ignored.");
-            pw.println("#timewindowRefPath ");
+            pw.println("#timeWindowRefPath ");
             pw.println("##Path of a root folder containing observed dataset. (.)");
             pw.println("#obsPath ");
             pw.println("##Path of a root folder containing synthetic dataset. (.)");
@@ -259,9 +260,10 @@ public class ActualWaveformCompiler extends Operation {
         components = Arrays.stream(property.parseStringArray("components", "Z R T"))
                 .map(SACComponent::valueOf).collect(Collectors.toSet());
 
-        timewindowPath = property.parsePath("timewindowPath", null, true, workPath);
-        if (property.containsKey("timewindowRefPath")) {
-            timewindowRefPath = property.parsePath("timewindowRefPath", null, true, workPath);
+        timeWindowPath = Test_temp.getTimeWindowPath_temp(property, workPath);  //TODO delete (This is here for backward compatibility.)
+//      timeWindowPath = property.parsePath("timeWindowPath", null, true, workPath);
+        if (property.containsKey("timeWindowRefPath")) {
+            timeWindowRefPath = property.parsePath("timeWindowRefPath", null, true, workPath);
         }
         obsPath = property.parsePath("obsPath", ".", true, workPath);
         synPath = property.parsePath("synPath", ".", true, workPath);
@@ -302,7 +304,7 @@ public class ActualWaveformCompiler extends Operation {
     @Override
     public void run() throws IOException {
         // read time window file and select based on component and entries
-        sourceTimeWindowSet = TimeWindowDataFile.readAndSelect(timewindowPath, dataEntryPath, components);
+        sourceTimeWindowSet = TimeWindowDataFile.readAndSelect(timeWindowPath, dataEntryPath, components);
 
         // read static correction data
         if (correctTime || amplitudeCorrectionType > 0) {
@@ -333,8 +335,8 @@ public class ActualWaveformCompiler extends Operation {
             mantleCorrectionSet = StaticCorrectionDataFile.read(mantleCorrectionPath);
         }
 
-        if (timewindowRefPath != null)
-            refTimeWindowSet = TimeWindowDataFile.read(timewindowRefPath)
+        if (timeWindowRefPath != null)
+            refTimeWindowSet = TimeWindowDataFile.read(timeWindowRefPath)
                     .stream().filter(window -> components.contains(window.getComponent())).collect(Collectors.toSet());
 
         Set<GlobalCMTID> eventSet = sourceTimeWindowSet.stream().map(TimeWindowData::getGlobalCMTID).collect(Collectors.toSet());
