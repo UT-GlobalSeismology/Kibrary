@@ -204,7 +204,6 @@ public class ScalarStructurePlotter  extends Operation {
         // update plot range based on these values
         modelPlotRange.update(absoluteMap);
 
-
         // create gnuplot script
         Path outputScriptPath = outPath.resolve("modelPlot.plt");
         createScript(outputScriptPath, variable, initialStructure, modelPlotRange);

@@ -53,6 +53,7 @@ import io.github.kensuke1984.kibrary.visual.plot.ModelStructurePlotter;
 import io.github.kensuke1984.kibrary.visual.plot.PartialsPlotter;
 import io.github.kensuke1984.kibrary.visual.plot.PolynomialStructurePlotter;
 import io.github.kensuke1984.kibrary.visual.plot.ScalarStructurePlotter;
+import io.github.kensuke1984.kibrary.visual.plot.SensitivityKernelPlotter1D;
 import io.github.kensuke1984.kibrary.visual.plot.SyntheticRecordSection;
 import io.github.kensuke1984.kibrary.voxel.VoxelAutoDesigner;
 import io.github.kensuke1984.kibrary.voxel.VoxelManualDesigner;
@@ -150,6 +151,7 @@ enum Manhattan {
     ScalarMapper(92, ScalarMapper.class),
     CrossSectionCreator(93, CrossSectionCreator.class),
     // Temporal 100
+    SensitivityKernelPlotter1D(100, SensitivityKernelPlotter1D.class),
     ;
 
     private final Class<? extends Operation> operation;
