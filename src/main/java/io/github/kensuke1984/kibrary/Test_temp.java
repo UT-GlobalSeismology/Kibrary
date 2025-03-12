@@ -7,6 +7,8 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.math3.util.Precision;
+
 import edu.sc.seis.TauP.TauModelException;
 import io.github.kensuke1984.kibrary.util.MathAid;
 
@@ -15,8 +17,8 @@ public class Test_temp {
     public static void main(String[] args) throws IOException, TauModelException {
         Path inPath = Paths.get(args[0]);
 
-        double centerLat = 0;
-        double centerLon = 0;
+        double centerLat = 22.27265;
+        double centerLon = -175 + 360;
         double centerRad = 3680;
 
         List<String> inLines = Files.readAllLines(inPath);
@@ -26,11 +28,12 @@ public class Test_temp {
 
             double lat = Double.parseDouble(parts[2]);
             double lon = Double.parseDouble(parts[3]);
+            if (lon < 0) lon += 360;
             double rad = Double.parseDouble(parts[4]);
 
-            lat = centerLat * 2 - lat;
-            lon = centerLon * 2 - lon;
-            rad = centerRad * 2 - rad;
+            lat = Precision.round(centerLat * 2 - lat, 4);
+            lon = Precision.round(centerLon * 2 - lon, 4);
+            rad = Precision.round(centerRad * 2 - rad, 4);
 
             String outLine = parts[0] + " " + parts[1] + " " + lat + " " + lon + " " + rad + " " + parts[5] + " " + parts[6];
             outLines.add(outLine);

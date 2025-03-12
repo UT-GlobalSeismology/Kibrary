@@ -22,6 +22,7 @@ import io.github.kensuke1984.kibrary.inversion.solve.InversionSolver;
 import io.github.kensuke1984.kibrary.inversion.solve.InversionSumSolver;
 import io.github.kensuke1984.kibrary.perturbation.BlockModelMaker;
 import io.github.kensuke1984.kibrary.perturbation.CheckerboardMaker;
+import io.github.kensuke1984.kibrary.perturbation.ModelResampler;
 import io.github.kensuke1984.kibrary.perturbation.ModelSmoothener;
 import io.github.kensuke1984.kibrary.selection.DataSelection;
 import io.github.kensuke1984.kibrary.selection.RaypathSelection;
@@ -134,6 +135,7 @@ enum Manhattan {
     ModelStructurePlotter(74, ModelStructurePlotter.class),
     ModelSetMapper(75, ModelSetMapper.class),
     ModelMapper(76, ModelMapper.class),
+    ModelResampler(78, ModelResampler.class),
     ModelStructureConverter(79, ModelStructureConverter.class),
     // Tests 80
     CheckerboardMaker(80, CheckerboardMaker.class),
