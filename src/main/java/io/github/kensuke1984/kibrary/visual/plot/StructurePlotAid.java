@@ -3,6 +3,7 @@ package io.github.kensuke1984.kibrary.visual.plot;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Arrays;
+import java.util.List;
 
 import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
 
@@ -17,16 +18,35 @@ import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
  */
 public class StructurePlotAid {
 
-    private static final int NUM_VARIABLES = 6;
-    private static final String[] COLORS = {
-            "dark-magenta", "dark-orange", "web-green", "red", "web-blue", "dark-gray",
-            "purple", "goldenrod", "greenyellow", "salmon", "skyblue", "gray",
-            "plum", "khaki", "seagreen", "light-pink", "light-cyan", "light-gray"};
+    private static final String[][] COLORS = {
+            {"gray20", "dark-gray", "gray", "light-gray"},
+            {"red", "orange-red", "salmon", "light-pink"},
+            {"blue", "web-blue", "skyblue", "light-cyan"},
+            {"yellow4", "goldenrod", "gold", "khaki"},
+            {"dark-violet", "dark-magenta", "purple", "plum"},
+            {"dark-green", "web-green", "greenyellow", "seagreen"}};
 
-    private boolean colorByStructure;
-    private boolean colorByVariable;
-    private boolean dashByStructure;
-    private boolean dashByVariable;
+    static enum Distinguisher {
+        COLOR, SHADE, DASH, NONE;
+    }
+
+    static enum Color {
+        GRAY(0), RED(1), BLUE(2), ORANGE(3), PURPLE(4), GREEN(5), NONE(-1);
+
+        private final int number;
+        private Color(int number) {
+            this.number = number;
+        }
+        public int getNumber() {
+            return number;
+        }
+    }
+
+    private Distinguisher structureDistinguisher;
+    private Distinguisher modelDistinguisher;
+    private Distinguisher variableDistinguisher;
+    private List<VariableType> variableTypes;
+    private List<Color> colors;
 
     /**
      * Prints definition of a set of polynomial functions for a variable of a 1-D structure.
@@ -96,53 +116,82 @@ public class StructurePlotAid {
         }
     }
 
-    StructurePlotAid(boolean colorByStructure, boolean colorByVariable, boolean dashByStructure, boolean dashByVariable) {
-        this.colorByStructure = colorByStructure;
-        this.colorByVariable = colorByVariable;
-        this.dashByStructure = dashByStructure;
-        this.dashByVariable = dashByVariable;
+    /**
+     * Create instance to manage color, shade, and dash type of lines to plot.
+     * @param structureDistinguisher ({@link Distinguisher}) How to distinguish the structure.
+     * @param modelDistinguisher ({@link Distinguisher}) How to distinguish models.
+     * @param variableDistinguisher ({@link Distinguisher}) How to distinguish variables.
+     * @param variableTypes (List of {@link VariableType}) Variables that will be used.
+     */
+    StructurePlotAid(Distinguisher structureDistinguisher, Distinguisher modelDistinguisher, Distinguisher variableDistinguisher, List<VariableType> variableTypes) {
+        this.structureDistinguisher = structureDistinguisher;
+        this.modelDistinguisher = modelDistinguisher;
+        this.variableDistinguisher = variableDistinguisher;
+        this.variableTypes = variableTypes;
     }
 
     /**
-     * Get string specifying line type.
+     * Set color for each structure.
+     * @param colors (List of {@link Color}) Colors for each structure.
+     */
+    void setColors(List<Color> colors) {
+        this.colors = colors;
+    }
+
+    /**
+     * Get String specifying line type. When distinguishing structure by SHADE or DASH, the order is flipped (to make newer ones stronger).
      * @param iStructure (int) Index of structure.
+     * @param iModel (int) Index of model.
+     * @param variable ({@link VariableType}) Variable plotted for by this line.
+     * @param nStructure (int) Total number of structures.
+     * @return (String) String specifying line type.
+     */
+    String lineTypeFor(int iStructure, int iModel, VariableType variable, int nStructure) {
+        switch(structureDistinguisher) {
+        case SHADE:
+        case DASH:
+            return lineTypeFor(nStructure - 1 - iStructure, iModel, variable);
+        default:
+            return lineTypeFor(iStructure, iModel, variable);
+        }
+    }
+
+    /**
+     * Get String specifying line type.
+     * @param iStructure (int) Index of structure.
+     * @param iModel (int) Index of model.
      * @param variable ({@link VariableType}) Variable plotted for by this line.
      * @return (String) String specifying line type.
      */
-    String lineTypeFor(int iStructure, VariableType variable) {
-        int iVariable;
-        switch (variable) {
-        case RHO:
-            iVariable = 0; break;
-        case Vpv:
-            iVariable = 1; break;
-        case Vph:
-        case Vp:
-            iVariable = 2; break;
-        case Vsv:
-            iVariable = 3; break;
-        case Vsh:
-        case Vs:
-            iVariable = 4; break;
-        case ETA:
-            iVariable = 5; break;
-        default:
-            throw new IllegalArgumentException(variable + " not supported yet.");
+    String lineTypeFor(int iStructure, int iModel, VariableType variable) {
+        int iVariable = (variable != null) ? variableTypes.indexOf(variable) : 0;
+        // set defaults
+        int iColor = 0;
+        int iShade = 1;
+        int iDash = 1;
+        // select
+        switch(structureDistinguisher) {
+        case COLOR: iColor = iStructure % 6; break;
+        case SHADE: iShade = iStructure % 4; break;
+        case DASH: iDash = iStructure + 1; break;
+        case NONE: break;
         }
-
-        int iColor;
-        if (colorByStructure && colorByVariable) iColor = iStructure * NUM_VARIABLES + iVariable;
-        else if (colorByStructure) iColor = iStructure;
-        else if (colorByVariable) iColor = iVariable;
-        else iColor = 0;
-
-        int iDash;
-        if (dashByStructure && dashByVariable) iDash = iStructure * NUM_VARIABLES + iVariable + 1;
-        else if (dashByStructure) iDash = iStructure + 1;
-        else if (dashByVariable) iDash = iVariable + 1;
-        else iDash = 1;
-
-        String lineTypeString = "dt " + iDash + " lc rgb '" + COLORS[iColor] + "'";
+        switch(modelDistinguisher) {
+        case COLOR: iColor = iModel % 6; break;
+        case SHADE: iShade = iModel % 4; break;
+        case DASH: iDash = iModel + 1; break;
+        case NONE: break;
+        }
+        switch(variableDistinguisher) {
+        case COLOR: iColor = iVariable % 6; break;
+        case SHADE: iShade = iVariable % 4; break;
+        case DASH: iDash = iVariable + 1; break;
+        case NONE: break;
+        }
+        // when structure color is set, overwrite color
+        if (colors != null && colors.get(iStructure) != Color.NONE) iColor = colors.get(iStructure).getNumber();
+        // create and return String
+        String lineTypeString = "dt " + iDash + " lc rgb '" + COLORS[iColor][iShade] + "'";
         return lineTypeString;
     }
 

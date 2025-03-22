@@ -82,17 +82,16 @@ public class ModelStructurePlotter extends Operation {
     /**
      * Variable types to plot.
      */
-    private Set<VariableType> variableTypes;
+    private List<VariableType> variableTypes;
     /**
      * Solvers for equation.
      */
     private Set<InverseMethodEnum> inverseMethods;
     private List<String> indexStrings;
 
-    private boolean colorByStructure;
-    private boolean colorByVariable;
-    private boolean dashByStructure;
-    private boolean dashByVariable;
+    private StructurePlotAid.Distinguisher structureDistinguisher;
+    private StructurePlotAid.Distinguisher modelDistinguisher;
+    private StructurePlotAid.Distinguisher variableDistinguisher;
 
     private boolean setLowerRadius = false;
     private double lowerRadius;
@@ -137,14 +136,12 @@ public class ModelStructurePlotter extends Operation {
             pw.println("#indexStrings ");
             pw.println("##(int) Maximum number of basis vectors to map. (10)");
             pw.println("#maxNum ");
-            pw.println("##(boolean) Whether to color structures differently. (true)");
-            pw.println("#colorByStructure ");
-            pw.println("##(boolean) Whether to color variables differently. (true)");
-            pw.println("#colorByVariable ");
-            pw.println("##(boolean) Whether to dash structures differently. (false)");
-            pw.println("#dashByStructure ");
-            pw.println("##(boolean) Whether to dash variables differently. (false)");
-            pw.println("#dashByVariable ");
+            pw.println("##(boolean) How to distinguish structures, from {COLOR, SHADE, DASH, NONE}. (SHADE)");
+            pw.println("#structureDistinguisher ");
+            pw.println("##(boolean) How to distinguish models, from {COLOR, SHADE, DASH, NONE}. (COLOR)");
+            pw.println("#modelDistinguisher ");
+            pw.println("##(boolean) How to distinguish variables, from {COLOR, SHADE, DASH, NONE}. (DASH)");
+            pw.println("#variableDistinguisher ");
             pw.println("##(double) Lower limit of radius [km], when setting manually; [0:upperRadius).");
             pw.println("#lowerRadius ");
             pw.println("##(double) Upper limit of radius [km], when setting manually; (lowerRadius:).");
@@ -175,7 +172,7 @@ public class ModelStructurePlotter extends Operation {
         }
 
         variableTypes = Arrays.stream(property.parseStringArray("variableTypes", "Vs")).map(VariableType::valueOf)
-                .collect(Collectors.toSet());
+                .collect(Collectors.toList());
         inverseMethods = Arrays.stream(property.parseStringArray("inverseMethods", "CG")).map(InverseMethodEnum::of)
                 .collect(Collectors.toSet());
         if (property.containsKey("indexStrings")) {
@@ -185,10 +182,9 @@ public class ModelStructurePlotter extends Operation {
             indexStrings = IntStream.range(1, maxNum).mapToObj(String::valueOf).collect(Collectors.toList());
         }
 
-        colorByStructure = property.parseBoolean("colorByStructure", "true");
-        colorByVariable = property.parseBoolean("colorByVariable", "true");
-        dashByStructure = property.parseBoolean("dashByStructure", "false");
-        dashByVariable = property.parseBoolean("dashByVariable", "false");
+        structureDistinguisher = StructurePlotAid.Distinguisher.valueOf(property.parseString("structureDistinguisher", "SHADE"));
+        modelDistinguisher = StructurePlotAid.Distinguisher.valueOf(property.parseString("modelDistinguisher", "COLOR"));
+        variableDistinguisher = StructurePlotAid.Distinguisher.valueOf(property.parseString("variableDistinguisher", "DASH"));
 
         if (property.containsKey("lowerRadius")) {
             lowerRadius = property.parseDouble("lowerRadius", null);
@@ -289,7 +285,7 @@ public class ModelStructurePlotter extends Operation {
 
     private void createModelScript(Path scriptPath, PolynomialStructure structure, PlotRange plotRange) throws IOException {
         String fileNameRoot = FileAid.extractNameRoot(scriptPath);
-        StructurePlotAid plotAid = new StructurePlotAid(colorByStructure, colorByVariable, dashByStructure, dashByVariable);
+        StructurePlotAid plotAid = new StructurePlotAid(structureDistinguisher, modelDistinguisher, variableDistinguisher, variableTypes);
 
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(scriptPath))) {
             pw.println("set samples 1000");
@@ -319,17 +315,17 @@ public class ModelStructurePlotter extends Operation {
             // plot the defined functions
             pw.print("p");
             for (VariableType variable : variableTypes) {
-                pw.println("  " + variable.toString().toLowerCase() + "0(t),t w l lw 1 " + plotAid.lineTypeFor(1, variable)
+                pw.println("  " + variable.toString().toLowerCase() + "0(t),t w l lw 2 " + plotAid.lineTypeFor(0, 0, variable, 2)
                         + " title '" + StructurePlotAid.labelStringFor(variable) + "', \\");
             }
 
             // plot model
             for (VariableType variable : variableTypes) {
-                pw.println("  \"" + variable.toString().toLowerCase() + "Absolute.lst\" u 4:3 w l lw 1 " + plotAid.lineTypeFor(0, variable)
+                pw.println("  \"" + variable.toString().toLowerCase() + "Absolute.lst\" u 4:3 w l lw 2 " + plotAid.lineTypeFor(1, 0, variable, 2)
                         + " notitle, \\");
             }
 
-            pw.println("  0,t w l lw 0.5 dt 1 lc rgb 'black' notitle");
+            pw.println("  0,t w l lw 1 dt 1 lc rgb 'black' notitle");
         }
 
         GnuplotFile plot = new GnuplotFile(scriptPath);
@@ -338,7 +334,7 @@ public class ModelStructurePlotter extends Operation {
 
     private void createVariableScript(Path scriptPath, VariableType variable, PolynomialStructure structure, PlotRange plotRange) throws IOException {
         String fileNameRoot = FileAid.extractNameRoot(scriptPath);
-        StructurePlotAid plotAid = new StructurePlotAid(colorByStructure, colorByVariable, dashByStructure, dashByVariable);
+        StructurePlotAid plotAid = new StructurePlotAid(structureDistinguisher, modelDistinguisher, variableDistinguisher, variableTypes);
 
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(scriptPath))) {
             pw.println("set samples 1000");
@@ -365,18 +361,19 @@ public class ModelStructurePlotter extends Operation {
 
             // plot the defined function
             pw.print("p");
-            pw.println("  " + variable.toString().toLowerCase() + "0(t),t w l lw 1 " + plotAid.lineTypeFor(1, variable) + " title 'initial', \\");
+            pw.println("  " + variable.toString().toLowerCase() + "0(t),t w l lw 2 " + plotAid.lineTypeFor(0, 0, variable, 2) + " title 'initial', \\");
 
             // plot models
+            int i = 0;
             for (InverseMethodEnum method : inverseMethods) {
                 for (String indexString : indexStrings){
                     String modelName = method.simpleName() + indexString;
-                    pw.println("  \"../" + modelName + "/" + variable.toString().toLowerCase() + "Absolute.lst\" u 4:3 w l lw 1 "
-                            + plotAid.lineTypeFor(0, variable) + " title '" + modelName + "', \\");
+                    pw.println("  \"../" + modelName + "/" + variable.toString().toLowerCase() + "Absolute.lst\" u 4:3 w l lw 2 "
+                            + plotAid.lineTypeFor(1, i++, variable, 2) + " title '" + modelName + "', \\");
                 }
             }
 
-            pw.println("  0,t w l lw 0.5 dt 1 lc rgb 'black' notitle");
+            pw.println("  0,t w l lw 1 dt 1 lc rgb 'black' notitle");
         }
 
         GnuplotFile plot = new GnuplotFile(scriptPath);
