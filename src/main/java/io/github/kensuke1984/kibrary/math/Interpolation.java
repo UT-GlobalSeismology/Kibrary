@@ -71,32 +71,48 @@ public class Interpolation {
 
         for (double radius : radii) {
             for (double latitude : latitudes) {
-                List<FullPosition> inLinePositions = allPositions.stream()
-                        .filter(pos -> Precision.equals(pos.getLatitude(), latitude, FullPosition.LATITUDE_EPSILON)
-                                && Precision.equals(pos.getR(), radius, FullPosition.RADIUS_EPSILON))
-                        .sorted(Comparator.comparing(pos -> pos.getLongitude(crossDateLine)))
-                        .collect(Collectors.toList());
+                interpolatedMap.putAll(forWestEastLine(originalMap, radius, latitude, sampleLongitudes,
+                        longitudeMargin, longitudeInKm, meanRadius, crossDateLine, mosaic));
+            }
+        }
+        return interpolatedMap;
+    }
 
-                // pack data values at original points along this latitude in a Trace (x is the longitude direction here)
-                double[] x = inLinePositions.stream().mapToDouble(position -> position.getLongitude(crossDateLine)).toArray();
-                double[] y = inLinePositions.stream().mapToDouble(position -> originalMap.get(position)).toArray();
-                Trace originalTrace = new Trace(x, y);
+    public static Map<FullPosition, Double> forWestEastLine(Map<FullPosition, Double> originalMap, double radius, double latitude, double[] sampleLongitudes,
+            double longitudeMargin, boolean longitudeInKm, double meanRadius, boolean crossDateLine, boolean mosaic) {
+        // This is created as LinkedHashMap to preserve the order of grid points
+        Map<FullPosition, Double> interpolatedMap = new LinkedHashMap<>();
 
-                // split the trace at gaps
-                double smallCircleRadius = meanRadius * Math.cos(Math.toRadians(latitude));
-                double longitudeMarginDeg = longitudeInKm ? Math.toDegrees(longitudeMargin / smallCircleRadius) : longitudeMargin;
-                List<Trace> splitTraces = splitTraceAtGaps(originalTrace, longitudeMarginDeg);
-                // interpolate each of the split traces and store the results
-                List<Trace> interpolatedTraces = splitTraces.stream()
-                        .map(trace -> interpolateTraceAtPoints(trace, sampleLongitudes, longitudeMarginDeg, mosaic)).collect(Collectors.toList());
-                for (Trace interpolatedTrace : interpolatedTraces) {
-                    for (int i = 0; i < interpolatedTrace.getLength(); i++) {
-                        double longitude = interpolatedTrace.getXAt(i);
-                        double value = interpolatedTrace.getYAt(i);
-                        FullPosition position = new FullPosition(latitude, longitude, radius);
-                        interpolatedMap.put(position, value);
-                    }
-                }
+        Set<FullPosition> allPositions = originalMap.keySet();
+        List<FullPosition> inLinePositions = allPositions.stream()
+                .filter(pos -> Precision.equals(pos.getLatitude(), latitude, FullPosition.LATITUDE_EPSILON)
+                        && Precision.equals(pos.getR(), radius, FullPosition.RADIUS_EPSILON))
+                .sorted(Comparator.comparing(pos -> pos.getLongitude(crossDateLine)))
+                .collect(Collectors.toList());
+
+        if (inLinePositions.size() == 0) {
+            System.err.println("No values for rad " + radius + " , lat " + latitude);
+            return interpolatedMap;
+        }
+
+        // pack data values at original points along this latitude in a Trace (x is the longitude direction here)
+        double[] x = inLinePositions.stream().mapToDouble(position -> position.getLongitude(crossDateLine)).toArray();
+        double[] y = inLinePositions.stream().mapToDouble(position -> originalMap.get(position)).toArray();
+        Trace originalTrace = new Trace(x, y);
+
+        // split the trace at gaps
+        double smallCircleRadius = meanRadius * Math.cos(Math.toRadians(latitude));
+        double longitudeMarginDeg = longitudeInKm ? Math.toDegrees(longitudeMargin / smallCircleRadius) : longitudeMargin;
+        List<Trace> splitTraces = splitTraceAtGaps(originalTrace, longitudeMarginDeg);
+        // interpolate each of the split traces and store the results
+        List<Trace> interpolatedTraces = splitTraces.stream()
+                .map(trace -> interpolateTraceAtPoints(trace, sampleLongitudes, longitudeMarginDeg, mosaic)).collect(Collectors.toList());
+        for (Trace interpolatedTrace : interpolatedTraces) {
+            for (int i = 0; i < interpolatedTrace.getLength(); i++) {
+                double longitude = interpolatedTrace.getXAt(i);
+                double value = interpolatedTrace.getYAt(i);
+                FullPosition position = new FullPosition(latitude, longitude, radius);
+                interpolatedMap.put(position, value);
             }
         }
         return interpolatedMap;
