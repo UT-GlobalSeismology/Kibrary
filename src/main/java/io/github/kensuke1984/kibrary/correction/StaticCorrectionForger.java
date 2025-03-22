@@ -14,18 +14,19 @@ import java.util.stream.Collectors;
 
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
+import io.github.kensuke1984.kibrary.Test_temp;
+import io.github.kensuke1984.kibrary.timewindow.TimeWindowData;
+import io.github.kensuke1984.kibrary.timewindow.TimeWindowDataFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 
 /**
- * Operation to set static correction data based on time shift values of other timewindows.
+ * Operation to set static correction data based on time shift values of other time windows.
  * <p>
  * This can be used, for example, when you want to correct S-phase travel times of R component waveforms
  * using time shift values of their corresponding T component waveforms.
  * <p>
- * Timewindows in the input {@link TimewindowDataFile} that satisfy the following criteria will be worked for:
+ * Time windows in the input {@link TimeWindowDataFile} that satisfy the following criteria will be worked for:
  * <ul>
  * <li> the component is included in the components specified in the property file </li>
  * <li> time shift data for the (event, observer)-pair, regardless of component and startTime, is included in the input static correction file </li>
@@ -55,9 +56,9 @@ public class StaticCorrectionForger extends Operation {
     private Set<SACComponent> components;
 
     /**
-     * Path of a timewindow data file.
+     * Path of a time window data file.
      */
-    private Path timewindowPath;
+    private Path timeWindowPath;
     /**
      * Path of a reference static correction file.
      */
@@ -85,8 +86,8 @@ public class StaticCorrectionForger extends Operation {
             pw.println("#appendFileDate false");
             pw.println("##SacComponents to be used, listed using spaces. (Z R T)");
             pw.println("#components ");
-            pw.println("##Path of a timewindow file, must be set.");
-            pw.println("#timewindowPath timewindow.dat");
+            pw.println("##Path of a time window file, must be set.");
+            pw.println("#timeWindowPath timeWindow.dat");
             pw.println("##Path of a reference static correction file, must be set.");
             pw.println("#refStaticCorrectionPath staticCorrection.dat");
         }
@@ -105,7 +106,8 @@ public class StaticCorrectionForger extends Operation {
         components = Arrays.stream(property.parseStringArray("components", "Z R T"))
                 .map(SACComponent::valueOf).collect(Collectors.toSet());
 
-        timewindowPath = property.parsePath("timewindowPath", null, true, workPath);
+        timeWindowPath = Test_temp.getTimeWindowPath_temp(property, workPath);  //TODO delete (This is here for backward compatibility.)
+//      timeWindowPath = property.parsePath("timeWindowPath", null, true, workPath);
         refStaticCorrectionPath = property.parsePath("refStaticCorrectionPath", null, true, workPath);
 
     }
@@ -113,8 +115,8 @@ public class StaticCorrectionForger extends Operation {
     @Override
     public void run() throws IOException {
 
-        // gather all timewindows to be processed
-        Set<TimewindowData> timewindowSet = TimewindowDataFile.read(timewindowPath)
+        // gather all time windows to be processed
+        Set<TimeWindowData> timeWindowSet = TimeWindowDataFile.read(timeWindowPath)
                 .stream().filter(window -> components.contains(window.getComponent())).collect(Collectors.toSet());
 
         // read reference static correction data
@@ -122,7 +124,7 @@ public class StaticCorrectionForger extends Operation {
 
         // forge static corrections for new dataset
         Set<StaticCorrectionData> forgedStaticCorrectionSet = new HashSet<>();
-        for (TimewindowData window : timewindowSet) {
+        for (TimeWindowData window : timeWindowSet) {
 
             // choose reference static correction data based on event and observer
             List<StaticCorrectionData> refStaticCorrectionsTmp = refStaticCorrectionSet.stream()
@@ -130,11 +132,11 @@ public class StaticCorrectionForger extends Operation {
                     .collect(Collectors.toList());
 
             if (refStaticCorrectionsTmp.size() == 0) {
-                // if static correction for a timewindow does not exist, skip
+                // if static correction for a time window does not exist, skip
                 System.err.println("Found no static correction for window " + window + " , skipping.");
                 continue;
             } else if (refStaticCorrectionsTmp.size() > 1) {
-                // if more than one static correction exists for a timewindow, choose one
+                // if more than one static correction exists for a time window, choose one
                 System.err.println("Caution: found more than 1 static correction for window " + window);
             }
             StaticCorrectionData refStaticCorrection = refStaticCorrectionsTmp.get(0);

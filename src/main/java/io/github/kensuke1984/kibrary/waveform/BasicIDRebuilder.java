@@ -31,7 +31,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
  * as well as for preparation of bootstrap or subsampling tests.
  * <p>
  * To select BasicIDs of certain raypaths, supply with a {@link DataEntryListFile} including a list of raypaths to be selected.
- * Timewindows may be also selected by the phases that they must include.
+ * Time windows may be also selected by the phases that they must include.
  *
  * @author otsuru
  * @since 2022/7/13
@@ -66,7 +66,7 @@ public class BasicIDRebuilder extends Operation {
     private Path dataEntryPath;
 
     /**
-     * Phases that must be included in timewindows to be selected.
+     * Phases that must be included in time windows to be selected.
      */
     private String[] requiredPhases;
     /**
@@ -107,7 +107,7 @@ public class BasicIDRebuilder extends Operation {
             pw.println("#basicPath actual");
             pw.println("##Path of a data entry list file, if you want to select raypaths.");
             pw.println("#dataEntryPath selectedEntry.lst");
-            pw.println("##Phases to be included in timewindows to use, listed using spaces. To use all phases, leave this unset.");
+            pw.println("##Phases to be included in time windows to use, listed using spaces. To use all phases, leave this unset.");
             pw.println("#requiredPhases ");
             pw.println("##(boolean) Whether to perform bootstrap test. (false)");
             pw.println("#bootstrap ");

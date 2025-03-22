@@ -89,13 +89,13 @@ public interface SACHeaderAccess {
         switch (getSACString(SACHeaderEnum.KCMPNM)) {
             case "Z":
             case "BHZ": //TODO erase: this is set here because DataKitchen hadn't placed "vertical" in Sac headers before.
-            case "vertical": //TODO erase: old format
+            case "vertical": //TODO erase: old format. This is here for backward compatibility.
                 return SACComponent.Z;
             case "R":
-            case "radial": //TODO erase: old format
+            case "radial": //TODO erase: old format. This is here for backward compatibility.
                 return SACComponent.R;
             case "T":
-            case "trnsvers": //TODO erase: old format
+            case "trnsvers": //TODO erase: old format. This is here for backward compatibility.
                 return SACComponent.T;
             default:
                 throw new RuntimeException("KCMPNM is invalid; must be Z, R, or T.");

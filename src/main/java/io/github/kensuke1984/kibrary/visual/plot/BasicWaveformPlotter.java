@@ -21,6 +21,8 @@ import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotColorName;
 import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotFile;
 import io.github.kensuke1984.kibrary.math.CircularRange;
 import io.github.kensuke1984.kibrary.math.LinearRange;
+import io.github.kensuke1984.kibrary.selection.DataFeature;
+import io.github.kensuke1984.kibrary.selection.DataFeatureListFile;
 import io.github.kensuke1984.kibrary.timewindow.TravelTimeInformation;
 import io.github.kensuke1984.kibrary.timewindow.TravelTimeInformationFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
@@ -37,8 +39,10 @@ import io.github.kensuke1984.kibrary.waveform.BasicIDPairUp;
  * For each event, a pdf file with waveforms for all observers will be created.
  * In each plot, the original observed waveform, the shifted observed waveform,
  * the synthetic waveform, and the residual waveform can be plotted.
- * Vertical lines of travel times can be displayed if a {@link TravelTimeInformationFile} is set as input.
  * Additional basic waveform folders can be given when plotting multiple synthetic seismograms.
+ * <p>
+ * Vertical lines of travel times can be displayed if a {@link TravelTimeInformationFile} is set as input.
+ * Waveform statistics can be displayed if a {@link DataFeatureListFile} is set as input. {@link DataFeature}s with overlapping time windows are used.
  * <p>
  * Text files of waveform data will be created in event folders under their corresponding basic waveform folders.
  * Output pdf files and their corresponding plt files will be created in event directories under workPath.
@@ -87,6 +91,10 @@ public class BasicWaveformPlotter extends Operation {
      * Path of a travel time information file.
      */
     private Path travelTimePath;
+    /**
+     * Path of a data feature list file.
+     */
+    private Path dataFeaturePath;
 
     /**
      * Events to work for. If this is empty, work for all events in workPath.
@@ -125,6 +133,10 @@ public class BasicWaveformPlotter extends Operation {
      * Set of information of travel times.
      */
     private Set<TravelTimeInformation> travelTimeInfoSet;
+    /**
+     * Set of data features.
+     */
+    private Set<DataFeature> dataFeatureSet;
 
     /**
      * @param args (String[]) Arguments: none to create a property file, path of property file to run it.
@@ -154,6 +166,8 @@ public class BasicWaveformPlotter extends Operation {
             pw.println("#refBasicPath2 ");
             pw.println("##Path of a travel time information file, if plotting travel times.");
             pw.println("#travelTimePath travelTime.inf");
+            pw.println("##Path of a data feature list file, if displaying data statistics.");
+            pw.println("#dataFeaturePath dataFeature.lst");
             pw.println("##GlobalCMTIDs of events to work for, listed using spaces. To use all events, leave this unset.");
             pw.println("#tendEvents ");
             pw.println("##(boolean) Whether to export individual files for each component. (true)");
@@ -216,6 +230,8 @@ public class BasicWaveformPlotter extends Operation {
             refBasicPath2 = property.parsePath("refBasicPath2", ".", true, workPath);
         if (property.containsKey("travelTimePath"))
             travelTimePath = property.parsePath("travelTimePath", null, true, workPath);
+        if (property.containsKey("dataFeaturePath"))
+            dataFeaturePath = property.parsePath("dataFeaturePath", null, true, workPath);
 
         if (property.containsKey("tendEvents")) {
             tendEvents = Arrays.stream(property.parseStringArray("tendEvents", null)).map(GlobalCMTID::new)
@@ -290,6 +306,13 @@ public class BasicWaveformPlotter extends Operation {
             travelTimeInfoSet = TravelTimeInformationFile.read(travelTimePath);
         }
 
+        // read data feature file
+        if (dataFeaturePath != null) {
+            dataFeatureSet = DataFeatureListFile.read(dataFeaturePath).stream()
+                    .filter(feature -> components.contains(feature.getTimeWindow().getComponent()))
+                    .collect(Collectors.toSet());
+        }
+
         for (GlobalCMTID event : events) {
 
             // create plots under workPath
@@ -353,7 +376,7 @@ public class BasicWaveformPlotter extends Operation {
             // set xrange
             gnuplot.setXrange(synID.getStartTime() - FRONT_MARGIN, synID.getStartTime() - FRONT_MARGIN + timeLength);
 
-            // display data of timewindow
+            // display data of time window
             gnuplot.addLabel(obsID.getObserver().toPaddedInfoString() + " " + obsID.getSacComponent().toString(), "graph", 0.01, 0.95);
             gnuplot.addLabel(obsID.getGlobalCMTID().toString(), "graph", 0.01, 0.85);
             gnuplot.addLabel("dist: " + MathAid.roundToString(obsID.toDataEntry().computeEpicentralDistanceDeg(), 2)
@@ -398,6 +421,24 @@ public class BasicWaveformPlotter extends Operation {
                                 gnuplot.addLabel(entry.getKey().toString(), "first", entry.getValue(), "graph", 0.95, GnuplotColorName.violet);
                             }
                         });
+            }
+
+            // add data feature statistics
+            if (dataFeatureSet != null) {
+                List<DataFeature> features = dataFeatureSet.stream()
+                        .filter(feature -> feature.getTimeWindow().toDataEntry().equals(synID.toDataEntry())
+                                && feature.getTimeWindow().overlaps(synID.toTimeWindow()))
+                        .collect(Collectors.toList());
+                if (features.size() != 1) throw new IllegalStateException("0 or more than 1 data features for " + synID);
+                DataFeature feature = features.get(0);
+
+                gnuplot.addLabel("Variance: " + feature.getVariance(), "graph", 0.78, 0.90);
+                gnuplot.addLabel("Correlation: " + feature.getCorrelation(), "graph", 0.78, 0.80);
+                gnuplot.addLabel("Amp. ratio: " + feature.getAbsRatio(), "graph", 0.78, 0.70);
+                gnuplot.addLabel("S/N: " + feature.getSNRatio(), "graph", 0.78, 0.40);
+                gnuplot.addLabel("obsS/N: " + feature.getObsSNRatio(), "graph", 0.78, 0.30);
+                gnuplot.addLabel("synS/N: " + feature.getSynSNRatio(), "graph", 0.78, 0.20);
+                gnuplot.addLabel(feature.isSelected() ? "O" : "X", "graph", 0.78, 0.10);
             }
 
             // this is not done for the last obsID because we don't want an extra blank page to be created

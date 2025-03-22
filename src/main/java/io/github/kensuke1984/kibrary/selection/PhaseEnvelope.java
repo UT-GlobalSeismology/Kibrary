@@ -67,8 +67,8 @@ import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.external.TauPPhase;
 import io.github.kensuke1984.kibrary.external.TauPTimeReader;
 import io.github.kensuke1984.kibrary.math.Trace;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
+import io.github.kensuke1984.kibrary.timewindow.TimeWindowData;
+import io.github.kensuke1984.kibrary.timewindow.TimeWindowDataFile;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.ThreadAid;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
@@ -222,7 +222,7 @@ public class PhaseEnvelope {
     }
 
     public void run() throws Exception {
-        Set<TimewindowData> infoset = new HashSet<>();
+        Set<TimeWindowData> infoset = new HashSet<>();
         ThreadAid.runEventProcess(obsPath, obsEventDir -> {
             try {
                 obsEventDir.sacFileSet().stream().filter(sfn -> sfn.isOBS() && components.contains(sfn.getComponent()))
@@ -311,7 +311,7 @@ public class PhaseEnvelope {
                                                 for (int i = 0; i < timewindows.length; i++) {
                                                     Phase[] phasenames = new Phase[phases[i].length];
                                                     phasenames = Stream.of(phases[i]).map(phase -> phase.getPhaseName()).collect(Collectors.toList()).toArray(phasenames);
-                                                    TimewindowData info = new TimewindowData(timewindows[i][0], timewindows[i][1], obsname.read().getObserver()
+                                                    TimeWindowData info = new TimeWindowData(timewindows[i][0], timewindows[i][1], obsname.read().getObserver()
                                                             , obsEventDir.getGlobalCMTID(), obsname.getComponent(), phasenames);
                                                     infoset.add(info);
                                                 }
@@ -327,7 +327,7 @@ public class PhaseEnvelope {
                 e.printStackTrace();
             }
         }, 10, TimeUnit.HOURS);
-        TimewindowDataFile.write(infoset, outputPath);
+        TimeWindowDataFile.write(infoset, outputPath);
     }
 
     private double[][][] computePhaseEnvelope(SACFileName obsname, SACFileName synname) {
@@ -1050,7 +1050,7 @@ public class PhaseEnvelope {
 
     private boolean show;
 
-    private Set<TimewindowData> timewindowSet;
+    private Set<TimeWindowData> timewindowSet;
 
     protected final FastFourierTransformer fft = new FastFourierTransformer(DftNormalization.STANDARD);
 

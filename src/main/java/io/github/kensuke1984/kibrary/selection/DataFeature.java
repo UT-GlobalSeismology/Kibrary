@@ -3,7 +3,7 @@ package io.github.kensuke1984.kibrary.selection;
 import org.apache.commons.math3.linear.RealVector;
 import org.apache.commons.math3.util.Precision;
 
-import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
+import io.github.kensuke1984.kibrary.timewindow.TimeWindowData;
 
 /**
  * Information of values that represent the difference between observed and synthetic waveforms,
@@ -14,42 +14,42 @@ import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
  * @version 2022/8/27 renamed from selection.DataSelectionInformation to selection.DataFeature
  */
 public class DataFeature {
-
     public static final int DECIMALS = 3;
 
-    private TimewindowData timewindow;
+    private TimeWindowData timeWindow;
 
     private double variance;
-
     private double correlation;
-
     private double posSideRatio;
-
     private double negSideRatio;
-
     private double absRatio;
-
     private double snRatio;
+    private double obsSNRatio;
+    private double synSNRatio;
 
     private boolean selected;
 
-
-    public DataFeature(TimewindowData timewindow, double variance, double correlation,
-            double posSideRatio, double negSideRatio, double absRatio, double snRatio, boolean selected) {
-        if (variance < 0) throw new IllegalArgumentException("variance must be positive: " + timewindow);
-        if (absRatio < 0) throw new IllegalArgumentException("absRatio must be positive: " + timewindow);
-        if (snRatio < 0) throw new IllegalArgumentException("snRatio must be positive: " + timewindow);
-        this.timewindow = timewindow;
+    public DataFeature(TimeWindowData timeWindow, double variance, double correlation,
+            double posSideRatio, double negSideRatio, double absRatio, double snRatio, double obsSNRatio, double synSNRatio, boolean selected) {
+        if (variance < 0) throw new IllegalArgumentException("variance must be positive: " + timeWindow);
+        if (absRatio < 0) throw new IllegalArgumentException("absRatio must be positive: " + timeWindow);
+        if (snRatio < 0) throw new IllegalArgumentException("snRatio must be positive: " + timeWindow);
+        if (obsSNRatio < 0) throw new IllegalArgumentException("obsSNRatio must be positive: " + timeWindow);
+        if (synSNRatio < 0) throw new IllegalArgumentException("synSNRatio must be positive: " + timeWindow);
+        this.timeWindow = timeWindow;
         this.variance = variance;
         this.correlation = correlation;
         this.posSideRatio = posSideRatio;
         this.negSideRatio = negSideRatio;
         this.absRatio = absRatio;
         this.snRatio = snRatio;
+        this.obsSNRatio = obsSNRatio;
+        this.synSNRatio = synSNRatio;
         this.selected = selected;
     }
 
-    public static DataFeature create(TimewindowData timewindow, RealVector obsU, RealVector synU, double snRatio, boolean selected) {
+    public static DataFeature create(TimeWindowData timeWindow, RealVector obsU, RealVector synU,
+            double snRatio, double obsSNRatio, double synSNRatio, boolean selected) {
         if (obsU.getDimension() < synU.getDimension())
             synU = synU.getSubVector(0, obsU.getDimension() - 1);
         else if (synU.getDimension() < obsU.getDimension())
@@ -71,11 +71,12 @@ public class DataFeature {
         double cor = obsU.dotProduct(synU) / (synU.getNorm() * obsU.getNorm());
         double correlation = Precision.round(cor, DECIMALS);
 
-        return new DataFeature(timewindow, variance, correlation, posSideRatio, negSideRatio, absRatio, snRatio, selected);
+        return new DataFeature(timeWindow, variance, correlation, posSideRatio, negSideRatio, absRatio,
+                Precision.round(snRatio, DECIMALS), Precision.round(obsSNRatio, DECIMALS), Precision.round(synSNRatio, DECIMALS), selected);
     }
 
-    public TimewindowData getTimewindow() {
-        return timewindow;
+    public TimeWindowData getTimeWindow() {
+        return timeWindow;
     }
 
     /**
@@ -117,6 +118,14 @@ public class DataFeature {
         return snRatio;
     }
 
+    public double getObsSNRatio() {
+        return obsSNRatio;
+    }
+
+    public double getSynSNRatio() {
+        return synSNRatio;
+    }
+
     public boolean isSelected() {
         return selected;
     }
@@ -127,7 +136,7 @@ public class DataFeature {
 
     @Override
     public String toString() {
-        return timewindow.toString() + " " + posSideRatio + " " + negSideRatio + " " + absRatio + " " +
-                variance + " " + correlation + " " + snRatio + " " + selected;
+        return timeWindow.toString() + " " + variance + " " + correlation + " " + posSideRatio + " " + negSideRatio + " " + absRatio + " " +
+                snRatio + " " + obsSNRatio + " " + synSNRatio + " " + selected;
     }
 }

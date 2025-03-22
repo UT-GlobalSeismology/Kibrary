@@ -72,8 +72,7 @@ public class ScalarStructurePlotter  extends Operation {
      */
     private String modelName;
 
-    private boolean colorByStructure;
-    private boolean dashByStructure;
+    private StructurePlotAid.Distinguisher structureDistinguisher;
 
     private boolean setLowerRadius = false;
     private double lowerRadius;
@@ -112,10 +111,8 @@ public class ScalarStructurePlotter  extends Operation {
             pw.println("#initialStructurePath ");
             pw.println("##Name of an initial structure model. (PREM)");
             pw.println("#initialStructureName ");
-            pw.println("##(boolean) Whether to color structures differently. (true)");
-            pw.println("#colorByStructure ");
-            pw.println("##(boolean) Whether to dash structures differently. (false)");
-            pw.println("#dashByStructure ");
+            pw.println("##(boolean) How to distinguish structures, from {COLOR, SHADE, DASH, NONE}. (COLOR)");
+            pw.println("#structureDistinguisher ");
             pw.println("##(double) Lower limit of radius [km], when setting manually; [0:upperRadius).");
             pw.println("#lowerRadius ");
             pw.println("##(double) Upper limit of radius [km], when setting manually; (lowerRadius:).");
@@ -146,8 +143,7 @@ public class ScalarStructurePlotter  extends Operation {
             initialStructureName = property.parseString("initialStructureName", "PREM");
         }
 
-        colorByStructure = property.parseBoolean("colorByStructure", "true");
-        dashByStructure = property.parseBoolean("dashByStructure", "false");
+        structureDistinguisher = StructurePlotAid.Distinguisher.valueOf(property.parseString("structureDistinguisher", "COLOR"));
 
         if (property.containsKey("lowerRadius")) {
             lowerRadius = property.parseDouble("lowerRadius", null);
@@ -204,7 +200,6 @@ public class ScalarStructurePlotter  extends Operation {
         // update plot range based on these values
         modelPlotRange.update(absoluteMap);
 
-
         // create gnuplot script
         Path outputScriptPath = outPath.resolve("modelPlot.plt");
         createScript(outputScriptPath, variable, initialStructure, modelPlotRange);
@@ -212,7 +207,7 @@ public class ScalarStructurePlotter  extends Operation {
 
     private void createScript(Path scriptPath, VariableType variable, PolynomialStructure structure, PlotRange plotRange) throws IOException {
         String fileNameRoot = FileAid.extractNameRoot(scriptPath);
-        StructurePlotAid plotAid = new StructurePlotAid(colorByStructure, false, dashByStructure, false);
+        StructurePlotAid plotAid = new StructurePlotAid(structureDistinguisher, StructurePlotAid.Distinguisher.NONE, StructurePlotAid.Distinguisher.NONE, null);
 
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(scriptPath))) {
             pw.println("set samples 1000");
@@ -239,13 +234,13 @@ public class ScalarStructurePlotter  extends Operation {
 
             // plot the defined function
             pw.print("p");
-            pw.println("  " + variable.toString().toLowerCase() + "0(t),t w l lw 1 " + plotAid.lineTypeFor(1, variable) + " title 'initial', \\");
+            pw.println("  " + variable.toString().toLowerCase() + "0(t),t w l lw 2 " + plotAid.lineTypeFor(0, 0, null, 2) + " title 'initial', \\");
 
             // plot models
-            pw.println("  \"" + variable.toString().toLowerCase() + "Absolute.lst\" u 4:3 w l lw 1 "
-                    + plotAid.lineTypeFor(0, variable) + " title '" + modelName + "', \\");
+            pw.println("  \"" + variable.toString().toLowerCase() + "Absolute.lst\" u 4:3 w l lw 2 "
+                    + plotAid.lineTypeFor(1, 0, null, 2) + " title '" + modelName + "', \\");
 
-            pw.println("  0,t w l lw 0.5 dt 1 lc rgb 'black' notitle");
+            pw.println("  0,t w l lw 1 dt 1 lc rgb 'black' notitle");
         }
 
         GnuplotFile plot = new GnuplotFile(scriptPath);

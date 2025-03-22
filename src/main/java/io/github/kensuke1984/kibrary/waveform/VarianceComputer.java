@@ -16,8 +16,8 @@ import org.apache.commons.math3.linear.RealVector;
 import io.github.kensuke1984.kibrary.Summon;
 import io.github.kensuke1984.kibrary.inversion.WeightingHandler;
 import io.github.kensuke1984.kibrary.inversion.setup.DVectorBuilder;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
+import io.github.kensuke1984.kibrary.timewindow.TimeWindowData;
+import io.github.kensuke1984.kibrary.timewindow.TimeWindowDataFile;
 import io.github.kensuke1984.kibrary.util.MathAid;
 
 /**
@@ -83,7 +83,7 @@ public class VarianceComputer {
 
         // cut out improvement windows if the file is given
         if (cmdLine.hasOption("p")) {
-            Set<TimewindowData> improvementWindowSet = TimewindowDataFile.read(Paths.get(cmdLine.getOptionValue("p")));
+            Set<TimeWindowData> improvementWindowSet = TimeWindowDataFile.read(Paths.get(cmdLine.getOptionValue("p")));
             System.err.println("Cutting out improvement window from waveform data");
             basicIDs = cutOutImprovementWindows(basicIDs, improvementWindowSet);
         }
@@ -111,10 +111,10 @@ public class VarianceComputer {
      * Cut out the parts included in improvement windows from input basicIDs.
      * BasicIDs will be split into several parts if multiple improvement windows exist for one ID.
      * @param basicIDs (List of {@link BasicID}) Input basicIDs
-     * @param improvementWindowSet (Set of {@link TimewindowData}) Improvement windows
+     * @param improvementWindowSet (Set of {@link TimeWindowData}) Improvement windows
      * @return (List of {@link BasicID}) Cut out basicIDs. {@link BasicID#startByte} is not set.
      */
-    private static List<BasicID> cutOutImprovementWindows(List<BasicID> basicIDs, Set<TimewindowData> improvementWindowSet) {
+    private static List<BasicID> cutOutImprovementWindows(List<BasicID> basicIDs, Set<TimeWindowData> improvementWindowSet) {
         List<BasicID> cutOutBasicIDs = new ArrayList<>();
 
         // sort observed and synthetic
@@ -129,11 +129,11 @@ public class VarianceComputer {
 
             // Time frame of synthetic waveform must be compared, since it is the correct one when time shift is applied.
             // All windows are worked for in case the improvement window is split into several parts.
-            Set<TimewindowData> improvementWindows = synID.findAllOverlappingWindows(improvementWindowSet);
+            Set<TimeWindowData> improvementWindows = synID.findAllOverlappingWindows(improvementWindowSet);
             if (improvementWindows.size() == 0) {
                 System.err.println(" No matching improvement window: " + synID.toDataEntry());
             }
-            for (TimewindowData improvementWindow : improvementWindows) {
+            for (TimeWindowData improvementWindow : improvementWindows) {
                 // Time frame of synthetic waveform must be used, since it is the correct one when time shift is applied.
                 double[] cutX = synID.toTrace().cutWindow(improvementWindow).getX();
                 double startTime = cutX[0];

@@ -10,8 +10,9 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
@@ -84,8 +85,6 @@ public class DataLobby extends Operation {
     private LinearRange depthRange;
     private LinearRange latitudeRange;
     private CircularRange longitudeRange;
-
-    private Set<GlobalCMTID> requestedEvents;
 
     /**
      * @param args (String[]) Arguments: none to create a property file, path of property file to run it.
@@ -183,20 +182,20 @@ public class DataLobby extends Operation {
 
     @Override
     public void run() throws IOException {
-        requestedEvents = listEvents();
-        int n_total = requestedEvents.size();
-        if (!DatasetAid.checkNum(n_total, "event", "events")) {
+        List<GlobalCMTAccess> requestedEvents = listEvents();
+        int nTotal = requestedEvents.size();
+        if (!DatasetAid.checkNum(nTotal, "event", "events")) {
             return;
         }
 
         Path outPath = DatasetAid.createOutputFolder(workPath, "dl", folderTag, appendFolderDate, null);
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
-        final AtomicInteger n = new AtomicInteger();
-        requestedEvents.stream().map(GlobalCMTID::getEventData).sorted(Comparator.comparing(GlobalCMTAccess::getCMTTime)).forEach(event -> {
+        int n = 0;
+        for (GlobalCMTAccess event : requestedEvents) {
             try {
-                n.incrementAndGet();
-                System.err.println(event + " (# " + n + " of " + n_total + ")  "
+                n++;
+                System.err.println(event + " (# " + n + " of " + nTotal + ")  "
                         + DateTimeFormatter.ofPattern("<yyyy/MM/dd HH:mm:ss>").format(LocalDateTime.now()));
 
                 // create event folder
@@ -208,29 +207,31 @@ public class DataLobby extends Operation {
                 String mseedFileName = event + "." + GadgetAid.getTemporaryString() + ".mseed";
                 if (!edp.downloadMseed(datacenter, networks, channels, headAdjustment, footAdjustment, mseedFileName)) {
                     System.err.println("!!! Data not found for " + event + ", skipping.");
-                    return;
+                    continue;
                 }
 
                 // wait 15 minutes befere moving on to the next event, so that the Datacenter has some time to rest
-                System.err.println(" ~ Resting for 15 minutes ...");
-                ThreadAid.sleep(1000 * 60 * 15);
+                if (n < nTotal) {
+                    System.err.println(" ~ Resting for 15 minutes ...");
+                    ThreadAid.sleep(1000 * 60 * 15);
+                }
 
             } catch (IOException e) {
                 // Here, suppress exceptions for events that failed, and move on to the next event.
                 System.err.println("!!! Download for " + event + " failed, skipping.");
                 e.printStackTrace();
             }
-        });
-
+        }
     }
 
-    private Set<GlobalCMTID> listEvents() {
+    private List<GlobalCMTAccess> listEvents() {
         GlobalCMTSearch search = new GlobalCMTSearch(startDate, endDate);
         search.setMwRange(mwRange);
         search.setDepthRange(depthRange);
         search.setLatitudeRange(latitudeRange);
         search.setLongitudeRange(longitudeRange);
-        return search.search();
+        Set<GlobalCMTID> eventSet = search.search();
+        return eventSet.stream().map(GlobalCMTID::getEventData).sorted(Comparator.comparing(GlobalCMTAccess::getCMTTime)).collect(Collectors.toList());
     }
 
 }

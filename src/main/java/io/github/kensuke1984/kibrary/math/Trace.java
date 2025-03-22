@@ -19,7 +19,7 @@ import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
 import org.apache.commons.math3.util.FastMath;
 
-import io.github.kensuke1984.kibrary.timewindow.Timewindow;
+import io.github.kensuke1984.kibrary.timewindow.TimeWindow;
 import io.github.kensuke1984.kibrary.util.InformationFileReader;
 import io.github.kensuke1984.kibrary.util.MathAid;
 
@@ -379,11 +379,11 @@ public final class Trace {
      * The time window does not have to be completely included in the time range of the Trace;
      * in that case, only the overlapping part will be returned.
      * The original Trace is not changed.
-     * @param timewindow ({@link Timewindow}) Time window of cut range.
+     * @param timeWindow ({@link TimeWindow}) Time window of cut range.
      * @return ({@link Trace}) New trace that is cut out around the time window (deep copy).
      */
-    public Trace cutWindow(Timewindow timewindow) {
-        return cutWindow(timewindow.getStartTime(), timewindow.getEndTime());
+    public Trace cutWindow(TimeWindow timeWindow) {
+        return cutWindow(timeWindow.getStartTime(), timeWindow.getEndTime());
     }
 
     /**
@@ -415,15 +415,15 @@ public final class Trace {
      * The number of points will be decided by rounding (xEnd-xStart)*samplingHz+1, so that it is not affected by time shifts.
      * The input time window MUST be completely included in the time range of the Trace.
      * The original Trace is not changed.
-     * @param timewindow ({@link Timewindow}) Time window of cut range.
+     * @param timeWindow ({@link TimeWindow}) Time window of cut range.
      * @param samplingHz (double) Sampling rate of this trace (used to decide number of points).
      * @return ({@link Trace}) New trace that is cut out around the time window (deep copy).
      *
      * @author otsuru
      * @since 2023/3/19
      */
-    public Trace cutWindow(Timewindow timewindow, double samplingHz) {
-        return cutWindow(timewindow.getStartTime(), timewindow.getEndTime(), samplingHz);
+    public Trace cutWindow(TimeWindow timeWindow, double samplingHz) {
+        return cutWindow(timeWindow.getStartTime(), timeWindow.getEndTime(), samplingHz);
     }
 
     /**
@@ -459,7 +459,7 @@ public final class Trace {
      * The number of points will be decided by rounding (xEnd-xStart)*finalSamplingHz, so that it is not affected by time shifts.
      * The input time window MUST be completely included in the time range of the Trace.
      * The original Trace is not changed.
-     * @param timewindow ({@link Timewindow}) Time window of cut range.
+     * @param timeWindow ({@link TimeWindow}) Time window of cut range.
      * @param originalSamplingHz (double) Sampling rate of this trace.
      * @param finalSamplingHz (double) Sampling rate to resample the trace.
      * @return ({@link Trace}) New trace that is cut out around the time window and resampled (deep copy).
@@ -467,8 +467,8 @@ public final class Trace {
      * @author otsuru
      * @since 2023/3/19
      */
-    public Trace resampleInWindow(Timewindow timewindow, double originalSamplingHz, double finalSamplingHz) {
-        return resampleInWindow(timewindow.getStartTime(), timewindow.getEndTime(), originalSamplingHz, finalSamplingHz);
+    public Trace resampleInWindow(TimeWindow timeWindow, double originalSamplingHz, double finalSamplingHz) {
+        return resampleInWindow(timeWindow.getStartTime(), timeWindow.getEndTime(), originalSamplingHz, finalSamplingHz);
     }
 
     /**

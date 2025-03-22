@@ -12,7 +12,7 @@ import java.util.Set;
 import java.util.stream.Stream;
 
 import io.github.kensuke1984.anisotime.Phase;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
+import io.github.kensuke1984.kibrary.timewindow.TimeWindowData;
 import io.github.kensuke1984.kibrary.util.InformationFileReader;
 import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.data.Observer;
@@ -24,14 +24,16 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 /**
  * File containing information of data features. Ascii-format.
  * <p>
- * The following values are output for each timewindow.
+ * The following values are output for each time window.
  * <ul>
  * <li> maximum ratio: (maximum value in synthetic waveform)/(maximum value in observed waveform)</li>
  * <li> minimum ratio: (minimum value in synthetic waveform)/(minimum value in observed waveform) </li>
  * <li> absolute ratio: (maximum absolute amplitude in synthetic waveform)/(maximum absolute amplitude in observed waveform) </li>
  * <li> normalized variance: (variance of differential waveform)/(variance of observed waveform) </li>
  * <li> correlation coefficient of observed and synthetic waveforms </li>
- * <li> S/N ratio </li>
+ * <li> Sobs/Nobs norm ratio </li>
+ * <li> Sobs/Nobs ratio </li>
+ * <li> Ssyn/Nobs ratio </li>
  * </ul>
  *
  * @author ?
@@ -48,8 +50,8 @@ public class DataFeatureListFile {
 
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath, options))) {
             pw.println("#station, network, lat, lon, event, component, startTime, endTime, phases, "
-                    + "posSideRatio, negSideRatio, absRatio, variance, correlation, S/N, selected");
-            featureSet.stream().sorted(Comparator.comparing(DataFeature::getTimewindow)).forEach(pw::println);
+                    + "variance, correlation, posSideRatio, negSideRatio, absRatio, S/N, obsS/N, synS/N, selected");
+            featureSet.stream().sorted(Comparator.comparing(DataFeature::getTimeWindow)).forEach(pw::println);
         }
     }
 
@@ -62,12 +64,12 @@ public class DataFeatureListFile {
             Observer observer = new Observer(parts[0], parts[1], new HorizontalPosition(Double.parseDouble(parts[2]), Double.parseDouble(parts[3])));
             Phase[] phases = Stream.of(parts[8].split(",")).map(string -> Phase.create(string)).toArray(Phase[]::new);
 
-            TimewindowData timewindow = new TimewindowData(Double.parseDouble(parts[6]), Double.parseDouble(parts[7]), observer,
+            TimeWindowData timeWindow = new TimeWindowData(Double.parseDouble(parts[6]), Double.parseDouble(parts[7]), observer,
                     new GlobalCMTID(parts[4]), SACComponent.valueOf(parts[5]), phases);
 
-            DataFeature feature = new DataFeature(timewindow, Double.parseDouble(parts[12]),
-                    Double.parseDouble(parts[13]), Double.parseDouble(parts[9]), Double.parseDouble(parts[10]),
-                    Double.parseDouble(parts[11]), Double.parseDouble(parts[14]), Boolean.parseBoolean(parts[15]));
+            DataFeature feature = new DataFeature(timeWindow, Double.parseDouble(parts[9]), Double.parseDouble(parts[10]),
+                    Double.parseDouble(parts[11]), Double.parseDouble(parts[12]), Double.parseDouble(parts[13]),
+                    Double.parseDouble(parts[14]), Double.parseDouble(parts[15]), Double.parseDouble(parts[16]), Boolean.parseBoolean(parts[17]));
 
             featureSet.add(feature);
         }

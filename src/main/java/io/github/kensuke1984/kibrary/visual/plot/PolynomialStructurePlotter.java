@@ -9,7 +9,6 @@ import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import io.github.kensuke1984.kibrary.Operation;
@@ -49,12 +48,10 @@ public class PolynomialStructurePlotter extends Operation {
      */
     private boolean appendFileDate;
 
-    private Set<VariableType> variableTypes;
+    private List<VariableType> variableTypes;
 
-    private boolean colorByStructure;
-    private boolean colorByVariable;
-    private boolean dashByStructure;
-    private boolean dashByVariable;
+    private StructurePlotAid.Distinguisher structureDistinguisher;
+    private StructurePlotAid.Distinguisher variableDistinguisher;
 
     private double lowerRadius;
     private double upperRadius;
@@ -66,6 +63,7 @@ public class PolynomialStructurePlotter extends Operation {
      */
     private Path[] structurePaths = new Path[MAX_INPUT];
     private String[] structureNames = new String[MAX_INPUT];
+    private StructurePlotAid.Color[] structureColors = new StructurePlotAid.Color[MAX_INPUT];
 
     /**
      * @param args (String[]) Arguments: none to create a property file, path of property file to run it.
@@ -89,14 +87,10 @@ public class PolynomialStructurePlotter extends Operation {
             pw.println("#appendFileDate false");
             pw.println("##Variable types to map, listed using spaces, from {RHO,Vp,Vpv,Vph,Vs,Vsv,Vsh,ETA}. (RHO Vpv Vph Vsv Vsh ETA)");
             pw.println("#variableTypes ");
-            pw.println("##(boolean) Whether to color structures differently. (true)");
-            pw.println("#colorByStructure ");
-            pw.println("##(boolean) Whether to color variables differently. (true)");
-            pw.println("#colorByVariable ");
-            pw.println("##(boolean) Whether to dash structures differently. (false)");
-            pw.println("#dashByStructure ");
-            pw.println("##(boolean) Whether to dash variables differently. (false)");
-            pw.println("#dashByVariable ");
+            pw.println("##(boolean) How to distinguish structures, from {COLOR, SHADE, DASH, NONE}. (SHADE)");
+            pw.println("#structureDistinguisher ");
+            pw.println("##(boolean) How to distinguish variables, from {COLOR, SHADE, DASH, NONE}. (COLOR)");
+            pw.println("#variableDistinguisher ");
             pw.println("##(double) Lower limit of radius [km]; [0:upperRadius). (0)");
             pw.println("#lowerRadius ");
             pw.println("##(double) Upper limit of radius [km]; (lowerRadius:). (6371)");
@@ -114,6 +108,8 @@ public class PolynomialStructurePlotter extends Operation {
                 if (i == 1) pw.println("##Name of a structure model you want to use. (PREM)");
                 else pw.println("##Name of a structure model you want to use.");
                 pw.println("#structureName" + i + " ");
+                pw.println("##Color for this structure, from {RED, ORANGE, GREEN, BLUE, PURPLE, GRAY}, when specifying.");
+                pw.println("#structureColor" + i + " ");
             }
         }
         System.err.println(outPath + " is created.");
@@ -130,12 +126,10 @@ public class PolynomialStructurePlotter extends Operation {
         appendFileDate = property.parseBoolean("appendFileDate", "true");
 
         variableTypes = Arrays.stream(property.parseStringArray("variableTypes", "RHO Vpv Vph Vsv Vsh ETA")).map(VariableType::valueOf)
-                .collect(Collectors.toSet());
+                .collect(Collectors.toList());
 
-        colorByStructure = property.parseBoolean("colorByStructure", "true");
-        colorByVariable = property.parseBoolean("colorByVariable", "true");
-        dashByStructure = property.parseBoolean("dashByStructure", "false");
-        dashByVariable = property.parseBoolean("dashByVariable", "false");
+        structureDistinguisher = StructurePlotAid.Distinguisher.valueOf(property.parseString("structureDistinguisher", "SHADE"));
+        variableDistinguisher = StructurePlotAid.Distinguisher.valueOf(property.parseString("variableDistinguisher", "COLOR"));
 
         lowerRadius = property.parseDouble("lowerRadius", "0");
         upperRadius = property.parseDouble("upperRadius", "6371");
@@ -156,29 +150,39 @@ public class PolynomialStructurePlotter extends Operation {
             } else if (i == 1) {
                 structureNames[0] = "PREM";
             }
+            String colorKey = "structureColor" + i;
+            if (property.containsKey(colorKey)) {
+                structureColors[i - 1] = StructurePlotAid.Color.valueOf(property.parseString(colorKey, null));
+                // when a structure color is set, distinguish structures by color
+                structureDistinguisher = StructurePlotAid.Distinguisher.COLOR;
+            } else {
+                structureColors[i - 1] = StructurePlotAid.Color.NONE;
+            }
         }
     }
 
    @Override
    public void run() throws IOException {
        // set structures
-       // Structures existing in the input properties file are set in reverse order.
        List<PolynomialStructure> structures = new ArrayList<>();
-       for (int i = MAX_INPUT - 1; i >= 0; i--) {
+       List<StructurePlotAid.Color> colors = new ArrayList<>();
+       for (int i = 0; i < MAX_INPUT ; i++) {
            if (structurePaths[i] != null || structureNames[i] != null) {
                PolynomialStructure structure = PolynomialStructure.setupFromFileOrName(structurePaths[i], structureNames[i]);
                structures.add(structure);
+               colors.add(structureColors[i]);
            }
        }
 
        // create script
        Path scriptPath = DatasetAid.generateOutputFilePath(workPath, "polynomial", fileTag, appendFileDate, null, ".plt");
-       createScript(scriptPath, structures);
+       createScript(scriptPath, structures, colors);
    }
 
-   private void createScript(Path scriptPath, List<PolynomialStructure> structures) throws IOException {
+   private void createScript(Path scriptPath, List<PolynomialStructure> structures, List<StructurePlotAid.Color> colors) throws IOException {
        String fileNameRoot = FileAid.extractNameRoot(scriptPath);
-       StructurePlotAid plotAid = new StructurePlotAid(colorByStructure, colorByVariable, dashByStructure, dashByVariable);
+       StructurePlotAid plotAid = new StructurePlotAid(structureDistinguisher, StructurePlotAid.Distinguisher.NONE, variableDistinguisher, variableTypes);
+       plotAid.setColors(colors);
 
        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(scriptPath))) {
            pw.println("set samples 1000");
@@ -210,20 +214,17 @@ public class PolynomialStructurePlotter extends Operation {
            pw.println("");
 
            // plot the defined functions
-           int i = 0;
            pw.print("p");
-           for (VariableType variable : variableTypes) {
-               pw.println("  " + variable.toString().toLowerCase() + i + "(t),t w l lw 1 " + plotAid.lineTypeFor(i, variable)
-                       + " title '" + StructurePlotAid.labelStringFor(variable) + "', \\");
-           }
-           for (i = 1; i < structures.size(); i++) {
+           for (int i = 0; i < structures.size(); i++) {
                for (VariableType variable : variableTypes) {
-                   pw.println("  " + variable.toString().toLowerCase() + i + "(t),t w l lw 1 " + plotAid.lineTypeFor(i, variable)
-                           + " notitle, \\");
+                   // show key for last structure
+                   String titleString = (i == structures.size() - 1) ? ("title '" + StructurePlotAid.labelStringFor(variable) + "'") : "notitle";
+                   pw.println("  " + variable.toString().toLowerCase() + i + "(t),t w l lw 2 " + plotAid.lineTypeFor(i, 0, variable, structures.size())
+                           + " " + titleString + ", \\");
                }
            }
 
-           pw.println("  0,t w l lw 0.5 dt 1 lc rgb 'black' notitle");
+           pw.println("  0,t w l lw 1 dt 1 lc rgb 'black' notitle");
        }
 
        GnuplotFile plot = new GnuplotFile(scriptPath);

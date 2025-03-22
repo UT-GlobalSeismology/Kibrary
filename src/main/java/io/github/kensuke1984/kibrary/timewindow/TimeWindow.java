@@ -11,7 +11,7 @@ import org.apache.commons.math3.util.Precision;
  * @author Kensuke Konishi
  * @since a long time ago
  */
-public class Timewindow implements Comparable<Timewindow> {
+public class TimeWindow implements Comparable<TimeWindow> {
 
     /**
      * The number of decimal places to round off the time values.
@@ -22,11 +22,11 @@ public class Timewindow implements Comparable<Timewindow> {
      */
     public static final int TYPICAL_MAX_INTEGER_DIGITS = 4;
     /**
-     * Margin to decide whether two timewindows have the same startTime and/or endTime.
+     * Margin to decide whether two time windows have the same startTime and/or endTime.
      */
     public static final double TIME_EPSILON = 0.1;
     /**
-     * Margin of startTime to decide whether two timewindows are pairs, taking into account the timeshifts due to corrections.
+     * Margin of startTime to decide whether two time windows are pairs, taking into account the timeshifts due to corrections.
      */
     public static final double TIME_SHIFT_MAX = 20;
 
@@ -45,7 +45,7 @@ public class Timewindow implements Comparable<Timewindow> {
      * @param startTime (double) Start time of the window [s].
      * @param endTime (double) End time of the window [s].
      */
-    public Timewindow(double startTime, double endTime) {
+    public TimeWindow(double startTime, double endTime) {
         if (endTime < startTime)
             throw new IllegalArgumentException("startTime: " + startTime + " endTime: " + endTime + " are invalid");
         this.startTime = Precision.round(startTime, DECIMALS);
@@ -54,36 +54,36 @@ public class Timewindow implements Comparable<Timewindow> {
 
     /**
      * Check if a given time window overlaps with this time window.
-     * @param timeWindow ({@link Timewindow}) Time window to check.
+     * @param timeWindow ({@link TimeWindow}) Time window to check.
      * @return (boolean) Whether the time windows overlap.
      */
-    boolean overlaps(Timewindow timeWindow) {
+    public boolean overlaps(TimeWindow timeWindow) {
         return timeWindow.startTime <= endTime && startTime <= timeWindow.endTime;
     }
 
     /**
      * Creates a new instance with this time window merged with the input time window.
      * If the two windows do not overlap, then the interval between them is also included.
-     * @param timeWindow ({@link Timewindow}) Time window to merge.
-     * @return ({@link Timewindow}) Merged time window.
+     * @param timeWindow ({@link TimeWindow}) Time window to merge.
+     * @return ({@link TimeWindow}) Merged time window.
      */
-    Timewindow merge(Timewindow timeWindow) {
+    TimeWindow merge(TimeWindow timeWindow) {
         double newStart = startTime < timeWindow.startTime ? startTime : timeWindow.startTime;
         double newEnd = timeWindow.endTime < endTime ? endTime : timeWindow.endTime;
-        return new Timewindow(newStart, newEnd);
+        return new TimeWindow(newStart, newEnd);
     }
 
     /**
      * Shift time window (in positive direction) by specified time.
      * @param shift (double) Time to shift time window [s].
-     * @return ({@link Timewindow}) Shifted time window.
+     * @return ({@link TimeWindow}) Shifted time window.
      */
-    public Timewindow shift(double shift) {
-        return new Timewindow(startTime + shift, endTime + shift);
+    public TimeWindow shift(double shift) {
+        return new TimeWindow(startTime + shift, endTime + shift);
     }
 
     @Override
-    public int compareTo(Timewindow o) {
+    public int compareTo(TimeWindow o) {
         int c = Double.compare(startTime, o.startTime);
         return c != 0 ? c : Double.compare(endTime, o.endTime);
     }
@@ -105,7 +105,7 @@ public class Timewindow implements Comparable<Timewindow> {
         if (this == obj) return true;
         if (obj == null) return false;
         if (getClass() != obj.getClass()) return false;
-        Timewindow other = (Timewindow) obj;
+        TimeWindow other = (TimeWindow) obj;
         return Double.doubleToLongBits(endTime) == Double.doubleToLongBits(other.endTime) &&
                 Double.doubleToLongBits(startTime) == Double.doubleToLongBits(other.startTime);
     }

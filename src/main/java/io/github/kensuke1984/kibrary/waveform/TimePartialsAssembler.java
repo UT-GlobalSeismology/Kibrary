@@ -20,8 +20,8 @@ import java.util.stream.Collectors;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.elastic.VariableType;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
+import io.github.kensuke1984.kibrary.timewindow.TimeWindowData;
+import io.github.kensuke1984.kibrary.timewindow.TimeWindowDataFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
@@ -66,9 +66,9 @@ public class TimePartialsAssembler extends Operation {
     private double finalSamplingHz;
 
     /**
-     * Path of a timewindow information file
+     * Path of a time window information file
      */
-    private Path timewindowPath;
+    private Path timeWindowPath;
     /**
      * Path of a data entry file
      */
@@ -94,7 +94,7 @@ public class TimePartialsAssembler extends Operation {
     private Path logPath;
     private Set<GlobalCMTID> eventSet;
     private Set<Observer> observerSet;
-    private Set<TimewindowData> timewindowSet;
+    private Set<TimeWindowData> timeWindowSet;
     private List<PartialID> partialIDs = Collections.synchronizedList(new ArrayList<>());
 
     /**
@@ -122,7 +122,7 @@ public class TimePartialsAssembler extends Operation {
             pw.println("##(double) Value of sampling Hz in output files, must be a factor of sacSamplingHz (1)");
             pw.println("#finalSamplingHz ");
             pw.println("##Path of a time window file, must be set");
-            pw.println("#timewindowPath timewindow.dat");
+            pw.println("#timeWindowPath timeWindow.dat");
             pw.println("##Path of a data entry list file, if you want to select raypaths");
             pw.println("#dataEntryPath selectedEntry.lst");
             pw.println("##Path of the time partials directory, must be set");
@@ -152,7 +152,7 @@ public class TimePartialsAssembler extends Operation {
         if (partialSamplingHz % finalSamplingHz != 0)
             throw new IllegalArgumentException("Must choose a finalSamplingHz that divides " + partialSamplingHz);
 
-        timewindowPath = property.parsePath("timewindowPath", null, true, workPath);
+        timeWindowPath = property.parsePath("timeWindowPath", null, true, workPath);
         if (property.containsKey("dataEntryPath")) {
             dataEntryPath = property.parsePath("dataEntryPath", null, true, workPath);
         }
@@ -176,7 +176,7 @@ public class TimePartialsAssembler extends Operation {
         final int N_THREADS = Runtime.getRuntime().availableProcessors();
 //      final int N_THREADS = 1;
         writeLog("Running " + N_THREADS + " threads");
-        collectTimewindowInformation();
+        collectTimeWindowInformation();
 
         // sacdataを何ポイントおきに取り出すか
         step = (int) (partialSamplingHz / finalSamplingHz);
@@ -190,36 +190,36 @@ public class TimePartialsAssembler extends Operation {
     }
 
     /**
-     * Reads timewindow information include observer and GCMTid
+     * Reads time window information include observer and GCMTid
      *
      * @throws IOException if any
      */
-    private void collectTimewindowInformation() throws IOException {
+    private void collectTimeWindowInformation() throws IOException {
         // タイムウインドウの情報を読み取る。
-        System.err.println("Reading timewindow information");
+        System.err.println("Reading time window information");
         if (dataEntryPath != null) {
             // read entry set to be used for selection
             Set<DataEntry> entrySet = DataEntryListFile.readAsSet(dataEntryPath);
 
-            // read timewindows and select based on component and entries
-            timewindowSet = TimewindowDataFile.read(timewindowPath)
+            // read time windows and select based on component and entries
+            timeWindowSet = TimeWindowDataFile.read(timeWindowPath)
                     .stream().filter(window -> components.contains(window.getComponent()) &&
                             entrySet.contains(new DataEntry(window.getGlobalCMTID(), window.getObserver(), window.getComponent())))
                     .collect(Collectors.toSet());
         } else {
-            // read timewindows and select based on component
-            timewindowSet = TimewindowDataFile.read(timewindowPath)
+            // read time windows and select based on component
+            timeWindowSet = TimeWindowDataFile.read(timeWindowPath)
                     .stream().filter(window -> components.contains(window.getComponent()))
                     .collect(Collectors.toSet());
         }
         eventSet = new HashSet<>();
         observerSet = new HashSet<>();
-        timewindowSet.forEach(t -> {
+        timeWindowSet.forEach(t -> {
             eventSet.add(t.getGlobalCMTID());
             observerSet.add(t.getObserver());
         });
 
-        writeLog(timewindowSet.size() + " timewindows are found in " + timewindowPath + ". " + eventSet.size()
+        writeLog(timeWindowSet.size() + " time windows are found in " + timeWindowPath + ". " + eventSet.size()
                 + " events and " + observerSet.size() + " stations.");
     }
 
@@ -274,7 +274,7 @@ public class TimePartialsAssembler extends Operation {
 //          System.out.println(sacnameSet.size());
 //          sacnameSet.forEach(name -> System.out.println(name));
 
-            Set<TimewindowData> timewindowCurrentEvent = timewindowSet
+            Set<TimeWindowData> timeWindowCurrentEvent = timeWindowSet
                     .stream()
                     .filter(tw -> tw.getGlobalCMTID().equals(id))
                     .collect(Collectors.toSet());
@@ -282,7 +282,7 @@ public class TimePartialsAssembler extends Operation {
             // すべてのsacファイルに対しての処理
             for (SACFileName sacname : sacnameSet) {
                 try {
-                    addTemporalPartial(sacname, timewindowCurrentEvent);
+                    addTemporalPartial(sacname, timeWindowCurrentEvent);
                 } catch (ClassCastException e) {
                     // 出来上がったインスタンスがOneDPartialSpectrumじゃない可能性
                     System.err.println(sacname + "is not 1D partial.");
@@ -301,8 +301,8 @@ public class TimePartialsAssembler extends Operation {
             System.err.print(".");
         }
 
-        private void addTemporalPartial(SACFileName sacname, Set<TimewindowData> timewindowCurrentEvent) throws IOException {
-            Set<TimewindowData> tmpTws = timewindowCurrentEvent.stream()
+        private void addTemporalPartial(SACFileName sacname, Set<TimeWindowData> timeWindowCurrentEvent) throws IOException {
+            Set<TimeWindowData> tmpTws = timeWindowCurrentEvent.stream()
                     .filter(info -> info.getObserver().toString().equals(sacname.getObserverID())) //TODO this may not get unique observer
                     .collect(Collectors.toSet());
             if (tmpTws.size() == 0) {
@@ -315,7 +315,7 @@ public class TimePartialsAssembler extends Operation {
             Observer station = sacdata.getObserver();
 
             for (SACComponent component : components) {
-                Set<TimewindowData> tw = tmpTws.stream()
+                Set<TimeWindowData> tw = tmpTws.stream()
                         .filter(info -> info.getObserver().equals(station))
                         .filter(info -> info.getGlobalCMTID().equals(id))
                         .filter(info -> info.getComponent().equals(component)).collect(Collectors.toSet());
@@ -326,11 +326,11 @@ public class TimePartialsAssembler extends Operation {
                         System.err.println(window.getObserver().getPosition());
                     });
                     System.err.println(station.getPosition());
-                    System.err.println("Ignoring empty timewindow " + sacname + " " + station);
+                    System.err.println("Ignoring empty time window " + sacname + " " + station);
                     continue;
                 }
 
-                for (TimewindowData t : tw) {
+                for (TimeWindowData t : tw) {
                     double[] filteredUt = sacdata.createTrace().getY();
                     cutAndWrite(station, filteredUt, t);
                 }
@@ -339,14 +339,14 @@ public class TimePartialsAssembler extends Operation {
         /**
          * @param u
          *            partial waveform
-         * @param timewindowInformation
+         * @param timeWindow
          *            cut information
          * @return u cut by considering sampling Hz
          */
-        private double[] sampleOutput(double[] u, TimewindowData timewindowInformation) {
-            int cutstart = (int) (timewindowInformation.getStartTime() * partialSamplingHz);
+        private double[] sampleOutput(double[] u, TimeWindowData timeWindow) {
+            int cutstart = (int) (timeWindow.getStartTime() * partialSamplingHz);
             // 書きだすための波形
-            int outnpts = (int) ((timewindowInformation.getEndTime() - timewindowInformation.getStartTime())
+            int outnpts = (int) ((timeWindow.getEndTime() - timeWindow.getStartTime())
                     * finalSamplingHz);
             double[] sampleU = new double[outnpts];
             // cutting a waveform for outputting
@@ -355,7 +355,7 @@ public class TimePartialsAssembler extends Operation {
             return sampleU;
         }
 
-        private void cutAndWrite(Observer station, double[] filteredUt, TimewindowData t) {
+        private void cutAndWrite(Observer station, double[] filteredUt, TimeWindowData t) {
 
             double[] cutU = sampleOutput(filteredUt, t);
             FullPosition stationLocation = new FullPosition(station.getPosition().getLatitude(), station.getPosition().getLongitude(), Earth.EARTH_RADIUS);

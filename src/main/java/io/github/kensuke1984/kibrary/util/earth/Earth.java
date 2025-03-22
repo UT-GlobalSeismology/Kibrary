@@ -294,4 +294,16 @@ public final class Earth {
         return computeAzimuthRad(receiverPos, sourcePos);
     }
 
+    /**
+     * Compute mid-point between two points.
+     * @param pos0 ({@link HorizontalPosition}) First position.
+     * @param pos1 ({@link HorizontalPosition}) Second position.
+     * @return ({@link HorizontalPosition}) Mid-point position.
+     */
+    public static HorizontalPosition computeMidpoint(HorizontalPosition pos0, HorizontalPosition pos1) {
+        double distanceDeg = pos0.computeEpicentralDistanceDeg(pos1);
+        double azimuthDeg = pos0.computeAzimuthDeg(pos1);
+        return pos0.pointAlongAzimuth(azimuthDeg, distanceDeg / 2.0);
+    }
+
 }

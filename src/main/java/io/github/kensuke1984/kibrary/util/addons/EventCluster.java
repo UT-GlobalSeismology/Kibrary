@@ -15,7 +15,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import edu.sc.seis.TauP.SphericalCoords;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
+import io.github.kensuke1984.kibrary.timewindow.TimeWindowData;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
@@ -268,7 +268,7 @@ public class EventCluster {
         pw.close();
     }
 
-    public static void printRecordInformation(List<EventCluster> clusters, Set<TimewindowData> timewindows) {
+    public static void printRecordInformation(List<EventCluster> clusters, Set<TimeWindowData> timewindows) {
         AtomicInteger idmax = new AtomicInteger();
         clusters.stream().map(c -> c.getIndex()).forEach(i ->  {
             if (idmax.get() < i) idmax.set(i);
@@ -283,10 +283,10 @@ public class EventCluster {
             }
             Set<GlobalCMTID> tmpids = clusters.stream().filter(c -> c.getIndex() == ifinal).map(c -> c.getID())
                     .collect(Collectors.toSet());
-            Set<TimewindowData> tmpwindows = timewindows.stream().filter(tw -> tmpids.contains(tw.getGlobalCMTID())).collect(Collectors.toSet());
+            Set<TimeWindowData> tmpwindows = timewindows.stream().filter(tw -> tmpids.contains(tw.getGlobalCMTID())).collect(Collectors.toSet());
             for (int iaz = 0; iaz < tmpc.getAzimuthSlices().size(); iaz++) {
                 int n = 0;
-                for (TimewindowData window : tmpwindows) {
+                for (TimeWindowData window : tmpwindows) {
                     double azimuth = Math.toDegrees(window.getGlobalCMTID().getEventData().getCmtPosition().computeAzimuthRad(window.getObserver().getPosition()));
                     if (azimuth >= tmpc.getAzimuthBound(iaz)[0] && azimuth < tmpc.getAzimuthBound(iaz)[1])
                         n++;

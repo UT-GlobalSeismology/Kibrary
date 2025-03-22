@@ -23,8 +23,8 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
 import io.github.kensuke1984.kibrary.Summon;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
+import io.github.kensuke1984.kibrary.timewindow.TimeWindowData;
+import io.github.kensuke1984.kibrary.timewindow.TimeWindowDataFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.InformationFileReader;
@@ -105,7 +105,7 @@ public class DataEntryListFile {
      * Reads dataset information from an input source
      * and creates a data entry list file under the working folder.
      * The input source may be SAC files in event directories under a dataset folder,
-     * a timewindow file, or a basic waveform folder.
+     * a time window file, or a basic waveform folder.
      * @param args Options.
      * @throws IOException if an I/O error occurs
      */
@@ -172,8 +172,8 @@ public class DataEntryListFile {
         if (cmdLine.hasOption("d")) {
             entrySet = collectFromDataset(Paths.get(cmdLine.getOptionValue("d")), components);
         } else if (cmdLine.hasOption("t")) {
-            Set<TimewindowData> timeWindows = TimewindowDataFile.read(Paths.get(cmdLine.getOptionValue("t")));
-            entrySet = timeWindows.stream().filter(timewindow -> components.contains(timewindow.getComponent()))
+            Set<TimeWindowData> timeWindows = TimeWindowDataFile.read(Paths.get(cmdLine.getOptionValue("t")));
+            entrySet = timeWindows.stream().filter(timeWindow -> components.contains(timeWindow.getComponent()))
                     .map(timeWindow -> new DataEntry(timeWindow.getGlobalCMTID(), timeWindow.getObserver(), timeWindow.getComponent()))
                     .collect(Collectors.toSet());
         } else if (cmdLine.hasOption("b")) {

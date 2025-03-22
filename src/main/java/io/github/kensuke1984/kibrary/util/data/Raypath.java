@@ -11,7 +11,8 @@ import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 
 /**
- * Raypath between a source and a receiver.
+ * Raypath between a source and a receiver, stored as a list of positions along the raypath.
+ * Multiple points along the raypath can be stored (e.g., pierce points, turning points).
  * This class is <b>IMMUTABLE</b>.
  *
  * @author Kensuke Konishi
@@ -21,29 +22,29 @@ import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 public final class Raypath {
 
     /**
-     * Name of phase
+     * Name of phase.
      */
     private final String phaseName;
     /**
-     * Number of points along the raypath (source, pierce points, turning points, receiver)
+     * Number of points along the raypath (source, pierce points, turning points, receiver).
      */
     private final int nPoint;
     /**
-     * Epicentral distances from the source to points along the raypath [deg]
+     * Epicentral distances from the source to points along the raypath [deg].
      */
     private final double[] distancesDeg;
     /**
-     * List of points along the raypath
+     * List of points along the raypath.
      */
     private final List<FullPosition> positions;
 
     /**
-     * @param phaseName (String) Name of phase of this raypath
-     * @param distancesDeg (double[]) Epicentral distances from the source to points along the raypath [deg]
-     * @param positions (List of FullPosition) List of points along the raypath
+     * @param phaseName (String) Name of phase of this raypath.
+     * @param distancesDeg (double[]) Epicentral distances from the source to points along the raypath [deg].
+     * @param positions (List of {@link FullPosition}) List of points along the raypath.
      */
     public Raypath(String phaseName, double[] distancesDeg, List<FullPosition> positions) {
-        if (distancesDeg.length != positions.size()) throw new IllegalArgumentException("number of distances and positions should match");
+        if (distancesDeg.length != positions.size()) throw new IllegalArgumentException("Number of distances and positions should match.");
         this.nPoint = distancesDeg.length;
 
         this.phaseName = phaseName;
@@ -52,30 +53,30 @@ public final class Raypath {
     }
 
     /**
-     * Create a raypath from the source to the receiver.
+     * Create a raypath from the source to the receiver, with no points in between.
      *
-     * @param phaseName (String) Name of phase of this raypath
-     * @param source  {@link FullPosition} of a source
-     * @param receiver {@link HorizontalPosition} of a receiver
+     * @param phaseName (String) Name of phase of this raypath.
+     * @param sourcePosition ({@link FullPosition}) Position of source.
+     * @param receiverPosition ({@link HorizontalPosition}) Position of receiver.
      */
-    public Raypath(String phaseName, FullPosition source, HorizontalPosition receiver) {
+    public Raypath(String phaseName, FullPosition sourcePosition, HorizontalPosition receiverPosition) {
         this.phaseName = phaseName;
         this.nPoint = 2;
 
         distancesDeg = new double[2];
         distancesDeg[0] = 0;
-        distancesDeg[1] = source.computeEpicentralDistanceDeg(receiver);
+        distancesDeg[1] = sourcePosition.computeEpicentralDistanceDeg(receiverPosition);
 
         positions = new ArrayList<>();
-        positions.add(source);
-        positions.add(receiver.toFullPosition(Earth.EARTH_RADIUS));
+        positions.add(sourcePosition);
+        positions.add(receiverPosition.toFullPosition(Earth.EARTH_RADIUS));
     }
 
     /**
      * Clips all raypath segments that are within a specified layer.
-     * @param lowerRadius (double) lower bound of layer [km]
-     * @param upperRadius (double) upper bound of layer [km]
-     * @return (List of Raypath)
+     * @param lowerRadius (double) Lower bound of layer [km].
+     * @param upperRadius (double) Upper bound of layer [km].
+     * @return (List of {@link Raypath}) Clipped raypaths.
      */
     public List<Raypath> clipInsideLayer(double lowerRadius, double upperRadius) {
         List<Raypath> clippedRaypaths = new ArrayList<>();
@@ -109,9 +110,9 @@ public final class Raypath {
 
     /**
      * Clips all raypath segments that are outside a specified layer.
-     * @param lowerRadius (double) lower bound of layer [km]
-     * @param upperRadius (double) upper bound of layer [km]
-     * @return (List of Raypath)
+     * @param lowerRadius (double) Lower bound of layer [km].
+     * @param upperRadius (double) Upper bound of layer [km].
+     * @return (List of {@link Raypath}) Clipped raypaths.
      */
     public List<Raypath> clipOutsideLayer(double lowerRadius, double upperRadius) {
         List<Raypath> clippedRaypaths = new ArrayList<>();
@@ -170,9 +171,10 @@ public final class Raypath {
     }
 
     /**
-     * @param from (int) index to start clipping from (includes this index)
-     * @param to (int) index to clip up to (does not include this index)
-     * @return (Raypath) Clipped raypath
+     * Clip raypath using indices of positions.
+     * @param from (int) Index of position to start clipping from (includes this index).
+     * @param to (int) Index of position to clip up to (does not include this index).
+     * @return ({@link Raypath}) Clipped raypath.
      */
     private Raypath clip(int from, int to) {
         if (to - from <= 1) throw new IllegalArgumentException("Raypath must include at least 1 segment");
@@ -186,24 +188,55 @@ public final class Raypath {
 
     /**
      * Finds the bottom turning point of the given index.
-     * @param index (int) Which bottom turning point to look for (0:first, 1:second, ...)
-     * @return (FullPosition) Position of bottom turning point, or null if it does not exist
+     * @param index (int) Which bottom turning point to look for (0:first, 1:second, ...).
+     * @param includeStrictTurn (boolean) Whether to include points that are strict bottom turning points.
+     * @param includeDiffCenter (boolean) Whether to include mid-points of diffraction leg.
+     * @param includeDiffStart (boolean) Whether to include points where diffraction starts.
+     * @param includeDiffEnd (boolean) Whether to include points where diffraction ends.
+     * @return ({@link FullPosition}) Position of bottom turning point, or null if it does not exist.
      */
-    public FullPosition findTurningPoint(int index) {
-        List<FullPosition> turningPoints = findTurningPoints();
+    public FullPosition findTurningPoint(int index, boolean includeStrictTurn, boolean includeDiffCenter, boolean includeDiffStart, boolean includeDiffEnd) {
+        List<FullPosition> turningPoints = findTurningPoints(includeStrictTurn, includeDiffCenter, includeDiffStart, includeDiffEnd);
         if (index < 0 || index >= turningPoints.size()) return null;
         return turningPoints.get(index);
     }
 
     /**
      * Finds all bottom turning points.
-     * @return (List of FullPosition) Positions of bottom turning points
+     * @param includeStrictTurn (boolean) Whether to include points that are strict bottom turning points.
+     * @param includeDiffCenter (boolean) Whether to include mid-points of diffraction leg.
+     * @param includeDiffStart (boolean) Whether to include points where diffraction starts.
+     * @param includeDiffEnd (boolean) Whether to include points where diffraction ends.
+     * @return (List of {@link FullPosition}) Positions of bottom turning points.
      */
-    public List<FullPosition> findTurningPoints() {
+    public List<FullPosition> findTurningPoints(boolean includeStrictTurn, boolean includeDiffCenter, boolean includeDiffStart, boolean includeDiffEnd) {
         List<FullPosition> turningPoints = new ArrayList<>();
+
         for (int i = 1; i < nPoint - 1; i++) {
-            if (positions.get(i).getR() <= positions.get(i - 1).getR() && positions.get(i).getR() <= positions.get(i + 1).getR()) {
-                turningPoints.add(positions.get(i));
+            FullPosition position = positions.get(i);
+            double rad = position.getR();
+
+            if (includeStrictTurn) {
+                if (rad < positions.get(i - 1).getR() && rad < positions.get(i + 1).getR()) {
+                    turningPoints.add(position);
+                }
+            }
+            if (includeDiffStart) {
+                if (rad != positions.get(i - 1).getR() && rad == positions.get(i + 1).getR()) {
+                    turningPoints.add(position);
+                }
+            }
+            if (includeDiffEnd) {
+                if (rad == positions.get(i - 1).getR() && rad != positions.get(i + 1).getR()) {
+                    turningPoints.add(position);
+                }
+            }
+            // This is at the end to list positions in order.
+            if (includeDiffCenter) {
+                if (rad == positions.get(i + 1).getR()) {
+                    HorizontalPosition centerPosition = Earth.computeMidpoint(position, positions.get(i + 1));
+                    turningPoints.add(centerPosition.toFullPosition(rad));
+                }
             }
         }
         return turningPoints;
@@ -211,8 +244,8 @@ public final class Raypath {
 
     /**
      * Finds the ceil bouncing point of the given index.
-     * @param index (int) Which ceil bouncing point to look for (0:first, 1:second, ...)
-     * @return (FullPosition) Position of ceil bouncing point, or null if it does not exist
+     * @param index (int) Which ceil bouncing point to look for (0:first, 1:second, ...).
+     * @return ({@link FullPosition}) Position of ceil bouncing point, or null if it does not exist.
      */
     public FullPosition findCeilBouncingPoint(int index) {
         List<FullPosition> ceilBouncingPoints = findCeilBouncingPoints();
@@ -222,7 +255,7 @@ public final class Raypath {
 
     /**
      * Finds all ceil bouncing points.
-     * @return (List of FullPosition) Positions of ceil bouncing points
+     * @return (List of {@link FullPosition}) Positions of ceil bouncing points.
      */
     public List<FullPosition> findCeilBouncingPoints() {
         List<FullPosition> ceilBouncingPoints = new ArrayList<>();
@@ -235,54 +268,54 @@ public final class Raypath {
     }
 
     /**
-     * Computes the bottom turning point azimuth of the given index.
-     * @param index (int) Which bottom turning point to compute for (0:first, 1:second, ...)
-     * @return (double) Azimuth at bottom turning point [deg]
+     * Computes the bottom turning point azimuth of the given index. Center points of diffraction are also considered.
+     * @param index (int) Which bottom turning point to compute for (0:first, 1:second, ...).
+     * @return (double) Azimuth at bottom turning point [deg].
      */
     public double computeTurningAzimuthDeg(int index) {
-        FullPosition turningPoint = findTurningPoint(index);
+        FullPosition turningPoint = findTurningPoint(index, true, true, false, false);
         if (turningPoint == null)
             throw new ArrayIndexOutOfBoundsException("Bottom turning point " + index + " does not exist.");
         return turningPoint.computeAzimuthDeg(getReceiver());
     }
 
     /**
-     * @return epicentral distance of this full raypath [deg]
+     * @return (double) Epicentral distance of this full raypath [deg].
      */
     public double getEpicentralDistanceDeg() {
         return distancesDeg[nPoint - 1];
     }
 
     /**
-     * @return azimuth at source [deg]
+     * @return (double) Azimuth at source [deg].
      */
     public double getAzimuthDeg() {
         return getSource().computeAzimuthDeg(getReceiver());
     }
 
     /**
-     * @return back azimuth at receiver [deg]
+     * @return (double) Back azimuth at receiver [deg].
      */
     public double getBackAzimuthDeg() {
         return getSource().computeBackAzimuthDeg(getReceiver());
     }
 
     /**
-     * @return (FullPosition) The first point on this raypath
+     * @return ({@link FullPosition}) The first point on this raypath.
      */
     public FullPosition getSource() {
         return positions.get(0);
     }
 
     /**
-     * @return (FullPosition) The last point on this raypath
+     * @return ({@link FullPosition}) The last point on this raypath.
      */
     public FullPosition getReceiver() {
         return positions.get(nPoint - 1);
     }
 
     /**
-     * @return (String) The name of phase of this raypath
+     * @return (String) The name of phase of this raypath.
      */
     public String getPhaseName() {
         return phaseName;

@@ -65,8 +65,8 @@ public final class AMatrixBuilder {
                 return;
             }
 
-            // find which timewindow this partialID corresponds to
-            int k = dVector.whichTimewindow(id);
+            // find which time window this partialID corresponds to
+            int k = dVector.whichTimeWindow(id);
             if (k < 0) {
                 return;
             }

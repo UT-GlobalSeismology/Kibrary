@@ -53,7 +53,7 @@ class SacDeconvolution {
     private static int taperType = 1;
 
     /**
-     * timewindowの端のテーピング領域（％） （フーリエ変換を行うため）
+     * time windowの端のテーピング領域（％） （フーリエ変換を行うため）
      */
     private static int taperAreaRatio = 5;
 

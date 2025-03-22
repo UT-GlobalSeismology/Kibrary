@@ -13,8 +13,8 @@ import org.apache.commons.math3.complex.Complex;
 
 import io.github.kensuke1984.kibrary.filter.BandPassFilter;
 import io.github.kensuke1984.kibrary.filter.ButterworthFilter;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
+import io.github.kensuke1984.kibrary.timewindow.TimeWindowData;
+import io.github.kensuke1984.kibrary.timewindow.TimeWindowDataFile;
 import io.github.kensuke1984.kibrary.util.addons.Phases;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
@@ -29,8 +29,8 @@ public class BPVisual {
 
     final int samplingHz = 20;
 
-    private Path timewindowPath;
-    private Set<TimewindowData> timewindows;
+    private Path timeWindowPath;
+    private Set<TimeWindowData> timeWindows;
     private Path workingDir;
 
     private int ext;
@@ -44,10 +44,10 @@ public class BPVisual {
     private ButterworthFilter filter;
 
 
-    public BPVisual(Path timewindowPath, Path workingDir, double partialSamplingHz, double finalSamplingHz
+    public BPVisual(Path timeWindowPath, Path workingDir, double partialSamplingHz, double finalSamplingHz
             , double minFreq, double maxFreq, int filterNp) throws IOException {
-        this.timewindowPath = timewindowPath;
-        this.timewindows = TimewindowDataFile.read(timewindowPath);
+        this.timeWindowPath = timeWindowPath;
+        this.timeWindows = TimeWindowDataFile.read(timeWindowPath);
         this.workingDir = workingDir;
 
         this.partialSamplingHz = partialSamplingHz;
@@ -82,7 +82,7 @@ public class BPVisual {
                 for (int j = 0; j < spcComponents.length; j++) {
                     double[] bpserie = spcComponents[j].getTimeseries();
                     Complex[] bpspectrum = spcComponents[j].getValueInFrequencyDomain();
-                    for (TimewindowData info : timewindows) {
+                    for (TimeWindowData info : timeWindows) {
                         Observer station = info.getObserver();
                         GlobalCMTID event = info.getGlobalCMTID();
 
@@ -115,7 +115,7 @@ public class BPVisual {
     }
 
     public static void main(String[] args) throws IOException {
-        Path timewindowPath = Paths.get(args[0]);
+        Path timeWindowPath = Paths.get(args[0]);
         Path workingDir = Paths.get(".");
         double partialSamplingHz = 20.;
         double finalSamplingHz = 4.;
@@ -123,7 +123,7 @@ public class BPVisual {
         double maxFreq = 0.05;
         int filterNp = 6;
 
-        BPVisual bpVisual = new BPVisual(timewindowPath, workingDir
+        BPVisual bpVisual = new BPVisual(timeWindowPath, workingDir
                 , partialSamplingHz, finalSamplingHz, minFreq, maxFreq, filterNp);
 
         bpVisual.run();
@@ -137,21 +137,21 @@ public class BPVisual {
      * @param property
      * @return
      */
-    private Complex[] cutPartial(double[] u, TimewindowData timewindowInformation) {
-        int cutstart = (int) (timewindowInformation.getStartTime() * partialSamplingHz) - ext;
+    private Complex[] cutPartial(double[] u, TimeWindowData timeWindow) {
+        int cutstart = (int) (timeWindow.getStartTime() * partialSamplingHz) - ext;
         // cutstartが振り切れた場合0 からにする
         if (cutstart < 0)
             return null;
-        int cutend = (int) (timewindowInformation.getEndTime() * partialSamplingHz) + ext;
+        int cutend = (int) (timeWindow.getEndTime() * partialSamplingHz) + ext;
         Complex[] cut = new Complex[cutend - cutstart];
         Arrays.parallelSetAll(cut, i -> new Complex(u[i + cutstart]));
 
         return cut;
     }
 
-    private double[] sampleOutput(Complex[] u, TimewindowData timewindowInformation) {
+    private double[] sampleOutput(Complex[] u, TimeWindowData timeWindow) {
         // 書きだすための波形
-        int outnpts = (int) ((timewindowInformation.getEndTime() - timewindowInformation.getStartTime())
+        int outnpts = (int) ((timeWindow.getEndTime() - timeWindow.getStartTime())
                 * finalSamplingHz);
         double[] sampleU = new double[outnpts];
 
