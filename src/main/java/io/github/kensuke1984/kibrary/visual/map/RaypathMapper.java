@@ -109,6 +109,7 @@ public class RaypathMapper extends Operation {
     private int colorMode;
     private Path colorBinPath;
     private boolean drawOutsides;
+    private boolean drawTurningPoints;
     private Path outsideColorBinPath;
     private double rayTransparency;
 
@@ -198,6 +199,8 @@ public class RaypathMapper extends Operation {
             pw.println("#colorBinPath ");
             pw.println("##(boolean) Whether to draw the raypaths outside the pierce points. (false)");
             pw.println("#drawOutsides ");
+            pw.println("##(boolean) Whether to draw the turning points. (true)");
+            pw.println("#drawTurningPoints ");
             pw.println("##Path of color bin file for the outside segments, must be set if colorMode is not 0 and drawOutsides is true.");
             pw.println("#outsideColorBinPath ");
             pw.println("##(double) Transparency of raypaths and turning points [%]. (0)");
@@ -257,6 +260,7 @@ public class RaypathMapper extends Operation {
         if (colorMode > 0)
             colorBinPath = property.parsePath("colorBinPath", null, true, workPath);
         drawOutsides = property.parseBoolean("drawOutsides", "false");
+        drawTurningPoints = property.parseBoolean("drawTurningPoints", "true");
         if (colorMode > 0 && drawOutsides == true)
             outsideColorBinPath = property.parsePath("outsideColorBinPath", null, true, workPath);
         rayTransparency = property.parseDouble("rayTransparency", "0");
@@ -437,13 +441,14 @@ public class RaypathMapper extends Operation {
         String fontSize = forSlides ? "25p" : "15p";
         String legendWidth = forSlides ? "6c" : "4.5cm";
         String rayTransparencyOption = (rayTransparency > 0) ? (" -t" + rayTransparency) : "";
+        String regionString = createRegionString();
+        String projectionString = createProjectionString();
+        String tickString = lambert ? ScalarMapShellscript.decideTickSpacing(horizon * 2, true) : ScalarMapShellscript.decideTickSpacing(regionString);
 
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(gmtPath))) {
             pw.println("#!/bin/sh");
             pw.println("");
-            pw.println("outputps=\"" + gmtPath.getFileName().toString().replace(".sh", ".eps") + "\"");
-            pw.println("");
-            pw.println("# GMT options");
+            pw.println("#------- GMT options");
             pw.println("gmt set COLOR_MODEL RGB");
             pw.println("gmt set PS_MEDIA 1500x1500");
             pw.println("gmt set PS_PAGE_ORIENTATION landscape");
@@ -451,16 +456,19 @@ public class RaypathMapper extends Operation {
             pw.println("gmt set MAP_TITLE_OFFSET 1p");
             pw.println("gmt set FONT " + fontSize);
             pw.println("");
-            pw.println("# map parameters");
-            pw.println("R='" + createRegionString() + "'");
-            pw.println("J='" + createProjectionString() + "'");
-            pw.println("B='-Ba30" + (lambert ? "g30" : "") + " -BWeSn'");
+            pw.println("#------- Map parameters");
+            pw.println("R='-R" + regionString + "'");
+            pw.println("J='-J" + projectionString + "'");
+            pw.println("B='-B" + tickString + " -BWeSn'");
             pw.println("");
-            pw.println("gmt pscoast -Ggray -Wthinnest,gray20 $B $J $R -P -K > $outputps");
+
+            pw.println("#------- Begin main plot");
+            pw.println("gmt begin " + gmtPath.getFileName().toString().replace(".sh", "") + " eps,pdf,png");
+            pw.println("gmt pscoast -Ggray -Wthinnest,gray20 $B $J $R");
             pw.println("");
             pw.println("#------- Events & Observers");
-            pw.println("awk '{print $2, $3}' " + eventFileName + " | gmt psxy -: -Sa0.3 -G255/156/0 -Wthinnest -J -R -P -O -K  >> $outputps");
-            pw.println("awk '{print $3, $4}' " + observerFileName + " | gmt psxy -: -Si0.3 -G71/187/243 -Wthinnest -J -R -P -O -K >> $outputps");
+            pw.println("awk '{print $2, $3}' " + eventFileName + " | gmt psxy -: -Sa0.3 -G255/156/0 -Wthinnest");
+            pw.println("awk '{print $3, $4}' " + observerFileName + " | gmt psxy -: -Si0.3 -G71/187/243 -Wthinnest");
             pw.println("");
 
             pw.println("#------- Raypath");
@@ -473,7 +481,7 @@ public class RaypathMapper extends Operation {
                     int nSections = outsideColorBin.getNSections();
                     if (nSections == 1) {
                         pw.println("  echo $line | awk '{print $1, $2, \"\\n\", $3, $4}' | \\");
-                        pw.println("  gmt psxy -: -Wthinnest," + outsideColorBin.getColorFor(0) + " -J -R -P -O -K >> $outputps");
+                        pw.println("  gmt psxy -: -Wthinnest," + outsideColorBin.getColorFor(0) + rayTransparencyOption);
                     } else {
                         pw.println("  valueForBin=$(echo $line | awk '{print $" + columnFor(colorMode) + "}')");
                         for (int i = 0; i < nSections + 2; i++) {
@@ -483,7 +491,7 @@ public class RaypathMapper extends Operation {
                             } else if (i < nSections + 1) {
                                 pw.println("  elif [ $valueForBin -lt " + outsideColorBin.getStartValueFor(i) + " ]; then");
                                 pw.println("    echo $line | awk '{print $1, $2, \"\\n\", $3, $4}' | \\");
-                                pw.println("    gmt psxy -: -Wthinnest," + outsideColorBin.getColorFor(i - 1) + " -J -R -P -O -K >> $outputps");
+                                pw.println("    gmt psxy -: -Wthinnest," + outsideColorBin.getColorFor(i - 1) + rayTransparencyOption);
                             } else {
                                 pw.println("  else");
                                 pw.println("    echo \"value $valueForBin out of range\"");
@@ -493,7 +501,7 @@ public class RaypathMapper extends Operation {
                     }
                 } else {
                     pw.println("  echo $line | awk '{print $1, $2, \"\\n\", $3, $4}' | \\");
-                    pw.println("  gmt psxy -: -Wthinnest,lavender -J -R -P -O -K >> $outputps");
+                    pw.println("  gmt psxy -: -Wthinnest,lavender" + rayTransparencyOption);
                 }
                 pw.println("done < " + outsideFileName);
                 pw.println("");
@@ -506,8 +514,7 @@ public class RaypathMapper extends Operation {
                 int nSections = colorBin.getNSections();
                 if (nSections == 1) {
                     pw.println("  echo $line | awk '{print $1, $2, \"\\n\", $3, $4}' | \\");
-                    pw.println("  gmt psxy -: -Wthinnest," + colorBin.getColorFor(0) + rayTransparencyOption
-                            + " -J -R -P -O -K >> $outputps");
+                    pw.println("  gmt psxy -: -Wthinnest," + colorBin.getColorFor(0) + rayTransparencyOption);
                 } else {
                     pw.println("  valueForBin=$(echo $line | awk '{print $" + columnFor(colorMode) + "}')");
                     for (int i = 0; i < nSections + 2; i++) {
@@ -517,8 +524,7 @@ public class RaypathMapper extends Operation {
                         } else if (i < nSections + 1) {
                             pw.println("  elif [ $valueForBin -lt " + colorBin.getStartValueFor(i) + " ]; then");
                             pw.println("    echo $line | awk '{print $1, $2, \"\\n\", $3, $4}' | \\");
-                            pw.println("    gmt psxy -: -Wthinnest," + colorBin.getColorFor(i - 1) + rayTransparencyOption
-                                    + " -J -R -P -O -K >> $outputps");
+                            pw.println("    gmt psxy -: -Wthinnest," + colorBin.getColorFor(i - 1) + rayTransparencyOption);
                         } else {
                             pw.println("  else");
                             pw.println("    echo \"value $valueForBin out of range\"");
@@ -528,7 +534,7 @@ public class RaypathMapper extends Operation {
                 }
             } else {
                 pw.println("  echo $line | awk '{print $1, $2, \"\\n\", $3, $4}' | \\");
-                pw.println("  gmt psxy -: -Wthinnest,red" + rayTransparencyOption + " -J -R -P -O -K >> $outputps");
+                pw.println("  gmt psxy -: -Wthinnest,red" + rayTransparencyOption);
             }
             if (cutAtPiercePoint) {
                 pw.println("done < " + insideFileName);
@@ -538,16 +544,16 @@ public class RaypathMapper extends Operation {
             pw.println("");
 
             // turning points
-            if (cutAtPiercePoint) {
+            if (cutAtPiercePoint && drawTurningPoints) {
                 pw.println("awk '{print $1, $2}' " + turningPointFileName
-                        + " | gmt psxy -: -Sx0.3 -Wthinnest,black" + rayTransparencyOption + " -J -R -P -O -K >> $outputps");
+                        + " | gmt psxy -: -Sx0.3 -Wthinnest,black" + rayTransparencyOption);
                 pw.println("");
             }
 
             // pixel points
             if (voxelPath != null || unknownParameterPath != null) {
                 pw.println("#------- Pixels");
-                pw.println("gmt psxy " + pixelFileName + " -: -Sc0.2 -G0/255/0 -Wthinnest -J -R -P -O -K >> $outputps");
+                pw.println("gmt psxy " + pixelFileName + " -: -Sc0.2 -G0/255/0 -Wthinnest");
                 pw.println("");
             }
 
@@ -557,7 +563,7 @@ public class RaypathMapper extends Operation {
                 // For Lambert azimuthal projection, set it on the right outside of the map.
                 // For equidistant cylindrical projection, set it inside the map, based on 'legendJustification'.
                 pw.println("gmt pslegend -D" + (lambert ? "n1/0.05" : "j" + legendJustification) + "+w" + legendWidth
-                        + (lambert ? "" : " -F+gwhite+p1p,black") + " -J -R -O -K << END >> $outputps");
+                        + (lambert ? "" : " -F+gwhite+p1p,black") + " << END");
                 // header of legend
                 pw.println("H - - " + headerFor(colorMode));
                 // contents
@@ -580,12 +586,9 @@ public class RaypathMapper extends Operation {
             }
 
             pw.println("#------- Finalize");
-            pw.println("gmt pstext -N -F+jLM+f30p,Helvetica,black -J -R -O << END >> $outputps");
-            pw.println("END");
+            pw.println("gmt end");
             pw.println("");
-            pw.println("gmt psconvert $outputps -A -Tf -Qg4 -E100");
-            pw.println("gmt psconvert $outputps -A -Tg -Qg4 -E500");
-            pw.println("");
+
             pw.println("#-------- Clear");
             pw.println("rm -rf cp.cpt gmt.conf gmt.history");
             pw.println("echo \"Done!\"");
@@ -629,12 +632,12 @@ public class RaypathMapper extends Operation {
         if (lambert) {
             // for Lambert azimuthal
             // "-Rg" is the same as "-R-180/180/-90/90"
-            return "-Rg";
+            return "g";
         }
 
         // The rest is for equidistant cylindrical.
         if (mapRegion != null) {
-            return "-R" + mapRegion;
+            return mapRegion;
 
         } else {
             Set<HorizontalPosition> positions = collectPositions();
@@ -657,24 +660,24 @@ public class RaypathMapper extends Operation {
             }
 
             // recreate the region String
-            return "-R" + (int) lonMin + "/" + (int) lonMax + "/" + (int) latMin + "/" + (int) latMax;
+            return (int) lonMin + "/" + (int) lonMax + "/" + (int) latMin + "/" + (int) latMax;
         }
     }
 
     private String createProjectionString() throws IOException {
         if (!lambert) {
             // for equidistant cylindrical
-            return "-Jq1:120000000";
+            return "Q20";
         }
 
         // The rest is for Lambert azimuthal.
         if (mapCenter != null) {
-            return "-Ja" + mapCenter + "/" + horizon + "/1:120000000";
+            return "A" + mapCenter + "/" + horizon + "/20";
 
         } else {
             Set<HorizontalPosition> positions = collectPositions();
             String centerString = ScalarMapShellscript.decideMapCenter(positions);
-            return "-Ja" + centerString + "/" + horizon + "/1:120000000";
+            return "A" + centerString + "/" + horizon + "/20";
         }
     }
 

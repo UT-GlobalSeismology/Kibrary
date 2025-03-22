@@ -99,21 +99,22 @@ public class VoxelMapper {
         // decide map region
         String regionString;
         String projectionString;
+        String tickString;
         if (cmdLine.hasOption("l")) {
             // Lambert azimuthal projection
             String mapCenter;
             int horizon = cmdLine.hasOption("h") ? Integer.parseInt(cmdLine.getOptionValue("h")) : 90;
             if (cmdLine.hasOption("c")) mapCenter = cmdLine.getOptionValue("c");
             else mapCenter = ScalarMapShellscript.decideMapCenter(voxelPositions.stream().collect(Collectors.toSet()));
-            regionString = "-Rg";
-            projectionString = "-Ja" + mapCenter + "/" + horizon + "/1:120000000";
+            regionString = "g";
+            projectionString = "A" + mapCenter + "/" + horizon + "/20";
+            tickString = ScalarMapShellscript.decideTickSpacing(horizon * 2, true);
         } else {
             // equidistant cylindrical projection
-            String mapRegion;
-            if (cmdLine.hasOption("r")) mapRegion = cmdLine.getOptionValue("r");
-            else mapRegion = ScalarMapShellscript.decideMapRegion(voxelPositions.stream().collect(Collectors.toSet()));
-            regionString = "-R" + mapRegion;
-            projectionString = "-Jq1:120000000";
+            if (cmdLine.hasOption("r")) regionString = cmdLine.getOptionValue("r");
+            else regionString = ScalarMapShellscript.decideMapRegion(voxelPositions.stream().collect(Collectors.toSet()));
+            projectionString = "Q20";
+            tickString = ScalarMapShellscript.decideTickSpacing(regionString);
         }
 
         // create output folder
@@ -129,18 +130,16 @@ public class VoxelMapper {
         // output GMT script
         String gmtFileName = "voxelMap.sh";
         Path gmtPath = outPath.resolve(gmtFileName);
-        outputGMT(gmtPath, regionString, projectionString) ;
+        outputGMT(gmtPath, regionString, projectionString, tickString) ;
 
         System.err.println("After this finishes, please run " + gmtPath);
     }
 
-    private static void outputGMT(Path gmtPath, String regionString, String projectionString) throws IOException {
+    private static void outputGMT(Path gmtPath, String regionString, String projectionString, String tickString) throws IOException {
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(gmtPath))) {
             pw.println("#!/bin/sh");
             pw.println("");
-            pw.println("outputps=\"voxelMap.eps\"");
-            pw.println("");
-            pw.println("# GMT options");
+            pw.println("#------- GMT options");
             pw.println("gmt set COLOR_MODEL RGB");
             pw.println("gmt set PS_MEDIA 1500x1500");
             pw.println("gmt set PS_PAGE_ORIENTATION landscape");
@@ -148,22 +147,20 @@ public class VoxelMapper {
             pw.println("gmt set MAP_TITLE_OFFSET 1p");
             pw.println("gmt set FONT 25");
             pw.println("");
-            pw.println("# map parameters");
-            pw.println("R='" + regionString + "'");
-            pw.println("J='" + projectionString + "'");
-            pw.println("B='-Ba30 -BWeSn'");
+            pw.println("#------- Map parameters");
+            pw.println("R='-R" + regionString + "'");
+            pw.println("J='-J" + projectionString + "'");
+            pw.println("B='-B" + tickString + " -BWeSn'");
             pw.println("");
-            pw.println("gmt pscoast -Ggray -Wthinnest,gray20 $B $J $R -P -K > $outputps");
+            pw.println("#------- Begin main plot");
+            pw.println("gmt begin voxelMap eps,pdf,png");
+            pw.println("gmt pscoast -Ggray -Wthinnest,gray20 $B $J $R");
             pw.println("");
             pw.println("#------- Pixels");
-            pw.println("gmt psxy pixel.lst -: -Sc0.3 -G0/255/0 -Wthinnest -J -R -P -O -K >> $outputps");
+            pw.println("gmt psxy pixel.lst -: -Sc0.3 -G0/255/0 -Wthinnest");
             pw.println("");
             pw.println("#------- Finalize");
-            pw.println("gmt pstext -N -F+jLM+f30p,Helvetica,black -J -R -O << END >> $outputps");
-            pw.println("END");
-            pw.println("");
-            pw.println("gmt psconvert $outputps -A -Tf -Qg4 -E100");
-            pw.println("gmt psconvert $outputps -A -Tg -Qg4 -E500");
+            pw.println("gmt end");
             pw.println("");
             pw.println("#-------- Clear");
             pw.println("rm -rf cp.cpt gmt.conf gmt.history");

@@ -94,6 +94,8 @@ public class ModelSetMapper extends Operation {
      * Map region in the form lonMin/lonMax/latMin/latMax, when it is set manually.
      */
     private String mapRegion;
+    private boolean forSlides;
+
     private double marginLatitudeRaw;
     private boolean setMarginLatitudeByKm;
     private double marginLongitudeRaw;
@@ -103,6 +105,7 @@ public class ModelSetMapper extends Operation {
      * Whether to display map as mosaic without smoothing.
      */
     private boolean mosaic;
+    private int cpStyle;
 
     /**
      * @param args (String[]) Arguments: none to create a property file, path of property file to run it.
@@ -151,6 +154,8 @@ public class ModelSetMapper extends Operation {
             pw.println("#nPanelsPerRow ");
             pw.println("##To specify the map region, set it in the form lonMin/lonMax/latMin/latMax.");
             pw.println("#mapRegion -180/180/-90/90");
+            pw.println("##(boolean) Whether to enlarge labels and use stronger colors for slides. (true)");
+            pw.println("#forSlides ");
             pw.println("##########The following should be set to half of dLatitude and dLongitude used to design voxels (or smaller).");
             pw.println("##(double) Latitude margin at both ends [km]. If this is unset, the following marginLatitudeDeg will be used.");
             pw.println("#marginLatitudeKm ");
@@ -165,6 +170,8 @@ public class ModelSetMapper extends Operation {
             pw.println("#scale ");
             pw.println("##(boolean) Whether to display map as mosaic without smoothing. (false)");
             pw.println("#mosaic ");
+            pw.println("##Style of color palette, from {0: red-turquoise, 1: orange-skyblue, 2: red-purple}. (1)");
+            pw.println("#cpStyle ");
         }
         System.err.println(outPath + " is created.");
     }
@@ -203,6 +210,7 @@ public class ModelSetMapper extends Operation {
         if (property.containsKey("displayLayers")) displayLayers = property.parseIntArray("displayLayers", null);
         nPanelsPerRow = property.parseInt("nPanelsPerRow", "4");
         if (property.containsKey("mapRegion")) mapRegion = property.parseString("mapRegion", null);
+        forSlides = property.parseBoolean("forSlides", "true");
 
         if (property.containsKey("marginLatitudeKm")) {
             marginLatitudeRaw = property.parseDouble("marginLatitudeKm", null);
@@ -223,6 +231,7 @@ public class ModelSetMapper extends Operation {
 
         scale = property.parseDouble("scale", "3");
         mosaic = property.parseBoolean("mosaic", "false");
+        cpStyle = property.parseInt("cpStyle", "1");
     }
 
     @Override
@@ -301,6 +310,8 @@ public class ModelSetMapper extends Operation {
             ScalarMapShellscript script = new ScalarMapShellscript(variable, ScalarType.PERCENT, radii, boundaries,
                     mapRegion, gridInterval, scale, nPanelsPerRow);
             if (displayLayers != null) script.setDisplayLayers(displayLayers);
+            script.setCpStyle(cpStyle, variable);
+            script.setForSlides(forSlides);
             script.write(outPath);
             String fileNameRoot = script.getPlotFileNameRoot();
             writeParentShellscript(fileNameRoot, outPath.resolve(fileNameRoot + "AllMap.sh"));

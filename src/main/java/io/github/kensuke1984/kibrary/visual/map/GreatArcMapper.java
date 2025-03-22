@@ -157,38 +157,37 @@ public class GreatArcMapper extends Operation {
     }
 
     private void outputGMT(HorizontalPosition startPosition, HorizontalPosition endPosition, Path outputPath) throws IOException {
+        String regionString = decideMapRegion(startPosition, endPosition);
+        String tickString = ScalarMapShellscript.decideTickSpacing(regionString);
+
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath))) {
             pw.println("#!/bin/sh");
             pw.println("");
-            pw.println("outputps=\"arcMap.eps\"");
-            pw.println("");
-            pw.println("# GMT options");
+            pw.println("#------- GMT options");
             pw.println("gmt set COLOR_MODEL RGB");
             pw.println("gmt set PS_MEDIA 1500x1500");
             pw.println("gmt set PS_PAGE_ORIENTATION landscape");
             pw.println("gmt set MAP_DEFAULT_PEN black");
             pw.println("gmt set MAP_TITLE_OFFSET 1p");
-            pw.println("gmt set FONT 10p");
+            pw.println("gmt set FONT 25");
             pw.println("");
-            pw.println("# map parameters");
-            pw.println("R='-R" + decideMapRegion(startPosition, endPosition) + "'");
-            pw.println("J='-Jq1:120000000'");
-            pw.println("B='-Ba30 -BWeSn'");
+            pw.println("#------- Map parameters");
+            pw.println("R='-R" + regionString + "'");
+            pw.println("J='-JQ20'");
+            pw.println("B='-B" + tickString + " -BWeSn'");
             pw.println("");
-            pw.println("gmt pscoast -Ggray -Wthinnest,gray20 $B $J $R -P -K > $outputps");
+            pw.println("#------- Begin main plot");
+            pw.println("gmt begin arcMap eps,pdf,png");
+            pw.println("gmt pscoast -Ggray -Wthinnest,gray20 $B $J $R");
             pw.println("");
             pw.println("#------- Great arc");
-            pw.println("gmt psxy -: $J $R -O -K -Wfat,magenta << END >> $outputps");
+            pw.println("gmt psxy -: -Wfat,magenta << END");
             pw.println(startPosition.toString());
             pw.println(endPosition.toString());
             pw.println("END");
             pw.println("");
             pw.println("#------- Finalize");
-            pw.println("gmt pstext -N -F+jLM+f30p,Helvetica,black -J -R -O << END >> $outputps");
-            pw.println("END");
-            pw.println("");
-            pw.println("gmt psconvert $outputps -A -Tf -Qg4 -E100");
-            pw.println("gmt psconvert $outputps -A -Tg -Qg4 -E500");
+            pw.println("gmt end");
             pw.println("");
             pw.println("#-------- Clear");
             pw.println("rm -rf cp.cpt gmt.conf gmt.history");
