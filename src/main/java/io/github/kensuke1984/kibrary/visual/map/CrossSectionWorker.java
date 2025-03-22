@@ -77,6 +77,14 @@ public class CrossSectionWorker {
     private double maskThreshold;
     private String maskFileName;
 
+    /**
+     * Color palette.
+     * 0: red-yellow-white-skyblue-turquoise
+     * 1: orange-yellow-white-cyan-skyblue
+     * 2: red-orange-white-skyblue-purple
+     */
+    private int cpStyle = 1;
+
     private Path raypathPath;
     private Path leftTextPath;
     private Path rightTextPath;
@@ -179,6 +187,10 @@ public class CrossSectionWorker {
         // set scalar file name
         String tag2 = (tag != null) ? (tag + "_forMaskXZ") : "forMaskXZ";
         this.maskFileName = ScalarListFile.generateFileName(maskVariable, maskScalarType, tag2);
+    }
+
+    void setCpStyle(int cpStyle, VariableType variable) {
+        this.cpStyle = cpStyle;
     }
 
     /**
@@ -357,7 +369,7 @@ public class CrossSectionWorker {
         Path annotationPath = outPath.resolve("rAnnotation.txt");
         Path gmtPath = outPath.resolve(plotFileNameRoot + "Section.sh");
 
-        ScalarMapShellscript.writeCpMaster(cpMasterPath);
+        ScalarMapShellscript.writeCpMaster(cpMasterPath, cpStyle, true);
         if (maskExists) {
             ScalarMapShellscript.writeCpMask(cpMaskPath, maskThreshold);
         }
@@ -397,7 +409,7 @@ public class CrossSectionWorker {
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath))) {
             pw.println("#!/bin/sh");
             pw.println("");
-            pw.println("# create grid");
+            pw.println("#------- Create grid");
             pw.println("cat " + scalarFileName + " | \\");
             pw.println("awk '{print $1,$4,$5}' | \\");
             pw.println("gmt xyz2grd -G0model.grd -R" + MathAid.simplestString(startAngle) + "/" + MathAid.simplestString(endAngle)
@@ -411,7 +423,7 @@ public class CrossSectionWorker {
                         + " -I" + MathAid.simplestString(horizontalGridInterval) + "/" + MathAid.simplestString(verticalGridInterval) + " -di0");
             }
             pw.println("");
-            pw.println("# GMT options");
+            pw.println("#------- GMT options");
             pw.println("gmt set COLOR_MODEL RGB");
             pw.println("gmt set PS_MEDIA 6000x6000");
             pw.println("gmt set PS_PAGE_ORIENTATION landscape");
@@ -422,51 +434,53 @@ public class CrossSectionWorker {
             pw.println("gmt set MAP_ANNOT_OFFSET_PRIMARY 10p");
             pw.println("gmt set MAP_TICK_LENGTH_PRIMARY 10p");
             pw.println("");
-            pw.println("# map parameters");
+            pw.println("#------- Map parameters");
             pw.println("R='-R" + MathAid.simplestString(startAngle) + "/" + MathAid.simplestString(endAngle)
                     + "/" + MathAid.simplestString(lowerRadius) + "/" + MathAid.simplestString(upperRadius) + "'");
             pw.println("J='-JP60+a+t" + MathAid.simplestString((endAngle + startAngle) / 2) + "'");
             pw.println("B='-BWeSn -Bx30f10 -BycrAnnotation.txt'");
             pw.println("");
-            pw.println("outputps=" + plotFileNameRoot + "Section.eps");
+            pw.println("#------- Color palette");
             pw.println("MP=" + scale);
             pw.println("gmt makecpt -Ccp_master.cpt -T-$MP/$MP > cp.cpt");
             pw.println("");
+            pw.println("#------- Begin main plot");
+            pw.println("gmt begin " + plotFileNameRoot + "Section eps,pdf,png");
+            pw.println("");
             pw.println("#------- Panels");
-            pw.println("gmt grdimage 0model.grd $B $J $R -Ccp.cpt -K -Y80 -X20 > $outputps");
+            pw.println("gmt grdimage 0model.grd -Ccp.cpt -Y80 -X20 $B $J $R");
             if (maskExists) {
-                pw.println("gmt grdimage 0mask.grd $J $R -Ccp_mask.cpt -G0/0/0 -t80 -K -O >> $outputps");
+                pw.println("gmt grdimage 0mask.grd -Ccp_mask.cpt -G0/0/0 -t80");
             }
             pw.println("");
             if (raypathPath != null) {
-                pw.println("cat " + raypathPath + " | gmt psxy -J -R -K -O >> $outputps");
+                pw.println("cat " + raypathPath + " | gmt psxy");
                 pw.println("");
             }
             if (!Double.isNaN(sourceRadius)) {
                 pw.println("echo \"0 " + sourceRadius + "\" | \\");
-                pw.println("gmt psxy -N -SA1 -G156/255/0 -Wthickest -J -R -K -O >> $outputps");
+                pw.println("gmt psxy -N -SA1 -G156/255/0 -Wthickest");
                 pw.println("");
             }
             if (!Double.isNaN(receiverRadius)) {
                 pw.println("echo \"" + receiverDistance + " " + receiverRadius + "\" | \\");
-                pw.println("gmt psxy -N -SC1 -G0/255/156 -Wthickest -J -R -K -O >> $outputps");
+                pw.println("gmt psxy -N -SC1 -G0/255/156 -Wthickest");
                 pw.println("");
             }
             pw.println("#------- Scale");
             pw.println("gmt psscale -Ccp.cpt " + (scalarType.isNonNegative() ? "-G0/$MP " : "")
-                    + "-DjCB+jCB+w12/0.8+h -B$MP+l\"" + ScalarType.createScaleLabel(variable, scalarType)
-                    + "\" -J -R -K -O >> $outputps");
+                    + "-DjCB+jCB+w12/0.8+h -B$MP+l\"" + ScalarType.createScaleLabel(variable, scalarType, 75) + "\"");
+            pw.println("#gmt psscale -Ccp.cpt " + (scalarType.isNonNegative() ? "-G0/$MP " : "")
+                    + "-DjCB+jCB+w12/0.8+h -B$MP+l\"" + ScalarType.createScaleLabel_TeX(variable, scalarType) + "\"");
+            pw.println("");
+            pw.println("#------- Labels");
+            if (leftTextPath != null)
+                pw.println("gmt pstext -N -D0/-2 -F+cTL+a0+jTL+f50p,Helvetica,black < " + leftTextPath);
+            if (rightTextPath != null)
+                pw.println("gmt pstext -N -D-2/-2 -F+cTR+a0+jTR+f50p,Helvetica,black < " + rightTextPath);
             pw.println("");
             pw.println("#------- Finalize");
-            if (leftTextPath != null)
-                pw.println("gmt pstext -N -D0/-2 -F+cTL+a0+jTL+f50p,Helvetica,black -J -R -K -O < " + leftTextPath + " >> $outputps");
-            if (rightTextPath != null)
-                pw.println("gmt pstext -N -D-2/-2 -F+cTR+a0+jTR+f50p,Helvetica,black -J -R -K -O < " + rightTextPath + " >> $outputps");
-            pw.println("gmt pstext -N -F+cBR+a0+jBR+f50p,Helvetica,black -J -R -O << END >> $outputps");
-            pw.println("END");
-            pw.println("");
-            pw.println("gmt psconvert $outputps -E100 -Tf -A -Qg4");
-            pw.println("gmt psconvert $outputps -E100 -Tg -A -Qg4");
+            pw.println("gmt end");
             pw.println("");
             pw.println("#-------- Clear");
             pw.println("rm -rf cp.cpt gmt.conf gmt.history");

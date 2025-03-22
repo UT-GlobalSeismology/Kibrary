@@ -105,6 +105,7 @@ public class CrossSectionCreator extends Operation {
      * Whether to display map as mosaic without smoothing.
      */
     private boolean mosaic;
+    private int cpStyle;
     /**
      * Threshold for mask.
      */
@@ -179,6 +180,8 @@ public class CrossSectionCreator extends Operation {
             pw.println("#scale ");
             pw.println("##(boolean) Whether to display map as mosaic without smoothing. (false)");
             pw.println("#mosaic true");
+            pw.println("##Style of color palette, from {0: red-turquoise, 1: orange-skyblue, 2: red-purple}. (1)");
+            pw.println("#cpStyle ");
             pw.println("##(double) Threshold for mask. (0.3)");
             pw.println("#maskThreshold ");
             pw.println("##########Parameters for perturbation values.");
@@ -250,6 +253,7 @@ public class CrossSectionCreator extends Operation {
 
         scale = property.parseDouble("scale", "3");
         mosaic = property.parseBoolean("mosaic", "false");
+        cpStyle = property.parseInt("cpStyle", "1");
         maskThreshold = property.parseDouble("maskThreshold", "0.3");
 
         if (property.containsKey("pos0Radius")) pos0Radius = property.parseDouble("pos0Radius", null);
@@ -288,6 +292,7 @@ public class CrossSectionCreator extends Operation {
                 marginLatitudeRaw, setMarginLatitudeByKm, marginLongitudeRaw, setMarginLongitudeByKm, marginRadius,
                 scale, mosaic, variable, scalarType, horizontalGridInterval, verticalGridInterval, null, discretePositions);
         if (maskPath != null) worker.setMask(maskVariable, maskScalarType, maskThreshold);
+        worker.setCpStyle(cpStyle, variable);
         if (!Double.isNaN(pos0Radius)) worker.setSourceRadius(pos0Radius);
         if (!Double.isNaN(pos1Radius)) worker.setReceiverRadius(pos1Radius);
         if (raypathPath != null) worker.setRaypathFile(Paths.get("..").resolve(raypathPath));

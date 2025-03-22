@@ -21,7 +21,7 @@ import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.elastic.VariableType;
 import io.github.kensuke1984.kibrary.perturbation.ScalarListFile;
 import io.github.kensuke1984.kibrary.perturbation.ScalarType;
-import io.github.kensuke1984.kibrary.timewindow.Timewindow;
+import io.github.kensuke1984.kibrary.timewindow.TimeWindow;
 import io.github.kensuke1984.kibrary.timewindow.TravelTimeInformation;
 import io.github.kensuke1984.kibrary.timewindow.TravelTimeInformationFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
@@ -358,14 +358,14 @@ public class PartialsMovieMaker extends Operation {
                                     .findFirst().get();
                         }
 
-                        // for each timewindow
+                        // for each time window
                         for (double startTime : startTimes) {
                             List<PartialID> partialsForWindow = partialsForEntry.stream()
                                     .filter(partial -> partial.getStartTime() == startTime).collect(Collectors.toList());
 
                             // create folder
                             String seriesName = event + "_" + observerName + "_" + component + "_" + variable + "_w"
-                                    + MathAid.padToString(startTime, Timewindow.TYPICAL_MAX_INTEGER_DIGITS, Timewindow.DECIMALS, true, "d");
+                                    + MathAid.padToString(startTime, TimeWindow.TYPICAL_MAX_INTEGER_DIGITS, TimeWindow.DECIMALS, true, "d");
                             Path seriesPath = outPath.resolve(seriesName);
                             Files.createDirectories(seriesPath);
 
@@ -405,7 +405,7 @@ public class PartialsMovieMaker extends Operation {
                                 // create folder for each snapshot
                                 // The number part of output file names has to be padded with 0 for the "convert" command to work.
                                 String snapshotName = "snapshot_t"
-                                        + MathAid.padToString(time, Timewindow.TYPICAL_MAX_INTEGER_DIGITS, Timewindow.DECIMALS, true, "d");
+                                        + MathAid.padToString(time, TimeWindow.TYPICAL_MAX_INTEGER_DIGITS, TimeWindow.DECIMALS, true, "d");
                                 Path outSnapshotPath = seriesPath.resolve(snapshotName);
                                 Files.createDirectories(outSnapshotPath);
 

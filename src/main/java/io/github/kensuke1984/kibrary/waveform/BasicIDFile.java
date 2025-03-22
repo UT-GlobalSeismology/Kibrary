@@ -416,7 +416,7 @@ public final class BasicIDFile {
     }
 
     /**
-     * The name of text file which is to contain waveform data. TODO there may be multiple timewindows for a dataEntry
+     * The name of text file which is to contain waveform data. TODO there may be multiple time windows for a dataEntry
      * @param oneID
      * @return
      */

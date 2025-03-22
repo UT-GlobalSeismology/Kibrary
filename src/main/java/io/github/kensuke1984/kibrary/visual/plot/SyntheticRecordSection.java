@@ -531,18 +531,22 @@ public class SyntheticRecordSection extends Operation {
             sacTrace.write(outputPath);
 
             // output ref trace 1
-            outputPath = eventPath.resolve(sacNameString + ".ref1.txt");
-            SACFileName refSACName1 = new SACFileName(refSynPath1.resolve(eventName).resolve(sacNameString));
-            sacTrace = refSACName1.read().createTrace().cutWindow(minTime, maxTime);
-            if (subtractMain) sacTrace = sacTrace.subtract(mainSacTrace);
-            sacTrace.write(outputPath);
+            if (refSynPath1 != null) {
+                outputPath = eventPath.resolve(sacNameString + ".ref1.txt");
+                SACFileName refSACName1 = new SACFileName(refSynPath1.resolve(eventName).resolve(sacNameString));
+                sacTrace = refSACName1.read().createTrace().cutWindow(minTime, maxTime);
+                if (subtractMain) sacTrace = sacTrace.subtract(mainSacTrace);
+                sacTrace.write(outputPath);
+            }
 
             // output ref trace 2
-            outputPath = eventPath.resolve(sacNameString + ".ref2.txt");
-            SACFileName refSACName2 = new SACFileName(refSynPath2.resolve(eventName).resolve(sacNameString));
-            sacTrace = refSACName2.read().createTrace().cutWindow(minTime, maxTime);
-            if (subtractMain) sacTrace = sacTrace.subtract(mainSacTrace);
-            sacTrace.write(outputPath);
+            if (refSynPath2 != null) {
+                outputPath = eventPath.resolve(sacNameString + ".ref2.txt");
+                SACFileName refSACName2 = new SACFileName(refSynPath2.resolve(eventName).resolve(sacNameString));
+                sacTrace = refSACName2.read().createTrace().cutWindow(minTime, maxTime);
+                if (subtractMain) sacTrace = sacTrace.subtract(mainSacTrace);
+                sacTrace.write(outputPath);
+            }
         }
 
         private void calculateSynMeanMax(Set<SACFileName> names) throws IOException, TauModelException {

@@ -115,7 +115,7 @@ public class ResultEvaluation {
      * <p>
      * (&delta;d<sup>T</sup> - &delta;m<sup>T</sup>A<sup>T</sup>)(&delta;d - A&delta;m) = &delta;d<sup>T</sup>&delta;d - &delta;d<sup>T
      * </sup>A&delta;m - &delta;m<sup>T</sup>A<sup>T</sup>&delta;d + &delta;m<sup>T</sup>A<sup>T</sup>A&delta;m = &delta;d<sup>T
-     * </sup>&delta;d - 2*(A<sup>T</sup>&delta;d)&delta;m<sup>T</sup> + &delta;m<sup>T</sup>(A<sup>T</sup>A)&delta;m
+     * </sup>&delta;d - 2*&delta;m<sup>T</sup>(A<sup>T</sup>&delta;d) + &delta;m<sup>T</sup>(A<sup>T</sup>A)&delta;m
      *
      * @param m &delta;m
      * @return |A&delta;m - &delta;d|<sup>2</sup>/|obs|<sup>2</sup>
@@ -123,7 +123,7 @@ public class ResultEvaluation {
     private double varianceOf(RealVector m) {
         Objects.requireNonNull(m);
 
-        double variance = dNorm * dNorm - 2  * atd.dotProduct(m) + m.dotProduct(ata.operate(m));
+        double variance = dNorm * dNorm - 2 * atd.dotProduct(m) + m.dotProduct(ata.operate(m));
         return variance / (obsNorm * obsNorm);
     }
 

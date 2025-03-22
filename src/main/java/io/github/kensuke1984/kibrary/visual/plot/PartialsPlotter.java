@@ -314,7 +314,7 @@ public class PartialsPlotter extends Operation {
            // set xrange
            gnuplot.setXrange(id.getStartTime() - FRONT_MARGIN, id.getStartTime() - FRONT_MARGIN + timeLength);
 
-           // display data of timewindow
+           // display data of time window
            gnuplot.addLabel(id.getObserver().toPaddedInfoString() + " " + id.getSacComponent().toString(), "graph", 0.01, 0.95);
            gnuplot.addLabel(id.getGlobalCMTID().toString(), "graph", 0.01, 0.85);
            gnuplot.addLabel(id.getVoxelPosition().toString(), "graph", 0.01, 0.75);

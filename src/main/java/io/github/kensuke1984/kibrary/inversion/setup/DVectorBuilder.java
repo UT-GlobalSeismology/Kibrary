@@ -49,11 +49,11 @@ public final class DVectorBuilder {
      */
     private final double numIndependent;
     /**
-     * Number of timewindows.
+     * Number of time windows.
      */
     private final int nTimeWindow;
     /**
-     * Indices of the points that each timewindow starts at.
+     * Indices of the points that each time window starts at.
      */
     private final int[] startPoints;
 
@@ -74,7 +74,7 @@ public final class DVectorBuilder {
         obsVecs = new RealVector[nTimeWindow];
         synVecs = new RealVector[nTimeWindow];
         startPoints = new int[nTimeWindow];
-        System.err.println(" " + MathAid.switchSingularPlural(nTimeWindow, "timewindow is", "timewindows are") + " used");
+        System.err.println(" " + MathAid.switchSingularPlural(nTimeWindow, "time window is", "time windows are") + " used");
 
         totalNpts = read();
         numIndependent = computeNumIndependent();
@@ -129,20 +129,20 @@ public final class DVectorBuilder {
     }
 
     /**
-     * Look for the timewindow that the input ID corresponds to.
+     * Look for the time window that the input ID corresponds to.
      * If the input is obs, the search is done for obs, while if the input is syn or partial, the search is done for syn.
      *
      * @param id ({@link BasicID}) ID to search for.
      * @return (int) Index for the ID. -1 if no ID is found.
      */
-    public int whichTimewindow(BasicID id) {
+    public int whichTimeWindow(BasicID id) {
         BasicID[] ids = id.getWaveformType() == WaveformType.OBS ? obsIDs : synIDs;
         return IntStream.range(0, ids.length).filter(i -> BasicID.isPair(id, ids[i])).findAny().orElse(-1);
     }
 
     /**
-     * Conposes a full vector from smaller ones corresponding to the timewindows set in this class.
-     * Every vector must have the same length as the corresponding timewindow.
+     * Conposes a full vector from smaller ones corresponding to the time windows set in this class.
+     * Every vector must have the same length as the corresponding time window.
      *
      * @param vectors (RealVector[]) Vectors to combine.
      * @return (RealVector) Combined vector.
@@ -161,7 +161,7 @@ public final class DVectorBuilder {
     }
 
     /**
-     * Decomposes a full vector to smaller ones corresponding to the timewindows set in this class.
+     * Decomposes a full vector to smaller ones corresponding to the time windows set in this class.
      * Error occurs if the input is invalid.
      * @param vector (RealVector) Full vector to separate.
      * @return (RealVector[]) Separated vectors for each time window.
@@ -176,14 +176,14 @@ public final class DVectorBuilder {
 
     /**
      * Builds and returns the d vector.
-     * It will be weighed as Wd = [weight diagonal matrix](obsVector - synVector).
+     * It will be weighted as Wd = [weight diagonal matrix](obsVector - synVector).
      * @param weighting (Weighting)
      * @return (RealVector) Wd
      */
     public RealVector buildWithWeight(RealVector[] weighting) {
         RealVector v = new ArrayRealVector(totalNpts);
         for (int i = 0; i < nTimeWindow; i++) {
-            // [(obs - syn) * weight] for each element point inside timewindow i
+            // [(obs - syn) * weight] for each element point inside time window i
             RealVector vi = obsVecs[i].subtract(synVecs[i]).ebeMultiply(weighting[i]);
             v.setSubVector(startPoints[i], vi);
         }
@@ -241,8 +241,8 @@ public final class DVectorBuilder {
     }
 
     /**
-     * @param i (int) Index of timewindow.
-     * @return (int) Number of points inside i-th timewindow.
+     * @param i (int) Index of time window.
+     * @return (int) Number of points inside i-th time window.
      */
     public int nptsOfWindow(int i) {
         return obsIDs[i].getNpts();
@@ -267,7 +267,7 @@ public final class DVectorBuilder {
     }
 
     /**
-     * @return (int) Number of timewindows (= number of BasicIDs) included.
+     * @return (int) Number of time windows (= number of BasicIDs) included.
      */
     public int getNTimeWindow() {
         return nTimeWindow;
@@ -290,8 +290,8 @@ public final class DVectorBuilder {
     }
 
     /**
-     * @param i (int) Index of timewindow.
-     * @return (int) Index of point where the i-th timewindow starts.
+     * @param i (int) Index of time window.
+     * @return (int) Index of point where the i-th time window starts.
      */
     public int getStartPoint(int i) {
         return startPoints[i];

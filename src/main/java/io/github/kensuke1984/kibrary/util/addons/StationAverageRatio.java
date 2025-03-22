@@ -3,8 +3,8 @@ package io.github.kensuke1984.kibrary.util.addons;
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.correction.StaticCorrectionData;
 import io.github.kensuke1984.kibrary.correction.StaticCorrectionDataFile;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
+import io.github.kensuke1984.kibrary.timewindow.TimeWindowData;
+import io.github.kensuke1984.kibrary.timewindow.TimeWindowDataFile;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 
@@ -26,12 +26,12 @@ public class StationAverageRatio {
 		Path timewindowPath = Paths.get(args[1]);
 		
 		Set<StaticCorrectionData> corrections = StaticCorrectionDataFile.read(staticCorrectionPath);
-		Set<TimewindowData> timewindows = TimewindowDataFile.read(timewindowPath);
+		Set<TimeWindowData> timewindows = TimeWindowDataFile.read(timewindowPath);
 
 		Map<Observer, Double> stationAverages = new HashMap<Observer, Double>();
 		Map<Observer, Integer> stationCount = new HashMap<Observer, Integer>();
 		
-		for (TimewindowData tw : timewindows) {
+		for (TimeWindowData tw : timewindows) {
 //			if (!tw.getGlobalCMTID().equals(new GlobalCMTID("200608250044A")))
 //				continue;
 			

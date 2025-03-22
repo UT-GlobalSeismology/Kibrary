@@ -37,8 +37,8 @@ public class TravelTimeInformationFile {
 
     /**
      * Writes a file with information of travel times.
-     * @param usePhases (Set of Phase) Phases that are used in timewindow.
-     * @param avoidPhases (Set of Phase) Phases that are avoided in timewindow.
+     * @param usePhases (Set of Phase) Phases that are used in time window.
+     * @param avoidPhases (Set of Phase) Phases that are avoided in time window.
      * @param informationSet (Set of {@link TravelTimeInformation}) Travel time information.
      * @param outputPath (Path) Output file.
      * @param options (OpenOption...) Options for write.
@@ -70,7 +70,7 @@ public class TravelTimeInformationFile {
                 for (Phase phase : useList) {
                     Double travelTime = info.timeOf(phase);
                     if (travelTime != null) {
-                        pw.print(" " + MathAid.padToString(travelTime, Timewindow.TYPICAL_MAX_INTEGER_DIGITS, Timewindow.DECIMALS, false));
+                        pw.print(" " + MathAid.padToString(travelTime, TimeWindow.TYPICAL_MAX_INTEGER_DIGITS, TimeWindow.DECIMALS, false));
                     } else {
                         pw.print(" -");
                     }
@@ -78,7 +78,7 @@ public class TravelTimeInformationFile {
                 for (Phase phase : avoidList) {
                     Double travelTime = info.timeOf(phase);
                     if (travelTime != null) {
-                        pw.print(" " + MathAid.padToString(travelTime, Timewindow.TYPICAL_MAX_INTEGER_DIGITS, Timewindow.DECIMALS, false));
+                        pw.print(" " + MathAid.padToString(travelTime, TimeWindow.TYPICAL_MAX_INTEGER_DIGITS, TimeWindow.DECIMALS, false));
                     } else {
                         pw.print(" -");
                     }

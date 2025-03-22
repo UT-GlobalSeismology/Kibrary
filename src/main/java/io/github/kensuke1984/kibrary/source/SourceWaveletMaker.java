@@ -18,13 +18,14 @@ import org.apache.commons.math3.linear.RealVector;
 
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
+import io.github.kensuke1984.kibrary.Test_temp;
 import io.github.kensuke1984.kibrary.correction.StaticCorrectionData;
 import io.github.kensuke1984.kibrary.correction.StaticCorrectionDataFile;
 import io.github.kensuke1984.kibrary.math.FourierTransform;
 import io.github.kensuke1984.kibrary.math.Trace;
-import io.github.kensuke1984.kibrary.timewindow.Timewindow;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
+import io.github.kensuke1984.kibrary.timewindow.TimeWindow;
+import io.github.kensuke1984.kibrary.timewindow.TimeWindowData;
+import io.github.kensuke1984.kibrary.timewindow.TimeWindowDataFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.ThreadAid;
@@ -71,7 +72,7 @@ public class SourceWaveletMaker extends Operation {
     /**
      * Path of a time window information file.
      */
-    private Path timewindowPath;
+    private Path timeWindowPath;
     /**
      * Time length that the time window includes before main phase arrival [s].
      * If the value is 5 (not -5), each time window starts 5 sec before the main phase arrival.
@@ -112,7 +113,7 @@ public class SourceWaveletMaker extends Operation {
      */
     private int np;
 
-    private Set<TimewindowData> sourceTimewindowSet;
+    private Set<TimeWindowData> sourceTimeWindowSet;
     private Set<StaticCorrectionData> staticCorrectionSet;
 
     /**
@@ -138,7 +139,7 @@ public class SourceWaveletMaker extends Operation {
             pw.println("##SacComponents to be used, listed using spaces. (Z R T)");
             pw.println("#components ");
             pw.println("##Path of a time window file, must be set.");
-            pw.println("#timewindowPath selectedTimewindow.dat");
+            pw.println("#timeWindowPath selectedTimeWindow.dat");
             pw.println("##(double) Time length before phase arrival in time window [s]. (20)");
             pw.println("#frontShift ");
             pw.println("##Path of a root folder containing observed dataset. (.)");
@@ -173,7 +174,8 @@ public class SourceWaveletMaker extends Operation {
         components = Arrays.stream(property.parseStringArray("components", "Z R T"))
                 .map(SACComponent::valueOf).collect(Collectors.toSet());
 
-        timewindowPath = property.parsePath("timewindowPath", null, true, workPath);
+        timeWindowPath = Test_temp.getTimeWindowPath_temp(property, workPath);  //TODO delete (This is here for backward compatibility.)
+//      timeWindowPath = property.parsePath("timeWindowPath", null, true, workPath);
         frontShift = property.parseDouble("frontShift", "20");
         obsPath = property.parsePath("obsPath", ".", true, workPath);
         synPath = property.parsePath("synPath", ".", true, workPath);
@@ -193,10 +195,10 @@ public class SourceWaveletMaker extends Operation {
 
     @Override
     public void run() throws IOException {
-        // read timewindow file and select based on component and entries
-        sourceTimewindowSet = TimewindowDataFile.readAndSelect(timewindowPath, dataEntryPath, components);
+        // read time window file and select based on component and entries
+        sourceTimeWindowSet = TimeWindowDataFile.readAndSelect(timeWindowPath, dataEntryPath, components);
         // collect all events that exist in the time window set
-        Set<GlobalCMTID> eventSet = sourceTimewindowSet.stream().map(TimewindowData::getGlobalCMTID).collect(Collectors.toSet());
+        Set<GlobalCMTID> eventSet = sourceTimeWindowSet.stream().map(TimeWindowData::getGlobalCMTID).collect(Collectors.toSet());
 
         // read static corrections
         staticCorrectionSet = (staticCorrectionPath == null ? Collections.emptySet() :
@@ -223,12 +225,12 @@ public class SourceWaveletMaker extends Operation {
         double halfDuration;
 
         private Worker(GlobalCMTID eventID) {
-            super(eventID, obsPath, synPath, convolved, sacSamplingHz, sourceTimewindowSet);
+            super(eventID, obsPath, synPath, convolved, sacSamplingHz, sourceTimeWindowSet);
             halfDuration = eventID.getEventData().getHalfDuration();
         }
 
         @Override
-        public void actualWork(TimewindowData timeWindow, SACFileAccess obsSac, SACFileAccess synSac) {
+        public void actualWork(TimeWindowData timeWindow, SACFileAccess obsSac, SACFileAccess synSac) {
 
             // check SAC file end time
             if (timeWindow.getEndTime() > obsSac.getValue(SACHeaderEnum.E)
@@ -253,7 +255,7 @@ public class SourceWaveletMaker extends Operation {
             // use window [arrival - halfDuration, arrival + 3 * halfDuration]
             double startTime = timeWindow.getStartTime() + frontShift - halfDuration;
             double endTime = timeWindow.getStartTime() + frontShift + 3 * halfDuration;
-            Timewindow stfWindow = new Timewindow(startTime, endTime);
+            TimeWindow stfWindow = new TimeWindow(startTime, endTime);
 
             // prepare observed trace, integrated to get displacement waveform
             Trace obsTrace = obsSac.createTrace().cutWindow(stfWindow.shift(-shift), sacSamplingHz);
@@ -289,7 +291,7 @@ public class SourceWaveletMaker extends Operation {
 
         @Override
         public void finalWork() {
-            // divide by the number of timewindows added to get average, and half duration to normalize the amplitude
+            // divide by the number of time windows added to get average, and half duration to normalize the amplitude
             double[] yArray = sumVector.mapDivide(num).mapDivide(halfDuration).toArray();
             // taper
             yArray = FourierTransform.taper(yArray, TAPER_LENGTH_PERCENT, true);

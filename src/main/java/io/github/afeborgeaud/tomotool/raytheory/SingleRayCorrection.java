@@ -15,8 +15,8 @@ import io.github.afeborgeaud.tomotool.topoModel.Seismic3Dmodel;
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.correction.StaticCorrectionData;
 import io.github.kensuke1984.kibrary.correction.StaticCorrectionDataFile;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
+import io.github.kensuke1984.kibrary.timewindow.TimeWindowData;
+import io.github.kensuke1984.kibrary.timewindow.TimeWindowDataFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 
@@ -24,7 +24,7 @@ import io.github.kensuke1984.kibrary.util.GadgetAid;
  * TODO CHECK ACURACY
  * Compute mantle correction value at each raypath.
  * Different from MantleCorrection, this class uses single phase to compute correction value.
- * Raypath informations are referred from {@link TimewindowData}.
+ * Raypath informations are referred from {@link TimeWindowData}.
  *
  * The format of output file is same as {@link StaticCorrectionDataFile}.
  * bouncepoint.lst file includes following: obsever, event, bounce point position, and mantle correction value.
@@ -48,7 +48,7 @@ public class SingleRayCorrection{
     /**
      * Timewindow data
      */
-    private Set<TimewindowData> timewindows;
+    private Set<TimeWindowData> timewindows;
     /**
      * Seismic 3D model
      * Sould be selected from {@link SEMUCBWM1}, {@link S20RTS}
@@ -111,7 +111,7 @@ public class SingleRayCorrection{
     }
 
     private void set() throws IOException {
-        timewindows = TimewindowDataFile.read(inputPath);
+        timewindows = TimeWindowDataFile.read(inputPath);
 
         // set 3D seismic model
         switch (threeDmodel) {
@@ -148,7 +148,7 @@ public class SingleRayCorrection{
         if(timewindows == null || timewindows.isEmpty()) {
             throw new RuntimeException("Error: timewindow file is null or empty");
         } else {
-            for(TimewindowData window : timewindows) {
+            for(TimeWindowData window : timewindows) {
                 Compute(window);
             }
         }
@@ -180,7 +180,7 @@ public class SingleRayCorrection{
      * @param window
      * @throws IOException
      */
-    public void Compute(TimewindowData window) throws IOException {
+    public void Compute(TimeWindowData window) throws IOException {
         List<RaypathInformation> raypathInformations = new ArrayList<>();
         raypathInformations.add(new RaypathInformation(window.getObserver(), window.getGlobalCMTID()));
 

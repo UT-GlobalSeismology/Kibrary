@@ -8,8 +8,8 @@ import org.apache.commons.math3.util.Precision;
 
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.elastic.VariableType;
-import io.github.kensuke1984.kibrary.timewindow.Timewindow;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
+import io.github.kensuke1984.kibrary.timewindow.TimeWindow;
+import io.github.kensuke1984.kibrary.timewindow.TimeWindowData;
 import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
@@ -42,7 +42,7 @@ import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
  * <li> number of points </li>
  * <li> sampling Hz </li>
  * <li> whether waveform is either convolved or observed </li>
- * <li> phases contained in timewindow </li>
+ * <li> phases contained in time window </li>
  * </ul>
  * <p>
  * Caution: A PartialID instance may or may not hold waveform data, dependeing on whether it has already been set.
@@ -169,9 +169,9 @@ public class PartialID extends BasicID {
     @Override
     public String toString() {
         String partialString = observer.toPaddedInfoString() + " " + eventID.toPaddedString() + " " + component + " "
-                + MathAid.padToString(startTime, Timewindow.TYPICAL_MAX_INTEGER_DIGITS, Timewindow.DECIMALS, false) + " "
+                + MathAid.padToString(startTime, TimeWindow.TYPICAL_MAX_INTEGER_DIGITS, TimeWindow.DECIMALS, false) + " "
                 + npts + " " + samplingHz + " " + minPeriod + " " + maxPeriod + " "
-                + TimewindowData.phasesAsString(phases) + " " + convolved + " "
+                + TimeWindowData.phasesAsString(phases) + " " + convolved + " "
                 + parameterType + " " + variableType + " " + voxelPosition;
         return partialString;
     }

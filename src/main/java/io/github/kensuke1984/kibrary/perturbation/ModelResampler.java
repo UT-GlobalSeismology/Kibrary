@@ -151,7 +151,7 @@ public class ModelResampler extends Operation {
                 FullPosition knownPosition = known.getParameter().getPosition();
                 double knownLatitude = knownPosition.getLatitude();
                 OptionalDouble latitudeOpt = Arrays.stream(latitudes).filter(lat -> Math.abs(lat - knownLatitude) < 0.01).distinct().sorted().findFirst();
-                if (latitudeOpt.isEmpty()) continue;
+                if (!latitudeOpt.isPresent()) continue;
                 double latitude = latitudeOpt.getAsDouble();
 
                 FullPosition position = new FullPosition(latitude, knownPosition.getLongitude(), knownPosition.getR());

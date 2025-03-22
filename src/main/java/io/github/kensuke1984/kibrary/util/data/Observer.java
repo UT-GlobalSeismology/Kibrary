@@ -5,9 +5,13 @@ import java.nio.ByteBuffer;
 
 import org.apache.commons.lang3.StringUtils;
 
+import io.github.kensuke1984.kibrary.correction.StaticCorrectionDataFile;
+import io.github.kensuke1984.kibrary.timewindow.TimeWindowDataFile;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderAccess;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
+import io.github.kensuke1984.kibrary.waveform.BasicIDFile;
+import io.github.kensuke1984.kibrary.waveform.PartialIDFile;
 
 /**
  * <p>
@@ -111,8 +115,8 @@ public final class Observer implements Comparable<Observer> {
      * <p>
      * The bytes must contain Name(8), NETWORK(8), latitude(4), longitude(4)
      * <p>
-     * The bytes are written in header parts of BasicIDFile PartialIDFile
-     * TimewindowInformationFile.
+     * The bytes are written in header parts of {@link TimeWindowDataFile}, {@link StaticCorrectionDataFile},
+     * {@link BasicIDFile}, and {@link PartialIDFile}.
      *
      * @param bytes for one station
      * @return Station created from the input bytes

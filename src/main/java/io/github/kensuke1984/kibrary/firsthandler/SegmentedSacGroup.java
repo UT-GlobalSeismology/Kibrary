@@ -128,7 +128,7 @@ class SegmentedSacGroup {
         // the output waveform
         List<Double> sacdata = new ArrayList<>(currentNpts);
 
-        // timewindow length of file0 (msec)
+        // time window length of file0 (msec)
         long timelength = deltaInMillis * (currentNpts - 1);
         // b value of file0 (msec)
         double currentB = Double.parseDouble(headerMap.get(SACHeaderEnum.B));

@@ -8,8 +8,8 @@ import org.apache.commons.math3.util.Precision;
 
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.math.Trace;
-import io.github.kensuke1984.kibrary.timewindow.Timewindow;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
+import io.github.kensuke1984.kibrary.timewindow.TimeWindow;
+import io.github.kensuke1984.kibrary.timewindow.TimeWindowData;
 import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.data.DataEntry;
 import io.github.kensuke1984.kibrary.util.data.Observer;
@@ -34,7 +34,7 @@ import io.github.kensuke1984.kibrary.util.sac.WaveformType;
  * <li> number of points </li>
  * <li> sampling Hz </li>
  * <li> whether waveform is either convolved or observed </li>
- * <li> phases contained in timewindow </li>
+ * <li> phases contained in time window </li>
  * </ul>
  * <p>
  * Caution: A BasicID instance may or may not hold waveform data, dependeing on whether it has already been set.
@@ -98,7 +98,7 @@ public class BasicID {
             boolean convolved, double... waveformData) {
         this.type = waveFormType;
         this.samplingHz = Precision.round(samplingHz, DECIMALS);
-        this.startTime = Precision.round(startTime, Timewindow.DECIMALS);
+        this.startTime = Precision.round(startTime, TimeWindow.DECIMALS);
         this.npts = npts;
         this.observer = observer;
         this.eventID = eventID;
@@ -124,13 +124,13 @@ public class BasicID {
     }
 
     /**
-     * Extract all timewindows from a set of input timewindows
-     * that have the same (event, observer, component) and overlap with the timewindow of this basicID.
-     * @param timewindowSet (Set of {@link TimewindowData}) Input timewindow set to search from.
-     * @return (Set of {@link TimewindowData}) All timewindows that overlap with this.
+     * Extract all time windows from a set of input time windows
+     * that have the same (event, observer, component) and overlap with the time window of this basicID.
+     * @param timeWindowSet (Set of {@link TimeWindowData}) Input time window set to search from.
+     * @return (Set of {@link TimeWindowData}) All time windows that overlap with this.
      */
-    public Set<TimewindowData> findAllOverlappingWindows(Set<TimewindowData> timewindowSet) {
-        Set<TimewindowData> overlappingWindows = timewindowSet.stream()
+    public Set<TimeWindowData> findAllOverlappingWindows(Set<TimeWindowData> timeWindowSet) {
+        Set<TimeWindowData> overlappingWindows = timeWindowSet.stream()
                 .filter(window -> window.getGlobalCMTID().equals(eventID)
                         && window.getObserver().equals(observer)
                         && window.getComponent().equals(component)
@@ -154,7 +154,7 @@ public class BasicID {
     public static boolean isPair(BasicID id0, BasicID id1) {
         boolean res = id0.getGlobalCMTID().equals(id1.getGlobalCMTID()) && id0.getObserver().equals(id1.getObserver())
                 && id0.getSacComponent() == id1.getSacComponent() && id0.getNpts() == id1.getNpts()
-                && Precision.equals(id0.getStartTime(), id1.getStartTime(), TimewindowData.TIME_SHIFT_MAX)
+                && Precision.equals(id0.getStartTime(), id1.getStartTime(), TimeWindowData.TIME_SHIFT_MAX)
                 && id0.getSamplingHz() == id1.getSamplingHz()
                 && Precision.equals(id0.getMaxPeriod(), id1.getMaxPeriod(), PERIOD_EPSILON)
                 && Precision.equals(id0.getMinPeriod(), id1.getMinPeriod(), PERIOD_EPSILON);
@@ -301,12 +301,21 @@ public class BasicID {
         return new DataEntry(eventID, observer, component);
     }
 
+    /**
+     * @return ({@link TimeWindow}) Time window for this ID.
+     * @since 2025/2/23
+     * @author otsuru
+     */
+    public TimeWindow toTimeWindow() {
+        return new TimeWindow(startTime, computeEndTime());
+    }
+
     @Override
     public String toString() {
         String basicString = observer.toPaddedInfoString() + " " + eventID.toPaddedString() + " " + component + " " + type + " "
-                + MathAid.padToString(startTime, Timewindow.TYPICAL_MAX_INTEGER_DIGITS, Timewindow.DECIMALS, false) + " "
+                + MathAid.padToString(startTime, TimeWindow.TYPICAL_MAX_INTEGER_DIGITS, TimeWindow.DECIMALS, false) + " "
                 + npts + " " + samplingHz + " " + minPeriod + " " + maxPeriod + " "
-                + TimewindowData.phasesAsString(phases) + " " + convolved;
+                + TimeWindowData.phasesAsString(phases) + " " + convolved;
         return basicString;
     }
 

@@ -16,6 +16,7 @@ import io.github.kensuke1984.kibrary.firsthandler.DataKitchen;
 import io.github.kensuke1984.kibrary.fusion.AdaptiveGridDesigner;
 import io.github.kensuke1984.kibrary.fusion.CoarseGridDesigner;
 import io.github.kensuke1984.kibrary.fusion.PartialsFuser;
+import io.github.kensuke1984.kibrary.inversion.GeometryWeighter;
 import io.github.kensuke1984.kibrary.inversion.LetMeInvert;
 import io.github.kensuke1984.kibrary.inversion.setup.InversionArranger;
 import io.github.kensuke1984.kibrary.inversion.solve.InversionSolver;
@@ -28,8 +29,8 @@ import io.github.kensuke1984.kibrary.selection.DataSelection;
 import io.github.kensuke1984.kibrary.selection.RaypathSelection;
 import io.github.kensuke1984.kibrary.source.SourceTimeFunctionConvolver;
 import io.github.kensuke1984.kibrary.source.SourceWaveletMaker;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowMaker;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowMerge;
+import io.github.kensuke1984.kibrary.timewindow.TimeWindowMaker;
+import io.github.kensuke1984.kibrary.timewindow.TimeWindowMerge;
 import io.github.kensuke1984.kibrary.util.DatasetMerge;
 import io.github.kensuke1984.kibrary.util.data.VirtualDatasetMaker;
 import io.github.kensuke1984.kibrary.util.earth.ModelStructureConverter;
@@ -53,6 +54,7 @@ import io.github.kensuke1984.kibrary.visual.plot.ModelStructurePlotter;
 import io.github.kensuke1984.kibrary.visual.plot.PartialsPlotter;
 import io.github.kensuke1984.kibrary.visual.plot.PolynomialStructurePlotter;
 import io.github.kensuke1984.kibrary.visual.plot.ScalarStructurePlotter;
+import io.github.kensuke1984.kibrary.visual.plot.SensitivityKernelPlotter1D;
 import io.github.kensuke1984.kibrary.visual.plot.SyntheticRecordSection;
 import io.github.kensuke1984.kibrary.voxel.VoxelAutoDesigner;
 import io.github.kensuke1984.kibrary.voxel.VoxelManualDesigner;
@@ -97,11 +99,11 @@ enum Manhattan {
     VirtualDatasetMaker(25, VirtualDatasetMaker.class),
     // Filtered 30
     FilterDivider(30, FilterDivider.class),
-    TimewindowMaker(31, TimewindowMaker.class),
+    TimeWindowMaker(31, TimeWindowMaker.class),
     FujiStaticCorrection(32, FujiStaticCorrection.class),
     DataSelection(33, DataSelection.class),
     SourceWaveletMaker(34, SourceWaveletMaker.class),
-    TimewindowMerge(37, TimewindowMerge.class),
+    TimeWindowMerge(37, TimeWindowMerge.class),
     StaticCorrectionMerge(38, StaticCorrectionMerge.class),
     StaticCorrectionForger(39, StaticCorrectionForger.class),
     // Compiled 40
@@ -116,6 +118,7 @@ enum Manhattan {
     VoxelManualDesigner(51,VoxelManualDesigner.class),
     CoarseGridDesigner(52, CoarseGridDesigner.class),
     AdaptiveGridDesigner(53, AdaptiveGridDesigner.class),
+    GeometryWeighter(58, GeometryWeighter.class),
     // Partial 60
     OneDPartialDSMSetup(60, OneDPartialDSMSetup.class),
     ThreeDPartialDSMSetup(61, ThreeDPartialDSMSetup.class),
@@ -150,6 +153,7 @@ enum Manhattan {
     ScalarMapper(92, ScalarMapper.class),
     CrossSectionCreator(93, CrossSectionCreator.class),
     // Temporal 100
+    SensitivityKernelPlotter1D(100, SensitivityKernelPlotter1D.class),
     ;
 
     private final Class<? extends Operation> operation;
