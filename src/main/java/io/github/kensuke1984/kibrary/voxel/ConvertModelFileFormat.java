@@ -9,7 +9,6 @@ import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import io.github.kensuke1984.kibrary.Operation;
@@ -45,13 +44,13 @@ public class ConvertModelFileFormat extends Operation {
      */
     private Path modelPath;
     /**
-     * The format of values of model file. {difference, percent, absolute}
+     * The format of values of input model file. {difference, percent, absolute}
      */
     private String valueFormat;
     /**
      * Variable types to perturb
      */
-    private Set<VariableType> variableTypes;
+    private List<VariableType> variableTypes;
 
     public static void main(String[] args) throws IOException {
         if (args.length == 0) writeDefaultPropertiesFile();
@@ -73,7 +72,7 @@ public class ConvertModelFileFormat extends Operation {
             pw.println("#initialStructureName ");
             pw.println("##Path of a model file to use, must be set.");
             pw.println("#modelPath ");
-            pw.println("##The format of values of model file, from {difference, percent, absolute}. (difference)");
+            pw.println("##The format of values of input model file, from {difference, percent, absolute}. (difference)");
             pw.println("#valueFormat ");
             pw.println("##Variable types to perturb, listed using spaces, from {RHO,Vp,Vpv,Vph,Vs,Vsv,Vsh,ETA}. (Vs)");
             pw.println("#variableTypes ");
@@ -99,7 +98,7 @@ public class ConvertModelFileFormat extends Operation {
         valueFormat = property.parseString("valueFormat", "difference");
 
         variableTypes = Arrays.stream(property.parseStringArray("variableTypes", "Vs")).map(VariableType::valueOf)
-                .collect(Collectors.toSet());
+                .collect(Collectors.toList());
     }
 
    @Override
@@ -110,11 +109,15 @@ public class ConvertModelFileFormat extends Operation {
 
        // read model
        List<KnownParameter> knowns = KnownParameterFile.read(modelPath);
-       PerturbationModel model = new PerturbationModel(knowns, initialStructure, valueFormat);
 
        // create output folder
        Path outPath = DatasetAid.createOutputFolder(workPath, "models", folderTag, GadgetAid.getTemporaryString());
        property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
+
+       convertAndOutputModelFiles(knowns, initialStructure, valueFormat, variableTypes, outPath);
+   }
+
+   public static void convertAndOutputModelFiles(List<KnownParameter> knowns, PolynomialStructure initialStructure, String valueFormat, List<VariableType> variableTypes, Path outPath) throws IOException {
        Path outDiferrencePath = outPath.resolve("difference.lst");
        Path outPercentPath = outPath.resolve("percent.lst");
        Path outAbsolutePath = outPath.resolve("absolute.lst");
@@ -123,7 +126,9 @@ public class ConvertModelFileFormat extends Operation {
        List<KnownParameter> percentList = new ArrayList<>();
        List<KnownParameter> absoluteList = new ArrayList<>();
 
-       // compute values of the model for each voxel
+       PerturbationModel model = new PerturbationModel(knowns, initialStructure, valueFormat);
+
+    // compute values of the model for each voxel
        for (KnownParameter known : knowns) {
            boolean existing = false;
            // check whether the parameter is already existing

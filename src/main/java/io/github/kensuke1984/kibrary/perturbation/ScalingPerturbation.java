@@ -16,6 +16,8 @@ import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.elastic.VariableType;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
+import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
+import io.github.kensuke1984.kibrary.voxel.ConvertModelFileFormat;
 import io.github.kensuke1984.kibrary.voxel.KnownParameter;
 import io.github.kensuke1984.kibrary.voxel.KnownParameterFile;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
@@ -29,25 +31,25 @@ public class ScalingPerturbation extends Operation {
      */
     private Path workPath;
     /**
-     * A tag to include in output file name. When this is empty, no tag is used.
+     * A tag to include in output folder name. When this is empty, no tag is used.
      */
-    private String fileTag;
+    private String folderTag;
     /**
      * File of 1D structure used in inversion
      */
-    private Path initialStructurePath; //TODO
+    private Path initialStructurePath;
     /**
      * Name of 1D structure used in inversion
      */
-    private String initialStructureName; //TODO
+    private String initialStructureName;
     /**
      * Model file with perturbation information
      */
     private Path modelPath;
     /**
-     * The format of values of model file. {difference, percent, absolute}
+     * The format of values of input model file. {difference, percent, absolute}
      */
-    private String valueFormat; //TODO
+    private String valueFormat;
     /**
      * A variable type to use for scaling
      */
@@ -57,7 +59,11 @@ public class ScalingPerturbation extends Operation {
      */
     private List<VariableType> outVariableTypes;
     /**
-     * The value of scale (= out value / in value).
+     * The type of scaling. (i.e. which calculation to perform on the input values.) {multiply, add}
+     */
+    private String scaleType;
+    /**
+     * The value of scale (= out value / in value) or (= out value - invalue).
      */
     private double[] scaleValues;
 
@@ -73,15 +79,23 @@ public class ScalingPerturbation extends Operation {
             pw.println("manhattan " + thisClass.getSimpleName());
             pw.println("##Path of work folder. (.)");
             pw.println("#workPath ");
-            pw.println("##(String) A tag to include in output file names. If no tag is needed, leave this unset.");
-            pw.println("#fileTag ");
+            pw.println("##(String) A tag to include in output folder names. If no tag is needed, leave this unset.");
+            pw.println("#folderTag ");
+            pw.println("##Path of an initial structure file used in inversion. If this is unset, the following initialStructureName will be referenced.");
+            pw.println("#initialStructurePath ");
+            pw.println("##Name of an initial structure model used in inversion. (PREM)");
+            pw.println("#initialStructureName ");
             pw.println("##Path of a model file to use, must be set.");
             pw.println("#modelPath ");
-            pw.println("##A variable type to use for scaling, from {RHO,Vp,Vpv,Vph,Vs,Vsv,Vsh,ETA}. (Vs)");
+            pw.println("##The format of values of input model file, from {difference, percent, absolute}. (percent)");
+            pw.println("#valueFormat ");
+            pw.println("##A variable type to use for scaling, from. (Vs)");
             pw.println("#inVariableType ");
-            pw.println("##Variable types to be scaled, listed using spaces, from {RHO,Vp,Vpv,Vph,Vs,Vsv,Vsh,ETA}. (Vp)");
+            pw.println("##Variable types to be scaled, listed using spaces. (Vp)");
             pw.println("#outVariableTypes ");
-            pw.println("##The values for scaling (= out value / in value), listed using spaces in the order of partialTypes, must be set.");
+            pw.println("##The type of scaling, from {multiply, add}. (multiply)");
+            pw.println("#scaleType add");
+            pw.println("##The values for scaling ((= out value / in value) or (= out value - in value)), listed using spaces in the order of partialTypes, must be set.");
             pw.println("#scaleValues ");
         }
         System.err.println(outPath + " is created.");
@@ -94,12 +108,19 @@ public class ScalingPerturbation extends Operation {
     @Override
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
-        if (property.containsKey("fileTag")) fileTag = property.parseStringSingle("fileTag", null);
-
+        if (property.containsKey("folderTag")) folderTag = property.parseStringSingle("folderTag", null);
+        if (property.containsKey("initialStructurePath")) {
+            initialStructurePath = property.parsePath("initialStructurePath", null, true, workPath);
+        } else {
+            initialStructureName = property.parseString("initialStructureName", "PREM");
+        }
         modelPath = property.parsePath("modelPath", null, true, workPath);
+
+        valueFormat = property.parseString("valueFormat", "percent");
         inVariableType = VariableType.valueOf(property.parseString("inVariableType", "Vs"));
         outVariableTypes = Arrays.stream(property.parseStringArray("outVariableTypes", "Vp")).map(VariableType::valueOf)
                 .collect(Collectors.toList());
+        scaleType = property.parseString("scaleType", "multiply");
         scaleValues = Arrays.stream(property.parseDoubleArray("scaleValues", null)).toArray();
     }
 
@@ -108,20 +129,32 @@ public class ScalingPerturbation extends Operation {
        // read model
        List<KnownParameter> knowns = KnownParameterFile.read(modelPath);
 
-       // output
-       Path outputPath = workPath.resolve(DatasetAid.generateOutputFileName("percent", fileTag, GadgetAid.getTemporaryString(), ".lst"));
+       // create output folder
+       Path outPath = DatasetAid.createOutputFolder(workPath, "scaled", folderTag, GadgetAid.getTemporaryString());
+       property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
-       List<KnownParameter> percentList = new ArrayList<>();
+       List<KnownParameter> scaledList = new ArrayList<>();
        for (KnownParameter known : knowns) {
            if (!known.getParameter().getVariableType().equals(inVariableType))
                continue;
            // compute scaled value for each out variable type
            for (int i = 0; i < outVariableTypes.size(); i++) {
                UnknownParameter parameter = UnknownParameterFile.convertVariableType(known.getParameter(), outVariableTypes.get(i));
-               double percent = known.getValue() * scaleValues[i];
-               percentList.add(new KnownParameter(parameter, percent));
+               double scaled;
+               if (scaleType.equals("multiply")) {
+                   scaled = known.getValue() * scaleValues[i];
+               } else if (scaleType.equals("add")) {
+                   scaled = known.getValue() + scaleValues[i];
+               } else {
+                   throw new IllegalArgumentException("scaleType must be choosed from multiply or add");
+               }
+               scaledList.add(new KnownParameter(parameter, scaled));
            }
        }
-       KnownParameterFile.write(percentList, outputPath);
+
+       // read initial structure
+       System.err.print("Initial structure: ");
+       PolynomialStructure initialStructure = PolynomialStructure.setupFromFileOrName(initialStructurePath, initialStructureName);
+       ConvertModelFileFormat.convertAndOutputModelFiles(scaledList, initialStructure, valueFormat, outVariableTypes, outPath);
    }
 }
