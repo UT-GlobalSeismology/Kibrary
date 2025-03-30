@@ -33,6 +33,10 @@ import io.github.kensuke1984.kibrary.waveform.PartialID;
 import io.github.kensuke1984.kibrary.waveform.PartialIDFile;
 
 /**
+ * Plots the sensitivity kernel for 1D perturbations.
+ * <p>
+ * NOTE: the layer volume is NOT multiplied.
+ *
  * @author otsuru
  * @since 2025/3/9
  */

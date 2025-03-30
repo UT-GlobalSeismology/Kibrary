@@ -44,7 +44,7 @@ import io.github.kensuke1984.kibrary.visual.map.ModelSetMapper;
 import io.github.kensuke1984.kibrary.visual.map.PartialsMovieMaker;
 import io.github.kensuke1984.kibrary.visual.map.RaypathMapper;
 import io.github.kensuke1984.kibrary.visual.map.ScalarMapper;
-import io.github.kensuke1984.kibrary.visual.map.SensitivityKernelMapper;
+import io.github.kensuke1984.kibrary.visual.map.SensitivityKernelMapper3D;
 import io.github.kensuke1984.kibrary.visual.plot.BasicBinnedStackCreator;
 import io.github.kensuke1984.kibrary.visual.plot.BasicRecordSectionCreator;
 import io.github.kensuke1984.kibrary.visual.plot.BasicWaveformPlotter;
@@ -151,7 +151,7 @@ enum Manhattan {
     ScalarMapper(92, ScalarMapper.class),
     CrossSectionCreator(93, CrossSectionCreator.class),
     SensitivityKernelPlotter1D(96, SensitivityKernelPlotter1D.class),
-    SensitivityKernelMapper(97, SensitivityKernelMapper.class),
+    SensitivityKernelMapper3D(97, SensitivityKernelMapper3D.class),
     PartialsMovieMaker(99, PartialsMovieMaker.class),
     // Temporal 100
     ;
