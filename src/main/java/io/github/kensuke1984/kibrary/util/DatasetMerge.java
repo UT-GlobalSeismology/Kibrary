@@ -8,13 +8,18 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.util.data.DataEntry;
 import io.github.kensuke1984.kibrary.util.data.DataEntryListFile;
+import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
+import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
 
 /**
@@ -45,6 +50,12 @@ public class DatasetMerge extends Operation {
      * Whether to append date string at end of output folder name.
      */
     private boolean appendFolderDate;
+
+    /**
+     * Threshold to judge which stations are in the same position [deg].
+     */
+    private double coordinateGrid;
+
     /**
      * List of paths of input dataset folders.
      */
@@ -76,6 +87,9 @@ public class DatasetMerge extends Operation {
             pw.println("#folderTag ");
             pw.println("##(boolean) Whether to append date string at end of output folder name. (true)");
             pw.println("#appendFolderDate false");
+            pw.println("##Threshold to judge which stations are in the same position, non-negative [deg]. (0.01)"); // = about 1 km
+            pw.println("##  If two stations are closer to each other than this threshold, one will be eliminated.");
+            pw.println("#coordinateGrid ");
             pw.println("##########From here on, list up paths of dataset folders to merge.");
             pw.println("##########  Additionally, paths of data entry files can be set when selecting entries.");
             pw.println("##########  Up to " + MAX_IN + " folders can be managed. Any entry may be left unset.");
@@ -98,6 +112,10 @@ public class DatasetMerge extends Operation {
         nameRoot = property.parseStringSingle("nameRoot", null);
         if (property.containsKey("folderTag")) folderTag = property.parseStringSingle("folderTag", null);
         appendFolderDate = property.parseBoolean("appendFolderDate", "true");
+
+        coordinateGrid = property.parseDouble("coordinateGrid", "0.01");
+        if (coordinateGrid < 0)
+            throw new IllegalArgumentException("coordinateGrid must be non-negative.");
 
         for (int i = 1; i <= MAX_IN; i++) {
             String inKey = "inPath" + i;
@@ -125,6 +143,9 @@ public class DatasetMerge extends Operation {
         Path outPath = DatasetAid.createOutputFolder(workPath, nameRoot, folderTag, appendFolderDate, null);
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
+        // Map to store observer positions for each event
+        Map<GlobalCMTID, Set<HorizontalPosition>> observerPositionMap = new HashMap<>();
+
         // each datset folder
         for (int i = 0; i < inPaths.size(); i++) {
             Set<EventFolder> eventDirs = DatasetAid.eventFolderSet(inPaths.get(i));
@@ -141,13 +162,34 @@ public class DatasetMerge extends Operation {
                     Path outEventPath = outPath.resolve(eventDir.getName());
                     Files.createDirectories(outEventPath);
 
+                    // get Set of observer positions for this event
+                    GlobalCMTID event = eventDir.getGlobalCMTID();
+                    Set<HorizontalPosition> originalPositionSet = null;
+                    if (observerPositionMap.containsKey(event)) originalPositionSet = observerPositionMap.get(event);
+                    Set<HorizontalPosition> additionalPositionSet = new HashSet<>();
+
                     // each sac file
                     for (SACFileName sacName : sacNames) {
+                        DataEntry entry = sacName.readHeader().toDataEntry();
+                        HorizontalPosition observerPosition = entry.getObserver().getPosition();
 
                         // select based on data entry file if it is specified
                         if (entrySet != null) {
-                            if (!entrySet.contains(sacName.readHeader().toDataEntry())) continue;
+                            if (!entrySet.contains(entry)) continue;
                         }
+
+                        // check observer position duplication
+                        if (originalPositionSet != null) {
+                            boolean isDuplicate = originalPositionSet.stream()
+                                    .anyMatch(pos -> observerPosition.computeEpicentralDistanceDeg(pos) < coordinateGrid);
+                            if (isDuplicate) {
+                                System.err.println("!! Duplication of observer position, skipping: " + sacName.getName());
+                                continue;
+                            }
+                        }
+
+                        // add observer position to new Set
+                        additionalPositionSet.add(observerPosition);
 
                         // create soft link
                         Path outSacPath = outEventPath.resolve(sacName.getName());
@@ -158,11 +200,17 @@ public class DatasetMerge extends Operation {
                         }
                     }
 
+                    if (originalPositionSet != null) {
+                        originalPositionSet.addAll(additionalPositionSet);
+                    } else {
+                        observerPositionMap.put(event, additionalPositionSet);
+                    }
+
                 } catch (IOException e) {
                     throw new UncheckedIOException(e);
                 }
-
             });
         }
     }
+
 }
