@@ -27,6 +27,7 @@ import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.DefaultStructure;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
+import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTAccess;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.sac.SACFileAccess;
@@ -112,7 +113,7 @@ class DSMComputation implements DataGenerator<PolynomialStructure, SACFileAccess
             SyntheticDSMInputFile[] infos = createDSMInfo(model);
             for (SyntheticDSMInputFile info : infos) {
                 Path infoPath = root.resolve(info.getGlobalCMTData() + ".inf");
-                info.writeSH(infoPath);
+                info.writeSH(infoPath, GlobalCMTAccess.Catalog.CMT);
                 Path idPath = root.resolve(info.getGlobalCMTData().toString());
                 Files.createDirectories(idPath);
                 Callable<Integer> callable = DSMMPI.tish(8, infoPath);

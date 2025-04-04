@@ -62,7 +62,7 @@ public class SyntheticDSMInputFile extends DSMInputHeader {
      * @author Kensuke Konishi
      * @author anselme change station string to NAME_NETWORK
      */
-    public void writePSV(Path psvPath, OpenOption... options) throws IOException {
+    public void writePSV(Path psvPath, GlobalCMTAccess.Catalog catalog, OpenOption... options) throws IOException {
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(psvPath, options))) {
             // header
             String[] header = outputDSMHeader();
@@ -73,7 +73,7 @@ public class SyntheticDSMInputFile extends DSMInputHeader {
             Arrays.stream(structurePart).forEach(pw::println);
 
             // source
-            FullPosition eventLocation = event.getCmtPosition();
+            FullPosition eventLocation = event.getPosition(catalog);
             pw.println("c parameter for the source");
             pw.println(eventLocation.getR() + " " + eventLocation.getLatitude() + " " + eventLocation.getLongitude()
                     + " r0(km), lat, lon (deg)");
@@ -106,7 +106,7 @@ public class SyntheticDSMInputFile extends DSMInputHeader {
      * @author Kensuke Konishi
      * @author anselme change station string to NAME_NETWORK
      */
-    public void writeSH(Path outPath, OpenOption... options) throws IOException {
+    public void writeSH(Path outPath, GlobalCMTAccess.Catalog catalog, OpenOption... options) throws IOException {
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, options))) {
             // header
             String[] header = outputDSMHeader();
@@ -117,7 +117,7 @@ public class SyntheticDSMInputFile extends DSMInputHeader {
             Arrays.stream(structurePart).forEach(pw::println);
 
             // source
-            FullPosition eventLocation = event.getCmtPosition();
+            FullPosition eventLocation = event.getPosition(catalog);
             pw.println("c parameter for the source");
             pw.println(eventLocation.getR() + " " + eventLocation.getLatitude() + " " + eventLocation.getLongitude()
                     + " r0(km), lat, lon (deg)");

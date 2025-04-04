@@ -42,13 +42,13 @@ public class OneDPartialDSMInputFile extends SyntheticDSMInputFile {
     private Set<HorizontalPosition> observerPositions;
 
     public OneDPartialDSMInputFile(PolynomialStructure structure, GlobalCMTAccess event, Set<Observer> observers, String outputDir,
-                      double[] perturbationR, double tlen, int np) {
+                      double[] perturbationR, double tlen, int np, GlobalCMTAccess.Catalog catalog) {
         super(structure, event, observers, outputDir, tlen, np);
         observerPositions = observers.stream().map(Observer::getPosition).collect(Collectors.toSet());
 
         radii = perturbationR.clone();
         commentPerturbationR = new boolean[perturbationR.length];
-        double eventR = event.getCmtPosition().getR();
+        double eventR = event.getPosition(catalog).getR();
         for (int i = 0; i < perturbationR.length; i++) {
             commentPerturbationR[i] = false;
             if (Math.abs(eventR - perturbationR[i]) < 10.)
@@ -60,10 +60,11 @@ public class OneDPartialDSMInputFile extends SyntheticDSMInputFile {
      * Creates a file for sshpsv(TI)
      *
      * @param psvPath write path
+     * @param catalog of events
      * @param options options for writing
      * @throws IOException if any
      */
-    public void writeTIPSV(Path psvPath, OpenOption... options) throws IOException {
+    public void writeTIPSV(Path psvPath, GlobalCMTAccess.Catalog catalog, OpenOption... options) throws IOException {
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(psvPath, options))) {
             // header
             String[] header = outputDSMHeader();
@@ -74,7 +75,7 @@ public class OneDPartialDSMInputFile extends SyntheticDSMInputFile {
             Arrays.stream(structurePart).forEach(pw::println);
 
             // source
-            FullPosition eventLocation = event.getCmtPosition();
+            FullPosition eventLocation = event.getPosition(catalog);
             pw.println(eventLocation.getR() + " " + eventLocation.getLatitude() + " " + eventLocation.getLongitude()
                     + " r0(km), lat, lon (deg)");
             pw.println(Arrays.stream(event.getCmt().toDSMStyle()).mapToObj(Double::toString).collect(Collectors.joining(" "))
@@ -116,10 +117,11 @@ public class OneDPartialDSMInputFile extends SyntheticDSMInputFile {
      * Creates a file for sshpsvi(isotropic)
      *
      * @param psvPath write path
+     * @param catalog of events
      * @param options options for writing
      * @throws IOException if any
      */
-    public void writeISOPSV(Path psvPath, OpenOption... options) throws IOException {
+    public void writeISOPSV(Path psvPath, GlobalCMTAccess.Catalog catalog, OpenOption... options) throws IOException {
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(psvPath, options))) {
             // header
             String[] header = outputDSMHeader();
@@ -129,7 +131,7 @@ public class OneDPartialDSMInputFile extends SyntheticDSMInputFile {
             String[] structurePart = structure.toPSVlines();
             Arrays.stream(structurePart).forEach(pw::println);
 
-            FullPosition eventLocation = event.getCmtPosition();
+            FullPosition eventLocation = event.getPosition(catalog);
             // source
             pw.println(eventLocation.getR() + " " + eventLocation.getLatitude() + " " + eventLocation.getLongitude()
                     + " r0(km), lat, lon (deg)");
@@ -169,10 +171,11 @@ public class OneDPartialDSMInputFile extends SyntheticDSMInputFile {
      * Creates a file for sshsh(TI)
      *
      * @param shPath  write path
+     * @param catalog of events
      * @param options options for writing
      * @throws IOException if any
      */
-    public void writeTISH(Path shPath, OpenOption... options) throws IOException {
+    public void writeTISH(Path shPath, GlobalCMTAccess.Catalog catalog, OpenOption... options) throws IOException {
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(shPath, options))) {
             // header
             String[] header = outputDSMHeader();
@@ -182,7 +185,7 @@ public class OneDPartialDSMInputFile extends SyntheticDSMInputFile {
             String[] structurePart = structure.toSHlines();
             Arrays.stream(structurePart).forEach(pw::println);
 
-            FullPosition eventLocation = event.getCmtPosition();
+            FullPosition eventLocation = event.getPosition(catalog);
             // source
             pw.println(eventLocation.getR() + " " + eventLocation.getLatitude() + " " + eventLocation.getLongitude()
                     + " r0(km), lat, lon (deg)");
@@ -221,10 +224,11 @@ public class OneDPartialDSMInputFile extends SyntheticDSMInputFile {
      * Creates a file for sshshi(isotropic)
      *
      * @param shPath  write path
+     * @param catalog of events
      * @param options for writing
      * @throws IOException if any
      */
-    public void writeISOSH(Path shPath, OpenOption... options) throws IOException {
+    public void writeISOSH(Path shPath, GlobalCMTAccess.Catalog catalog, OpenOption... options) throws IOException {
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(shPath, options))) {
             // header
             String[] header = outputDSMHeader();
@@ -235,7 +239,7 @@ public class OneDPartialDSMInputFile extends SyntheticDSMInputFile {
             Arrays.stream(structurePart).forEach(pw::println);
 
             // source
-            FullPosition eventLocation = event.getCmtPosition();
+            FullPosition eventLocation = event.getPosition(catalog);
             pw.println(eventLocation.getR() + " " + eventLocation.getLatitude() + " " + eventLocation.getLongitude()
                     + " r0(km), lat, lon (deg)");
             pw.println(Arrays.stream(event.getCmt().toDSMStyle()).mapToObj(Double::toString).collect(Collectors.joining(" "))

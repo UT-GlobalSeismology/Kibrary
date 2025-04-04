@@ -31,6 +31,10 @@ public interface GlobalCMTAccess {
 
     LocalDateTime getPDETime();
 
+    FullPosition getPosition(Catalog catalog);
+
+    LocalDateTime getTime(Catalog catalog);
+
     double getTimeDifference();
 
     SourceTimeFunctionType getSTFType();
@@ -41,4 +45,7 @@ public interface GlobalCMTAccess {
 
     String getGeographicalLocationName();
 
+    static enum Catalog {
+        CMT, PDE;
+    }
 }

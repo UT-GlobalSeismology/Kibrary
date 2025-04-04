@@ -18,6 +18,7 @@ import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
+import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTAccess;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.spc.SPCMode;
@@ -62,6 +63,10 @@ public class SyntheticDSMSetup extends Operation {
      * Information file name is header_[sh,psv].inf (default:PREM)
      */
     private String header;
+    /**
+     * catalog of events
+     */
+    private GlobalCMTAccess.Catalog eventCatalog;
     /**
      * components to be used
      */
@@ -120,6 +125,8 @@ public class SyntheticDSMSetup extends Operation {
             pw.println("#folderTag ");
             pw.println("##(String) Header for names of output files (as in header_[sh,psv].inf) (PREM)");
             pw.println("#header ");
+            pw.println("##(String) Catalog of events from {CMT, PDE} (CMT)");
+            pw.println("#eventCatalog PDE");
             pw.println("##SacComponents to be used, listed using spaces (Z R T)");
             pw.println("#components ");
             pw.println("##Path of an entry list file. If this is unset, the following obsPath will be used.");
@@ -149,6 +156,7 @@ public class SyntheticDSMSetup extends Operation {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
         if (property.containsKey("folderTag")) folderTag = property.parseStringSingle("folderTag", null);
         header = property.parseStringSingle("header", "PREM");
+        eventCatalog = GlobalCMTAccess.Catalog.valueOf(property.parseString("eventCatalog", "CMT"));
         components = Arrays.stream(property.parseStringArray("components", "Z R T"))
                 .map(SACComponent::valueOf).collect(Collectors.toSet());
 
@@ -203,8 +211,8 @@ public class SyntheticDSMSetup extends Operation {
                 SyntheticDSMInputFile info = new SyntheticDSMInputFile(structure, event.getEventData(), observers, header, tlen, np);
                 Path outEventPath = outPath.resolve(event.toString());
                 Files.createDirectories(outEventPath.resolve(header));
-                info.writeSH(outEventPath.resolve(header + "_SH.inf"));
-                info.writePSV(outEventPath.resolve(header + "_PSV.inf"));
+                info.writeSH(outEventPath.resolve(header + "_SH.inf"), eventCatalog);
+                info.writePSV(outEventPath.resolve(header + "_PSV.inf"), eventCatalog);
                 sourceTreeSet.add(event.toString());
             } catch (IOException e) {
                 // If there are any problems, move on to the next event.

@@ -18,6 +18,7 @@ import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
+import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTAccess;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.spc.SPCMode;
@@ -69,6 +70,10 @@ public class OneDPartialDSMSetup extends Operation {
      * Information file name is header_[sh,psv].inf (default:PREM)
      */
     private String header;
+    /**
+     * catalog of events
+     */
+    private GlobalCMTAccess.Catalog eventCatalog;
     /**
      * components to create an information file for
      */
@@ -130,6 +135,8 @@ public class OneDPartialDSMSetup extends Operation {
             pw.println("#folderTag ");
             pw.println("##(String) Header for names of output files (as in header_[sh,psv].inf) (PREM)");
             pw.println("#header ");
+            pw.println("##(String) Catalog of events from {CMT, PDE} (CMT)");
+            pw.println("#eventCatalog PDE");
             pw.println("##SacComponents to be used, listed using spaces (Z R T)");
             pw.println("#components ");
             pw.println("##Path of an entry list file. If this is unset, the following obsPath will be used.");
@@ -165,6 +172,7 @@ public class OneDPartialDSMSetup extends Operation {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
         if (property.containsKey("folderTag")) folderTag = property.parseStringSingle("folderTag", null);
         header = property.parseStringSingle("header", "PREM");
+        eventCatalog = GlobalCMTAccess.Catalog.valueOf(property.parseString("eventCatalog", "CMT"));
         components = Arrays.stream(property.parseStringArray("components", "Z R T"))
                 .map(SACComponent::valueOf).collect(Collectors.toSet());
 
@@ -228,15 +236,15 @@ public class OneDPartialDSMSetup extends Operation {
                     System.err.println("!Caution there are observers with the same name and different position for " + event);
 
                 OneDPartialDSMInputFile info = new OneDPartialDSMInputFile(structure, event.getEventData(), observers, header,
-                        layerRadii, tlen, np);
+                        layerRadii, tlen, np, eventCatalog);
                 Path outEventPath = outPath.resolve(event.toString());
                 Files.createDirectories(outEventPath.resolve(header));
                 if (forTIParameters) {
-                    info.writeTISH(outEventPath.resolve(header + "_SH.inf"));
-                    info.writeTIPSV(outEventPath.resolve(header + "_PSV.inf"));
+                    info.writeTISH(outEventPath.resolve(header + "_SH.inf"), eventCatalog);
+                    info.writeTIPSV(outEventPath.resolve(header + "_PSV.inf"), eventCatalog);
                 } else {
-                    info.writeISOSH(outEventPath.resolve(header + "_SH.inf"));
-                    info.writeISOPSV(outEventPath.resolve(header + "_PSV.inf"));
+                    info.writeISOSH(outEventPath.resolve(header + "_SH.inf"), eventCatalog);
+                    info.writeISOPSV(outEventPath.resolve(header + "_PSV.inf"), eventCatalog);
                 }
                 sourceTreeSet.add(event.toString());
             } catch (IOException e) {

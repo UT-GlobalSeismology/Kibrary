@@ -491,6 +491,30 @@ public final class NDK implements GlobalCMTAccess {
     }
 
     @Override
+    public FullPosition getPosition(Catalog catalog) {
+        switch (catalog) {
+        case CMT:
+            return this.getCmtPosition();
+        case PDE:
+            return this.getPDEPosition();
+        default:
+            throw new IllegalArgumentException("This Catalog is not supported yet.");
+        }
+    }
+
+    @Override
+    public LocalDateTime getTime(Catalog catalog) {
+        switch (catalog) {
+        case CMT:
+            return this.getCMTTime();
+        case PDE:
+            return this.getPDETime();
+        default:
+            throw new IllegalArgumentException("This Catalog is not supported yet.");
+        }
+    }
+
+    @Override
     public double getTimeDifference() {
         return timeDifference;
     }
