@@ -101,7 +101,7 @@ enum Brooklyn {
     SPECFEMSetup(80, SPECFEMSetup.class),
     SPECFEMModelMaker(81, SPECFEMModelMaker.class),
     SPECFEMPostProcess(82, SPECFEMPostProcess.class),
-    // Scalar 90
+    // Scalar & Sensitivity 90
     PerturbationComparison(90, PerturbationComparison.class),
     // Temporal 100
     ;

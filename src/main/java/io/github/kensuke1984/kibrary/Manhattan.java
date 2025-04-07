@@ -44,7 +44,7 @@ import io.github.kensuke1984.kibrary.visual.map.ModelSetMapper;
 import io.github.kensuke1984.kibrary.visual.map.PartialsMovieMaker;
 import io.github.kensuke1984.kibrary.visual.map.RaypathMapper;
 import io.github.kensuke1984.kibrary.visual.map.ScalarMapper;
-import io.github.kensuke1984.kibrary.visual.map.SensitivityKernelMapper;
+import io.github.kensuke1984.kibrary.visual.map.SensitivityKernelMapper3D;
 import io.github.kensuke1984.kibrary.visual.plot.BasicBinnedStackCreator;
 import io.github.kensuke1984.kibrary.visual.plot.BasicRecordSectionCreator;
 import io.github.kensuke1984.kibrary.visual.plot.BasicWaveformPlotter;
@@ -126,8 +126,6 @@ enum Manhattan {
     PartialsAssembler3D(63, PartialsAssembler3D.class),
     PartialIDMerge(64, PartialIDMerge.class),
     PartialsPlotter(65, PartialsPlotter.class),
-    SensitivityKernelMapper(66, SensitivityKernelMapper.class),
-    PartialsMovieMaker(67, PartialsMovieMaker.class),
     CatalogueErrorCalculator(68, CatalogueErrorCalculator.class),
     PartialsFuser(69, PartialsFuser.class),
     // Inversion 70
@@ -148,12 +146,14 @@ enum Manhattan {
     BasicIDRebuilder(86, BasicIDRebuilder.class),
     OrthogonalityTest(87, OrthogonalityTest.class),
     OrthogonalitySumUp(88, OrthogonalitySumUp.class),
-    // Scalar 90
+    // Scalar & Sensitivity 90
     ScalarStructurePlotter(91, ScalarStructurePlotter.class),
     ScalarMapper(92, ScalarMapper.class),
     CrossSectionCreator(93, CrossSectionCreator.class),
+    SensitivityKernelPlotter1D(96, SensitivityKernelPlotter1D.class),
+    SensitivityKernelMapper3D(97, SensitivityKernelMapper3D.class),
+    PartialsMovieMaker(99, PartialsMovieMaker.class),
     // Temporal 100
-    SensitivityKernelPlotter1D(100, SensitivityKernelPlotter1D.class),
     ;
 
     private final Class<? extends Operation> operation;

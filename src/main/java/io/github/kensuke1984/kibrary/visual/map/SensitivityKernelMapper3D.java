@@ -32,7 +32,7 @@ import io.github.kensuke1984.kibrary.waveform.PartialID;
 import io.github.kensuke1984.kibrary.waveform.PartialIDFile;
 
 /**
- * Maps the sensitivity kernel.
+ * Maps the sensitivity kernel for 3D perturbations.
  * <p>
  * NOTE: the voxel volume is NOT multiplied.
  *
@@ -40,7 +40,7 @@ import io.github.kensuke1984.kibrary.waveform.PartialIDFile;
  * @author otsuru
  * @since 2022/4/14
  */
-public class SensitivityKernelMapper extends Operation {
+public class SensitivityKernelMapper3D extends Operation {
 
     private final Property property;
     /**
@@ -157,8 +157,8 @@ public class SensitivityKernelMapper extends Operation {
             pw.println("##(double) Longitude margin at both ends [deg]. (2.5)");
             pw.println("#marginLongitudeDeg ");
             pw.println("##########Parameters for perturbation values");
-            pw.println("##(double) The factor to amplify the normalized sensitivity values. (1e5)");
-            pw.println("#amplification ");
+            pw.println("##(double) The factor to amplify the normalized sensitivity values. (1)");
+            pw.println("#amplification 1e5");
             pw.println("##(double) Range of scale. (3)");
             pw.println("#scale ");
             pw.println("##(boolean) Whether to display map as mosaic without smoothing. (false)");
@@ -167,7 +167,7 @@ public class SensitivityKernelMapper extends Operation {
         System.err.println(outPath + " is created.");
     }
 
-    public SensitivityKernelMapper(Property property) throws IOException {
+    public SensitivityKernelMapper3D(Property property) throws IOException {
         this.property = (Property) property.clone();
     }
 
@@ -210,7 +210,7 @@ public class SensitivityKernelMapper extends Operation {
         }
         if (marginLongitude <= 0) throw new IllegalArgumentException("marginLongitude must be positive");
 
-        amplification = property.parseDouble("amplification", "1e5");
+        amplification = property.parseDouble("amplification", "1");
         scale = property.parseDouble("scale", "3");
         mosaic = property.parseBoolean("mosaic", "false");
     }

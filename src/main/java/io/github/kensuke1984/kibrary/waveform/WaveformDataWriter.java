@@ -22,7 +22,7 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.WaveformType;
 
 /**
- * Writer of BasicDataset and PartialDataset.
+ * Writer for {@link BasicIDFile} and {@link PartialIDFile}.
  * <p>
  * This class creates a new set of ID and waveform files in binary-format.
  *
@@ -30,6 +30,7 @@ import io.github.kensuke1984.kibrary.util.sac.WaveformType;
  * @since a long time ago
  */
 public class WaveformDataWriter implements Closeable, Flushable {
+
     /**
      * id information file
      */
@@ -75,6 +76,7 @@ public class WaveformDataWriter implements Closeable, Flushable {
      * The file size (byte). (should be StartByte)
      */
     private long dataLength;
+
     /**
      * This constructor is only for BasicID. All write ID must have a station,
      * a Global CMT ID and period ranges in the input ones.
@@ -118,11 +120,11 @@ public class WaveformDataWriter implements Closeable, Flushable {
         idStream = new DataOutputStream(new BufferedOutputStream(Files.newOutputStream(idPath)));
         dataStream = new DataOutputStream(new BufferedOutputStream(Files.newOutputStream(dataPath)));
         dataLength = Files.size(dataPath);
-        idStream.writeShort(observerSet.size());
-        idStream.writeShort(globalCMTIDSet.size());
-        idStream.writeShort(periodRanges.length);
-        idStream.writeShort(phases.length);
-        if (voxelPositions != null) idStream.writeShort(voxelPositions.size());
+        writeShortWithCheck("observers", observerSet.size());
+        writeShortWithCheck("events", globalCMTIDSet.size());
+        writeShortWithCheck("period ranges", periodRanges.length);
+        writeShortWithCheck("phases", phases.length);
+        if (voxelPositions != null) writeShortWithCheck("voxels", voxelPositions.size());
         makeAndWriteObserverMap(observerSet);
         makeAndWriteGlobalCMTIDMap(globalCMTIDSet);
         for (int i = 0; i < periodRanges.length; i++) {
@@ -134,31 +136,16 @@ public class WaveformDataWriter implements Closeable, Flushable {
         mode = (voxelPositions == null ? 0 : 1);
     }
 
+    private void writeShortWithCheck(String namePlural, int value) throws IOException {
+        if (value > Short.MAX_VALUE) throw new IllegalArgumentException("Too many " + namePlural + ", limit is " + Short.MAX_VALUE + " ; now " + value);
+        idStream.writeShort(value);
+    }
+
     private static boolean checkDuplication(double[][] periodRanges) {
         for (int i = 0; i < periodRanges.length - 1; i++)
             for (int j = i + 1; j < periodRanges.length; j++)
                 if (Arrays.equals(periodRanges[i], periodRanges[j])) return true;
         return false;
-    }
-
-    public Path getIDPath() {
-        return idPath;
-    }
-
-    public Path getDataPath() {
-        return dataPath;
-    }
-
-    @Override
-    public void close() throws IOException {
-        idStream.close();
-        dataStream.close();
-    }
-
-    @Override
-    public void flush() throws IOException {
-        idStream.flush();
-        dataStream.flush();
     }
 
     private void makeAndWriteGlobalCMTIDMap(Set<GlobalCMTID> globalCMTIDSet) throws IOException {
@@ -203,30 +190,7 @@ public class WaveformDataWriter implements Closeable, Flushable {
     }
 
     /**
-     * Writes a waveform
-     *
-     * @param data waveform data
-     */
-    private void addWaveform(double[] data) throws IOException {
-        for (double aData : data) dataStream.writeDouble(aData);
-        dataLength += Double.BYTES * data.length;
-    }
-
-    /**
-     * An ID information contains<br>
-     * obs or syn(1)<br>
-     * observer number(2)<br>
-     * event number(2)<br>
-     * component(1)<br>
-     * period range(1) <br>
-     * phases numbers(10*2)<br>
-     * start time(4)<br>
-     * number of points(4)<br>
-     * sampling hz(4) <br>
-     * convoluted(or observed) or not(1)<br>
-     * position of a waveform for the ID in the datafile(8)
-     *
-     * @param basicID StartByte will be ignored and set properly in the write file.
+     * @param basicID ({@link BasicID}) BasicID to write. Must contain waveform data.
      * @throws IOException if an I/O error occurs
      */
     public synchronized void addBasicID(BasicID basicID) throws IOException {
@@ -270,19 +234,10 @@ public class WaveformDataWriter implements Closeable, Flushable {
         // if its convolute  true for obs
         idStream.writeBoolean(basicID.getWaveformType() == WaveformType.OBS || basicID.convolved); // 1Byte
         idStream.writeLong(startByte); // data address 8 Byte
-
-    }
-
-    private int getIndexOfRange(double min, double max) {
-        for (int i = 0; i < periodRanges.length; i++) // TODO
-            if (Math.abs(periodRanges[i][0] - min) < 0.000000001 && Math.abs(periodRanges[i][1] - max) < 0.000000001)
-                return i;
-        throw new RuntimeException("A range is N/A");
     }
 
     /**
-     * @param partialID {@link PartialID} must contain waveform data. StartByte will
-     *                  be ignored and set properly in the write file.
+     * @param partialID ({@link PartialID}) PartialID to write. Must contain waveform data.
      * @throws IOException if an I/O error occurs
      */
     public synchronized void addPartialID(PartialID partialID) throws IOException {
@@ -311,4 +266,42 @@ public class WaveformDataWriter implements Closeable, Flushable {
         idStream.writeByte(PartialType.of(partialID.getParameterType(), partialID.getVariableType()).getNumber()); // partial type; 1 Byte
         idStream.writeShort(perturbationLocationMap.get(partialID.getVoxelPosition())); // 2 Byte
     }
+
+    private int getIndexOfRange(double min, double max) {
+        for (int i = 0; i < periodRanges.length; i++) // TODO
+            if (Math.abs(periodRanges[i][0] - min) < 0.000000001 && Math.abs(periodRanges[i][1] - max) < 0.000000001)
+                return i;
+        throw new RuntimeException("A range is N/A");
+    }
+
+    /**
+     * Writes a waveform
+     *
+     * @param data waveform data
+     */
+    private void addWaveform(double[] data) throws IOException {
+        for (double aData : data) dataStream.writeDouble(aData);
+        dataLength += Double.BYTES * data.length;
+    }
+
+    public Path getIDPath() {
+        return idPath;
+    }
+
+    public Path getDataPath() {
+        return dataPath;
+    }
+
+    @Override
+    public void close() throws IOException {
+        idStream.close();
+        dataStream.close();
+    }
+
+    @Override
+    public void flush() throws IOException {
+        idStream.flush();
+        dataStream.flush();
+    }
+
 }
