@@ -18,7 +18,8 @@ import io.github.kensuke1984.kibrary.Summon;
 
 /**
  * Class to clean threeDPartial folders when they are not needed any more.
- * This deletes all files under FPpool/modelName/ and BPpool/modelName/ (which should all be SPC files).
+ * This deletes all files under FPpool/{@literal *}/modelName/ and BPpool/{@literal *}/modelName/ (which should all be SPC files).
+ * Note that this class does not check the directory IDs or SPC file names.
  *
  * @author otsuru
  * @since 2023/3/21
@@ -84,7 +85,6 @@ public class ThreeDPartialCleanup {
         for (Path modelFolder : bpModelFolders) {
             FileUtils.cleanDirectory(modelFolder.toFile());
         }
-
     }
 
     private static Set<Path> collectModelFolders(Path inPath, String modelName) throws IOException {
@@ -93,4 +93,5 @@ public class ThreeDPartialCleanup {
             return stream.filter(path -> Files.isDirectory(path)).map(path -> path.resolve(modelName)).collect(Collectors.toSet());
         }
     }
+
 }
