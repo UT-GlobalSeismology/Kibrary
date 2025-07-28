@@ -79,6 +79,10 @@ public class DataEntry implements Comparable<DataEntry> {
         return Math.toDegrees(event.getEventData().getCmtPosition().computeAzimuthRad(observer.getPosition()));
     }
 
+    public DataEntry withComponent(SACComponent component) {
+        return new DataEntry(event, observer, component);
+    }
+
     public GlobalCMTID getEvent() {
         return event;
     }

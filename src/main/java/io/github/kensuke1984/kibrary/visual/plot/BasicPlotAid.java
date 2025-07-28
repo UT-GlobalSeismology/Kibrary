@@ -32,6 +32,7 @@ class BasicPlotAid {
     static final GnuplotLineAppearance RED_APPEARANCE = new GnuplotLineAppearance(1, GnuplotColorName.orange_red, 1);
     static final GnuplotLineAppearance GREEN_APPEARANCE = new GnuplotLineAppearance(1, GnuplotColorName.web_green, 1);
     static final GnuplotLineAppearance BLUE_APPEARANCE = new GnuplotLineAppearance(1, GnuplotColorName.web_blue, 1);
+    static final GnuplotLineAppearance GRAY_APPEARANCE = new GnuplotLineAppearance(1, GnuplotColorName.gray, 1);
     static final GnuplotLineAppearance RESIDUAL_APPEARANCE = new GnuplotLineAppearance(1, GnuplotColorName.skyblue, 1);
 
     static final GnuplotLineAppearance ZERO_APPEARANCE = new GnuplotLineAppearance(1, GnuplotColorName.light_gray, 1);
@@ -51,6 +52,7 @@ class BasicPlotAid {
         case 1: return RED_APPEARANCE;
         case 2: return GREEN_APPEARANCE;
         case 3: return BLUE_APPEARANCE;
+        case 4: return GRAY_APPEARANCE;
         default: throw new IllegalArgumentException("Undefined style number for synthetic: " + num);
         }
     }

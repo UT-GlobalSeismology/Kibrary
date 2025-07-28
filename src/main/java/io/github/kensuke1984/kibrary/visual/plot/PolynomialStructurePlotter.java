@@ -140,17 +140,15 @@ public class PolynomialStructurePlotter extends Operation {
 
         for (int i = 1; i <= MAX_INPUT; i++) {
             String pathKey = "structurePath" + i;
+            String nameKey = "structureName" + i;
+            String colorKey = "structureColor" + i;
             if (property.containsKey(pathKey)) {
                 structurePaths[i - 1] = property.parsePath(pathKey, null, true, workPath);
-                continue;
-            }
-            String nameKey = "structureName" + i;
-            if (property.containsKey(nameKey)) {
+            } else if (property.containsKey(nameKey)) {
                 structureNames[i - 1] = property.parseString(nameKey, null);
             } else if (i == 1) {
                 structureNames[0] = "PREM";
             }
-            String colorKey = "structureColor" + i;
             if (property.containsKey(colorKey)) {
                 structureColors[i - 1] = StructurePlotAid.Color.valueOf(property.parseString(colorKey, null));
                 // when a structure color is set, distinguish structures by color
@@ -196,10 +194,10 @@ public class PolynomialStructurePlotter extends Operation {
            pw.println("set parametric");
            pw.println("set term pngcairo enhanced size 600,1200 font 'Helvetica,20'");
            pw.println("set output '" + fileNameRoot + ".png'");
-           pw.println("set xlabel font 'Helvetica,20");
-           pw.println("set ylabel font 'Helvetica,20");
-           pw.println("set tics font 'Helvetica,20");
-           pw.println("set key font 'Helvetica,20");
+           pw.println("set xlabel font 'Helvetica,20'");
+           pw.println("set ylabel font 'Helvetica,20'");
+           pw.println("set tics font 'Helvetica,20'");
+           pw.println("set key font 'Helvetica,20'");
            pw.println("set key samplen 1");
            pw.println("");
 

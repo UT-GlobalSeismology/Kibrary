@@ -27,7 +27,6 @@ import io.github.kensuke1984.kibrary.util.FileAid;
  */
 public class LobbyCleanup {
 
-
     /**
      * Clean up data lobby folders when they are not needed any more.
      * @param args Options.
@@ -95,7 +94,6 @@ public class LobbyCleanup {
             FileUtils.deleteDirectory(stationDirPath2.toFile());
 
         }
-
     }
 
     /**
@@ -125,7 +123,6 @@ public class LobbyCleanup {
                 }
             }
         }
-
     }
 
     /**
@@ -173,7 +170,7 @@ public class LobbyCleanup {
                     FileAid.moveToDirectory(stationPath, stationDirPath, true);
                 }
             }
-
         }
     }
+
 }

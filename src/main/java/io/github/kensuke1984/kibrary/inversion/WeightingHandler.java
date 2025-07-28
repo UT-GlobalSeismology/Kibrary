@@ -63,6 +63,7 @@ public class WeightingHandler {
 
     private List<DataFeature> dataFeatures; // TODO apply
 
+    private SACComponent weightedComponent;
     private List<Map<DataEntry, Double>> weightMaps = new ArrayList<>();
 
     /**
@@ -121,6 +122,8 @@ public class WeightingHandler {
             pw.println("#factorForTComponent ");
             pw.println("##(boolean) Whether to balance event & observer positions. (false)");
             pw.println("#balanceGeometry ");
+            pw.println("##Component weighted in the following weight list files, from {Z, R, T}.");
+            pw.println("#weightedComponent ");
             pw.println("##########From here on, list up paths of entry weight list files to use.");
             pw.println("########## Up to " + MAX_INPUT + " files can be managed. Any entry may be left unset.");
             for (int i = 1; i <= MAX_INPUT; i++) {
@@ -154,6 +157,7 @@ public class WeightingHandler {
         System.err.print("factorR=" + factorForRComponent + ", ");
         System.err.print("factorT=" + factorForTComponent + ", ");
         System.err.println(MathAid.switchSingularPlural(weightMaps.size(), "weight file.",  "weight files."));
+        if (weightedComponent != null) System.err.println("  (weighted for " + weightedComponent + " component)");
     }
 
     /**
@@ -180,6 +184,8 @@ public class WeightingHandler {
         factorForRComponent = property.parseDouble("factorForRComponent", "1.0");
         factorForTComponent = property.parseDouble("factorForTComponent", "1.0");
         balanceGeometry = property.parseBoolean("balanceGeometry", "false");
+        if (property.containsKey("weightedComponent"))
+            weightedComponent = SACComponent.valueOf(property.parseString("weightedComponent", null));
 
         for (int i = 1; i <= MAX_INPUT; i++) {
             String weightKey = "weightPath" + i;
@@ -246,6 +252,8 @@ public class WeightingHandler {
             // multiply values specified in weight files
             for (int k = 0; k < weightMaps.size(); k++) {
                 DataEntry entry = dVector.getObsID(i).toDataEntry();
+                if (weightedComponent != null) entry = entry.withComponent(weightedComponent);
+                if (!weightMaps.get(k).containsKey(entry)) throw new IllegalStateException("No weighting found for " + entry);
                 // Take square root because weighting matrix W will be multiplied twice, as tAWWAm=tAWWd
                 weighting *= Math.sqrt(weightMaps.get(k).get(entry));
             }
