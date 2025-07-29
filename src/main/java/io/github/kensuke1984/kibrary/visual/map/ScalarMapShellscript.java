@@ -202,7 +202,7 @@ public class ScalarMapShellscript {
                 pw.println("2.75  49 121 168   3.25  49 121 168");
                 pw.println("3.25  37  91 153   3.75  37  91 153");
                 pw.println("3.75  27  65 140   4.00  27  65 140");
-                pw.println("B       153  43   7");
+                pw.println("B       127  25   5");
                 pw.println("F        27  65 140");
                 pw.println("N       255 255 255");
                 break;
@@ -225,7 +225,7 @@ public class ScalarMapShellscript {
                 pw.println("2.75  49 121 168   3.25  49 121 168");
                 pw.println("3.25  37  91 153   3.75  37  91 153");
                 pw.println("3.75  27  65 140   4.00  27  65 140");
-                pw.println("B       153  43   7");
+                pw.println("B       127  25   5");
                 pw.println("F        27  65 140");
                 pw.println("N       255 255 255");
                 break;
