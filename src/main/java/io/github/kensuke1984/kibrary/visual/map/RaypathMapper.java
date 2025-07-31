@@ -307,15 +307,15 @@ public class RaypathMapper extends Operation {
         }
 
         // read voxelFile or unknownsFile and write voxel positions
-        List<HorizontalPosition> voxelPositions = null;
+        List<HorizontalPosition> pixelPositions = null;
         if (voxelPath != null) {
-            voxelPositions = new VoxelInformationFile(voxelPath).getHorizontalPositions();
+            pixelPositions = new VoxelInformationFile(voxelPath).getHorizontalPositions();
         } else if (unknownParameterPath != null) {
-            voxelPositions = UnknownParameterFile.read(unknownParameterPath)
+            pixelPositions = UnknownParameterFile.read(unknownParameterPath)
                     .stream().map(u -> u.getPosition().toHorizontalPosition()).distinct().collect(Collectors.toList());
         }
-        if (voxelPositions != null) {
-            List<String> pixelLines = voxelPositions.stream().map(HorizontalPosition::toString).collect(Collectors.toList());
+        if (pixelPositions != null) {
+            List<String> pixelLines = pixelPositions.stream().map(HorizontalPosition::toString).collect(Collectors.toList());
             Files.write(outPath.resolve(pixelFileName), pixelLines);
             // NOTE: HorizontalPosition.crossesDateLine() is not needed here, as psxy can plot points on longitude+360
         }
