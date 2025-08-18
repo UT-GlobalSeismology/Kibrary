@@ -317,7 +317,6 @@ class EventProcessor implements Runnable {
 
     }
 
-
     /**
      * Checks whether the channel is supported by this class.
      * Files with channels other than [BH][HL][ZNE12] will not be accepted.

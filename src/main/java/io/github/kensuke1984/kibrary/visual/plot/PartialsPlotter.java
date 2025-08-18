@@ -24,6 +24,7 @@ import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotLineAppearance;
 import io.github.kensuke1984.kibrary.timewindow.TravelTimeInformation;
 import io.github.kensuke1984.kibrary.timewindow.TravelTimeInformationFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
+import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
@@ -227,7 +228,7 @@ public class PartialsPlotter extends Operation {
                }
            }
        }
-       System.err.println("Created " + num + " plots.");
+       System.err.println("Created " + MathAid.switchSingularPlural(num, "plot.", "plots."));
    }
 
    private boolean checkPosition(FullPosition position) {
