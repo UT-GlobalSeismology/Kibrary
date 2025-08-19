@@ -45,21 +45,21 @@ public final class Trace {
      * Upward convex is defined as
      * 0 &lt; (y(x[i])-y(x[i-1]))*(y(x[i])-y(x[i+1])) and y[i-1] &lt; y[i]
      */
-    private final int[] indexOfUpwardConvex;
+    private final int[] indicesOfUpwardConvex;
     /**
      * Index of downward convex, ordered by the absolute values of the convex.
      * <p>
      * Downward convex is defined as
      * 0 &lt; (y(x[i])-y(x[i-1])) * (y(x[i]) - y(x[i+1])) and y[i] &lt; y[i-1]
      */
-    private final int[] indexOfDownwardConvex;
+    private final int[] indicesOfDownwardConvex;
     /**
      * Index of a peak, ordered by the absolute values of the convex.
      * <p>
      * Peak is defined as
      * 0 &lt; (y(x[i])-y(x[i-1]))*(y(x[i])-y(x[i+1]))
      */
-    private final int[] indexOfPeak;
+    private final int[] indicesOfPeak;
 
     /**
      * Create trace from arrays of x and y by deep copy.
@@ -72,13 +72,13 @@ public final class Trace {
         yArray = y.clone();
         xVector = new ArrayRealVector(x, false);
         yVector = new ArrayRealVector(y, false);
-        indexOfDownwardConvex = IntStream.range(1, xArray.length - 1)
+        indicesOfDownwardConvex = IntStream.range(1, xArray.length - 1)
                 .filter(i -> yArray[i] < yArray[i - 1] && 0 < (yArray[i + 1] - yArray[i]) * (yArray[i - 1] - yArray[i])).boxed()
                 .sorted(Comparator.comparingDouble(o -> -yArray[o] * yArray[o])).mapToInt(i -> i).toArray();
-        indexOfUpwardConvex = IntStream.range(1, xArray.length - 1)
+        indicesOfUpwardConvex = IntStream.range(1, xArray.length - 1)
                 .filter(i -> yArray[i - 1] < yArray[i] && 0 < (yArray[i + 1] - yArray[i]) * (yArray[i - 1] - yArray[i])).boxed()
                 .sorted(Comparator.comparingDouble(o -> -yArray[o] * yArray[o])).mapToInt(i -> i).toArray();
-        indexOfPeak = IntStream.range(1, xArray.length - 1).filter(i -> 0 < (yArray[i + 1] - yArray[i]) * (yArray[i - 1] - yArray[i])).boxed()
+        indicesOfPeak = IntStream.range(1, xArray.length - 1).filter(i -> 0 < (yArray[i + 1] - yArray[i]) * (yArray[i - 1] - yArray[i])).boxed()
                 .sorted(Comparator.comparingDouble(o -> -yArray[o] * yArray[o])).mapToInt(i -> i).toArray();
     }
 
@@ -711,24 +711,24 @@ public final class Trace {
     }
 
     /**
-     * @return index of maximal and minimal points. The order follows the absolute values of the points.
+     * @return (Array of int) Indices of maximal and minimal points. The order follows the absolute values of the points.
      */
-    public int[] getIndexOfPeak() {
-        return indexOfPeak.clone();
+    public int[] getIndicesOfPeak() {
+        return indicesOfPeak.clone();
     }
 
     /**
-     * @return index of minimal points. The order follows the absolute values of the points.
+     * @return (Array of int) Indices of minimal points. The order follows the absolute values of the points.
      */
-    public int[] getIndexOfDownwardConvex() {
-        return indexOfDownwardConvex.clone();
+    public int[] getIndicesOfDownwardConvex() {
+        return indicesOfDownwardConvex.clone();
     }
 
     /**
-     * @return index of maximal points. The order follows the absolute values of the points.
+     * @return (Array of int) Indices of maximal points. The order follows the absolute values of the points.
      */
-    public int[] getIndexOfUpwardConvex() {
-        return indexOfUpwardConvex.clone();
+    public int[] getIndicesOfUpwardConvex() {
+        return indicesOfUpwardConvex.clone();
     }
 
     /**

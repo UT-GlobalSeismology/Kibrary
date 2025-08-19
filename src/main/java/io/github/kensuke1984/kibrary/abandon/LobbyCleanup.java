@@ -5,7 +5,10 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
@@ -75,7 +78,8 @@ public class LobbyCleanup {
     private static void copyNeeded(String output) throws IOException {
         Path outPath = Paths.get(output);
         Path inPath = Paths.get(".");
-        Set<EventFolder> inEventDirs = DatasetAid.eventFolderSet(inPath);
+        List<EventFolder> inEventDirs = DatasetAid.eventFolderSet(inPath).stream()
+                .sorted(Comparator.comparing(EventFolder::getGlobalCMTID)).collect(Collectors.toList());
         if (!DatasetAid.checkNum(inEventDirs.size(), "event", "events")) {
             return;
         }
@@ -83,7 +87,11 @@ public class LobbyCleanup {
         Files.createDirectories(outPath);
         System.err.println("Output folder is " + outPath);
 
+        int n = 0;
         for (EventFolder inEventDir : inEventDirs) {
+            n++;
+            System.err.print("\r " + inEventDir.getGlobalCMTID() + " (" + n + " / " + inEventDirs.size() + ")");
+
             // copy mseed/...
             Path outMseedDirPath = outPath.resolve(inEventDir.toString()).resolve("mseed");
             try (DirectoryStream<Path> inMseedPaths = Files.newDirectoryStream(inEventDir.toPath().resolve("mseed"), "*.mseed")) {
@@ -101,6 +109,7 @@ public class LobbyCleanup {
                 }
             }
         }
+        System.err.println("\r Finished copying all events.");
     }
 
     /**

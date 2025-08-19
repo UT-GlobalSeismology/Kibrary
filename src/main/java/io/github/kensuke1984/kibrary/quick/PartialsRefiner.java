@@ -26,6 +26,8 @@ import io.github.kensuke1984.kibrary.waveform.PartialIDFile;
 
 public class PartialsRefiner extends Operation {
 
+    private static final double halfWindowLength = 20;
+
     private final Property property;
     /**
      * Path of the work folder.
@@ -205,7 +207,7 @@ public class PartialsRefiner extends Operation {
        double baseRadius = tendVoxelRadii[0];
        FullPosition basePosition = new FullPosition(baseLatitude, baseLongitude, baseRadius);
        PartialID baseID = ids.stream().filter(id -> id.getVoxelPosition().equals(basePosition)).findFirst().get();
-       Trace baseTrace = baseID.toTrace();
+       Trace baseTrace = cutFirstPeakWindowTrace(baseID.toTrace());
        double samplingHz = baseID.getSamplingHz();
 
        int i;
@@ -213,9 +215,25 @@ public class PartialsRefiner extends Operation {
            PartialID id = ids.get(i);
            System.err.println(id.getVoxelPosition().toString());
 
-           double[] shiftResults = baseTrace.findBestShift(id.toTrace(), true, true, samplingHz);
+           double[] shiftResults = baseTrace.findBestShift(cutFirstPeakWindowTrace(id.toTrace()), true, true, samplingHz);
            System.err.println(" shift: " + -shiftResults[0] + " corr: " + shiftResults[1] + " amp: " + shiftResults[2]);
        }
+   }
+
+   private Trace cutFirstPeakWindowTrace(Trace trace) {
+       // get indices of peaks
+       int[] indicesOfPeak = trace.getIndicesOfPeak();
+       // max value
+       double max = trace.getYAt(indicesOfPeak[0]);
+       // find index of first peak that exceeds 0.9*max
+       int firstPeakIndex = indicesOfPeak[0];
+       for (int i = 1; i < indicesOfPeak.length; i++) {
+           if (trace.getYAt(indicesOfPeak[i]) > 0.9 * max && indicesOfPeak[i] < indicesOfPeak[0]) firstPeakIndex = indicesOfPeak[i];
+       }
+       // return Trace in window that includes first peak
+       double peakX = trace.getXAt(firstPeakIndex);
+       System.err.println("  " + peakX);
+       return trace.cutWindow(peakX - halfWindowLength, peakX + halfWindowLength);
    }
 
 }
