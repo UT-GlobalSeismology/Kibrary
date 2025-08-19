@@ -26,6 +26,7 @@ import io.github.kensuke1984.kibrary.perturbation.CheckerboardMaker;
 import io.github.kensuke1984.kibrary.perturbation.ModelResampler;
 import io.github.kensuke1984.kibrary.perturbation.ModelSmoothener;
 import io.github.kensuke1984.kibrary.quick.PartialsRefiner;
+import io.github.kensuke1984.kibrary.quick.PartialsShiftComputer;
 import io.github.kensuke1984.kibrary.selection.DataSelection;
 import io.github.kensuke1984.kibrary.selection.RaypathSelection;
 import io.github.kensuke1984.kibrary.source.SourceTimeFunctionConvolver;
@@ -155,6 +156,7 @@ enum Manhattan {
     SensitivityKernelMapper3D(97, SensitivityKernelMapper3D.class),
     PartialsMovieMaker(99, PartialsMovieMaker.class),
     // Temporal 100
+    PartialsShiftComputer(100, PartialsShiftComputer.class),
     PartialsRefiner(101, PartialsRefiner.class),
     ;
 

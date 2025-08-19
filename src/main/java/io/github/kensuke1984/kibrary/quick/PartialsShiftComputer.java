@@ -24,7 +24,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.waveform.PartialID;
 import io.github.kensuke1984.kibrary.waveform.PartialIDFile;
 
-public class PartialsRefiner extends Operation {
+public class PartialsShiftComputer extends Operation {
 
     private static final double halfWindowLength = 20;
 
@@ -109,7 +109,7 @@ public class PartialsRefiner extends Operation {
         System.err.println(outPath + " is created.");
     }
 
-    public PartialsRefiner(Property property) throws IOException {
+    public PartialsShiftComputer(Property property) throws IOException {
         this.property = (Property) property.clone();
     }
 
@@ -201,13 +201,6 @@ public class PartialsRefiner extends Operation {
        if (ids.size() == 0) {
            return;
        }
-
-
-       // voxel file 読んで voxelPositions[][] 設定
-       // partials を orderedIDs[][] に設定
-       // i,jごとに処理
-
-
 
        double baseLatitude = tendVoxelLatitudes[0];
        double baseLongitude = tendVoxelLongitudes[0];

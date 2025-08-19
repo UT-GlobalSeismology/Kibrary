@@ -332,12 +332,11 @@ public class VoxelAutoDesigner extends Operation {
             }
 
             // the min and max longitudes are set so that all sample points are included
-            double minLongitude = Math.round((minLongitudes[i] - baseLongitude) / dLongitudeForRow) * dLongitudeForRow + baseLongitude;
-            double maxLongitude = Math.round((maxLongitudes[i] - baseLongitude) / dLongitudeForRow) * dLongitudeForRow + baseLongitude;
-            int nLongitude = (int) ((maxLongitude - minLongitude) / dLongitudeForRow) + 1;
-            for (int j = 0; j < nLongitude; j++) {
+            int jMin = (int) Math.round((minLongitudes[i] - baseLongitude) / dLongitudeForRow);
+            int jMax = (int) Math.round((maxLongitudes[i] - baseLongitude) / dLongitudeForRow);
+            for (int j = jMin; j <= jMax; j++) {
                 // center longitude of each horizontal pixel
-                double longitude = minLongitude + j * dLongitudeForRow;
+                double longitude = baseLongitude + j * dLongitudeForRow;
                 // add horizontal pixel to list
                 horizontalPixels.add(new HorizontalPixel(new HorizontalPosition(latitude, longitude), dLatitude, dLongitudeForRow));
             }
