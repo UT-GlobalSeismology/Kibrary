@@ -8,7 +8,9 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -16,11 +18,16 @@ import org.apache.commons.math3.util.Precision;
 
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
+import io.github.kensuke1984.kibrary.math.CircularRange;
+import io.github.kensuke1984.kibrary.math.LinearRange;
 import io.github.kensuke1984.kibrary.math.Trace;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
+import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
+import io.github.kensuke1984.kibrary.voxel.HorizontalPixel;
+import io.github.kensuke1984.kibrary.voxel.VoxelInformationFile;
 import io.github.kensuke1984.kibrary.waveform.PartialID;
 import io.github.kensuke1984.kibrary.waveform.PartialIDFile;
 
@@ -50,6 +57,10 @@ public class PartialsRefiner extends Operation {
      * Partial waveform folder.
      */
     private Path partialPath;
+    /**
+     * Path of a voxel information file.
+     */
+    private Path voxelPath;
 
     /**
      * Events to work for.
@@ -59,9 +70,19 @@ public class PartialsRefiner extends Operation {
      * Names of observers to work for, in the form "net_sta".
      */
     private Set<String> tendObserverNames;
-    private double[] tendVoxelLatitudes;
-    private double[] tendVoxelLongitudes;
-    private double[] tendVoxelRadii;
+
+    /**
+     * Horizontal pixels.
+     */
+    private List<HorizontalPixel> horizontalPixels;
+    /**
+     * Radii of center points of voxels.
+     */
+    private double[] voxelRadii;
+    private int nILatitude;
+    private int nILongitude;
+    private Map<HorizontalPosition, Integer> iLatitudeMap = new HashMap<>();
+    private Map<HorizontalPosition, Integer> iLongitudeMap = new HashMap<>();
 
     /**
      * @param args (String[]) Arguments: none to create a property file, path of property file to run it.
@@ -87,24 +108,12 @@ public class PartialsRefiner extends Operation {
             pw.println("#components ");
             pw.println("##Path of a partial waveform folder, must be set.");
             pw.println("#partialPath partial");
-            pw.println("##Path of a basic waveform folder, if plotting residual waveform.");
-            pw.println("#basicPath actual");
-            pw.println("##Path of a travel time information file, if plotting travel times.");
-            pw.println("#travelTimePath travelTime.inf");
+            pw.println("##Path of a voxel information file for perturbation points, must be set.");
+            pw.println("#voxelPath voxel.inf");
             pw.println("##GlobalCMTIDs of events to work for, listed using spaces, must be set.");
             pw.println("#tendEvents ");
             pw.println("##Observers to work for, in form \"sta_net\", listed using spaces, must be set.");
             pw.println("#tendObserverNames ");
-            pw.println("##(double) Latitudes of voxels to work for, listed using spaces, must be set.");
-            pw.println("#tendVoxelLatitudes ");
-            pw.println("##(double) Longitudes of voxels to work for, listed using spaces, must be set.");
-            pw.println("#tendVoxelLongitudes ");
-            pw.println("##(double) Radii of voxels to work for, listed using spaces, must be set.");
-            pw.println("#tendVoxelRadii ");
-            pw.println("##(double) Time length of each plot [s]. (150)");
-            pw.println("#timeLength ");
-            pw.println("##(double) How much to scale down the residual waveform. (1e7)");
-            pw.println("#residualScale ");
         }
         System.err.println(outPath + " is created.");
     }
@@ -122,17 +131,37 @@ public class PartialsRefiner extends Operation {
                 .map(SACComponent::valueOf).collect(Collectors.toSet());
 
         partialPath = property.parsePath("partialPath", null, true, workPath);
+        voxelPath = property.parsePath("voxelPath", null, true, workPath);
 
         tendEvents = Arrays.stream(property.parseStringArray("tendEvents", null)).map(GlobalCMTID::new)
                 .collect(Collectors.toSet());
         tendObserverNames = Arrays.stream(property.parseStringArray("tendObserverNames", null)).collect(Collectors.toSet());
-        tendVoxelLatitudes = property.parseDoubleArray("tendVoxelLatitudes", null);
-        tendVoxelLongitudes = property.parseDoubleArray("tendVoxelLongitudes", null);
-        tendVoxelRadii = property.parseDoubleArray("tendVoxelRadii", null);
     }
 
    @Override
    public void run() throws IOException {
+       // read voxel information
+       VoxelInformationFile vif = new VoxelInformationFile(voxelPath);
+       voxelRadii = vif.getRadii();
+       horizontalPixels = vif.getHorizontalPixels();
+       // check iLatitude range
+       int[] iLatitudes = horizontalPixels.stream().mapToInt(HorizontalPixel::getILatitude).toArray();
+       int minILatitude = Arrays.stream(iLatitudes).min().getAsInt();
+       int maxILatitude = Arrays.stream(iLatitudes).max().getAsInt();
+       nILatitude = maxILatitude - minILatitude + 1;
+       // check iLongitude range
+       int[] iLongitudes = horizontalPixels.stream().mapToInt(HorizontalPixel::getILongitude).toArray();
+       int minILongitude = Arrays.stream(iLongitudes).min().getAsInt();
+       int maxILongitude = Arrays.stream(iLongitudes).max().getAsInt();
+       nILongitude = maxILongitude - minILongitude + 1;
+       // create mapping from position to iLatitude and iLongitude
+       // The ranges of iLatitude and iLongitude are shifted so that the first index is 0.
+       for (HorizontalPixel pixel : horizontalPixels) {
+           iLatitudeMap.put(pixel.getPosition(), pixel.getILatitude() - minILatitude);
+           iLongitudeMap.put(pixel.getPosition(), pixel.getILongitude() - minILongitude);
+       }
+
+       // read partials
        List<PartialID> partialIDs = PartialIDFile.read(partialPath, true).stream().filter(id ->
                components.contains(id.getSacComponent())
                && tendEvents.contains(id.getGlobalCMTID())
@@ -140,22 +169,24 @@ public class PartialsRefiner extends Operation {
                && checkPosition(id.getVoxelPosition()))
                .collect(Collectors.toList());
 
+       // process for each event-observer pair, component, and radius
        int num = 0;
        for (GlobalCMTID event : tendEvents) {
            for (String observerName : tendObserverNames) {
-//               Path eventObserverPath = outPath.resolve(event + "_" + observerName);
-
                for (SACComponent component : components) {
-                   List<PartialID> useIDs = partialIDs.stream().filter(id ->
-                           id.getSacComponent().equals(component)
-                           && id.getGlobalCMTID().equals(event)
-                           && id.getObserver().toString().equals(observerName))
-                           .sorted(Comparator.comparing(PartialID::getVoxelPosition))
-                           .collect(Collectors.toList());
-                   if (useIDs.size() == 0) continue;
+                   for (double radius : voxelRadii) {
+                       List<PartialID> useIDs = partialIDs.stream().filter(id ->
+                               id.getSacComponent().equals(component)
+                               && id.getGlobalCMTID().equals(event)
+                               && id.getObserver().toString().equals(observerName)
+                               && Precision.equals(id.getVoxelPosition().getR(), radius, FullPosition.RADIUS_EPSILON))
+                               .sorted(Comparator.comparing(PartialID::getVoxelPosition))
+                               .collect(Collectors.toList());
+                       if (useIDs.size() == 0) continue;
 
-                   process(useIDs);
-                   num++;
+                       process(useIDs);
+                       num++;
+                   }
                }
            }
        }
@@ -163,38 +194,18 @@ public class PartialsRefiner extends Operation {
 
    private boolean checkPosition(FullPosition position) {
 
-       // check latitude
-       double latitude = position.getLatitude();
-       boolean flag = false;
-       for (double tendLatitude : tendVoxelLatitudes) {
-           if (Precision.equals(latitude, tendLatitude, FullPosition.LATITUDE_EPSILON)) {
-               flag = true;
-               break;
-           }
+       LinearRange latitudeRange = new LinearRange("Latitude", -37, -22, -90.0, 90.0);
+       CircularRange longitudeRange = new CircularRange("Longitude", -20, -5, -180.0, 360.0);
+       if (!position.isInRange(latitudeRange, longitudeRange)) {
+           return false;
        }
-       if (flag == false) return false;
-
-       // check longitude
-       double longitude = position.getLongitude();
-       flag = false;
-       for (double tendLongitude : tendVoxelLongitudes) {
-           if (Precision.equals(longitude, tendLongitude, FullPosition.LONGITUDE_EPSILON)) {
-               flag = true;
-               break;
-           }
-       }
-       if (flag == false) return false;
 
        // check radius
        double radius = position.getR();
-       flag = false;
-       for (double tendRadius : tendVoxelRadii) {
-           if (Precision.equals(radius, tendRadius, FullPosition.RADIUS_EPSILON)) {
-               flag = true;
-               break;
-           }
+       if (radius < 3560) {
+           return true;
        }
-       return flag;
+       return false;
    }
 
    private void process(List<PartialID> ids) throws IOException {
@@ -202,44 +213,71 @@ public class PartialsRefiner extends Operation {
            return;
        }
 
-
-       // voxel file 読んで voxelPositions[][] 設定
-       // partials を orderedIDs[][] に設定
-       // i,jごとに処理
-
-
-
-       double baseLatitude = tendVoxelLatitudes[0];
-       double baseLongitude = tendVoxelLongitudes[0];
-       double baseRadius = tendVoxelRadii[0];
-       FullPosition basePosition = new FullPosition(baseLatitude, baseLongitude, baseRadius);
-       PartialID baseID = ids.stream().filter(id -> id.getVoxelPosition().equals(basePosition)).findFirst().get();
-       Trace baseTrace = cutFirstPeakWindowTrace(baseID.toTrace());
-       double samplingHz = baseID.getSamplingHz();
-
-       int i;
-       for (i = 0; i < ids.size(); i++) {
-           PartialID id = ids.get(i);
-           System.err.println(id.getVoxelPosition().toString());
-
-           double[] shiftResults = baseTrace.findBestShift(cutFirstPeakWindowTrace(id.toTrace()), true, true, samplingHz);
-           System.err.println(" shift: " + -shiftResults[0] + " corr: " + shiftResults[1] + " amp: " + shiftResults[2]);
+       // arrange partialIDs into array based on iLatitude and iLongitude
+       PartialID[][] orderedIDs = new PartialID[nILatitude][nILongitude];
+       for (PartialID id : ids) {
+           HorizontalPosition position = id.getVoxelPosition().toHorizontalPosition();
+           orderedIDs[iLatitudeMap.get(position)][iLongitudeMap.get(position)] = id;
        }
+
+       // process for each pixel
+       for (int i = 1; i < nILatitude - 1; i++) {
+           for (int j = 1; j < nILongitude - 1; j++) {
+
+               // make sure all 9 adjacent pixels have partials
+               boolean computable = true;
+               for (int i2 = -1; i2 <= 1; i2++) {
+                   for (int j2 = -1; j2 <= 1; j2++) {
+                       if (orderedIDs[i + i2][j + j2] == null) computable = false;
+                   }
+               }
+               if (computable == false) continue;
+
+               // get base partial
+               PartialID baseID = orderedIDs[i][j];
+               Trace baseTrace = cutFirstPeakWindowTrace(baseID.toTrace());
+               double samplingHz = baseID.getSamplingHz();
+               System.err.println(baseID.getVoxelPosition().toString());
+
+               // compute shift for adjacent partials
+               double[][] shifts = new double[3][3];
+               double[][] ampRatios = new double[3][3];
+               for (int i2 = -1; i2 <= 1; i2++) {
+                   for (int j2 = -1; j2 <= 1; j2++) {
+                       PartialID id = orderedIDs[i + i2][j + j2];
+                       System.err.println("-- " + id.getVoxelPosition().toString());
+
+                       double[] shiftResults = baseTrace.findBestShift(cutFirstPeakWindowTrace(id.toTrace()), true, true, samplingHz);
+                       System.err.println("  shift: " + -shiftResults[0] + " corr: " + shiftResults[1] + " amp: " + shiftResults[2]);
+                       shifts[i2 + 1][j2 + 1] = -shiftResults[0];
+                       ampRatios[i2 + 1][j2 + 1] = shiftResults[2];
+                   }
+               }
+
+               for (int i2 = -1; i2 <= 1; i2++) {
+                   System.err.println(" * " + shifts[i2 + 1][0] + " " + shifts[i2 + 1][1] + " " + shifts[i2 + 1][2]);
+               }
+               for (int i2 = -1; i2 <= 1; i2++) {
+                   System.err.println(" * " + ampRatios[i2 + 1][0] + " " + ampRatios[i2 + 1][1] + " " + ampRatios[i2 + 1][2]);
+               }
+           }
+       }
+
    }
 
    private Trace cutFirstPeakWindowTrace(Trace trace) {
        // get indices of peaks
        int[] indicesOfPeak = trace.getIndicesOfPeak();
-       // max value
-       double max = trace.getYAt(indicesOfPeak[0]);
+       // max absolute value
+       double max = Math.abs(trace.getYAt(indicesOfPeak[0]));
        // find index of first peak that exceeds 0.9*max
        int firstPeakIndex = indicesOfPeak[0];
        for (int i = 1; i < indicesOfPeak.length; i++) {
-           if (trace.getYAt(indicesOfPeak[i]) > 0.9 * max && indicesOfPeak[i] < indicesOfPeak[0]) firstPeakIndex = indicesOfPeak[i];
+           if (Math.abs(trace.getYAt(indicesOfPeak[i])) > 0.9 * max && indicesOfPeak[i] < firstPeakIndex) firstPeakIndex = indicesOfPeak[i];
        }
        // return Trace in window that includes first peak
        double peakX = trace.getXAt(firstPeakIndex);
-       System.err.println("  " + peakX);
+       System.err.println("  " + peakX + " ; " + trace.getXAt(indicesOfPeak[0]) + " " + trace.getXAt(indicesOfPeak[1]));
        return trace.cutWindow(peakX - halfWindowLength, peakX + halfWindowLength);
    }
 
