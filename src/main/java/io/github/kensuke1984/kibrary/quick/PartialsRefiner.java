@@ -6,7 +6,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -83,6 +85,11 @@ public class PartialsRefiner extends Operation {
     private int nILongitude;
     private Map<HorizontalPosition, Integer> iLatitudeMap = new HashMap<>();
     private Map<HorizontalPosition, Integer> iLongitudeMap = new HashMap<>();
+
+    /**
+     * Created {@link PartialID}s.
+     */
+    private List<PartialID> refinedPartialIDs = Collections.synchronizedList(new ArrayList<>());
 
     /**
      * @param args (String[]) Arguments: none to create a property file, path of property file to run it.
@@ -190,6 +197,13 @@ public class PartialsRefiner extends Operation {
                 }
             }
         }
+
+        // prepare output folder
+        Path outPath = DatasetAid.createOutputFolder(workPath, "partial", folderTag, appendFolderDate, null);
+        property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
+
+        // output
+        PartialIDFile.write(refinedPartialIDs, outPath);
     }
 
     private boolean checkPosition(FullPosition position) {
@@ -245,9 +259,9 @@ public class PartialsRefiner extends Operation {
                 for (int i2 = -1; i2 <= 1; i2++) {
                     for (int j2 = -1; j2 <= 1; j2++) {
                         PartialID id = orderedIDs[i + i2][j + j2];
-                        System.err.println("-- " + id.getVoxelPosition().toString());
 
                         double[] shiftResults = baseTrace.findBestShift(cutFirstPeakWindowTrace(id.toTrace()), true, true, samplingHz);
+                        // Here, shift is the amount to move the x axis of baseTrace to the left (data points to the right) to fit this trace.
                         shifts[i2 + 1][j2 + 1] = -shiftResults[0];
                         ampRatios[i2 + 1][j2 + 1] = shiftResults[2];
                     }
@@ -257,9 +271,10 @@ public class PartialsRefiner extends Operation {
                     System.err.println(" s " + shifts[i2 + 1][0] + " " + shifts[i2 + 1][1] + " " + shifts[i2 + 1][2]);
                 }
                 for (int i2 = -1; i2 <= 1; i2++) {
-                    System.err.println(" a " + ampRatios[i2 + 1][0] + " " + ampRatios[i2 + 1][1] + " " + ampRatios[i2 + 1][2]);
+                    System.err.println(" a " + Precision.round(ampRatios[i2 + 1][0], 2) + " " + Precision.round(ampRatios[i2 + 1][1],2) + " " + Precision.round(ampRatios[i2 + 1][2],2));
                 }
 
+                // interpolate at nxn points in range (-0.5:0.5, -0.5:0.5)
                 int n = 5;
                 shifts = interpolateBiquadratic(n, shifts);
                 ampRatios = interpolateBiquadratic(n, ampRatios);
@@ -267,20 +282,39 @@ public class PartialsRefiner extends Operation {
                 for (int i2 = 0; i2 < n; i2++) {
                     System.err.print(" S");
                     for (int j2 = 0; j2 < n; j2++) {
-                        System.err.print(" " + shifts[i2][j2]);
+                        System.err.print(" " + Precision.round(shifts[i2][j2],2));
                     }
                     System.err.println();
                 }
                 for (int i2 = 0; i2 < n; i2++) {
                     System.err.print(" A");
                     for (int j2 = 0; j2 < n; j2++) {
-                        System.err.print(" " + ampRatios[i2][j2]);
+                        System.err.print(" " + Precision.round(ampRatios[i2][j2],2));
                     }
                     System.err.println();
                 }
+
+                // sum up the nxn traces applying shift and ampRatio
+                Trace sumTrace = null;
+                for (int i2 = 0; i2 < n; i2++) {
+                    for (int j2 = 0; j2 < n; j2++) {
+                        // Here, the data points of baseTrace is moved to the right for positive shift.
+                        int nShift = (int) Math.round(shifts[i2][j2] * samplingHz);
+                        Trace pseudoTrace = baseTrace.shiftYInXDirection(nShift).multiply(ampRatios[i2][j2]);
+                        sumTrace = (sumTrace == null) ? pseudoTrace : sumTrace.add(pseudoTrace);
+
+                        for (int t = 0; t < pseudoTrace.getLength(); t++) {
+                            System.err.println(" t " + baseTrace.getXAt(t) + " " + sumTrace.getXAt(t) +"  base " + baseTrace.getYAt(t) + "  shift " + sumTrace.getYAt(t));
+                        }
+                        throw new RuntimeException("AAAAAAAAAAAA");
+                    }
+                }
+                // divide by number to get average
+                sumTrace = sumTrace.multiply(1.0 / n / n);
+
+                refinedPartialIDs.add(baseID.withData(sumTrace.getY()));
             }
         }
-
     }
 
     /**

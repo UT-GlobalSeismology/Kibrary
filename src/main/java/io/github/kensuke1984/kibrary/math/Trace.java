@@ -136,8 +136,8 @@ public final class Trace {
      * The search is done by sliding the input ({@link Trace}).
      * Assumed that the interval of x is the same in both Traces.
      * @param trace ({@link Trace}) Input. Its length must be shorter than this.
-     * @return (Array of double) Contains 3 values: The shift value in x direction for best correlation,
-     *   corresponding correlation, and corresponding amplitude (L2 norm) ratio.
+     * @return (Array of double) Contains 3 values: The shift value of input trace in x direction for best correlation,
+     *   corresponding correlation, and corresponding amplitude (L2 norm) ratio (input / this).
      *
      * @author anselme
      */
@@ -233,6 +233,26 @@ public final class Trace {
      */
     public Trace shiftX(double shift) {
         return new Trace(Arrays.stream(xArray).map(d -> d + shift).toArray(), yArray);
+    }
+
+    /**
+     * Shifts the y values by "nShift" indices in the direction of the x axis. <br>
+     * f(x) &rarr; f(x+nShift*dx) <br>
+     * Y values that moved out of range will be discarded, and non-existent values will be set to 0.
+     * @param nShift (int) Number of indices to shift.
+     * @return ({@link Trace}) f(x+nShift*dx). The values in x are deep copied.
+     *
+     * @author otsuru
+     * @since 2025/8/25
+     */
+    public Trace shiftYInXDirection(int nShift) {
+        double[] newYArray = new double[yArray.length];
+        for (int i = 0; i < yArray.length; i++) {
+            int iBefore = i - nShift;
+            if (0 <= iBefore && iBefore < yArray.length) newYArray[i] = yArray[iBefore];
+            else newYArray[i] = 0.0;
+        }
+        return new Trace(xArray, newYArray);
     }
 
     /**
