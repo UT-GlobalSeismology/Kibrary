@@ -9,7 +9,6 @@ import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -20,10 +19,11 @@ import org.apache.commons.math3.util.Precision;
 
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
-import io.github.kensuke1984.kibrary.math.CircularRange;
-import io.github.kensuke1984.kibrary.math.LinearRange;
+import io.github.kensuke1984.kibrary.elastic.VariableType;
 import io.github.kensuke1984.kibrary.math.Trace;
+import io.github.kensuke1984.kibrary.timewindow.TimeWindow;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
+import io.github.kensuke1984.kibrary.util.data.DataEntry;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
@@ -169,27 +169,36 @@ public class PartialsRefiner extends Operation {
         }
 
         // read partials
-        List<PartialID> partialIDs = PartialIDFile.read(partialPath, true).stream().filter(id ->
+        Set<PartialID> partialIDs = PartialIDFile.read(partialPath, true).stream().filter(id ->
                 components.contains(id.getSacComponent())
                 && tendEvents.contains(id.getGlobalCMTID())
-                && tendObserverNames.contains(id.getObserver().toString())
-                && checkPosition(id.getVoxelPosition()))
-                .collect(Collectors.toList());
+                && tendObserverNames.contains(id.getObserver().toString()))
+                .collect(Collectors.toSet());
+        Set<DataEntry> dataEntries = partialIDs.stream().map(PartialID::toDataEntry).collect(Collectors.toSet());
 
-        // process for each event-observer pair, component, and radius
+        // process for each data entry, time window, variable, and radius
         int num = 0;
-        for (GlobalCMTID event : tendEvents) {
-            for (String observerName : tendObserverNames) {
-                for (SACComponent component : components) {
+        for (DataEntry dataEntry : dataEntries) {
+            Set<PartialID> idsForEntry = partialIDs.stream().filter(id -> id.toDataEntry().equals(dataEntry)).collect(Collectors.toSet());
+            Set<TimeWindow> timeWindows = idsForEntry.stream().map(id -> id.toTimeWindow()).collect(Collectors.toSet());
+
+            System.err.println("Entry: " + dataEntry);
+
+            for (TimeWindow timeWindow : timeWindows) {
+                Set<PartialID> idsForWindow = idsForEntry.stream().filter(id -> id.toTimeWindow().equals(timeWindow)).collect(Collectors.toSet());
+                Set<VariableType> variables = idsForWindow.stream().map(PartialID::getVariableType).collect(Collectors.toSet());
+
+                System.err.println(" Window: " + timeWindow);
+
+                for (VariableType variable : variables) {
                     for (double radius : voxelRadii) {
-                        List<PartialID> useIDs = partialIDs.stream().filter(id ->
-                                id.getSacComponent().equals(component)
-                                && id.getGlobalCMTID().equals(event)
-                                && id.getObserver().toString().equals(observerName)
+                        Set<PartialID> useIDs = partialIDs.stream().filter(id ->
+                                id.getVariableType().equals(variable)
                                 && Precision.equals(id.getVoxelPosition().getR(), radius, FullPosition.RADIUS_EPSILON))
-                                .sorted(Comparator.comparing(PartialID::getVoxelPosition))
-                                .collect(Collectors.toList());
+                                .collect(Collectors.toSet());
                         if (useIDs.size() == 0) continue;
+
+                        System.err.println("  Variable, radius: " + variable + " " + radius);
 
                         process(useIDs);
                         num++;
@@ -206,23 +215,7 @@ public class PartialsRefiner extends Operation {
         PartialIDFile.write(refinedPartialIDs, outPath);
     }
 
-    private boolean checkPosition(FullPosition position) {
-
-        LinearRange latitudeRange = new LinearRange("Latitude", -37, -22, -90.0, 90.0);
-        CircularRange longitudeRange = new CircularRange("Longitude", -20, -5, -180.0, 360.0);
-        if (!position.isInRange(latitudeRange, longitudeRange)) {
-            return false;
-        }
-
-        // check radius
-        double radius = position.getR();
-        if (radius < 3560) {
-            return true;
-        }
-        return false;
-    }
-
-    private void process(List<PartialID> ids) throws IOException {
+    private void process(Set<PartialID> ids) throws IOException {
         if (ids.size() == 0) {
             return;
         }
@@ -249,9 +242,9 @@ public class PartialsRefiner extends Operation {
 
                 // get base partial
                 PartialID baseID = orderedIDs[i][j];
-                Trace baseTrace = cutFirstPeakWindowTrace(baseID.toTrace());
+                Trace baseTrace = baseID.toTrace();
+                Trace baseTraceCut = cutFirstPeakWindowTrace(baseTrace);
                 double samplingHz = baseID.getSamplingHz();
-                System.err.println(baseID.getVoxelPosition().toString());
 
                 // compute shift for adjacent partials
                 double[][] shifts = new double[3][3];
@@ -260,39 +253,17 @@ public class PartialsRefiner extends Operation {
                     for (int j2 = -1; j2 <= 1; j2++) {
                         PartialID id = orderedIDs[i + i2][j + j2];
 
-                        double[] shiftResults = baseTrace.findBestShift(cutFirstPeakWindowTrace(id.toTrace()), true, true, samplingHz);
+                        double[] shiftResults = baseTraceCut.findBestShift(cutFirstPeakWindowTrace(id.toTrace()), true, true, samplingHz);
                         // Here, shift is the amount to move the x axis of baseTrace to the left (data points to the right) to fit this trace.
                         shifts[i2 + 1][j2 + 1] = -shiftResults[0];
                         ampRatios[i2 + 1][j2 + 1] = shiftResults[2];
                     }
                 }
 
-                for (int i2 = -1; i2 <= 1; i2++) {
-                    System.err.println(" s " + shifts[i2 + 1][0] + " " + shifts[i2 + 1][1] + " " + shifts[i2 + 1][2]);
-                }
-                for (int i2 = -1; i2 <= 1; i2++) {
-                    System.err.println(" a " + Precision.round(ampRatios[i2 + 1][0], 2) + " " + Precision.round(ampRatios[i2 + 1][1],2) + " " + Precision.round(ampRatios[i2 + 1][2],2));
-                }
-
                 // interpolate at nxn points in range (-0.5:0.5, -0.5:0.5)
                 int n = 5;
                 shifts = interpolateBiquadratic(n, shifts);
                 ampRatios = interpolateBiquadratic(n, ampRatios);
-
-                for (int i2 = 0; i2 < n; i2++) {
-                    System.err.print(" S");
-                    for (int j2 = 0; j2 < n; j2++) {
-                        System.err.print(" " + Precision.round(shifts[i2][j2],2));
-                    }
-                    System.err.println();
-                }
-                for (int i2 = 0; i2 < n; i2++) {
-                    System.err.print(" A");
-                    for (int j2 = 0; j2 < n; j2++) {
-                        System.err.print(" " + Precision.round(ampRatios[i2][j2],2));
-                    }
-                    System.err.println();
-                }
 
                 // sum up the nxn traces applying shift and ampRatio
                 Trace sumTrace = null;
@@ -302,11 +273,6 @@ public class PartialsRefiner extends Operation {
                         int nShift = (int) Math.round(shifts[i2][j2] * samplingHz);
                         Trace pseudoTrace = baseTrace.shiftYInXDirection(nShift).multiply(ampRatios[i2][j2]);
                         sumTrace = (sumTrace == null) ? pseudoTrace : sumTrace.add(pseudoTrace);
-
-                        for (int t = 0; t < pseudoTrace.getLength(); t++) {
-                            System.err.println(" t " + baseTrace.getXAt(t) + " " + sumTrace.getXAt(t) +"  base " + baseTrace.getYAt(t) + "  shift " + sumTrace.getYAt(t));
-                        }
-                        throw new RuntimeException("AAAAAAAAAAAA");
                     }
                 }
                 // divide by number to get average
