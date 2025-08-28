@@ -228,17 +228,11 @@ public class PartialsRefiner extends Operation {
         }
 
         // process for each pixel
-        for (int i = 1; i < nILatitude - 1; i++) {
-            for (int j = 1; j < nILongitude - 1; j++) {
+        for (int i = 0; i < nILatitude; i++) {
+            for (int j = 0; j < nILongitude; j++) {
 
-                // make sure all 9 adjacent pixels have partials
-                boolean computable = true;
-                for (int i2 = -1; i2 <= 1; i2++) {
-                    for (int j2 = -1; j2 <= 1; j2++) {
-                        if (orderedIDs[i + i2][j + j2] == null) computable = false;
-                    }
-                }
-                if (computable == false) continue;
+                // make sure this pixel has partials
+                if (orderedIDs[i][j] == null) continue;
 
                 // get base partial
                 PartialID baseID = orderedIDs[i][j];
@@ -251,7 +245,29 @@ public class PartialsRefiner extends Operation {
                 double[][] ampRatios = new double[3][3];
                 for (int i2 = -1; i2 <= 1; i2++) {
                     for (int j2 = -1; j2 <= 1; j2++) {
+
+                        // when out of range, set NaN
+                        if (i + i2 < 0 || nILatitude <= i + i2 || j + j2 < 0 || nILongitude <= j + j2) {
+                            shifts[i2 + 1][j2 + 1] = Double.NaN;
+                            ampRatios[i2 + 1][j2 + 1] = Double.NaN;
+                            continue;
+                        }
+
                         PartialID id = orderedIDs[i + i2][j + j2];
+
+                        // when partialID does not exist, set NaN
+                        if (id == null) {
+                            shifts[i2 + 1][j2 + 1] = Double.NaN;
+                            ampRatios[i2 + 1][j2 + 1] = Double.NaN;
+                            continue;
+                        }
+
+                        // at center, shift is 0 and amp ratio is 1
+                        if (i2 == 0 && j2 == 0) {
+                            shifts[i2 + 1][j2 + 1] = 0.0;
+                            ampRatios[i2 + 1][j2 + 1] = 1.0;
+                            continue;
+                        }
 
                         double[] shiftResults = baseTraceCut.findBestShift(cutFirstPeakWindowTrace(id.toTrace()), true, true, samplingHz);
                         // Here, shift is the amount to move the x axis of baseTrace to the left (data points to the right) to fit this trace.
@@ -267,18 +283,30 @@ public class PartialsRefiner extends Operation {
 
                 // sum up the nxn traces applying shift and ampRatio
                 Trace sumTrace = null;
+                int minNegativeNShift = 0;
                 for (int i2 = 0; i2 < n; i2++) {
                     for (int j2 = 0; j2 < n; j2++) {
+                        if (Double.isNaN(shifts[i2][j2]) || Double.isNaN(ampRatios[i2][j2])) {
+                            throw new IllegalArgumentException("Cannot interpolate at " + baseID.getVoxelPosition().toHorizontalPosition());
+                        }
                         // Here, the data points of baseTrace is moved to the right for positive shift.
                         int nShift = (int) Math.round(shifts[i2][j2] * samplingHz);
                         Trace pseudoTrace = baseTrace.shiftYInXDirection(nShift).multiply(ampRatios[i2][j2]);
                         sumTrace = (sumTrace == null) ? pseudoTrace : sumTrace.add(pseudoTrace);
+                        // keep record of largest negative shift
+                        if (nShift < minNegativeNShift) minNegativeNShift = nShift;
                     }
                 }
                 // divide by number to get average
                 sumTrace = sumTrace.multiply(1.0 / n / n);
 
-                refinedPartialIDs.add(baseID.withData(sumTrace.getY()));
+                // The end of the waveform can be jagged when not added at all points. Thus, set that part to 0.
+                double[] yArray = sumTrace.getY();
+                for (int s = yArray.length + minNegativeNShift; s < yArray.length; s++) {
+                    yArray[s] = 0.0;
+                }
+
+                refinedPartialIDs.add(baseID.withData(yArray));
             }
         }
     }
@@ -306,26 +334,45 @@ public class PartialsRefiner extends Operation {
 
     /**
      * Given values at x=-1, 0, 1, conduct quadratic interpolation to get values at n points in range (-0.5:0.5).
+     * If values at only two adjacent points are given, linear interpolation is conducted.
+     * Otherwise, returns NaN.
      * @param n (int) Number of points to interpolate at.
-     * @param valN (double) Value at x=-1.
+     * @param valN (double) Value at x=-1. Can be NaN when undefined.
      * @param val0 (double) Value at x=0.
-     * @param valP (double) Value at x=1.
-     * @return (size-n Array of double) Interpolated values.
+     * @param valP (double) Value at x=1. Can be NaN when undefined.
+     * @return (size-n Array of double) Interpolated values. NaN when interpolation cannot be conducted.
      */
     private double[] interpolateQuadratic(int n, double valN, double val0, double valP) {
-       // find coefficients of ax^2+bx+c
-       double a = (valN + valP) / 2 - val0;
-       double b = (valP - valN) / 2;
-       double c = val0;
+        double a, b, c;
+        if (!Double.isNaN(valN) && !Double.isNaN(val0) && !Double.isNaN(valP)) {
+            // find coefficients of ax^2+bx+c
+            a = (valN + valP) / 2 - val0;
+            b = (valP - valN) / 2;
+            c = val0;
+        } else if (!Double.isNaN(valN) && !Double.isNaN(val0)) {
+            // find coefficients of bx+c
+            a = 0.0;
+            b = (val0 - valN) / 2;
+            c = val0;
+        } else if (!Double.isNaN(val0) && !Double.isNaN(valP)) {
+            // find coefficients of bx+c
+            a = 0.0;
+            b = (valP - val0) / 2;
+            c = val0;
+        } else {
+            a = Double.NaN;
+            b = Double.NaN;
+            c = Double.NaN;
+        }
 
-       // interpolate at n points in (-0.5:0.5)
-       double[] results = new double[n];
-       for (int i = 0; i < n; i++) {
-           double x = -0.5 + (i + 0.5) / n;
-           results[i] = a*x*x + b*x + c;
-       }
-       return results;
-   }
+        // interpolate at n points in (-0.5:0.5)
+        double[] results = new double[n];
+        for (int i = 0; i < n; i++) {
+            double x = -0.5 + (i + 0.5) / n;
+            results[i] = a*x*x + b*x + c;
+        }
+        return results;
+    }
 
     private Trace cutFirstPeakWindowTrace(Trace trace) {
         // get indices of peaks
