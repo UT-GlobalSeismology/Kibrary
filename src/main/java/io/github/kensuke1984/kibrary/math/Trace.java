@@ -638,6 +638,18 @@ public final class Trace {
     }
 
     /**
+     * Create trace with same x values but 0 for all y values.
+     * @return ({@link Trace}) Trace with 0 for all y values.
+     *
+     * @author otsuru
+     * @since 2025/8/29
+     */
+    public Trace withZeroes() {
+        double[] zeroes = new double[xArray.length];
+        return new Trace(xArray, zeroes);
+    }
+
+    /**
      * @return DEEP copy of x
      */
     public double[] getX() {

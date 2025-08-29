@@ -13,7 +13,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import org.apache.commons.math3.util.Precision;
@@ -24,10 +25,10 @@ import io.github.kensuke1984.kibrary.elastic.VariableType;
 import io.github.kensuke1984.kibrary.math.Trace;
 import io.github.kensuke1984.kibrary.timewindow.TimeWindow;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
+import io.github.kensuke1984.kibrary.util.ThreadAid;
 import io.github.kensuke1984.kibrary.util.data.DataEntry;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
-import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.voxel.HorizontalPixel;
 import io.github.kensuke1984.kibrary.voxel.VoxelInformationFile;
@@ -74,15 +75,15 @@ public class PartialsRefiner extends Operation {
      * Path of a voxel information file.
      */
     private Path voxelPath;
-
-    /**
-     * Events to work for.
-     */
-    private Set<GlobalCMTID> tendEvents;
-    /**
-     * Names of observers to work for, in the form "net_sta".
-     */
-    private Set<String> tendObserverNames;
+//
+//    /**
+//     * Events to work for.
+//     */
+//    private Set<GlobalCMTID> tendEvents;
+//    /**
+//     * Names of observers to work for, in the form "net_sta".
+//     */
+//    private Set<String> tendObserverNames;
 
     /**
      * Horizontal pixels.
@@ -101,6 +102,10 @@ public class PartialsRefiner extends Operation {
      * Created {@link PartialID}s.
      */
     private List<PartialID> refinedPartialIDs = Collections.synchronizedList(new ArrayList<>());
+    /**
+     * Number of processed parameters.
+     */
+    private AtomicInteger nProcessedEntry = new AtomicInteger();
 
     /**
      * @param args (String[]) Arguments: none to create a property file, path of property file to run it.
@@ -151,9 +156,9 @@ public class PartialsRefiner extends Operation {
         partialPath = property.parsePath("partialPath", null, true, workPath);
         voxelPath = property.parsePath("voxelPath", null, true, workPath);
 
-        tendEvents = Arrays.stream(property.parseStringArray("tendEvents", null)).map(GlobalCMTID::new)
-                .collect(Collectors.toSet());
-        tendObserverNames = Arrays.stream(property.parseStringArray("tendObserverNames", null)).collect(Collectors.toSet());
+//        tendEvents = Arrays.stream(property.parseStringArray("tendEvents", null)).map(GlobalCMTID::new)
+//                .collect(Collectors.toSet());
+//        tendObserverNames = Arrays.stream(property.parseStringArray("tendObserverNames", null)).collect(Collectors.toSet());
     }
 
     @Override
@@ -181,65 +186,71 @@ public class PartialsRefiner extends Operation {
 
         // read partials
         Set<PartialID> partialIDs = PartialIDFile.read(partialPath, true).stream().filter(id ->
-                        components.contains(id.getSacComponent())
-                         && tendEvents.contains(id.getGlobalCMTID())
-                         && tendObserverNames.contains(id.getObserver().toString()))
-//                components.contains(id.getSacComponent()))
+//                        components.contains(id.getSacComponent())
+//                         && tendEvents.contains(id.getGlobalCMTID())
+//                         && tendObserverNames.contains(id.getObserver().toString()))
+                components.contains(id.getSacComponent()))
                 .collect(Collectors.toSet());
         Set<DataEntry> dataEntries = partialIDs.stream().map(PartialID::toDataEntry).collect(Collectors.toSet());
 
-        // process for each data entry, time window, variable, and radius
-        int num = 0;
+        // work for each data entry
+        ExecutorService es = ThreadAid.createFixedThreadPool();
         int nEntry = dataEntries.size();
         for (DataEntry dataEntry : dataEntries) {
-            Set<PartialID> idsForEntry = partialIDs.stream().filter(id -> id.toDataEntry().equals(dataEntry)).collect(Collectors.toSet());
-            Set<TimeWindow> timeWindows = idsForEntry.stream().map(id -> id.toTimeWindow()).collect(Collectors.toSet());
-
-            System.err.println("Entry: " + dataEntry);
-
-            for (TimeWindow timeWindow : timeWindows) {
-                Set<PartialID> idsForWindow = idsForEntry.stream().filter(id -> id.toTimeWindow().equals(timeWindow)).collect(Collectors.toSet());
-                Set<VariableType> variables = idsForWindow.stream().map(PartialID::getVariableType).collect(Collectors.toSet());
-
-//                System.err.println(" Window: " + timeWindow);
-
-                for (VariableType variable : variables) {
-                    for (double radius : voxelRadii) {
-                        Set<PartialID> useIDs = idsForWindow.stream().filter(id ->
-                                id.getVariableType().equals(variable)
-                                && Precision.equals(id.getVoxelPosition().getR(), radius, FullPosition.RADIUS_EPSILON))
-                                .collect(Collectors.toSet());
-                        if (useIDs.size() == 0) continue;
-
-//                        System.err.println("  Variable, radius: " + variable + " " + radius);
-
-                        process(useIDs);
-                    }
-                }
-            }
-
-            num++;
-            if (num % 10 == 0) System.err.print("\r " + num + " of " + nEntry + " data entries done.");
+            es.execute(process(dataEntry, partialIDs));
         }
-        System.err.println("\r All data entries done.");
+        es.shutdown();
+        System.err.println("Refining partials ...");
+        while (!es.isTerminated()) {
+            System.err.print("\r " + nProcessedEntry + " of " + nEntry + " data entries done.");
+            ThreadAid.sleep(100);
+        }
+        System.err.println("\r Finished handling all data entries.");
 
         // prepare output folder
-        Path outPath = DatasetAid.createOutputFolder(workPath, "partial", folderTag, appendFolderDate, null);
+        Path outPath = DatasetAid.createOutputFolder(workPath, "partialRefined", folderTag, appendFolderDate, null);
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         // output
         PartialIDFile.write(refinedPartialIDs, outPath);
     }
 
-    private void process(Set<PartialID> ids) throws IOException {
+    private Runnable process(DataEntry dataEntry, Set<PartialID> partialIDs) {
+        return () -> {
+            // process for each data entry, time window, variable, and radius
+            try {
+                Set<PartialID> idsForEntry = partialIDs.stream().filter(id -> id.toDataEntry().equals(dataEntry)).collect(Collectors.toSet());
+                Set<TimeWindow> timeWindows = idsForEntry.stream().map(id -> id.toTimeWindow()).collect(Collectors.toSet());
+
+                for (TimeWindow timeWindow : timeWindows) {
+                    Set<PartialID> idsForWindow = idsForEntry.stream().filter(id -> id.toTimeWindow().equals(timeWindow)).collect(Collectors.toSet());
+                    Set<VariableType> variables = idsForWindow.stream().map(PartialID::getVariableType).collect(Collectors.toSet());
+
+                    for (VariableType variable : variables) {
+                        for (double radius : voxelRadii) {
+                            Set<PartialID> useIDs = idsForWindow.stream().filter(id ->
+                                    id.getVariableType().equals(variable)
+                                    && Precision.equals(id.getVoxelPosition().getR(), radius, FullPosition.RADIUS_EPSILON))
+                                    .collect(Collectors.toSet());
+                            if (useIDs.size() == 0) continue;
+
+                            processLayer(useIDs);
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                System.err.println("!!! Error on " + dataEntry);
+                e.printStackTrace();
+            } finally {
+                nProcessedEntry.incrementAndGet();
+            }
+        };
+    }
+
+    private void processLayer(Set<PartialID> ids) throws IOException {
         if (ids.size() == 0) {
             return;
         }
-
-
-        Map<FullPosition, String> resultMessage = new TreeMap<FullPosition, String>();
-
-
 
         // find maximum amplitude of all partials
         double maxAmp = ids.stream().mapToDouble(id -> id.toTrace().getYVector().getLInfNorm()).max().getAsDouble();
@@ -251,12 +262,8 @@ public class PartialsRefiner extends Operation {
             // partials that have small amplitude (the peak of the waveform is out of the time window) should not be used for cross-correlation
             // thus, it is used as is without refining
             if (id.toTrace().getYVector().getLInfNorm() < maxAmp * USABLE_AMP_RATIO_THRESHOLD) {
-                refinedPartialIDs.add(id);
-
-
-                resultMessage.put(id.getVoxelPosition(), "too small...");
-
-
+//                refinedPartialIDs.add(id);
+                refinedPartialIDs.add(id.withData(id.toTrace().withZeroes().getY()));
 
             } else {
                 HorizontalPosition position = id.getVoxelPosition().toHorizontalPosition();
@@ -325,14 +332,8 @@ public class PartialsRefiner extends Operation {
 
                 // if interpolation failed (e.g. voxels at edge of region with usable partials), use it as is without refining
                 if (Double.isNaN(shifts[0][0]) || Double.isNaN(ampRatios[0][0])) {
-//                    System.err.println("! " + baseID.toDataEntry() + "Cannot interpolate at " + baseID.getVoxelPosition().toHorizontalPosition());
-
-
-                    resultMessage.put(baseID.getVoxelPosition(), "cannot interpolate");
-
-
-
-                    refinedPartialIDs.add(baseID);
+//                    refinedPartialIDs.add(baseID);
+                    refinedPartialIDs.add(baseID.withData(baseID.toTrace().withZeroes().getY()));
                     continue;
                 }
 
@@ -370,15 +371,8 @@ public class PartialsRefiner extends Operation {
                 }
 
                 refinedPartialIDs.add(baseID.withData(yArray));
-
-                resultMessage.put(baseID.getVoxelPosition(), "success!!");
-
-
-
             }
         }
-
-        resultMessage.forEach((k, s) -> System.err.println(k + " : " + s));
     }
 
     /**
