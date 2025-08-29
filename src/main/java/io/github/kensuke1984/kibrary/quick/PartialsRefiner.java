@@ -13,6 +13,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 import org.apache.commons.math3.util.Precision;
@@ -33,9 +34,19 @@ import io.github.kensuke1984.kibrary.voxel.VoxelInformationFile;
 import io.github.kensuke1984.kibrary.waveform.PartialID;
 import io.github.kensuke1984.kibrary.waveform.PartialIDFile;
 
+/**
+ * Operation to make partial derivative waveforms more accurate for each voxel.
+ * This conducts a pseudo-integration of partial derivative waveforms across the voxel volume.
+ *
+ * @author otsuru
+ * @since 2025/8/18
+ */
 public class PartialsRefiner extends Operation {
 
     private static final double halfWindowLength = 20;
+    private static final double USABLE_AMP_RATIO_THRESHOLD = 0.2;
+    private static final double PEAK_AMP_RATIO_THRESHOLD = 0.9;
+    private static final int N_INTERPOLATE = 5;
 
     private final Property property;
     /**
@@ -117,10 +128,10 @@ public class PartialsRefiner extends Operation {
             pw.println("#partialPath partial");
             pw.println("##Path of a voxel information file for perturbation points, must be set.");
             pw.println("#voxelPath voxel.inf");
-            pw.println("##GlobalCMTIDs of events to work for, listed using spaces, must be set.");
-            pw.println("#tendEvents ");
-            pw.println("##Observers to work for, in form \"sta_net\", listed using spaces, must be set.");
-            pw.println("#tendObserverNames ");
+//            pw.println("##GlobalCMTIDs of events to work for, listed using spaces, must be set.");
+//            pw.println("#tendEvents ");
+//            pw.println("##Observers to work for, in form \"sta_net\", listed using spaces, must be set.");
+//            pw.println("#tendObserverNames ");
         }
         System.err.println(outPath + " is created.");
     }
@@ -170,14 +181,16 @@ public class PartialsRefiner extends Operation {
 
         // read partials
         Set<PartialID> partialIDs = PartialIDFile.read(partialPath, true).stream().filter(id ->
-                components.contains(id.getSacComponent())
-                && tendEvents.contains(id.getGlobalCMTID())
-                && tendObserverNames.contains(id.getObserver().toString()))
+                        components.contains(id.getSacComponent())
+                         && tendEvents.contains(id.getGlobalCMTID())
+                         && tendObserverNames.contains(id.getObserver().toString()))
+//                components.contains(id.getSacComponent()))
                 .collect(Collectors.toSet());
         Set<DataEntry> dataEntries = partialIDs.stream().map(PartialID::toDataEntry).collect(Collectors.toSet());
 
         // process for each data entry, time window, variable, and radius
         int num = 0;
+        int nEntry = dataEntries.size();
         for (DataEntry dataEntry : dataEntries) {
             Set<PartialID> idsForEntry = partialIDs.stream().filter(id -> id.toDataEntry().equals(dataEntry)).collect(Collectors.toSet());
             Set<TimeWindow> timeWindows = idsForEntry.stream().map(id -> id.toTimeWindow()).collect(Collectors.toSet());
@@ -188,24 +201,27 @@ public class PartialsRefiner extends Operation {
                 Set<PartialID> idsForWindow = idsForEntry.stream().filter(id -> id.toTimeWindow().equals(timeWindow)).collect(Collectors.toSet());
                 Set<VariableType> variables = idsForWindow.stream().map(PartialID::getVariableType).collect(Collectors.toSet());
 
-                System.err.println(" Window: " + timeWindow);
+//                System.err.println(" Window: " + timeWindow);
 
                 for (VariableType variable : variables) {
                     for (double radius : voxelRadii) {
-                        Set<PartialID> useIDs = partialIDs.stream().filter(id ->
+                        Set<PartialID> useIDs = idsForWindow.stream().filter(id ->
                                 id.getVariableType().equals(variable)
                                 && Precision.equals(id.getVoxelPosition().getR(), radius, FullPosition.RADIUS_EPSILON))
                                 .collect(Collectors.toSet());
                         if (useIDs.size() == 0) continue;
 
-                        System.err.println("  Variable, radius: " + variable + " " + radius);
+//                        System.err.println("  Variable, radius: " + variable + " " + radius);
 
                         process(useIDs);
-                        num++;
                     }
                 }
             }
+
+            num++;
+            if (num % 10 == 0) System.err.print("\r " + num + " of " + nEntry + " data entries done.");
         }
+        System.err.println("\r All data entries done.");
 
         // prepare output folder
         Path outPath = DatasetAid.createOutputFolder(workPath, "partial", folderTag, appendFolderDate, null);
@@ -220,11 +236,37 @@ public class PartialsRefiner extends Operation {
             return;
         }
 
+
+        Map<FullPosition, String> resultMessage = new TreeMap<FullPosition, String>();
+
+
+
+        // find maximum amplitude of all partials
+        double maxAmp = ids.stream().mapToDouble(id -> id.toTrace().getYVector().getLInfNorm()).max().getAsDouble();
+
         // arrange partialIDs into array based on iLatitude and iLongitude
         PartialID[][] orderedIDs = new PartialID[nILatitude][nILongitude];
         for (PartialID id : ids) {
-            HorizontalPosition position = id.getVoxelPosition().toHorizontalPosition();
-            orderedIDs[iLatitudeMap.get(position)][iLongitudeMap.get(position)] = id;
+
+            // partials that have small amplitude (the peak of the waveform is out of the time window) should not be used for cross-correlation
+            // thus, it is used as is without refining
+            if (id.toTrace().getYVector().getLInfNorm() < maxAmp * USABLE_AMP_RATIO_THRESHOLD) {
+                refinedPartialIDs.add(id);
+
+
+                resultMessage.put(id.getVoxelPosition(), "too small...");
+
+
+
+            } else {
+                HorizontalPosition position = id.getVoxelPosition().toHorizontalPosition();
+
+                // something is wrong if multiple partials exist for the same voxel
+                if (orderedIDs[iLatitudeMap.get(position)][iLongitudeMap.get(position)] != null)
+                    throw new IllegalStateException("Partial already exists for " + id);
+
+                orderedIDs[iLatitudeMap.get(position)][iLongitudeMap.get(position)] = id;
+            }
         }
 
         // process for each pixel
@@ -277,9 +319,22 @@ public class PartialsRefiner extends Operation {
                 }
 
                 // interpolate at nxn points in range (-0.5:0.5, -0.5:0.5)
-                int n = 5;
+                int n = N_INTERPOLATE;
                 shifts = interpolateBiquadratic(n, shifts);
                 ampRatios = interpolateBiquadratic(n, ampRatios);
+
+                // if interpolation failed (e.g. voxels at edge of region with usable partials), use it as is without refining
+                if (Double.isNaN(shifts[0][0]) || Double.isNaN(ampRatios[0][0])) {
+//                    System.err.println("! " + baseID.toDataEntry() + "Cannot interpolate at " + baseID.getVoxelPosition().toHorizontalPosition());
+
+
+                    resultMessage.put(baseID.getVoxelPosition(), "cannot interpolate");
+
+
+
+                    refinedPartialIDs.add(baseID);
+                    continue;
+                }
 
                 // sum up the nxn traces applying shift and ampRatio
                 Trace sumTrace = null;
@@ -302,13 +357,28 @@ public class PartialsRefiner extends Operation {
 
                 // The end of the waveform can be jagged when not added at all points. Thus, set that part to 0.
                 double[] yArray = sumTrace.getY();
+                if (yArray.length + minNegativeNShift < 0) {
+                    System.err.println(" " + baseID.toDataEntry() + "  " + baseID.getVoxelPosition());
+                    for (int i2 = 0; i2 < n; i2++) {
+                        for (int j2 = 0; j2 < n; j2++) {
+                            System.err.println("  " + shifts[i2][j2]);
+                        }
+                    }
+                }
                 for (int s = yArray.length + minNegativeNShift; s < yArray.length; s++) {
                     yArray[s] = 0.0;
                 }
 
                 refinedPartialIDs.add(baseID.withData(yArray));
+
+                resultMessage.put(baseID.getVoxelPosition(), "success!!");
+
+
+
             }
         }
+
+        resultMessage.forEach((k, s) -> System.err.println(k + " : " + s));
     }
 
     /**
@@ -382,7 +452,8 @@ public class PartialsRefiner extends Operation {
         // find index of first peak that exceeds 0.9*max
         int firstPeakIndex = indicesOfPeak[0];
         for (int i = 1; i < indicesOfPeak.length; i++) {
-            if (Math.abs(trace.getYAt(indicesOfPeak[i])) > 0.9 * max && indicesOfPeak[i] < firstPeakIndex) firstPeakIndex = indicesOfPeak[i];
+            if (Math.abs(trace.getYAt(indicesOfPeak[i])) > PEAK_AMP_RATIO_THRESHOLD * max && indicesOfPeak[i] < firstPeakIndex)
+                firstPeakIndex = indicesOfPeak[i];
         }
         // return Trace in window that includes first peak
         double peakX = trace.getXAt(firstPeakIndex);
