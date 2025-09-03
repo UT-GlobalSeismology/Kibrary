@@ -8,7 +8,9 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -17,6 +19,7 @@ import org.apache.commons.math3.util.Precision;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.math.Trace;
+import io.github.kensuke1984.kibrary.perturbation.ScalarListFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
@@ -27,6 +30,7 @@ import io.github.kensuke1984.kibrary.waveform.PartialIDFile;
 public class PartialsShiftComputer extends Operation {
 
     private static final double halfWindowLength = 20;
+    private static final double PEAK_AMP_RATIO_THRESHOLD = 0.9;
 
     private final Property property;
     /**
@@ -62,6 +66,10 @@ public class PartialsShiftComputer extends Operation {
     private double[] tendVoxelLatitudes;
     private double[] tendVoxelLongitudes;
     private double[] tendVoxelRadii;
+
+    Map<FullPosition, Double> shiftMap = new LinkedHashMap<>();
+    Map<FullPosition, Double> corrMap = new LinkedHashMap<>();
+    Map<FullPosition, Double> ampMap = new LinkedHashMap<>();
 
     /**
      * @param args (String[]) Arguments: none to create a property file, path of property file to run it.
@@ -136,8 +144,7 @@ public class PartialsShiftComputer extends Operation {
        List<PartialID> partialIDs = PartialIDFile.read(partialPath, true).stream().filter(id ->
                components.contains(id.getSacComponent())
                && tendEvents.contains(id.getGlobalCMTID())
-               && tendObserverNames.contains(id.getObserver().toString())
-               && checkPosition(id.getVoxelPosition()))
+               && tendObserverNames.contains(id.getObserver().toString()))
                .collect(Collectors.toList());
 
        int num = 0;
@@ -159,6 +166,14 @@ public class PartialsShiftComputer extends Operation {
                }
            }
        }
+
+       // prepare output folder
+       Path outPath = DatasetAid.createOutputFolder(workPath, "partialShift", folderTag, appendFolderDate, null);
+       property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
+
+       ScalarListFile.write(ampMap, outPath.resolve("amp.lst"));
+       ScalarListFile.write(corrMap, outPath.resolve("corr.lst"));
+       ScalarListFile.write(shiftMap, outPath.resolve("shift.lst"));
    }
 
    private boolean checkPosition(FullPosition position) {
@@ -213,26 +228,32 @@ public class PartialsShiftComputer extends Operation {
        int i;
        for (i = 0; i < ids.size(); i++) {
            PartialID id = ids.get(i);
-           System.err.println(id.getVoxelPosition().toString());
+           FullPosition position = id.getVoxelPosition();
+           if (position.getR() > 3506) continue;
+
+//           System.err.println(id.getVoxelPosition().toString());
 
            double[] shiftResults = baseTrace.findBestShift(cutFirstPeakWindowTrace(id.toTrace()), true, true, samplingHz);
-           System.err.println(" shift: " + -shiftResults[0] + " corr: " + shiftResults[1] + " amp: " + shiftResults[2]);
+           shiftMap.put(position, -shiftResults[0]);
+           corrMap.put(position, shiftResults[1]);
+           ampMap.put(position, shiftResults[2]);
+//           System.err.println(" shift: " + -shiftResults[0] + " corr: " + shiftResults[1] + " amp: " + shiftResults[2]);
        }
    }
 
    private Trace cutFirstPeakWindowTrace(Trace trace) {
        // get indices of peaks
        int[] indicesOfPeak = trace.getIndicesOfPeak();
-       // max value
-       double max = trace.getYAt(indicesOfPeak[0]);
+       // max absolute value
+       double max = Math.abs(trace.getYAt(indicesOfPeak[0]));
        // find index of first peak that exceeds 0.9*max
        int firstPeakIndex = indicesOfPeak[0];
        for (int i = 1; i < indicesOfPeak.length; i++) {
-           if (trace.getYAt(indicesOfPeak[i]) > 0.9 * max && indicesOfPeak[i] < indicesOfPeak[0]) firstPeakIndex = indicesOfPeak[i];
+           if (Math.abs(trace.getYAt(indicesOfPeak[i])) > PEAK_AMP_RATIO_THRESHOLD * max && indicesOfPeak[i] < firstPeakIndex)
+               firstPeakIndex = indicesOfPeak[i];
        }
        // return Trace in window that includes first peak
        double peakX = trace.getXAt(firstPeakIndex);
-       System.err.println("  " + peakX);
        return trace.cutWindow(peakX - halfWindowLength, peakX + halfWindowLength);
    }
 
