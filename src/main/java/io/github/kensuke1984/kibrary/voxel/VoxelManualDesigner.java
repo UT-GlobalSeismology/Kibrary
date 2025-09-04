@@ -249,7 +249,7 @@ public class VoxelManualDesigner extends Operation {
                 double longitude = baseLongitude + j * dLongitudeForRow;
 
                 // add horizontal pixel to list
-                horizontalPixels.add(new HorizontalPixel(new HorizontalPosition(latitude, longitude), dLatitude, dLongitudeForRow, i, j));
+                horizontalPixels.add(new HorizontalPixel(new HorizontalPosition(latitude, longitude), dLatitude, dLongitudeForRow, -i, j));
             }
 
         }

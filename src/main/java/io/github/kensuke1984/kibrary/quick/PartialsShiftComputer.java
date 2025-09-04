@@ -171,9 +171,9 @@ public class PartialsShiftComputer extends Operation {
        Path outPath = DatasetAid.createOutputFolder(workPath, "partialShift", folderTag, appendFolderDate, null);
        property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
-       ScalarListFile.write(ampMap, outPath.resolve("amp.lst"));
-       ScalarListFile.write(corrMap, outPath.resolve("corr.lst"));
-       ScalarListFile.write(shiftMap, outPath.resolve("shift.lst"));
+       ScalarListFile.write(ampMap, outPath.resolve("scalar_amp..ABSOLUTE.lst"));
+       ScalarListFile.write(corrMap, outPath.resolve("scalar_corr..ABSOLUTE.lst"));
+       ScalarListFile.write(shiftMap, outPath.resolve("scalar_shift..ABSOLUTE.lst"));
    }
 
    private boolean checkPosition(FullPosition position) {

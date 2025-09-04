@@ -10,6 +10,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang3.StringUtils;
+
 import io.github.kensuke1984.kibrary.elastic.VariableType;
 import io.github.kensuke1984.kibrary.util.InformationFileReader;
 import io.github.kensuke1984.kibrary.util.MathAid;
@@ -54,7 +56,7 @@ public class ScalarListFile {
      * @return (String) Generated file name.
      */
     public static String generateFileName(VariableType variable, ScalarType scalarType, String tag) {
-        return "scalar" + ((tag != null) ? ("_" + tag) : "") + "." + variable.toString() + "." + scalarType.toString() + ".lst";
+        return "scalar" + ((tag != null) ? ("_" + tag) : "") + "." + (variable != null ? variable.toString() : "") + "." + scalarType.toString() + ".lst";
     }
 
     /**
@@ -131,7 +133,7 @@ public class ScalarListFile {
         String fileName = inputPath.getFileName().toString();
         String[] fileNameParts = fileName.split("\\.");
         if (fileNameParts.length != 4) throw new IllegalArgumentException("Invalid file name: " + fileName);
-        variable = VariableType.valueOf(fileNameParts[1]);
+        variable = (StringUtils.isEmpty(fileNameParts[1]) ? null : VariableType.valueOf(fileNameParts[1]));
         scalarType = ScalarType.valueOf(fileNameParts[2]);
 
         InformationFileReader reader = new InformationFileReader(inputPath, true);

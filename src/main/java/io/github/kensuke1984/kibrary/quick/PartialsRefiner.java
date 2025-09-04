@@ -47,7 +47,6 @@ public class PartialsRefiner extends Operation {
     private static final double halfWindowLength = 20;
     private static final double USABLE_AMP_RATIO_THRESHOLD = 0.2;
     private static final double PEAK_AMP_RATIO_THRESHOLD = 0.9;
-    private static final int N_INTERPOLATE = 5;
 
     private final Property property;
     /**
@@ -75,6 +74,11 @@ public class PartialsRefiner extends Operation {
      * Path of a voxel information file.
      */
     private Path voxelPath;
+    /**
+     * Number of points in each direction to interpolate at.
+     */
+    private int nInterpolate;
+
 //
 //    /**
 //     * Events to work for.
@@ -133,6 +137,8 @@ public class PartialsRefiner extends Operation {
             pw.println("#partialPath partial");
             pw.println("##Path of a voxel information file for perturbation points, must be set.");
             pw.println("#voxelPath voxel.inf");
+            pw.println("##(int) Number of points in each direction to interpolate at. (5)");
+            pw.println("#nInterpolate ");
 //            pw.println("##GlobalCMTIDs of events to work for, listed using spaces, must be set.");
 //            pw.println("#tendEvents ");
 //            pw.println("##Observers to work for, in form \"sta_net\", listed using spaces, must be set.");
@@ -155,6 +161,7 @@ public class PartialsRefiner extends Operation {
 
         partialPath = property.parsePath("partialPath", null, true, workPath);
         voxelPath = property.parsePath("voxelPath", null, true, workPath);
+        nInterpolate = property.parseInt("nInterpolate", "5");
 
 //        tendEvents = Arrays.stream(property.parseStringArray("tendEvents", null)).map(GlobalCMTID::new)
 //                .collect(Collectors.toSet());
@@ -326,7 +333,7 @@ public class PartialsRefiner extends Operation {
                 }
 
                 // interpolate at nxn points in range (-0.5:0.5, -0.5:0.5)
-                int n = N_INTERPOLATE;
+                int n = nInterpolate;
                 shifts = interpolateBiquadratic(n, shifts);
                 ampRatios = interpolateBiquadratic(n, ampRatios);
 

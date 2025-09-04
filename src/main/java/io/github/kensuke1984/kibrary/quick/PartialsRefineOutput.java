@@ -50,7 +50,6 @@ public class PartialsRefineOutput extends Operation {
     private static final double halfWindowLength = 20;
     private static final double USABLE_AMP_RATIO_THRESHOLD = 0.2;
     private static final double PEAK_AMP_RATIO_THRESHOLD = 0.9;
-    private static final int N_INTERPOLATE = 5;
 
     private final Property property;
     /**
@@ -82,6 +81,7 @@ public class PartialsRefineOutput extends Operation {
      * Path of a voxel information file.
      */
     private Path voxelPath2;
+    private int nInterpolate;
 
     /**
      * Events to work for.
@@ -154,6 +154,8 @@ public class PartialsRefineOutput extends Operation {
             pw.println("#tendEvents ");
             pw.println("##Observers to work for, in form \"sta_net\", listed using spaces, must be set.");
             pw.println("#tendObserverNames ");
+            pw.println("##(int) Number of points in each direction to interpolate at. (5)");
+            pw.println("#nInterpolate ");
         }
         System.err.println(outPath + " is created.");
     }
@@ -177,6 +179,8 @@ public class PartialsRefineOutput extends Operation {
         tendEvents = Arrays.stream(property.parseStringArray("tendEvents", null)).map(GlobalCMTID::new)
                 .collect(Collectors.toSet());
         tendObserverNames = Arrays.stream(property.parseStringArray("tendObserverNames", null)).collect(Collectors.toSet());
+
+        nInterpolate = property.parseInt("nInterpolate", "5");
     }
 
     @Override
@@ -235,8 +239,8 @@ public class PartialsRefineOutput extends Operation {
 
         // output
         PartialIDFile.write(refinedPartialIDs, outPath);
-        ScalarListFile.write(ampMap, outPath.resolve("amp.lst"));
-        ScalarListFile.write(shiftMap, outPath.resolve("shift.lst"));
+        ScalarListFile.write(ampMap, outPath.resolve("scalar_amp..ABSOLUTE.lst"));
+        ScalarListFile.write(shiftMap, outPath.resolve("scalar_shift..ABSOLUTE.lst"));
     }
 
     private Runnable process(DataEntry dataEntry, Set<PartialID> partialIDs) {
@@ -360,7 +364,7 @@ public class PartialsRefineOutput extends Operation {
                 }
 
                 // interpolate at nxn points in range (-0.5:0.5, -0.5:0.5)
-                int n = N_INTERPOLATE;
+                int n = nInterpolate;
                 shifts = interpolateBiquadratic(n, shifts);
                 ampRatios = interpolateBiquadratic(n, ampRatios);
 
@@ -381,8 +385,8 @@ public class PartialsRefineOutput extends Operation {
                         }
 
 
-                        int i3 = i2 - 46;
-                        int j3 = j2 - 2;
+                        int i3 = i2 + 208;
+                        int j3 = j2 - 12;
                         FullPosition thisPosition = horizontalPixels2.stream().filter(pix -> pix.getILatitude() == i3 && pix.getILongitude() == j3).map(pix -> pix.getPosition()).findFirst().get().toFullPosition(3505);
                         shiftMap.put(thisPosition, shifts[i2][j2]);
                         ampMap.put(thisPosition, ampRatios[i2][j2]);
