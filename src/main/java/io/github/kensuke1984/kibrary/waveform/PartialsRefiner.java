@@ -1,4 +1,4 @@
-package io.github.kensuke1984.kibrary.quick;
+package io.github.kensuke1984.kibrary.waveform;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -32,8 +32,6 @@ import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.voxel.HorizontalPixel;
 import io.github.kensuke1984.kibrary.voxel.VoxelInformationFile;
-import io.github.kensuke1984.kibrary.waveform.PartialID;
-import io.github.kensuke1984.kibrary.waveform.PartialIDFile;
 
 /**
  * Operation to make partial derivative waveforms more accurate for each voxel.
@@ -215,7 +213,7 @@ public class PartialsRefiner extends Operation {
         System.err.println("\r Finished handling all data entries.");
 
         // prepare output folder
-        Path outPath = DatasetAid.createOutputFolder(workPath, "partialRefined", folderTag, appendFolderDate, null);
+        Path outPath = DatasetAid.createOutputFolder(workPath, "refined", folderTag, appendFolderDate, null);
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         // output
