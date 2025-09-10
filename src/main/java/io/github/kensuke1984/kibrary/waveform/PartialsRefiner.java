@@ -77,7 +77,11 @@ public class PartialsRefiner extends Operation {
      */
     private int nInterpolate;
 
-//
+    private boolean onlyEveryOther;
+    private double baseLatitude;
+    private double baseLongitude;
+
+
 //    /**
 //     * Events to work for.
 //     */
@@ -99,6 +103,9 @@ public class PartialsRefiner extends Operation {
     private int nILongitude;
     private Map<HorizontalPosition, Integer> iLatitudeMap = new HashMap<>();
     private Map<HorizontalPosition, Integer> iLongitudeMap = new HashMap<>();
+
+    private boolean evenBaseILatitude;
+    private boolean evenBaseILongitude;
 
     /**
      * Created {@link PartialID}s.
@@ -137,6 +144,12 @@ public class PartialsRefiner extends Operation {
             pw.println("#voxelPath voxel.inf");
             pw.println("##(int) Number of points in each direction to interpolate at. (5)");
             pw.println("#nInterpolate ");
+            pw.println("##(boolean) Whether to use only every other perturbation point. (false)");
+            pw.println("#onlyEveryOther ");
+            pw.println("##Latitude of a standard perturbation point to use, when onlyEveryOther is true. (0.0)");
+            pw.println("#baseLatitude ");
+            pw.println("##Longitude of a standard perturbation point to use, when onlyEveryOther is true. (0.0)");
+            pw.println("#baseLongitude ");
 //            pw.println("##GlobalCMTIDs of events to work for, listed using spaces, must be set.");
 //            pw.println("#tendEvents ");
 //            pw.println("##Observers to work for, in form \"sta_net\", listed using spaces, must be set.");
@@ -160,6 +173,10 @@ public class PartialsRefiner extends Operation {
         partialPath = property.parsePath("partialPath", null, true, workPath);
         voxelPath = property.parsePath("voxelPath", null, true, workPath);
         nInterpolate = property.parseInt("nInterpolate", "5");
+
+        onlyEveryOther = property.parseBoolean("onlyEveryOther", "false");
+        baseLatitude = property.parseDouble("baseLatitude", "0.0");
+        baseLongitude = property.parseDouble("baseLongitude", "0.0");
 
 //        tendEvents = Arrays.stream(property.parseStringArray("tendEvents", null)).map(GlobalCMTID::new)
 //                .collect(Collectors.toSet());
@@ -187,6 +204,13 @@ public class PartialsRefiner extends Operation {
         for (HorizontalPixel pixel : horizontalPixels) {
             iLatitudeMap.put(pixel.getPosition(), pixel.getILatitude() - minILatitude);
             iLongitudeMap.put(pixel.getPosition(), pixel.getILongitude() - minILongitude);
+        }
+
+        // decide whether base position is odd or even
+        if (onlyEveryOther) {
+            HorizontalPosition basePosition = new HorizontalPosition(baseLatitude, baseLongitude);
+            evenBaseILatitude = (iLatitudeMap.get(basePosition) % 2 == 0);
+            evenBaseILongitude = (iLongitudeMap.get(basePosition) % 2 == 0);
         }
 
         // read partials
@@ -265,9 +289,8 @@ public class PartialsRefiner extends Operation {
         for (PartialID id : ids) {
 
             // partials that have small amplitude (the peak of the waveform is out of the time window) should not be used for cross-correlation
-            // thus, it is used as is without refining
+            // thus, it is set as 0
             if (id.toTrace().getYVector().getLInfNorm() < maxAmp * USABLE_AMP_RATIO_THRESHOLD) {
-//                refinedPartialIDs.add(id);
                 refinedPartialIDs.add(id.withData(id.toTrace().withZeroes().getY()));
 
             } else {
@@ -283,7 +306,10 @@ public class PartialsRefiner extends Operation {
 
         // process for each pixel
         for (int i = 0; i < nILatitude; i++) {
+            if (onlyEveryOther && (evenBaseILatitude ^ (i % 2 == 0))) continue;
+
             for (int j = 0; j < nILongitude; j++) {
+                if (onlyEveryOther && (evenBaseILongitude ^ (j % 2 == 0))) continue;
 
                 // make sure this pixel has partials
                 if (orderedIDs[i][j] == null) continue;
@@ -335,9 +361,8 @@ public class PartialsRefiner extends Operation {
                 shifts = interpolateBiquadratic(n, shifts);
                 ampRatios = interpolateBiquadratic(n, ampRatios);
 
-                // if interpolation failed (e.g. voxels at edge of region with usable partials), use it as is without refining
+                // if interpolation failed (e.g. voxels at edge of region with usable partials), set it as 0
                 if (Double.isNaN(shifts[0][0]) || Double.isNaN(ampRatios[0][0])) {
-//                    refinedPartialIDs.add(baseID);
                     refinedPartialIDs.add(baseID.withData(baseID.toTrace().withZeroes().getY()));
                     continue;
                 }
@@ -381,7 +406,8 @@ public class PartialsRefiner extends Operation {
     }
 
     /**
-     * Given 9 values at x=-1, 0, 1 and y=-1, 0, 1, conduct biquadratic interpolation to get values at nxn points in range (-0.5:0.5, -0.5:0.5).
+     * Given 9 values at x=-1, 0, 1 and y=-1, 0, 1,conduct biquadratic interpolation to get values at nxn points
+     * in range (-0.5:0.5, -0.5:0.5) or (-1:1, -1:1), depending on the setting.
      * @param n (int) Number of points to interpolate at in each direction.
      * @param input (3x3 Array of double) Values at 9 input points.
      * @return (nxn Array of double) Interpolated values.
@@ -402,7 +428,8 @@ public class PartialsRefiner extends Operation {
     }
 
     /**
-     * Given values at x=-1, 0, 1, conduct quadratic interpolation to get values at n points in range (-0.5:0.5).
+     * Given values at x=-1, 0, 1, conduct quadratic interpolation to get values at n points
+     * in range (-0.5:0.5) or (-1:1), depending on the setting.
      * If values at only two adjacent points are given, linear interpolation is conducted.
      * Otherwise, returns NaN.
      * @param n (int) Number of points to interpolate at.
@@ -434,16 +461,24 @@ public class PartialsRefiner extends Operation {
             c = Double.NaN;
         }
 
-        // interpolate at n points in (-0.5:0.5)
         double[] results = new double[n];
-        for (int i = 0; i < n; i++) {
-            double x = -0.5 + (i + 0.5) / n;
-            results[i] = a*x*x + b*x + c;
+        if (onlyEveryOther) {
+            // interpolate at n points in (-1:1)
+            for (int i = 0; i < n; i++) {
+                double x = -1.0 + (i + 0.5) / n * 2.0;
+                results[i] = a*x*x + b*x + c;
+            }
+        } else {
+            // interpolate at n points in (-0.5:0.5)
+            for (int i = 0; i < n; i++) {
+                double x = -0.5 + (i + 0.5) / n;
+                results[i] = a*x*x + b*x + c;
+            }
         }
         return results;
     }
 
-    private Trace cutFirstPeakWindowTrace(Trace trace) {
+    private static Trace cutFirstPeakWindowTrace(Trace trace) {
         // get indices of peaks
         int[] indicesOfPeak = trace.getIndicesOfPeak();
         // max absolute value
