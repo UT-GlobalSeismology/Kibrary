@@ -43,7 +43,7 @@ import io.github.kensuke1984.kibrary.voxel.VoxelInformationFile;
 public class PartialsRefiner extends Operation {
 
     private static final double halfWindowLength = 20;
-    private static final double USABLE_AMP_RATIO_THRESHOLD = 0.2;
+    private static final double USABLE_AMP_RATIO_THRESHOLD = 0.5;
     private static final double PEAK_AMP_RATIO_THRESHOLD = 0.9;
 
     private final Property property;
@@ -287,14 +287,16 @@ public class PartialsRefiner extends Operation {
         // arrange partialIDs into array based on iLatitude and iLongitude
         PartialID[][] orderedIDs = new PartialID[nILatitude][nILongitude];
         for (PartialID id : ids) {
+            HorizontalPosition position = id.getVoxelPosition().toHorizontalPosition();
 
             // partials that have small amplitude (the peak of the waveform is out of the time window) should not be used for cross-correlation
             // thus, it is set as 0
             if (id.toTrace().getYVector().getLInfNorm() < maxAmp * USABLE_AMP_RATIO_THRESHOLD) {
+                if (onlyEveryOther && (evenBaseILatitude ^ (iLatitudeMap.get(position) % 2 == 0))) continue;
+                if (onlyEveryOther && (evenBaseILongitude ^ (iLongitudeMap.get(position) % 2 == 0))) continue;
                 refinedPartialIDs.add(id.withData(id.toTrace().withZeroes().getY()));
 
             } else {
-                HorizontalPosition position = id.getVoxelPosition().toHorizontalPosition();
 
                 // something is wrong if multiple partials exist for the same voxel
                 if (orderedIDs[iLatitudeMap.get(position)][iLongitudeMap.get(position)] != null)
@@ -358,11 +360,11 @@ public class PartialsRefiner extends Operation {
 
                 // interpolate at nxn points in range (-0.5:0.5, -0.5:0.5)
                 int n = nInterpolate;
-                shifts = interpolateBiquadratic(n, shifts);
-                ampRatios = interpolateBiquadratic(n, ampRatios);
+                double[][] shiftsItpl = interpolateBiquadratic(n, shifts);
+                double[][] ampRatiosItpl = interpolateBiquadratic(n, ampRatios);
 
                 // if interpolation failed (e.g. voxels at edge of region with usable partials), set it as 0
-                if (Double.isNaN(shifts[0][0]) || Double.isNaN(ampRatios[0][0])) {
+                if (Double.isNaN(shiftsItpl[0][0]) || Double.isNaN(ampRatiosItpl[0][0])) {
                     refinedPartialIDs.add(baseID.withData(baseID.toTrace().withZeroes().getY()));
                     continue;
                 }
@@ -372,12 +374,12 @@ public class PartialsRefiner extends Operation {
                 int minNegativeNShift = 0;
                 for (int i2 = 0; i2 < n; i2++) {
                     for (int j2 = 0; j2 < n; j2++) {
-                        if (Double.isNaN(shifts[i2][j2]) || Double.isNaN(ampRatios[i2][j2])) {
+                        if (Double.isNaN(shiftsItpl[i2][j2]) || Double.isNaN(ampRatiosItpl[i2][j2])) {
                             throw new IllegalArgumentException("Cannot interpolate at " + baseID.getVoxelPosition().toHorizontalPosition());
                         }
                         // Here, the data points of baseTrace is moved to the right for positive shift.
-                        int nShift = (int) Math.round(shifts[i2][j2] * samplingHz);
-                        Trace pseudoTrace = baseTrace.shiftYInXDirection(nShift).multiply(ampRatios[i2][j2]);
+                        int nShift = (int) Math.round(shiftsItpl[i2][j2] * samplingHz);
+                        Trace pseudoTrace = baseTrace.shiftYInXDirection(nShift).multiply(ampRatiosItpl[i2][j2]);
                         sumTrace = (sumTrace == null) ? pseudoTrace : sumTrace.add(pseudoTrace);
                         // keep record of largest negative shift
                         if (nShift < minNegativeNShift) minNegativeNShift = nShift;
@@ -390,10 +392,17 @@ public class PartialsRefiner extends Operation {
                 double[] yArray = sumTrace.getY();
                 if (yArray.length + minNegativeNShift < 0) {
                     System.err.println(" " + baseID.toDataEntry() + "  " + baseID.getVoxelPosition());
+                    for (int i2 = 0; i2 < 3; i2++) {
+                        for (int j2 = 0; j2 < 3; j2++) {
+                            System.err.print("  " + Precision.round(shifts[i2][j2], 2));
+                        }
+                        System.err.println();
+                    }
                     for (int i2 = 0; i2 < n; i2++) {
                         for (int j2 = 0; j2 < n; j2++) {
-                            System.err.println("  " + shifts[i2][j2]);
+                            System.err.print("  " + Precision.round(shiftsItpl[i2][j2], 2));
                         }
+                        System.err.println();
                     }
                 }
                 for (int s = yArray.length + minNegativeNShift; s < yArray.length; s++) {
