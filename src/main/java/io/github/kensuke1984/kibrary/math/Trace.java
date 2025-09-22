@@ -171,6 +171,46 @@ public final class Trace {
     }
 
     /**
+     * Find amount of shift with best variance.
+     * The search is done by sliding the input ({@link Trace}).
+     * Assumed that the interval of x is the same in both Traces.
+     * @param trace ({@link Trace}) Input. Its length must be shorter than this.
+     * @return (Array of double) Contains 3 values: The shift value of input trace in x direction for best correlation,
+     *   corresponding variance, and corresponding amplitude (L2 norm) ratio (input / this).
+     *
+     * @author otsuru
+     * @since 2025/9/22
+     */
+    public double[] findBestVarianceShift(Trace trace) {
+        int traceLength = trace.getLength();
+        int gapLength = xArray.length - traceLength;
+        if (gapLength <= 0) throw new IllegalArgumentException("Input trace must be shorter.");
+
+        // get the shorter vector to be slided
+        RealVector slidingVector = trace.getYVector();
+        double slidingNorm = slidingVector.getNorm();
+
+        // find best shift while sliding the input trace
+        double shift = 0;
+        double varMin = Double.MAX_VALUE;
+        double normRatio = 0;
+        for (int i = 0; i <= gapLength; i++) {
+            RealVector cutVector = yVector.getSubVector(i, traceLength);
+            double cutNorm = cutVector.getNorm();
+            if (cutNorm == 0)  continue;
+
+            double var = Math.pow(cutVector.subtract(slidingVector).getNorm(), 2) / cutNorm / slidingNorm;
+            if (var < varMin) {
+                shift = xArray[i] - trace.xArray[0];
+                varMin = var;
+                normRatio = slidingNorm / cutNorm;
+            }
+        }
+        double[] result = {shift, varMin, normRatio};
+        return result;
+    }
+
+    /**
      * Find amount of shift with best correlation.
      * The search is done by sliding the input ({@link Trace}).
      * Thie original Trace can be zero-padded at the front and back by the length of the input Trace before searching for the shift.
@@ -191,6 +231,29 @@ public final class Trace {
         if (frontPad) paddedTrace = paddedTrace.frontPad(padLength, samplingHz);
         if (backPad) paddedTrace = paddedTrace.backPad(padLength, samplingHz);
         return paddedTrace.findBestShift(trace);
+    }
+
+    /**
+     * Find amount of shift with best variance.
+     * The search is done by sliding the input ({@link Trace}).
+     * Thie original Trace can be zero-padded at the front and back by the length of the input Trace before searching for the shift.
+     * Assumed that the interval of x is the same in both Traces.
+     * @param trace ({@link Trace}) Input. Its length must be shorter than this if not padding.
+     * @param frontPad (boolean) Whether to pad at the front.
+     * @param backPad (boolean) Whether to pad at the back.
+     * @param samplingHz (double) Sampling rate of this Trace.
+     * @return (Array of double) Contains 3 values: The shift value in x direction for best correlation,
+     *   corresponding variance, and corresponding amplitude (L2 norm) ratio.
+     *
+     * @author otsuru
+     * @since 2025/9/22
+     */
+    public double[] findBestVarianceShift(Trace trace, boolean frontPad, boolean backPad, double samplingHz) {
+        int padLength = xArray.length;
+        Trace paddedTrace = this;
+        if (frontPad) paddedTrace = paddedTrace.frontPad(padLength, samplingHz);
+        if (backPad) paddedTrace = paddedTrace.backPad(padLength, samplingHz);
+        return paddedTrace.findBestVarianceShift(trace);
     }
 
     public double findBestShiftConsiderAmplitude(Trace trace) {

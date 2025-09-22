@@ -68,7 +68,7 @@ public class PartialsShiftComputer extends Operation {
     private double[] tendVoxelRadii;
 
     Map<FullPosition, Double> shiftMap = new LinkedHashMap<>();
-    Map<FullPosition, Double> corrMap = new LinkedHashMap<>();
+    Map<FullPosition, Double> varMap = new LinkedHashMap<>();
     Map<FullPosition, Double> ampMap = new LinkedHashMap<>();
 
     /**
@@ -172,7 +172,7 @@ public class PartialsShiftComputer extends Operation {
        property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
        ScalarListFile.write(ampMap, outPath.resolve("scalar_amp..ABSOLUTE.lst"));
-       ScalarListFile.write(corrMap, outPath.resolve("scalar_corr..ABSOLUTE.lst"));
+       ScalarListFile.write(varMap, outPath.resolve("scalar_var..ABSOLUTE.lst"));
        ScalarListFile.write(shiftMap, outPath.resolve("scalar_shift..ABSOLUTE.lst"));
    }
 
@@ -233,9 +233,10 @@ public class PartialsShiftComputer extends Operation {
 
 //           System.err.println(id.getVoxelPosition().toString());
 
-           double[] shiftResults = baseTrace.findBestShift(cutFirstPeakWindowTrace(id.toTrace()), true, true, samplingHz);
+//           double[] shiftResults = baseTrace.findBestShift(cutFirstPeakWindowTrace(id.toTrace()), true, true, samplingHz);
+           double[] shiftResults = id.toTrace().findBestVarianceShift(baseTrace, true, true, samplingHz);
            shiftMap.put(position, -shiftResults[0]);
-           corrMap.put(position, shiftResults[1]);
+           varMap.put(position, shiftResults[1]);
            ampMap.put(position, shiftResults[2]);
 //           System.err.println(" shift: " + -shiftResults[0] + " corr: " + shiftResults[1] + " amp: " + shiftResults[2]);
        }

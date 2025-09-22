@@ -351,10 +351,11 @@ public class PartialsRefiner extends Operation {
                             continue;
                         }
 
-                        double[] shiftResults = baseTraceCut.findBestShift(cutFirstPeakWindowTrace(id.toTrace()), true, true, samplingHz);
+//                        double[] shiftResults = baseTraceCut.findBestVarianceShift(cutFirstPeakWindowTrace(id.toTrace()), true, true, samplingHz);
+                        double[] shiftResults = id.toTrace().findBestVarianceShift(baseTraceCut, true, true, samplingHz);
                         // Here, shift is the amount to move the x axis of baseTrace to the left (data points to the right) to fit this trace.
-                        shifts[i2 + 1][j2 + 1] = -shiftResults[0];
-                        ampRatios[i2 + 1][j2 + 1] = shiftResults[2];
+                        shifts[i2 + 1][j2 + 1] = shiftResults[0];
+                        ampRatios[i2 + 1][j2 + 1] = 1.0 / shiftResults[2];
                     }
                 }
 

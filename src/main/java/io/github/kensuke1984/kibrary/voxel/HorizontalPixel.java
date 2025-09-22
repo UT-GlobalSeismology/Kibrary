@@ -49,8 +49,8 @@ public class HorizontalPixel {
 
     @Override
     public String toString() {
-        return position + " " + MathAid.padToString(dLatitude, 2, Latitude.DECIMALS, false)
-                + " " + MathAid.padToString(dLongitude, 2, Longitude.DECIMALS, false)
+        return position + " " + MathAid.padToString(dLatitude, 2, Latitude.DECIMALS + 1, false)
+                + " " + MathAid.padToString(dLongitude, 2, Longitude.DECIMALS + 1, false)
                 + " " + MathAid.padToString(iLatitude, 3, false) + " " + MathAid.padToString(iLongitude, 3, false);
     }
 
