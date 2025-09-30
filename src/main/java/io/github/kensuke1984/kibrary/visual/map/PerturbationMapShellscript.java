@@ -239,7 +239,7 @@ public class PerturbationMapShellscript {
             pw.println("#------- Scale");
             // compute the column number of the last panel (counting as 0, 1, 2, 3, ...)
             int nLastColumn = (displayLayers.length - 1) % nPanelsPerRow;
-            pw.println("gmt psscale -Ccp.cpt -Dx2/-4+w12/0.8+h -B1.0+l\"@~d@~" + paramName + "/" + paramName + " \\(\\%\\)\" -K -O -X-"
+            pw.println("gmt psscale -Ccp.cpt -Dx2/-4+w12/0.8+h -B1.0+l\"@~d@~" + paramName + "/" + paramName + " (%)\" -K -O -X-"
                     + (PANEL_WIDTH * nLastColumn / 2) + " >> $outputps");
             pw.println("");
 

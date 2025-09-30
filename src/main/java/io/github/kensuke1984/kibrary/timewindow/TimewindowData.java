@@ -117,8 +117,8 @@ public class TimewindowData extends Timewindow {
     @Override
     public String toString() {
         return observer.toPaddedInfoString() + " " + eventID.toPaddedString() + " " + component + " "
-                + MathAid.padToString(startTime, TYPICAL_MAX_INTEGER_DIGITS, PRECISION, " ") + " "
-                + MathAid.padToString(endTime, TYPICAL_MAX_INTEGER_DIGITS, PRECISION, " ") + " " + phasesAsString(phases);
+                + MathAid.padToString(startTime, TYPICAL_MAX_INTEGER_DIGITS, PRECISION, false) + " "
+                + MathAid.padToString(endTime, TYPICAL_MAX_INTEGER_DIGITS, PRECISION, false) + " " + phasesAsString(phases);
     }
 
     /**

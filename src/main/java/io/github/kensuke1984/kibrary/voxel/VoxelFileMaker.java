@@ -9,37 +9,23 @@ import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
 
-import edu.sc.seis.TauP.TauModelException;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
-import io.github.kensuke1984.kibrary.external.TauPPierceWrapper;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
-import io.github.kensuke1984.kibrary.util.data.DataEntry;
-import io.github.kensuke1984.kibrary.util.data.DataEntryListFile;
-import io.github.kensuke1984.kibrary.util.data.Raypath;
-import io.github.kensuke1984.kibrary.util.earth.FullPosition;
+import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 
 /**
- * Operation that decides horizontal distribution of voxels based on raypath lines.
+ * Operation to create a {@link VoxelInformationFile} by deciding the position range of voxels manually.
  * <p>
- * Given a set of {@link DataEntry}s, raypath segments that run through a layer of specified radius range are computed.
- * Voxels are distributed so that they cover the region these raypath segments sample.
- * Voxels are set along latitude lines, with spacing of either equal longitude angle [deg] or equal distance [km].
- * When using distance [km], it is converted to degrees at the (roughly) median radius of the target region.
- * <p>
- * Radii of voxel boundaries must be decided manually. Voxel radii will be set at the center of each radius range.
- * <p>
- * Use {@link VoxelFileMaker} to decide the position range of voxels manually.
+ * Use {@link VoxelLayoutDesigner} to decide the positions of voxels based on a dataset.
  *
  * @author otsuru
- * @since 2022/2/11
+ * @since 2023/6/5
  */
-public class VoxelLayoutDesigner extends Operation {
+public class VoxelFileMaker extends Operation {
 
     private final Property property;
     /**
@@ -51,14 +37,10 @@ public class VoxelLayoutDesigner extends Operation {
      */
     private String fileTag;
 
-    /**
-     * Path of the input data entry list file
-     */
-    private Path dataEntryPath;
-    private String[] piercePhases;
-    private double lowerPierceRadius;
-    private double upperPierceRadius;
-    private String structureName;
+    private double lowerLatitude;
+    private double upperLatitude;
+    private double lowerLongitude;
+    private double upperLongitude;
 
     private double dLatitudeKm;
     private double dLatitudeDeg;
@@ -69,7 +51,6 @@ public class VoxelLayoutDesigner extends Operation {
     private double dLongitudeDeg;
     private boolean setLongitudeByKm;
     private double longitudeOffset;
-    private boolean crossDateLine;
 
     private double[] borderRadii;
     private int lowerRadius;
@@ -100,33 +81,29 @@ public class VoxelLayoutDesigner extends Operation {
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output file names. If no tag is needed, leave this unset.");
             pw.println("#fileTag ");
-            pw.println("##########Information to design horzontal positions of voxels.");
-            pw.println("##Path of a data entry list file, must be set.");
-            pw.println("#dataEntryPath dataEntry.lst");
-            pw.println("##Phases to compute pierce points for, listed using spaces. (ScS)");
-            pw.println("#piercePhases ");
-            pw.println("##(double) Lower radius to compute pierce points for [km]. (3480)");
-            pw.println("#lowerPierceRadius ");
-            pw.println("##(double) Upper radius to compute pierce points for [km]. (3880)");
-            pw.println("#upperPierceRadius ");
-            pw.println("##(String) Name of structure to use for calculating pierce points. (prem)");
-            pw.println("#structureName ");
-            pw.println("##(double) Latitude spacing [km]; (0:). If unset, the following dLatitudeDeg will be used.");
+            pw.println("##########Parameters for the CENTER positions of voxels to create.");
+            pw.println("##(double) Lower limit of latitude [deg]; [-90:upperLatitude). (0)");
+            pw.println("#lowerLatitude ");
+            pw.println("##(double) Upper limit of latitude [deg]; (lowerLatitude:90]. (0)");
+            pw.println("#upperLatitude ");
+            pw.println("##(double) Lower limit of longitude [deg]; [-180:upperLongitude). (0)");
+            pw.println("#lowerLongitude ");
+            pw.println("##(double) Upper limit of longitude [deg]; (lowerLongitude:360]. (180)");
+            pw.println("#upperLongitude ");
+            pw.println("##(double) Latitude spacing [km]; (0:). If this is unset, the following dLatitudeDeg will be used.");
             pw.println("##  The (roughly) median radius of target region will be used to convert this to degrees.");
             pw.println("#dLatitudeKm ");
             pw.println("##(double) Latitude spacing [deg]; (0:). (5)");
             pw.println("#dLatitudeDeg ");
-            pw.println("##(double) Offset of boundary latitude [deg]; [0:). (2.5)");
+            pw.println("##(double) Offset of voxel-CENTER latitude [deg]; [0:). (0)");
             pw.println("#latitudeOffset ");
             pw.println("##(double) Longitude spacing [km]; (0:). If this is unset, the following dLongitudeDeg will be used.");
             pw.println("##  The (roughly) median radius of target region will be used to convert this to degrees at each latitude.");
             pw.println("#dLongitudeKm ");
             pw.println("##(double) Longitude spacing [deg]; (0:). (5)");
             pw.println("#dLongitudeDeg ");
-            pw.println("##(double) Offset of boundary longitude, when dLongitudeDeg is used [deg]; [0:dLongitudeDeg). (2.5)");
+            pw.println("##(double) Offset of voxel-CENTER longitude [deg], when dLongitudeDeg is used; [0:). (0)");
             pw.println("#longitudeOffset ");
-            pw.println("##(boolean) Use longitude range [0:360) instead of [-180:180)? (false)");
-            pw.println("#crossDateLine ");
             pw.println("##########Parameters for the BORDER radii of voxels to create.");
             pw.println("##(double[]) Radii of layer borders, listed using spaces [km]; [0:).");
             pw.println("##  If unset, the subsequent parameters are used.");
@@ -141,7 +118,7 @@ public class VoxelLayoutDesigner extends Operation {
         System.err.println(outPath + " is created.");
     }
 
-    public VoxelLayoutDesigner(Property property) throws IOException {
+    public VoxelFileMaker(Property property) throws IOException {
         this.property = (Property) property.clone();
     }
 
@@ -150,11 +127,15 @@ public class VoxelLayoutDesigner extends Operation {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
         if (property.containsKey("fileTag")) fileTag = property.parseStringSingle("fileTag", null);
 
-        dataEntryPath = property.parsePath("dataEntryPath", null, true, workPath);
-        piercePhases = property.parseStringArray("piercePhases", "ScS");
-        lowerPierceRadius = property.parseDouble("lowerPierceRadius", "3480");
-        upperPierceRadius = property.parseDouble("upperPierceRadius", "3880");
-        structureName = property.parseString("structureName", "prem");
+        lowerLatitude = property.parseDouble("lowerLatitude", "0");
+        upperLatitude = property.parseDouble("upperLatitude", "0");
+        if (lowerLatitude < -90 || lowerLatitude > upperLatitude || 90 < upperLatitude)
+            throw new IllegalArgumentException("Latitude range " + lowerLatitude + " , " + upperLatitude + " is invalid.");
+
+        lowerLongitude = property.parseDouble("lowerLongitude", "0");
+        upperLongitude = property.parseDouble("upperLongitude", "180");
+        if (lowerLongitude < -180 || lowerLongitude > upperLongitude || 360 < upperLongitude)
+            throw new IllegalArgumentException("Longitude range " + lowerLongitude + " , " + upperLongitude + " is invalid.");
 
         if (property.containsKey("dLatitudeKm")) {
             dLatitudeKm = property.parseDouble("dLatitudeKm", null);
@@ -167,7 +148,7 @@ public class VoxelLayoutDesigner extends Operation {
                 throw new IllegalArgumentException("dLatitudeDeg must be positive.");
             setLatitudeByKm = false;
         }
-        latitudeOffset = property.parseDouble("latitudeOffset", "2.5");
+        latitudeOffset = property.parseDouble("latitudeOffset", "0");
         if (latitudeOffset < 0)
             throw new IllegalArgumentException("latitudeOffset must be non-negative.");
 
@@ -180,12 +161,11 @@ public class VoxelLayoutDesigner extends Operation {
             dLongitudeDeg = property.parseDouble("dLongitudeDeg", "5");
             if (dLongitudeDeg <= 0)
                 throw new IllegalArgumentException("dLongitudeDeg must be positive.");
-            longitudeOffset = property.parseDouble("longitudeOffset", "2.5");
-            if (longitudeOffset < 0 || dLongitudeDeg <= longitudeOffset)
-                throw new IllegalArgumentException("longitudeOffset must be in [0:dLongitudeDeg).");
+            longitudeOffset = property.parseDouble("longitudeOffset", "0");
+            if (longitudeOffset < 0)
+                throw new IllegalArgumentException("longitudeOffset must be non-negative.");
             setLongitudeByKm = false;
         }
-        crossDateLine = property.parseBoolean("crossDateLine", "false");
 
         if (property.containsKey("borderRadii")) {
             borderRadii = Arrays.stream(property.parseDoubleArray("borderRadii", null))
@@ -205,26 +185,9 @@ public class VoxelLayoutDesigner extends Operation {
     @Override
     public void run() throws IOException {
         centerRadius = (borderRadii != null) ? borderRadii[borderRadii.length / 2] : (lowerRadius + upperRadius) / 2;
-        Set<DataEntry> entrySet = DataEntryListFile.readAsSet(dataEntryPath);
-
-        // compute pierce points
-        TauPPierceWrapper pierceTool = null;
-        try {
-            double[] pierceRadii = {lowerPierceRadius, upperPierceRadius};
-            pierceTool = new TauPPierceWrapper(structureName, piercePhases, pierceRadii);
-            pierceTool.compute(entrySet);
-        } catch (TauModelException e) {
-            throw new RuntimeException(e);
-        }
-
-        // collect all raypath segments that run through the target region
-        List<Raypath> allRaypaths = pierceTool.getAll();
-        List<Raypath> insideSegments = allRaypaths.stream()
-                .flatMap(raypath -> raypath.clipInsideLayer(lowerPierceRadius, upperPierceRadius).stream())
-                .collect(Collectors.toList());
 
         // decide horizontal distribution of voxels
-        List<HorizontalPixel> horizontalPixels = designHorizontalPixels(insideSegments);
+        List<HorizontalPixel> horizontalPixels = designHorizontalPixels();
 
         // set voxel layer information
         double[] layerThicknesses;
@@ -251,70 +214,26 @@ public class VoxelLayoutDesigner extends Operation {
         VoxelInformationFile.write(layerThicknesses, voxelRadii, horizontalPixels, outputPath);
     }
 
-    private List<HorizontalPixel> designHorizontalPixels(List<Raypath> insideSegments) {
+    private List<HorizontalPixel> designHorizontalPixels() {
+        List<HorizontalPixel> horizontalPixels = new ArrayList<>();
 
         // when using dLatitudeKm, set dLatitude in degrees using the (roughly) median radius of target region
         double dLatitude = setLatitudeByKm ? Math.toDegrees(dLatitudeKm / centerRadius) : dLatitudeDeg;
 
-        //~decide longitude ranges for each (co)latitude
-        // decide number of colatitude intervals
-        // Colatitude is used because its range is [0:180] and is easier to decide intervals.
-        // When latitudeOffset > 0, intervals for that extra part is needed.
-        int nLatitude = (int) Math.ceil((180 + latitudeOffset) / dLatitude);
-        double minLongitudes[] = new double[nLatitude];
-        double maxLongitudes[] = new double[nLatitude];
-        for (int i = 0; i < nLatitude; i++) {
-            minLongitudes[i] = Double.MAX_VALUE;
-            maxLongitudes[i] = -Double.MAX_VALUE;
-        }
-        // the approximate interval to sample points along raypath segments
-        double dDistanceRef = dLatitude / 2;
-        // work for each raypath segment
-        for (Raypath segment : insideSegments) {
-            FullPosition startPosition = segment.getSource();
-            HorizontalPosition endPosition = segment.getReceiver();
-            double segmentDistanceDeg = startPosition.computeEpicentralDistanceDeg(endPosition);
-            double azimuthDeg = startPosition.computeAzimuthDeg(endPosition);
+        int lowerLatitudeIndex = getLowerIndex(lowerLatitude, dLatitude, latitudeOffset);
+        int upperLatitudeIndex = getUpperIndex(upperLatitude, dLatitude, latitudeOffset);
 
-            // distribute sample points equally along the raypath segment
-            int nSamplePointInterval = (int) Math.round(segmentDistanceDeg / dDistanceRef);
-            double dDistanceDeg = segmentDistanceDeg / nSamplePointInterval;
-
-            // sample points along the raypath segment, including startPosition and endPosition
-            for (int i = 0; i <= nSamplePointInterval; i++) {
-                double sampleDistanceDeg = i * dDistanceDeg;
-                HorizontalPosition samplePosition = startPosition.pointAlongAzimuth(azimuthDeg, sampleDistanceDeg);
-                // get latitude and longitude of sample position
-                double sampleColatitude = switchLatitudeColatitude(samplePosition.getLatitude());
-                double sampleLongitude = samplePosition.getLongitude();
-                if (crossDateLine && sampleLongitude < 0) sampleLongitude += 360;
-                // decide which colatitude interval the sample point is in
-                // latitudeOffset moves border latitudes to positive side, so moves border colatitudes to negative side.
-                // This way, sampleInterval will never become negative.
-                int colatitudeIndex = (int) Math.floor((sampleColatitude + latitudeOffset) / dLatitude);
-                // reflect this sample point on longitude ranges
-                if (sampleLongitude < minLongitudes[colatitudeIndex]) minLongitudes[colatitudeIndex] = sampleLongitude;
-                if (sampleLongitude > maxLongitudes[colatitudeIndex]) maxLongitudes[colatitudeIndex] = sampleLongitude;
-            }
-        }
-
-        //~decide horizontal positions of voxels
-        List<HorizontalPixel> horizontalPixels = new ArrayList<>();
-        for (int i = 0; i < nLatitude; i++) {
+        for (int i = lowerLatitudeIndex; i <= upperLatitudeIndex; i++) {
             // compute center latitude of the voxel row
-            double latitude = switchLatitudeColatitude((i + 0.5) * dLatitude) + latitudeOffset;
-            // when using latitudeOffset, the center latitude of first or last interval may be out of legal range; in that case, skip
-            if (latitude <= -90 || 90 <= latitude) continue;
-            // if no raypath segments entered this colatitude interval, skip
-            if (minLongitudes[i] > maxLongitudes[i]) continue;
+            double latitude = i * dLatitude + latitudeOffset;
 
             if (setLongitudeByKm) {
                 // voxel points are aligned on latitude lines so that their spacing (at the median radius) is dLongitudeKm
-                // the min and max borders are set close to the min and max longitudes of sample points
+                // the min and max voxel-centers are set close to the longitude bounds
                 double smallCircleRadius = centerRadius * Math.cos(Math.toRadians(latitude));
                 double dLongitudeForRow = Math.toDegrees(dLongitudeKm / smallCircleRadius);
-                int nLongitude = (int) Math.round((maxLongitudes[i] - minLongitudes[i]) / dLongitudeForRow);
-                double centerLongitude = (minLongitudes[i] + maxLongitudes[i]) / 2;
+                int nLongitude = (int) MathAid.ceil((upperLongitude - lowerLongitude) / dLongitudeForRow);
+                double centerLongitude = (lowerLongitude + upperLongitude) / 2;
 
                 double startLongitude;
                 if (nLongitude % 2 == 0) {
@@ -332,30 +251,28 @@ public class VoxelLayoutDesigner extends Operation {
                 }
 
             } else {
-                // all longitudes are set on ((n + 0.5) * dLongitudeDeg + longitudeOffset)
-                // the min and max borders of longitude are set so that all sample points are included
-                double minLongitude = Math.floor((minLongitudes[i] - longitudeOffset) / dLongitudeDeg) * dLongitudeDeg + longitudeOffset;
-                double maxLongitude = Math.ceil((maxLongitudes[i] - longitudeOffset) / dLongitudeDeg) * dLongitudeDeg + longitudeOffset;
-                int nLongitude = (int) ((maxLongitude - minLongitude) / dLongitudeDeg);
-                for (int j = 0; j < nLongitude; j++) {
-                    // center longitude of each horizontal pixel
-                    double longitude = minLongitude + (j + 0.5) * dLongitudeDeg;
+                // all longitudes are set on (n * dLongitudeDeg + longitudeOffset)
+                // voxel longitudes are set so that all voxel-centers are included in range
+                int lowerLongitudeIndex = getLowerIndex(lowerLongitude, dLongitudeDeg, longitudeOffset);
+                int upperLongitudeIndex = getUpperIndex(upperLongitude, dLongitudeDeg, longitudeOffset);
+                for (int j = lowerLongitudeIndex; j <= upperLongitudeIndex; j++) {
+                    // compute center longitude of the voxel
+                    double longitude = j * dLongitudeDeg + longitudeOffset;
+
                     // add horizontal pixel to list
                     horizontalPixels.add(new HorizontalPixel(new HorizontalPosition(latitude, longitude), dLatitude, dLongitudeDeg));
                 }
             }
-        }
 
+        }
         return horizontalPixels;
     }
 
-    /**
-     * Switch between latitude and colatitude.
-     * @param latitude (double) latitude or colatitude to convert
-     * @return (double) converted colatitude or latitude
-     */
-    private static double switchLatitudeColatitude(double latitude) {
-        return 90 - latitude;
+    private static int getLowerIndex(double lowerValue, double interval, double offset) {
+        return (int) MathAid.ceil((lowerValue - offset) / interval);
+    }
+    private static int getUpperIndex(double upperValue, double interval, double offset) {
+        return (int) MathAid.floor((upperValue - offset) / interval);
     }
 
 }

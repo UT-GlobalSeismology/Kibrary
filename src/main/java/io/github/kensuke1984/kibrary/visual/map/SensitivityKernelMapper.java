@@ -229,8 +229,7 @@ public class SensitivityKernelMapper extends Operation {
                         if (partialsForEntry.size() == 0) continue;
                         System.err.println("Working for " + component  + " " + variableType + " " + event + " " + observerName);
 
-                        Path eventPath = outPath.resolve(event.toString());
-                        Path observerPath = eventPath.resolve(observerName.toString());
+                        Path observerPath = outPath.resolve(event.toString() + "_" + observerName.toString());
                         Files.createDirectories(observerPath);
 
                         double[] startTimes = partialsForEntry.stream().mapToDouble(PartialID::getStartTime).distinct().sorted().toArray();
@@ -255,7 +254,7 @@ public class SensitivityKernelMapper extends Operation {
                             }
 
                             // output discrete perturbation file
-                            String fileNameRoot = "kernel_" + phaselist + "_" + component+ "_" + variableType + String.format("_t0%d", (int) startTime);
+                            String fileNameRoot = "kernel_" + phaselist + "_" + component + "_" + variableType + String.format("_t0%d", (int) startTime);
                             Path outputDiscretePath = observerPath.resolve(fileNameRoot + ".lst");
                             PerturbationListFile.write(discreteMap, outputDiscretePath);
                             // output interpolated perturbation file, in range [0:360) when crossDateLine==true so that mapping will succeed
@@ -274,7 +273,7 @@ public class SensitivityKernelMapper extends Operation {
             }
         }
         System.err.println("After this finishes, please enter each " + outPath
-                + "/eventFolder/observerFolder/ and run *Grid.sh and *Map.sh");
+                + "/event_observerFolder/ and run *Grid.sh and *Map.sh");
     }
 
 }

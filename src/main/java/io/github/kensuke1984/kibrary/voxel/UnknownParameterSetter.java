@@ -4,7 +4,13 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.commons.cli.CommandLine;
@@ -134,10 +140,10 @@ public class UnknownParameterSetter {
         List<HorizontalPixel> horizontalPixels = file.getHorizontalPixels();
 
         //~create unknown parameters
-        List<UnknownParameter> parameterList = new ArrayList<>();
-        int numFinished = 0;
+        Set<UnknownParameter> parameterSet = Collections.synchronizedSet(new HashSet<>());
+        AtomicInteger numFinished = new AtomicInteger();
         int numVoxel = horizontalPixels.size() * radii.length;
-        for (HorizontalPixel pixel : horizontalPixels) {
+        horizontalPixels.parallelStream().forEach(pixel -> {
             // extract information of horizontal pixel
             HorizontalPosition horizontalPosition = pixel.getPosition();
             double dLatitude = pixel.getDLatitude();
@@ -148,15 +154,15 @@ public class UnknownParameterSetter {
                 double volume = Earth.computeVolume(voxelPosition, layerThicknesses[i], dLatitude, dLongitude);
                 for (VariableType type : types) {
                     Physical3DParameter parameter = new Physical3DParameter(type, voxelPosition, volume);
-                    parameterList.add(parameter);
+                    parameterSet.add(parameter);
                 }
-                numFinished++;
+                if (numFinished.incrementAndGet() % 100 == 0)
+                    System.err.print("\rFinished " + numFinished + " of " + numVoxel + " voxels");
             }
-            System.err.print("\rFinished " + numFinished + " of " + numVoxel + " voxels");
-        }
+        });
         System.err.println("\rFinished working for all " + numVoxel + " voxels.");
 
-        return parameterList;
+        return parameterSet.stream().sorted(Comparator.comparing(UnknownParameter::getPosition)).collect(Collectors.toList());
     }
 
 }

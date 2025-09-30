@@ -348,37 +348,37 @@ public final class NDK implements GlobalCMTAccess {
         String[] lines = new String[5];
 
         lines[0] = StringUtils.rightPad(hypocenterReferenceCatalog, 4) + " " + referenceDateTime.format(DATE_FORMAT) + " "
-                + MathAid.padToString(hypocenterPosition.getLatitude(), 3, 2, " ") + " "
-                + MathAid.padToString(hypocenterPosition.getLongitude(), 4, 2, " ") + " "
-                + MathAid.padToString(hypocenterPosition.getDepth(), 3, 1, " ") + " "
-                + MathAid.padToString(mb, 1, 1, " ") + " " + MathAid.padToString(ms, 1, 1, " ") + " " + geographicalLocation;
+                + MathAid.padToString(hypocenterPosition.getLatitude(), 3, 2, false) + " "
+                + MathAid.padToString(hypocenterPosition.getLongitude(), 4, 2, false) + " "
+                + MathAid.padToString(hypocenterPosition.getDepth(), 3, 1, false) + " "
+                + MathAid.padToString(mb, 1, 1, false) + " " + MathAid.padToString(ms, 1, 1, false) + " " + geographicalLocation;
         lines[1] = "C" + id.toPaddedString() + "  "
-                + " B:" + MathAid.padToString(b[0], 3, " ") + " " + MathAid.padToString(b[1], 4, " ") + " " + MathAid.padToString(b[2], 3, " ")
-                + " S:" + MathAid.padToString(s[0], 3, " ") + " " + MathAid.padToString(s[1], 4, " ") + " " + MathAid.padToString(s[2], 3, " ")
-                + " M:" + MathAid.padToString(m[0], 3, " ") + " " + MathAid.padToString(m[1], 4, " ") + " " + MathAid.padToString(m[2], 3, " ")
-                + " CMT: " + cmtType + " " + momentRateFunctionType.toCode() + ":" + MathAid.padToString(halfDuration, 3, 1, " ");
-        lines[2] = "CENTROID:" + MathAid.padToString(timeDifference, 7, 1, " ") + " 0.0 "
-                + MathAid.padToString(centroidPosition.getLatitude(), 3, 2, " ") + " 0.00 "
-                + MathAid.padToString(centroidPosition.getLongitude(), 4, 2, " ") + " 0.00 "
-                + MathAid.padToString(centroidPosition.getDepth(), 3, 1, " ") + "  0.0 "
+                + " B:" + MathAid.padToString(b[0], 3, false) + " " + MathAid.padToString(b[1], 4, false) + " " + MathAid.padToString(b[2], 3, false)
+                + " S:" + MathAid.padToString(s[0], 3, false) + " " + MathAid.padToString(s[1], 4, false) + " " + MathAid.padToString(s[2], 3, false)
+                + " M:" + MathAid.padToString(m[0], 3, false) + " " + MathAid.padToString(m[1], 4, false) + " " + MathAid.padToString(m[2], 3, false)
+                + " CMT: " + cmtType + " " + momentRateFunctionType.toCode() + ":" + MathAid.padToString(halfDuration, 3, 1, false);
+        lines[2] = "CENTROID:" + MathAid.padToString(timeDifference, 7, 1, false) + " 0.0 "
+                + MathAid.padToString(centroidPosition.getLatitude(), 3, 2, false) + " 0.00 "
+                + MathAid.padToString(centroidPosition.getLongitude(), 4, 2, false) + " 0.00 "
+                + MathAid.padToString(centroidPosition.getDepth(), 3, 1, false) + "  0.0 "
                 + StringUtils.rightPad(depthType, 4) + " " + timeStamp;
-        lines[3] = MathAid.padToString(momentTensor.getMtExponent(), 2, " ") + " "
-                + MathAid.padToString(momentTensor.getMrrCoefficient(), 2, 3, " ") + " 0.000 "
-                + MathAid.padToString(momentTensor.getMttCoefficient(), 2, 3, " ") + " 0.000 "
-                + MathAid.padToString(momentTensor.getMppCoefficient(), 2, 3, " ") + " 0.000 "
-                + MathAid.padToString(momentTensor.getMrtCoefficient(), 2, 3, " ") + " 0.000 "
-                + MathAid.padToString(momentTensor.getMrpCoefficient(), 2, 3, " ") + " 0.000 "
-                + MathAid.padToString(momentTensor.getMtpCoefficient(), 2, 3, " ") + " 0.000";
+        lines[3] = MathAid.padToString(momentTensor.getMtExponent(), 2, false) + " "
+                + MathAid.padToString(momentTensor.getMrrCoefficient(), 2, 3, false) + " 0.000 "
+                + MathAid.padToString(momentTensor.getMttCoefficient(), 2, 3, false) + " 0.000 "
+                + MathAid.padToString(momentTensor.getMppCoefficient(), 2, 3, false) + " 0.000 "
+                + MathAid.padToString(momentTensor.getMrtCoefficient(), 2, 3, false) + " 0.000 "
+                + MathAid.padToString(momentTensor.getMrpCoefficient(), 2, 3, false) + " 0.000 "
+                + MathAid.padToString(momentTensor.getMtpCoefficient(), 2, 3, false) + " 0.000";
         lines[4] = StringUtils.rightPad(versionCode, 3) + " "
-                + MathAid.padToString(eigenValue0, 3, 3, " ") + " "
-                + MathAid.padToString((int) plunge0, 2, " ") + " " + MathAid.padToString((int) azimuth0, 3, " ") + " "
-                + MathAid.padToString(eigenValue1, 3, 3, " ") + " "
-                + MathAid.padToString((int) plunge1, 2, " ") + " " + MathAid.padToString((int) azimuth1, 3, " ") + " "
-                + MathAid.padToString(eigenValue2, 3, 3, " ") + " "
-                + MathAid.padToString((int) plunge2, 2, " ") + " " + MathAid.padToString((int) azimuth2, 3, " ") + " "
-                + MathAid.padToString(momentTensor.getM0Coefficient(), 3, 3, " ") + " "
-                + MathAid.padToString(strike0, 3, " ") + " " + MathAid.padToString(dip0, 2, " ") + " " + MathAid.padToString(rake0, 4, " ") + " "
-                + MathAid.padToString(strike1, 3, " ") + " " + MathAid.padToString(dip1, 2, " ") + " " + MathAid.padToString(rake1, 4, " ");
+                + MathAid.padToString(eigenValue0, 3, 3, false) + " "
+                + MathAid.padToString((int) plunge0, 2, false) + " " + MathAid.padToString((int) azimuth0, 3, false) + " "
+                + MathAid.padToString(eigenValue1, 3, 3, false) + " "
+                + MathAid.padToString((int) plunge1, 2, false) + " " + MathAid.padToString((int) azimuth1, 3, false) + " "
+                + MathAid.padToString(eigenValue2, 3, 3, false) + " "
+                + MathAid.padToString((int) plunge2, 2, false) + " " + MathAid.padToString((int) azimuth2, 3, false) + " "
+                + MathAid.padToString(momentTensor.getM0Coefficient(), 3, 3, false) + " "
+                + MathAid.padToString(strike0, 3, false) + " " + MathAid.padToString(dip0, 2, false) + " " + MathAid.padToString(rake0, 4, false) + " "
+                + MathAid.padToString(strike1, 3, false) + " " + MathAid.padToString(dip1, 2, false) + " " + MathAid.padToString(rake1, 4, false);
 
         return lines;
     }

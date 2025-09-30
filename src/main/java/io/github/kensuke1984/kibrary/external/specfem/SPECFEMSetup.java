@@ -81,7 +81,7 @@ public class SPECFEMSetup {
         } else {
             int i = 1;
             for (EventFolder eventDir : eventDirs) {
-                Path runPath = outPath.resolve("run" + MathAid.padToString(i++, 4, "0"));
+                Path runPath = outPath.resolve("run" + MathAid.padToString(i++, 4, true));
                 createRunDirectory(runPath, eventDir);
             }
 

@@ -148,7 +148,7 @@ public class VirtualDatasetMaker extends Operation {
         }
 
         // output
-        Path outputPath = workPath.resolve(DatasetAid.generateOutputFileName("dataEntry", fileTag, GadgetAid.getTemporaryString(), ".inf"));
+        Path outputPath = workPath.resolve(DatasetAid.generateOutputFileName("dataEntry", fileTag, GadgetAid.getTemporaryString(), ".lst"));
         DataEntryListFile.writeFromSet(entrySet, outputPath);
     }
 

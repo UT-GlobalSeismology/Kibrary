@@ -302,7 +302,7 @@ public class BasicID {
     @Override
     public String toString() {
         String basicString = observer.toPaddedInfoString() + " " + eventID.toPaddedString() + " " + component + " " + type + " "
-                + MathAid.padToString(startTime, Timewindow.TYPICAL_MAX_INTEGER_DIGITS, Timewindow.PRECISION, " ") + " "
+                + MathAid.padToString(startTime, Timewindow.TYPICAL_MAX_INTEGER_DIGITS, Timewindow.PRECISION, false) + " "
                 + npts + " " + samplingHz + " " + minPeriod + " " + maxPeriod + " "
                 + TimewindowData.phasesAsString(phases) + " " + convolved;
         return basicString;
