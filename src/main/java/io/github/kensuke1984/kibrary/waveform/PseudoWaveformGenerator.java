@@ -14,8 +14,6 @@ import org.apache.commons.math3.linear.RealVector;
 
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
-import io.github.kensuke1984.kibrary.filter.BandPassFilter;
-import io.github.kensuke1984.kibrary.filter.ButterworthFilter;
 import io.github.kensuke1984.kibrary.inversion.WeightingHandler;
 import io.github.kensuke1984.kibrary.inversion.setup.DVectorBuilder;
 import io.github.kensuke1984.kibrary.inversion.setup.MatrixAssembly;
@@ -72,12 +70,18 @@ public class PseudoWaveformGenerator extends Operation {
      * Which to set the psuedo waveform as. true: synthetic, false: observed
      */
     private boolean setPseudoAsSyn;
-    private boolean noise;
-    private double noisePower;
+    private boolean addNoise;
+    private String noiseType;
+    private double noiseAmp;
+    private double snRatio;
     /**
      * Fill 0 to empty partial waveforms or not.
      */
     private boolean fillEmptyPartial;
+    /**
+     * Sampling Hz of sac
+     */
+    private double sacSamplingHz = 20;
 
     /**
      * @param args  none to create a property file <br>
@@ -107,9 +111,13 @@ public class PseudoWaveformGenerator extends Operation {
             pw.println("##(boolean) Whether to set the psuedo waveform as synthetic. If false, observed. (false)");
             pw.println("#setPseudoAsSyn ");
             pw.println("##(boolean) Whether to add noise (false)");
-            pw.println("#noise ");
-            pw.println("##(double) Noise power [ ] (1000)"); // TODO what is the unit?
-            pw.println("#noisePower ");
+            pw.println("#addNoise ");
+            pw.println("##(String) A type of noise to add [white, gaussian] (white)");
+            pw.println("#noiseType ");
+            pw.println("##(double) S/N ratio. If not set, the following noiseAmp will be used.");
+            pw.println("#snRatio ");
+            pw.println("##(double) The amplitude of noise (1)");
+            pw.println("#noiseAmp ");
             pw.println("##(boolean) Fill 0 to empty partial waveforms (false)");
             pw.println("#fillEmptyPartial ");
         }
@@ -130,9 +138,15 @@ public class PseudoWaveformGenerator extends Operation {
         modelPath = property.parsePath("modelPath", null, true, workPath);
 
         setPseudoAsSyn = property.parseBoolean("setPseudoAsSyn", "false");
-        noise = property.parseBoolean("noise", "false");
-        if (noise) {
-            noisePower = property.parseDouble("noisePower", "1000");
+        addNoise = property.parseBoolean("addNoise", "false");
+        if (addNoise) {
+            if (property.containsKey("snRatio"))
+                snRatio = property.parseDouble("snRatio", null);
+            else {
+                snRatio = Double.NaN;
+                noiseAmp = property.parseDouble("noiseAmp", "1");
+            }
+            noiseType = property.parseString("noiseType", "white");
         }
         fillEmptyPartial = property.parseBoolean("fillEmptyPartial", "false");
     }
@@ -157,7 +171,20 @@ public class PseudoWaveformGenerator extends Operation {
         RealVector pseudoWaveform = dVectorBuilder.fullSynVec().add(pseudoD);
 
         // add noise
-        if (noise) pseudoWaveform = pseudoWaveform.add(createRandomNoise(dVectorBuilder));
+        if (addNoise) {
+            RealVector noiseV = createRandomNoise(dVectorBuilder, pseudoWaveform);
+            pseudoWaveform = pseudoWaveform.add(noiseV);
+//            // check whether the noise value is correct
+//            for (int i = 0; i < dVectorBuilder.getNTimeWindow(); i++) {
+//                int start = dVectorBuilder.getStartPoint(i);
+//                int npts = dVectorBuilder.getSynID(i).getNpts();
+//                RealVector p = pseudoWaveform.getSubVector(start, npts);
+//                RealVector n = noiseV.getSubVector(start, npts);
+//                double signal = p.getNorm() / p.getDimension();
+//                double noise = n.getNorm() / n.getDimension();
+//                System.err.println("S/N ratio of " + i + "th timewiondow is " + signal / noise);
+//            }
+        }
 
         // prepare output folder
         outPath = DatasetAid.createOutputFolder(workPath, "pseudo", folderTag, GadgetAid.getTemporaryString());
@@ -188,32 +215,21 @@ public class PseudoWaveformGenerator extends Operation {
         BasicIDFile.write(basicIDs, outPath);
     }
 
-    private RealVector createRandomNoise(DVectorBuilder dVectorBuilder) {
-        System.err.println("Adding noise of amplitude " + noisePower);
+    private RealVector createRandomNoise(DVectorBuilder dVectorBuilder, RealVector pseudoWaveform) {
+        if (Double.isNaN(snRatio))
+            System.err.println("Adding noise of amplitude " + noiseAmp);
+        else
+            System.err.println("Adding noise of S/N ratio " + snRatio);
         RealVector[] noiseV = new RealVector[dVectorBuilder.getNTimeWindow()];
 
-        // settings ; TODO: enable these values to be set
-        int[] pts = dVectorBuilder.nptsArray();
-        int sacSamplingHz = 20;
-        int finalSamplingHz = 1;
-        double delta = 1.0 / sacSamplingHz;
-        int step = (int) (sacSamplingHz / finalSamplingHz);
-        double maxFreq = 0.05;
-        double minFreq = 0.01;
-        int np = 6;
-
-        System.err.println("FYI, L2 norm of residual waveform: " + dVectorBuilder.fullObsVec().subtract(dVectorBuilder.fullSynVec()).getNorm());
-
-        ButterworthFilter bpf = new BandPassFilter(2 * Math.PI * delta * maxFreq, 2 * Math.PI * delta * minFreq, np);
         for (int i = 0; i < dVectorBuilder.getNTimeWindow(); i++) {
-            double[] u = RandomNoiseMaker.create(noisePower, sacSamplingHz, 3276.8, 512).getY();
-            u = bpf.applyFilter(u);
-            int startT = (int) dVectorBuilder.getObsID(i).getStartTime() * sacSamplingHz;
-            noiseV[i] = new ArrayRealVector(pts[i]);
-            for (int j = 0; j < pts[i]; j++)
-                noiseV[i].setEntry(j, u[j * step + startT]);
+            BasicID synID = dVectorBuilder.getSynID(i);
+            int start = dVectorBuilder.getStartPoint(i);
+            int npts = synID.getNpts();
+            RealVector pseudo = pseudoWaveform.getSubVector(start, npts);
+            noiseV[i] = RandomNoiseMaker.create(snRatio, noiseAmp, pseudo, synID.getStartTime(),
+                    synID.getMaxPeriod(), synID.getMinPeriod(), sacSamplingHz, synID.getSamplingHz(), noiseType).getYVector();
         }
-
         return dVectorBuilder.compose(noiseV);
     }
 
