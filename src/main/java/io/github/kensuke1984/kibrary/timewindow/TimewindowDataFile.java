@@ -266,10 +266,12 @@ public final class TimewindowDataFile {
         return new TimewindowData(startTime, endTime, observer, event, component, usablephases);
     }
 
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
     /**
      * The binary-format timewindow information file is output in ascii format.
-     *
-     * @param args [information file name]
+     * @param args Options.
      * @throws IOException if an I/O error occurs
      */
     public static void main(String[] args) throws IOException {

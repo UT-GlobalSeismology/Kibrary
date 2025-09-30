@@ -24,6 +24,11 @@ import io.github.kensuke1984.kibrary.Summon;
  */
 public class ThreeDPartialCleanup {
 
+    /**
+     * Clean up threeDPartial folders when they are not needed any more.
+     * @param args Options.
+     * @throws IOException if an I/O error occurs
+     */
     public static void main(String[] args) throws IOException {
         Options options = defineOptions();
         try {

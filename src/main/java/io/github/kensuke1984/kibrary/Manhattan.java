@@ -21,12 +21,14 @@ import io.github.kensuke1984.kibrary.inversion.solve.InversionSolver;
 import io.github.kensuke1984.kibrary.perturbation.BlockModelMaker;
 import io.github.kensuke1984.kibrary.perturbation.CheckerboardMaker;
 import io.github.kensuke1984.kibrary.perturbation.ModelSmoothener;
+import io.github.kensuke1984.kibrary.perturbation.ScalingPerturbation;
 import io.github.kensuke1984.kibrary.selection.DataSelection;
 import io.github.kensuke1984.kibrary.selection.RaypathSelection;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowMaker;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowMerge;
 import io.github.kensuke1984.kibrary.util.DatasetMerge;
 import io.github.kensuke1984.kibrary.util.data.VirtualDatasetMaker;
+import io.github.kensuke1984.kibrary.util.earth.ModelStructureConverter;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructurePerturber;
 import io.github.kensuke1984.kibrary.util.globalcmt.VirtualEventRegistration;
 import io.github.kensuke1984.kibrary.util.spc.SPC_SAC;
@@ -34,7 +36,6 @@ import io.github.kensuke1984.kibrary.visual.map.CrossSectionCreator;
 import io.github.kensuke1984.kibrary.visual.map.GreatArcMapper;
 import io.github.kensuke1984.kibrary.visual.map.ModelMapper;
 import io.github.kensuke1984.kibrary.visual.map.ModelSetMapper;
-import io.github.kensuke1984.kibrary.visual.map.PartialsMovieMaker;
 import io.github.kensuke1984.kibrary.visual.map.PerturbationMapper;
 import io.github.kensuke1984.kibrary.visual.map.RaypathMapper;
 import io.github.kensuke1984.kibrary.visual.map.SensitivityKernelMapper;
@@ -43,8 +44,10 @@ import io.github.kensuke1984.kibrary.visual.plot.BasicRecordSectionCreator;
 import io.github.kensuke1984.kibrary.visual.plot.BasicWaveformPlotter;
 import io.github.kensuke1984.kibrary.visual.plot.CatalogueErrorCalculator;
 import io.github.kensuke1984.kibrary.visual.plot.DataFeatureHistogram;
+import io.github.kensuke1984.kibrary.visual.plot.ModelStructurePlotter;
 import io.github.kensuke1984.kibrary.visual.plot.PartialWaveformPlotter;
 import io.github.kensuke1984.kibrary.visual.plot.PolynomialStructurePlotter;
+import io.github.kensuke1984.kibrary.voxel.ConvertModelFileFormat;
 import io.github.kensuke1984.kibrary.voxel.VoxelFileMaker;
 import io.github.kensuke1984.kibrary.voxel.VoxelLayoutDesigner;
 import io.github.kensuke1984.kibrary.waveform.ActualWaveformCompiler;
@@ -104,6 +107,8 @@ enum Manhattan {
     VoxelFileMaker(51,VoxelFileMaker.class),
     CoarseGridDesigner(52, CoarseGridDesigner.class),
     AdaptiveGridDesigner(53, AdaptiveGridDesigner.class),
+    ConvertModelFileFormat(54, ConvertModelFileFormat.class),
+    ScalingPerturbation(55, ScalingPerturbation.class),
     // Partial 60
     ThreeDPartialDSMSetup(60, ThreeDPartialDSMSetup.class),
     PartialWaveformAssembler3D(61, PartialWaveformAssembler3D.class),
@@ -114,16 +119,17 @@ enum Manhattan {
     PartialWaveformAssembler1D(66, PartialWaveformAssembler1D.class),
     PartialsFuser(67, PartialsFuser.class),
     CatalogueErrorCalculator(68, CatalogueErrorCalculator.class),
-    PartialsMovieMaker(69, PartialsMovieMaker.class),
     PartialIDRebuilder(610, PartialIDRebuilder.class),
     // Inversion 70
     LetMeInvert(70, LetMeInvert.class),
     InversionArranger(71, InversionArranger.class),
     InversionSolver(72, InversionSolver.class),
+    ModelStructurePlotter(73, ModelStructurePlotter.class),
     ModelSetMapper(74, ModelSetMapper.class),
     ModelMapper(75, ModelMapper.class),
     PerturbationMapper(76, PerturbationMapper.class),
     CrossSectionCreator(77, CrossSectionCreator.class),
+    ModelStructureConverter(78, ModelStructureConverter.class),
     // Tests 80
     BlockModelMaker(80, BlockModelMaker.class),
     CheckerboardMaker(81, CheckerboardMaker.class),

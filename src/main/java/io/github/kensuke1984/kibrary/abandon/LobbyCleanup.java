@@ -19,12 +19,19 @@ import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.FileAid;
 
 /**
+ * Class to clean data lobby folders when they are not needed any more.
+ * This deletes the sac/ and resp/ folders.
  * @author otsuru
  * @since 2022/1/3
  */
 public class LobbyCleanup {
 
 
+    /**
+     * Clean up data lobby folders when they are not needed any more.
+     * @param args Options.
+     * @throws IOException if an I/O error occurs
+     */
     public static void main(String[] args) throws IOException {
         Options options = defineOptions();
         try {

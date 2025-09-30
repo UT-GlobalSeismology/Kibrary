@@ -9,20 +9,17 @@ import io.github.kensuke1984.kibrary.source.SourceTimeFunction;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 
 /**
- * the object means a body in {@link SPCFile} the body means the spcdata of
- * each perturbation point...
- * <p>
- * スペクトルファイル（spcsac） の中のあるボディ
+ * Data for 1 depth layer (= 1 perturbation point) in {@link SPCFile}.
  * <p>
  * ista に対応する
  *
  * @author Kensuke Konishi
- * @version 0.1.2.2
+ * @since version 0.1.2.2
  */
 public class SPCBody {
 
-    private final int N_COMPONENT; // datarealsize
-    private final int NP;
+    private final int nComponent; // datarealsize
+    private final int np;
 
     private int nptsInTimeDomain;
 
@@ -33,8 +30,8 @@ public class SPCBody {
      * @param np         the number of steps in frequency domain
      */
     SPCBody(int nComponent, int np) {
-        N_COMPONENT = nComponent;
-        NP = np;
+        this.nComponent = nComponent;
+        this.np = np;
         allocateComponents();
     }
 
@@ -42,9 +39,9 @@ public class SPCBody {
      * @return DEEP copy of this
      */
     SPCBody copy() {
-        SPCBody s = new SPCBody(N_COMPONENT, NP);
+        SPCBody s = new SPCBody(nComponent, np);
         s.nptsInTimeDomain = nptsInTimeDomain;
-        s.spcComponents = new SPCComponent[N_COMPONENT];
+        s.spcComponents = new SPCComponent[nComponent];
         Arrays.setAll(s.spcComponents, i -> spcComponents[i].copy());
         return s;
     }
@@ -56,8 +53,8 @@ public class SPCBody {
      * @param u  u[i] ith component
      */
     void add(int ip, Complex... u) {
-        if (u.length != N_COMPONENT) throw new RuntimeException("The number of components is wrong");
-        for (int i = 0; i < N_COMPONENT; i++)
+        if (u.length != nComponent) throw new IllegalStateException("The number of components is wrong");
+        for (int i = 0; i < nComponent; i++)
             spcComponents[i].set(ip, u[i]);
     }
 
@@ -72,12 +69,12 @@ public class SPCBody {
         if (unitDistance < 0 || unitDistance > 1)
             throw new RuntimeException("Error: unit distance should be between 0-1 " + unitDistance);
         SPCBody s = this.copy();
-        if (N_COMPONENT != anotherBody.getNp())
+        if (nComponent != anotherBody.getNp())
             throw new RuntimeException("Error: Size of body is not equal!");
-        else if (N_COMPONENT != anotherBody.getNumberOfComponent())
+        else if (nComponent != anotherBody.getNumberOfComponent())
             throw new RuntimeException("Error: The numbers of each component are different.");
 
-        for (int j = 0; j < N_COMPONENT; j++) {
+        for (int j = 0; j < nComponent; j++) {
             SPCComponent comp1 = s.spcComponents[j];
             SPCComponent comp2 = anotherBody.spcComponents[j];
             comp1.mapMultiply(1. - unitDistance);
@@ -108,7 +105,7 @@ public class SPCBody {
         double c2 = -dh[0]*dh[2];
         double c3 = dh[0]*dh[1] / 2.;
 
-        for (int j = 0; j < body1.N_COMPONENT; j++) {
+        for (int j = 0; j < body1.nComponent; j++) {
             SPCComponent comp1 = body1.spcComponents[j].copy();
             SPCComponent comp2 = body2.spcComponents[j].copy();
             SPCComponent comp3 = body3.spcComponents[j].copy();
@@ -142,7 +139,7 @@ public class SPCBody {
         double c2 = dh[0]*dh[2] / 2.;
         double c3 = dh[0]*dh[1] / 2.;
 
-        for (int j = 0; j < body1.N_COMPONENT; j++) {
+        for (int j = 0; j < body1.nComponent; j++) {
             SPCComponent comp1 = body1.spcComponents[j];
             SPCComponent comp2 = body2.spcComponents[j];
             SPCComponent comp3 = body3.spcComponents[j];
@@ -164,11 +161,11 @@ public class SPCBody {
      *
      */
     public int findLsmooth(double tlen, double samplingFrequency) {
-        int tmpNp = Integer.highestOneBit(NP);
-        if (tmpNp < NP)
+        int tmpNp = Integer.highestOneBit(np);
+        if (tmpNp < np)
             tmpNp *= 2;
 
-        int lsmooth = (int) (0.5 * tlen * samplingFrequency / NP);
+        int lsmooth = (int) (0.5 * tlen * samplingFrequency / np);
         int i = Integer.highestOneBit(lsmooth);
         if (i < lsmooth)
             i *= 2;
@@ -201,10 +198,10 @@ public class SPCBody {
     public SPCComponent getSpcComponent(int n) {
         return spcComponents[n];
     }
-    
+
     /**
      * TODO デバッグ用なので、すぐ消す
-     * 
+     *
      * @author ryoichi
      */
 
@@ -214,18 +211,18 @@ public class SPCBody {
      * @param anotherBody {@link SPCBody} for addition
      */
     public void addBody(SPCBody anotherBody) {
-        if (NP != anotherBody.getNp()) throw new RuntimeException("Error: Size of body is not equal!");
-        else if (N_COMPONENT != anotherBody.getNumberOfComponent())
+        if (np != anotherBody.getNp()) throw new RuntimeException("Error: Size of body is not equal!");
+        else if (nComponent != anotherBody.getNumberOfComponent())
             throw new RuntimeException("Error: The numbers of each component are different.");
 
-        for (int j = 0; j < N_COMPONENT; j++)
+        for (int j = 0; j < nComponent; j++)
             spcComponents[j].addComponent(anotherBody.spcComponents[j]);
 
     }
 
     private void allocateComponents() {
         spcComponents =
-                IntStream.range(0, N_COMPONENT).mapToObj(i -> new SPCComponent(NP)).toArray(SPCComponent[]::new);
+                IntStream.range(0, nComponent).mapToObj(i -> new SPCComponent(np)).toArray(SPCComponent[]::new);
     }
 
     /**
@@ -266,11 +263,11 @@ public class SPCBody {
     }
 
     public int getNumberOfComponent() {
-        return N_COMPONENT;
+        return nComponent;
     }
 
     public int getNp() {
-        return NP;
+        return np;
     }
 
     public int getNPTSinTimeDomain() {

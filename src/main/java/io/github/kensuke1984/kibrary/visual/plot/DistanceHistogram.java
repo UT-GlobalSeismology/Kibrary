@@ -33,8 +33,7 @@ public class DistanceHistogram {
 
     /**
      * Creates histogram of epicentral distance based on a dataEntryFile.
-     *
-     * @param args
+     * @param args Options.
      * @throws IOException if an I/O error occurs
      */
     public static void main(String[] args) throws IOException {

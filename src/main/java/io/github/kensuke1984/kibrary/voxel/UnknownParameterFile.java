@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import io.github.kensuke1984.kibrary.elastic.VariableType;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.InformationFileReader;
 import io.github.kensuke1984.kibrary.util.MathAid;
@@ -93,4 +94,30 @@ public class UnknownParameterFile {
         }
     }
 
+    /**
+     * Return the new UnknownParameter of which variable type is changed from the one in given Unknownparameter to specied one.
+     * @param ({@link UnknownParameter}) parameter
+     * @param ({@link VariableType}) variableType
+     * @return ({@link UnknownParameter}) New unknown parameters
+     * @author Rei
+     * @since 2024/6/11
+     */
+    public static UnknownParameter convertVariableType(UnknownParameter parameter, VariableType variableType) {
+        switch (parameter.getParameterType()) {
+        case SOURCE:
+            if (!variableType.equals(VariableType.TIME))
+                throw new IllegalArgumentException("Variable Type cannot change from VariableType.TIME for ParameterType.SOURCE");
+            return parameter;
+        case RECEIVER:
+            if (!variableType.equals(VariableType.TIME))
+                throw new IllegalArgumentException("Variable Type cannot change from VariableType.TIME for ParameterType.RECEIVER");
+            return parameter;
+        case LAYER:
+            return new Physical1DParameter(variableType, parameter.getPosition().getR(), parameter.getSize());
+        case VOXEL:
+            return new Physical3DParameter(variableType, parameter.getPosition(), parameter.getSize());
+        default:
+            throw new IllegalArgumentException("Unknown ParameterType.");
+        }
+    }
 }

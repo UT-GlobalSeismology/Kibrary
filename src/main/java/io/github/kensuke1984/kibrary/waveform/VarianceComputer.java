@@ -23,6 +23,7 @@ public class VarianceComputer {
 
     /**
      * Computes normalized variance of residual waveforms in a basic waveform folder.
+     * @param args Options.
      * @throws IOException if an I/O error occurs
      */
     public static void main(String[] args) throws IOException {

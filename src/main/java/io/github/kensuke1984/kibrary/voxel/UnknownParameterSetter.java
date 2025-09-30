@@ -37,7 +37,11 @@ public class UnknownParameterSetter {
 
     /**
      * Create an {@link UnknownParameterFile}.
+<<<<<<< HEAD
      * @param args [option]
+=======
+     * @param args Options.
+>>>>>>> ccd3c5aa84f9ccee7f059c1cbd0a0e701d914e32
      * @throws IOException
      */
     public static void main(String[] args) throws IOException {

@@ -82,11 +82,11 @@ public class ColorBinInformationFile {
     }
 
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     /**
      * Creates a template color bin information file.
-     *
-     * @param args
+     * @param args Options.
      * @throws IOException if an I/O error occurs
      */
     public static void main(String[] args) throws IOException {

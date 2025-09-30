@@ -14,7 +14,7 @@ import io.github.kensuke1984.kibrary.source.SourceTimeFunction;
  * Data for one element in one {@link SPCBody} in a {@link SPCFile}
  *
  * @author Kensuke Konishi
- * @version 0.1.6
+ * @since version 0.1.6
  * @author anselme add methods for interpolation for BP/FP catalog
  */
 public class SPCComponent {
@@ -22,22 +22,22 @@ public class SPCComponent {
     /**
      * number of step in frequency domain
      */
-    private final int NP;
+    private final int np;
     /**
      * number of datapoints in time domain
      */
     private int nptsInTimeDomain;
     /**
-     * 周波数領域のデータ u[i] i=[0, NP] The length is NP+1
+     * Data in frequency domain. u[i], i=[0, np]. The length is np+1.
      */
     private Complex[] uFreq;
     /**
-     * 時間領域のデータ u[i] i=[0,nptsInTimedomain-1]
+     * Data in time domain. u[i], i=[0,nptsInTimedomain-1].
      */
     private Complex[] uTime;
 
     SPCComponent(int np) {
-        NP = np;
+        this.np = np;
         uFreq = new Complex[np + 1];
     }
 
@@ -45,7 +45,7 @@ public class SPCComponent {
      * @return DEEP copy of this
      */
     public SPCComponent copy() {
-        SPCComponent s = new SPCComponent(NP);
+        SPCComponent s = new SPCComponent(np);
         s.nptsInTimeDomain = nptsInTimeDomain;
         System.arraycopy(uFreq, 0, s.uFreq, 0, uFreq.length);
         if (uTime != null) s.uTime = uTime.clone();
@@ -53,14 +53,13 @@ public class SPCComponent {
     }
 
     /**
-     * 各ipの値に対するスペクトルを入力
-     * <p>
-     * set ip th step
+     * Set spectrum value of ip-th step.
      *
      * @param ip   index of &omega;
      * @param spec {@link Complex} to set at ip
      */
     void set(int ip, Complex spec) {
+        if (spec.isNaN()) throw new IllegalStateException("NaN in spectrum");
         uFreq[ip] = spec;
     }
 
@@ -70,10 +69,10 @@ public class SPCComponent {
      * @param anotherComponent additional {@link SPCComponent}
      */
     public void addComponent(SPCComponent anotherComponent) {
-        if (NP != anotherComponent.getNP()) throw new RuntimeException("Error: Size of body is not equal!");
+        if (np != anotherComponent.getNP()) throw new RuntimeException("Error: Size of body is not equal!");
 
         Complex[] another = anotherComponent.getValueInFrequencyDomain();
-        for (int i = 0; i < NP + 1; i++)
+        for (int i = 0; i < np + 1; i++)
             uFreq[i] = uFreq[i].add(another[i]);
 
     }
@@ -121,21 +120,21 @@ public class SPCComponent {
      */
     void differentiate(double tlen) {
         double constant = 2 * Math.PI / tlen;
-        for (int i = 1; i <= NP; i++) {
+        for (int i = 1; i <= np; i++) {
             double c = constant * i;
             uFreq[i] = new Complex(uFreq[i].getImaginary() * c, -uFreq[i].getReal() * c);
         }
     }
-    
-	/**
-	 * Multiply self by double
-	 * @param factor
-	 * @author anselme
-	 */
-	public void mapMultiply(double factor) {
-		for (int i = 0; i < NP + 1; i++)
-			uFreq[i] = uFreq[i].multiply(factor);
-	}
+
+    /**
+     * Multiply self by double
+     * @param factor
+     * @author anselme
+     */
+    public void mapMultiply(double factor) {
+        for (int i = 0; i < np + 1; i++)
+            uFreq[i] = uFreq[i].multiply(factor);
+    }
 
     /**
      * @return 周波数領域のデータ
@@ -145,7 +144,7 @@ public class SPCComponent {
     }
 
     private int getNP() {
-        return NP;
+        return np;
     }
 
     /**
@@ -156,7 +155,7 @@ public class SPCComponent {
     }
 
     private int getNPTS(int lsmooth) {
-        int npts = NP * lsmooth * 2;
+        int npts = np * lsmooth * 2;
         int pow2 = Integer.highestOneBit(npts);
         return pow2 < npts ? pow2 * 2 : npts;
     }
@@ -170,10 +169,10 @@ public class SPCComponent {
 
         // pack to temporary Complex array
         Complex[] data = new Complex[nptsInTimeDomain];
-        System.arraycopy(uFreq, 0, data, 0, NP + 1);
+        System.arraycopy(uFreq, 0, data, 0, np + 1);
 
         // set blank due to lsmooth
-        Arrays.fill(data, NP + 1, nnp + 1, Complex.ZERO);
+        Arrays.fill(data, np + 1, nnp + 1, Complex.ZERO);
 
         // set values for imaginary frequency  F[i] = F[N-i]
         for (int i = 0; i < nnp - 1; i++)

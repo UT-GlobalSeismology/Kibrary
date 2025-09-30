@@ -89,6 +89,13 @@ public class ThreeDPartialDSMSetup extends Operation {
     private String header;
 
     /**
+<<<<<<< HEAD
+=======
+     * catalog of events
+     */
+    private GlobalCMTAccess.Catalog eventCatalog;
+    /**
+>>>>>>> ccd3c5aa84f9ccee7f059c1cbd0a0e701d914e32
      * Path of an event list file.
      */
     private Path eventPath;
@@ -167,6 +174,8 @@ public class ThreeDPartialDSMSetup extends Operation {
             pw.println("#fileTag ");
             pw.println("##(String) Header for names of output files (as in header_[sh,psv].inf) (PREM)");
             pw.println("#header ");
+            pw.println("##(String) Catalog of events from {CMT, PDE} (CMT)");
+            pw.println("#eventCatalog PDE");
             pw.println("##Path of an event list file, must be set");
             pw.println("#eventPath event.lst");
             pw.println("##Path of an observer list file, must be set");
@@ -206,6 +215,7 @@ public class ThreeDPartialDSMSetup extends Operation {
         if (property.containsKey("fileTag")) fileTag = property.parseStringSingle("fileTag", null);
         header = property.parseStringSingle("header", "PREM");
 
+        eventCatalog = GlobalCMTAccess.Catalog.valueOf(property.parseString("eventCatalog", "CMT"));
         eventPath = property.parsePath("eventPath", null, true, workPath);
         observerPath = property.parsePath("observerPath", null, true, workPath);
         voxelPath = property.parsePath("voxelPath", null, true, workPath);
@@ -302,8 +312,8 @@ public class ThreeDPartialDSMSetup extends Operation {
                     GlobalCMTAccess virtualEventData = eventData.withCMT(mts[i]);
                     FPInputFile fp = new FPInputFile(virtualEventData, header, structure, tlen, np, voxelRadii, voxelPositions);
                     Files.createDirectories(mtPoolPath.resolve(header));
-                    fp.writeSHFP(mtPoolPath.resolve(header + "_SH.inf"));
-                    fp.writePSVFP(mtPoolPath.resolve(header + "_PSV.inf"));
+                    fp.writeSHFP(mtPoolPath.resolve(header + "_SH.inf"), eventCatalog);
+                    fp.writePSVFP(mtPoolPath.resolve(header + "_PSV.inf"), eventCatalog);
                 }
 
             } else {
@@ -318,14 +328,14 @@ public class ThreeDPartialDSMSetup extends Operation {
                 // Prepare files in FP pool
                 FPInputFile fp = new FPInputFile(eventData, header, structure, tlen, np, voxelRadii, voxelPositions);
                 Files.createDirectories(eventPoolPath.resolve(header));
-                fp.writeSHFP(eventPoolPath.resolve(header + "_SH.inf"));
-                fp.writePSVFP(eventPoolPath.resolve(header + "_PSV.inf"));
+                fp.writeSHFP(eventPoolPath.resolve(header + "_SH.inf"), eventCatalog);
+                fp.writePSVFP(eventPoolPath.resolve(header + "_PSV.inf"), eventCatalog);
 
                 if (catalogMode) {
                      Path catInfPath = fpCatPath.resolve(event.toString());
                      Files.createDirectories(catInfPath.resolve(header));
-                     fp.writeSHFPCAT(catInfPath.resolve(header + "_SH.inf"), thetamin, thetamax, dtheta);
-                     fp.writePSVFPCAT(catInfPath.resolve(header + "_PSV.inf"), thetamin, thetamax, dtheta);
+                     fp.writeSHFPCAT(catInfPath.resolve(header + "_SH.inf"), thetamin, thetamax, dtheta, eventCatalog);
+                     fp.writePSVFPCAT(catInfPath.resolve(header + "_PSV.inf"), thetamin, thetamax, dtheta, eventCatalog);
                 }
             }
             nCreated++;

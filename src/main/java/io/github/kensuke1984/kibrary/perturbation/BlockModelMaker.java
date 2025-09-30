@@ -211,7 +211,7 @@ public class BlockModelMaker extends Operation {
         List<KnownParameter> knowns = new ArrayList<>();
         for (VariableType outputVariableType : outputVariableTypes) {
             for (PerturbationVoxel voxel : model.getVoxels()) {
-                UnknownParameter unknown = new Physical3DParameter(outputVariableType, voxel.getPosition(), voxel.getVolume());
+                UnknownParameter unknown = new Physical3DParameter(outputVariableType, voxel.getPosition(), voxel.getSize());
                 KnownParameter known = new KnownParameter(unknown, voxel.getDelta(outputVariableType));
                 knowns.add(known);
             }

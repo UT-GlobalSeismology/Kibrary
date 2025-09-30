@@ -53,10 +53,11 @@ public class FPInputFile extends DSMInputHeader {
      * Write an information file for shfp.
      *
      * @param outPath Path for the file
+     * @param catalog Catalog of events
      * @param options for opening the file
      * @throws IOException If an I/O error happens
      */
-    public void writeSHFP(Path outPath, OpenOption... options) throws IOException {
+    public void writeSHFP(Path outPath, GlobalCMTAccess.Catalog catalog, OpenOption... options) throws IOException {
         // if(true)return;
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath))) {
             // header
@@ -68,8 +69,8 @@ public class FPInputFile extends DSMInputHeader {
             Arrays.stream(structurePart).forEach(pw::println);
 
             // source
-            pw.println(event.getCmtPosition().getR() + " " + event.getCmtPosition().getLatitude() + " " +
-                    event.getCmtPosition().getLongitude());
+            pw.println(event.getPosition(catalog).getR() + " " + event.getPosition(catalog).getLatitude() + " " +
+                    event.getPosition(catalog).getLongitude());
             double[] mt = event.getCmt().toDSMStyle();
             pw.println(Arrays.stream(mt).mapToObj(Double::toString).collect(Collectors.joining(" ")) +
                     " Moment Tensor (1.e25 dyne cm)");
@@ -97,11 +98,12 @@ public class FPInputFile extends DSMInputHeader {
      * @param thetamin
      * @param thetamax
      * @param dtheta
+     * @param catalog
      * @param options
      * @throws IOException
      * @author anselme
      */
-    public void writeSHFPCAT(Path outPath, double thetamin, double thetamax, double dtheta, OpenOption... options) throws IOException {
+    public void writeSHFPCAT(Path outPath, double thetamin, double thetamax, double dtheta, GlobalCMTAccess.Catalog catalog, OpenOption... options) throws IOException {
         // if(true)return;
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath))) {
             // header
@@ -113,7 +115,7 @@ public class FPInputFile extends DSMInputHeader {
             Arrays.stream(structurePart).forEach(pw::println);
 
             // source
-            pw.println(event.getCmtPosition().getR() + " 0. 0.");
+            pw.println(event.getPosition(catalog).getR() + " 0. 0.");
             double[] mt = event.getCmt().toDSMStyle();
             pw.println(Arrays.stream(mt).mapToObj(Double::toString).collect(Collectors.joining(" "))
                     + " Moment Tensor (1.e25 dyne cm)");
@@ -146,10 +148,11 @@ public class FPInputFile extends DSMInputHeader {
      * Write an information file for psvfp
      *
      * @param outPath Path for the file
+     * @param catalog Catalog of events
      * @param options for opening the file
      * @throws IOException If an I/O error happens
      */
-    public void writePSVFP(Path outPath, OpenOption... options) throws IOException {
+    public void writePSVFP(Path outPath, GlobalCMTAccess.Catalog catalog, OpenOption... options) throws IOException {
         // if(true)return;
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath))) {
             // header
@@ -161,8 +164,8 @@ public class FPInputFile extends DSMInputHeader {
             Arrays.stream(structurePart).forEach(pw::println);
 
             // source
-            pw.println(event.getCmtPosition().getR() + " " + event.getCmtPosition().getLatitude() + " " +
-                    event.getCmtPosition().getLongitude());
+            pw.println(event.getPosition(catalog).getR() + " " + event.getPosition(catalog).getLatitude() + " " +
+                    event.getPosition(catalog).getLongitude());
             double[] mt = event.getCmt().toDSMStyle();
             pw.println(Arrays.stream(mt).mapToObj(Double::toString).collect(Collectors.joining(" ")) +
                     " Moment Tensor (1.e25 dyne cm)");
@@ -190,10 +193,11 @@ public class FPInputFile extends DSMInputHeader {
      * @param thetamin
      * @param thetamax
      * @param dtheta
+     * @param catalog
      * @param options
      * @throws IOException
      */
-    public void writePSVFPCAT(Path outPath, double thetamin, double thetamax, double dtheta, OpenOption... options) throws IOException {
+    public void writePSVFPCAT(Path outPath, double thetamin, double thetamax, double dtheta, GlobalCMTAccess.Catalog catalog, OpenOption... options) throws IOException {
         // if(true)return;
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath))) {
             // header
@@ -205,8 +209,8 @@ public class FPInputFile extends DSMInputHeader {
             Arrays.stream(structurePart).forEach(pw::println);
 
             // source
-            pw.println(event.getCmtPosition().getR() + " " + event.getCmtPosition().getLatitude() + " "
-                    + event.getCmtPosition().getLongitude());
+            pw.println(event.getPosition(catalog).getR() + " " + event.getPosition(catalog).getLatitude() + " "
+                    + event.getPosition(catalog).getLongitude());
             double[] mt = event.getCmt().toDSMStyle();
             pw.println(Arrays.stream(mt).mapToObj(Double::toString).collect(Collectors.joining(" "))
                     + " Moment Tensor (1.e25 dyne cm)");

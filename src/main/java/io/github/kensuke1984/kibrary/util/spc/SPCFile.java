@@ -16,9 +16,9 @@ import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 
 /**
- * Spectrum file by DSM.
+ * Spectrum file written by DSM. Binary format.
  *
- * @version 0.1.2
+ * @since version 0.1.2
  * @author Kensuke Konishi
  * @author anselme add content for BP/FP catalog
  */
@@ -82,15 +82,18 @@ public class SPCFile implements SPCFileAccess {
      */
     public static final SPCFile getInstance(SPCFileName spcFileName, double phi, HorizontalPosition receiverPosition
             , FullPosition sourcePosition) throws IOException {
+        SPCFile specFile = new SPCFile(spcFileName);
+        specFile.sourceID = spcFileName.getSourceID();
+        specFile.receiverID = spcFileName.getReceiverID();
+
         try (DataInputStream dis = new DataInputStream(new BufferedInputStream(new FileInputStream(spcFileName)))) {
-            SPCFile specFile = new SPCFile(spcFileName);
-            specFile.sourceID = spcFileName.getSourceID();
-            specFile.receiverID = spcFileName.getReceiverID();
             // read header PF
             // tlen
             double tlen = dis.readDouble();
+            specFile.tlen = tlen;
             // np
             int np = dis.readInt();
+            specFile.np = np;
             // nbody
             int nbody = dis.readInt();
             // ncomponents
@@ -149,8 +152,14 @@ public class SPCFile implements SPCFileAccess {
 
             //System.out.println(nbody);
             specFile.nbody = nbody;
-            specFile.np = np;
-            specFile.tlen = tlen;
+            // ncomponents
+            int typeNumber = dis.readInt();
+            if (typeNumber == 0) {  // isotropic 1D partial
+                specFile.spcFileType = spcFileName.getFileType();
+            } else {  // synthetic, FP, or BP
+                specFile.spcFileType = SPCType.ofNumber(typeNumber);
+            }
+            specFile.nComponent = specFile.spcFileType.getNComponent();
 
             specFile.spcBody = new ArrayList<>(nbody);
             for (int i = 0; i < nbody; i++)
@@ -227,7 +236,7 @@ public class SPCFile implements SPCFileAccess {
             double sin2phi = FastMath.sin(2 * phi);
 
             // read body
-            for (int i = 0; i < np + 1; i++)
+            for (int i = 0; i < np + 1; i++) {
                 for (SPCBody body : specFile.spcBody) {
                     Complex[] u = new Complex[specFile.nComponent];
                     int ip = dis.readInt();
@@ -255,15 +264,6 @@ public class SPCFile implements SPCFileAccess {
                                 u[k] = new Complex(tmpReal, tmpImag);
                             }
                         }
-                      //TODO
-                      //  if (observerName.equals("XY100"))
-                      //  if (ip == 512) {
-                      //      System.err.println(spcFileName.toString());
-                      //      System.err.println(specFile.observerID + " " + phi);
-                      //      for (int k = 0; k < specFile.nComponent; k++) {
-                      //          System.err.println(u[k].getReal() + " " + u[k].getImaginary());
-                      //      }
-                      //  }
                     }
                     else if (specFile.spcFileType.equals(SPCType.PBPSVCAT)) {
                         for (int k = 0; k < specFile.nComponent; k++) {
@@ -348,10 +348,17 @@ public class SPCFile implements SPCFileAccess {
                             u[k] = new Complex(dis.readDouble(), dis.readDouble());
                         }
                     }
-                    body.add(ip, u);
+
+                    try {
+                        body.add(ip, u);
+                    } catch (Exception e) {
+                        System.err.println(spcFileName);
+                        throw e;
+                    }
                 }
-            return specFile;
+            }
         }
+        return specFile;
     }
 
     /**
@@ -395,6 +402,11 @@ public class SPCFile implements SPCFileAccess {
         return sourceID;
     }
 
+    /**
+     * (PB, PF, UB, UF) Return perturbation point code
+     * <p>
+     * (else) Return obsever code
+     */
     @Override
     public FullPosition getSourcePosition() {
         return sourcePosition;

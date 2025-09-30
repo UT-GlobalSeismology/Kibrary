@@ -227,10 +227,12 @@ public final class StaticCorrectionDataFile {
         return new StaticCorrectionData(observer, id, comp, start, timeshift, amplitude, usablephases);
     }
 
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
     /**
-     * Shows all static corrections in a file
-     *
-     * @param args [static correction file name]
+     * Shows all static corrections in a file.
+     * @param args Options.
      * @throws IOException if an I/O error occurs
      */
     public static void main(String[] args) throws IOException {

@@ -88,7 +88,7 @@ class TensorCalculationUCE {
 
         for (int r = 0; r < 3; r++)
             for (int s = 0; s < 3; s++) {
-                SPCTensorComponent irs = SPCTensorComponent.valueOf27Conmponent(i + 1, r + 1, s + 1);
+                SPCTensorComponent irs = SPCTensorComponent.valueOf27Component(i + 1, r + 1, s + 1);
                 eta[r][s] = bp.getSpcComponent(irs).getValueInFrequencyDomain();
             }
 

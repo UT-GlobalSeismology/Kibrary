@@ -14,6 +14,10 @@ import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 
 /**
+ * Operation that adds perturbations to a {@link PolynomialStructure}.
+ * <p>
+ * Perturbations can be added to a certain variable within a specified radius range.
+ *
  * @author otsuru
  * @since 2022/8/25
  */
@@ -34,7 +38,7 @@ public class PolynomialStructurePerturber extends Operation {
     private String fileTag;
 
     /**
-     * Structure file to use instead of PREM
+     * Structure file to use
      */
     private Path structurePath;
     /**
@@ -63,23 +67,23 @@ public class PolynomialStructurePerturber extends Operation {
         Path outPath = Property.generatePath(thisClass);
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
             pw.println("manhattan " + thisClass.getSimpleName());
-            pw.println("##Path of a working directory. (.)");
+            pw.println("##Path of work folder. (.)");
             pw.println("#workPath ");
-            pw.println("##(String) The first part of the name of output structure file (PREM)");
+            pw.println("##(String) The first part of the name of output structure file. (PREM)");
             pw.println("#nameRoot ");
             pw.println("##(String) A tag to include in output file names. If no tag is needed, set this blank.");
             pw.println("#fileTag ");
             pw.println("##Path of a structure file you want to use. If this is unset, the following structureName will be referenced.");
             pw.println("#structurePath ");
-            pw.println("##Name of a structure model you want to use (PREM)");
+            pw.println("##Name of a structure model you want to use. (PREM)");
             pw.println("#structureName ");
-            pw.println("##(double) Lower radius of layer to perturb (3480)");
+            pw.println("##(double) Lower radius of layer to perturb; [0:upperRadius). (3480)");
             pw.println("#lowerRadius ");
-            pw.println("##(double) Upper radius of layer to perturb (3580)");
+            pw.println("##(double) Upper radius of layer to perturb; (lowerRadius:). (3580)");
             pw.println("#upperRadius ");
-            pw.println("##Variable to perturb, from {RHO,Vp,Vpv,Vph,Vs,Vsv,Vsh,ETA,Qmu,Qkappa} (Vs)");
+            pw.println("##Variable to perturb, from {RHO,Vp,Vpv,Vph,Vs,Vsv,Vsh,ETA,Qmu,Qkappa}. (Vs)");
             pw.println("#variable ");
-            pw.println("##(double) Size of perturbation [%] (2)");
+            pw.println("##(double) Size of perturbation [%]. (2)");
             pw.println("#percent ");
         }
         System.err.println(outPath + " is created.");
@@ -103,7 +107,7 @@ public class PolynomialStructurePerturber extends Operation {
 
         lowerRadius = property.parseDouble("lowerRadius", "3480");
         upperRadius = property.parseDouble("upperRadius", "3580");
-        if (lowerRadius > upperRadius)
+        if (lowerRadius < 0 || lowerRadius > upperRadius)
             throw new IllegalArgumentException("Radius range " + lowerRadius + " , " + upperRadius + " is invalid.");
         variable = VariableType.valueOf(property.parseString("variable", "Vs"));
         percent = property.parseDouble("percent", "2");

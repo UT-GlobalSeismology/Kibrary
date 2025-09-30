@@ -81,7 +81,7 @@ public class LookAtBPspc {
         for (int i=1; i <= 3; i++) {
             for (int r=1; r <= 3; r++) {
                 for (int s=1; s <= 3; s++) {
-                    c[9*(i-1)+3*(r-1)+s-1] = SPCTensorComponent.valueOf27Conmponent(i, r, s);
+                    c[9*(i-1)+3*(r-1)+s-1] = SPCTensorComponent.valueOf27Component(i, r, s);
                 }
             }
         }

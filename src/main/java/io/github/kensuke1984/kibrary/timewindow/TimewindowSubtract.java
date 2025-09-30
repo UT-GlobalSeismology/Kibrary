@@ -24,8 +24,7 @@ public class TimewindowSubtract {
 
     /**
      * Removes timewindows of a timewindow file from those of another.
-     *
-     * @param args [information file name]
+     * @param args Options.
      * @throws IOException if an I/O error occurs
      */
     public static void main(String[] args) throws IOException {

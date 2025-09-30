@@ -37,7 +37,8 @@ public final class GlobalCMTCatalogUpdate {
     private GlobalCMTCatalogUpdate() {}
 
     /**
-     * @param args [option]
+     * Update the catalog of global CMT solutions.
+     * @param args Options.
      * @throws IOException if any
      */
     public static void main(String[] args) throws IOException {
