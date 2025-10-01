@@ -29,6 +29,7 @@ import io.github.kensuke1984.kibrary.selection.DataSelection;
 import io.github.kensuke1984.kibrary.selection.RaypathSelection;
 import io.github.kensuke1984.kibrary.source.SourceTimeFunctionConvolver;
 import io.github.kensuke1984.kibrary.source.SourceWaveletMaker;
+import io.github.kensuke1984.kibrary.source.SourceWaveletMaker2;
 import io.github.kensuke1984.kibrary.timewindow.TimeWindowMaker;
 import io.github.kensuke1984.kibrary.timewindow.TimeWindowMerge;
 import io.github.kensuke1984.kibrary.util.DatasetMerge;
@@ -154,6 +155,7 @@ enum Manhattan {
     SensitivityKernelMapper3D(97, SensitivityKernelMapper3D.class),
     PartialsMovieMaker(99, PartialsMovieMaker.class),
     // Temporal 100
+    SourceWaveletMaker2(200, SourceWaveletMaker2.class),
     ;
 
     private final Class<? extends Operation> operation;

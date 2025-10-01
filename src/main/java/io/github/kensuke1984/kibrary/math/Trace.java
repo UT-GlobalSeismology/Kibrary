@@ -731,6 +731,10 @@ public final class Trace {
     public double getXforMaxYValue() {
         return xArray[yVector.getMaxIndex()];
     }
+    
+    public int getXIndexforMaxYValue() {
+    	return yVector.getMaxIndex();
+    }
 
     /**
      * @return minimum value of y

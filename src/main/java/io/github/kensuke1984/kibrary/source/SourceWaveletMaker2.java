@@ -292,7 +292,7 @@ public class SourceWaveletMaker2 extends Operation {
         @Override
         public void finalWork() {
             // divide by the number of time windows added to get average, and half duration to normalize the amplitude
-            double[] yArray = sumVector.mapDivide(num).mapDivide(halfDuration).toArray();
+            double[] yArray = sumVector.mapDivide(num).toArray();
             // taper
             yArray = FourierTransform.taper(yArray, TAPER_LENGTH_PERCENT, true);
 
@@ -310,7 +310,13 @@ public class SourceWaveletMaker2 extends Operation {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-
+            
+            double t0 = waveletTrace.getXforMaxYValue();
+            double t1 = computet1(waveletTrace, t0);
+            double t2 = computet2(waveletTrace, t0);
+            
+            System.out.println(t0 + " " + t1 + " " + t2);
+            
             // zero-pad, with wavelet placed at the center of the time series
             //   Here, arrival + halfDuration is set at center.
             int npts = SPCFileAid.findNpts(tlen, sacSamplingHz);
@@ -342,5 +348,37 @@ public class SourceWaveletMaker2 extends Operation {
         }
 
     }
-
+    
+    //t1,t2
+    private double computet1 (Trace waveletTrace, double t0) {
+    	double yhalf = waveletTrace.getMaxY() / 2;
+    	int xIndexforMax = waveletTrace.getXIndexforMaxYValue();
+    	int halfIndex1 = 0;
+    	for (int i = xIndexforMax; i >= 0; i--) {
+    		if(waveletTrace.getYAt(i) < yhalf) {
+    			halfIndex1 = i;
+    			break;
+    		}
+    	}
+    	if(halfIndex1 == 0) {
+    		throw new IllegalStateException();
+    	}
+    	return waveletTrace.getXAt(halfIndex1);
+    }
+    
+    private double computet2 (Trace waveletTrace, double t0) {
+    	double yhalf = waveletTrace.getMaxY() / 2;
+    	int xIndexforMax = waveletTrace.getXIndexforMaxYValue();
+    	int halfIndex2 = 0;
+    	for (int i = xIndexforMax; i < waveletTrace.getLength(); i++) {
+    		if(waveletTrace.getYAt(i) < yhalf) {
+    			halfIndex2 = i;
+    			break;
+    		}
+    	}
+    	if(halfIndex2 == 0) {
+    		throw new IllegalStateException();
+    	}
+    	return waveletTrace.getXAt(halfIndex2);
+    }
 }
