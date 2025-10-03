@@ -60,6 +60,7 @@ public class PerturbationMapper extends Operation {
      */
     private int[] displayLayers;
     private int nPanelsPerRow;
+    private String mapProjection;
     /**
      * Map region in the form lonMin/lonMax/latMin/latMax, when it is set manually.
      */
@@ -109,6 +110,8 @@ public class PerturbationMapper extends Operation {
             pw.println("#displayLayers ");
             pw.println("##(int) Number of panels to display in each row. (4)");
             pw.println("#nPanelsPerRow ");
+            pw.println("##Mode of map projection {Q: Cylindrical Equidistant, Elon0/lat0/: Azimuthal Equidistant with map center (lon0, lat0)} (Q)");
+            pw.println("#mapProjection E180/90/");
             pw.println("##To specify the map region, set it in the form lonMin/lonMax/latMin/latMax, range lon:[-180,360] lat:[-90,90].");
             pw.println("#mapRegion -180/180/-90/90");
             pw.println("##########The following should be set to half of dLatitude and dLongitude used to design voxels (or smaller).");
@@ -150,6 +153,7 @@ public class PerturbationMapper extends Operation {
         boundaries = property.parseDoubleArray("boundaries", "0 50 100 150 200 250 300 350 400");
         if (property.containsKey("displayLayers")) displayLayers = property.parseIntArray("displayLayers", null);
         nPanelsPerRow = property.parseInt("nPanelsPerRow", "4");
+        mapProjection = property.parseString("mapProjection", "Q");
         if (property.containsKey("mapRegion")) mapRegion = property.parseString("mapRegion", null);
 
         if (property.containsKey("marginLatitudeKm")) {
@@ -216,7 +220,7 @@ public class PerturbationMapper extends Operation {
 
         // output shellscripts
         PerturbationMapShellscript script;
-        script = new PerturbationMapShellscript(variable, radii, boundaries, mapRegion, gridInterval, scale, fileNameRoot, nPanelsPerRow);
+        script = new PerturbationMapShellscript(variable, radii, boundaries, mapProjection, mapRegion, gridInterval, scale, fileNameRoot, nPanelsPerRow);
         if (displayLayers != null) script.setDisplayLayers(displayLayers);
         if (maskPath != null) script.setMask(maskFileNameRoot, maskThreshold);
         script.write(outPath);

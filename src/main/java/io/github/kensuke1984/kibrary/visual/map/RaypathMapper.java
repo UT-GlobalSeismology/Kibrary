@@ -108,6 +108,7 @@ public class RaypathMapper extends Operation {
     private boolean drawOutsides;
     private Path outsideColorBinPath;
     private double rayTransparency;
+    private String mapProjection;
     /**
      * Map region in the form lonMin/lonMax/latMin/latMax, when it is set manually.
      */
@@ -188,6 +189,8 @@ public class RaypathMapper extends Operation {
             pw.println("#outsideColorBinPath ");
             pw.println("##(double) Transparency of raypaths and turning points [%]. (0)");
             pw.println("#rayTransparency ");
+            pw.println("##Mode of map projection {Q: Cylindrical Equidistant, Elon0/lat0/: Azimuthal Equidistant with map center (lon0, lat0)} (Q)");
+            pw.println("#mapProjection E180/90/");
             pw.println("##To specify the map region, set it in the form lonMin/lonMax/latMin/latMax, range lon:[-180,180] lat:[-90,90].");
             pw.println("#mapRegion -180/180/-90/90");
             pw.println("##The position of the legend, when colorMode>0, from {TL, TR, BL, BR, none}. (BR)");
@@ -238,6 +241,7 @@ public class RaypathMapper extends Operation {
         rayTransparency = property.parseDouble("rayTransparency", "0");
         if (rayTransparency < 0 || 100 < rayTransparency)
             throw new IllegalArgumentException("rayTransparency " + rayTransparency + " is invalid; must be in [0:100]");
+        mapProjection = property.parseString("mapProjection", "Q");
         if (property.containsKey("mapRegion")) mapRegion = property.parseString("mapRegion", null);
         legendJustification = property.parseString("legendJustification", "BR");
 
@@ -420,7 +424,7 @@ public class RaypathMapper extends Operation {
             pw.println("");
             pw.println("# map parameters");
             pw.println("R='-R" + decideMapRegion() + "'");
-            pw.println("J='-JQ20'");
+            pw.println("J='-J" + mapProjection + "20'");
             pw.println("B='-Ba30 -BWeSn'");
             pw.println("");
             pw.println("gmt pscoast -Ggray -Wthinnest,gray20 $B $J $R -P -K > $outputps");

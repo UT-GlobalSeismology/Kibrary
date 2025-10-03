@@ -52,6 +52,8 @@ public class VoxelMapper {
         options.addOption(Option.builder("v").longOpt("voxelFile").hasArg().argName("voxelFile").required()
                 .desc("Path of voxel information file").build());
         // settings
+        options.addOption(Option.builder("j").longOpt("mapProjection").hasArg().argName("mapProjection")
+                .desc("Mode of map projection {Q: Cylindrical Equidistant, Elon0/lat0/: Azimuthal Equidistant with map center (lon0, lat0)} (Q)").build());
         options.addOption(Option.builder("r").longOpt("region").hasArg().argName("region")
                 .desc("Map region in the form lonMin/lonMax/latMin/latMax, range lon:[-180,180] lat:[-90,90]").build());
 
@@ -74,6 +76,11 @@ public class VoxelMapper {
         Path voxelPath = Paths.get(cmdLine.getOptionValue("v"));
         List<HorizontalPosition> voxelPositions = new VoxelInformationFile(voxelPath).getHorizontalPositions();
 
+        // decide map projection
+        String mapProjection;
+        if (cmdLine.hasOption("j")) mapProjection = cmdLine.getOptionValue("j");
+        else mapProjection = "Q";
+
         // decide map region
         String mapRegion;
         if (cmdLine.hasOption("r")) mapRegion = cmdLine.getOptionValue("r");
@@ -92,12 +99,12 @@ public class VoxelMapper {
         // output GMT script
         String gmtFileName = "voxelMap.sh";
         Path gmtPath = outPath.resolve(gmtFileName);
-        outputGMT(gmtPath, mapRegion) ;
+        outputGMT(gmtPath, mapProjection, mapRegion) ;
 
         System.err.println("After this finishes, please run " + gmtPath);
     }
 
-    private static void outputGMT(Path gmtPath, String mapRegion) throws IOException {
+    private static void outputGMT(Path gmtPath, String mapProjection, String mapRegion) throws IOException {
 
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(gmtPath))) {
             pw.println("#!/bin/sh");
@@ -114,7 +121,7 @@ public class VoxelMapper {
             pw.println("");
             pw.println("# map parameters");
             pw.println("R='-R" + mapRegion + "'");
-            pw.println("J='-JQ20'");
+            pw.println("J='-J" + mapProjection + "20'");
             pw.println("B='-Ba30 -BWeSn'");
             pw.println("");
             pw.println("gmt pscoast -Ggray -Wthinnest,gray20 $B $J $R -P -K > $outputps");
