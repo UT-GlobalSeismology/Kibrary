@@ -142,7 +142,7 @@ public class ElasticMedium implements Cloneable {
         // else : nothing has to be calculated
     }
 
-    private void tiToIsotropic() {
+     private void tiToIsotropic() {
         //Voigt approximation
         if (isDefined(VariableType.L) && isDefined(VariableType.N)) {
             if (isDefined(VariableType.A) && isDefined(VariableType.C) && isDefined(VariableType.F)) {

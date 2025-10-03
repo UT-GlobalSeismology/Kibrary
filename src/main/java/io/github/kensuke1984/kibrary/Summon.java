@@ -12,6 +12,7 @@ import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
+import org.apache.commons.lang3.StringUtils;
 
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 
@@ -39,7 +40,11 @@ public final class Summon {
         if (args.length > 0) {
             // when args exists, args[0] is the name of Brooklyn
             try {
-                brooklyn = Brooklyn.valueOf(args[0]);
+                if (StringUtils.isNumeric(args[0])) {
+                    brooklyn = Brooklyn.valueOf(Integer.parseInt(args[0]));
+                } else {
+                    brooklyn = Brooklyn.valueOf(args[0]);
+                }
             } catch (IllegalArgumentException iae) {
                 System.out.println(args[0] + " is not a Brooklyn.");
                 System.out.println("Please choose one in:");

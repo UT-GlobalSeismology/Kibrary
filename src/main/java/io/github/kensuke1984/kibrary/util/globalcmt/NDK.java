@@ -388,35 +388,33 @@ public final class NDK implements GlobalCMTAccess {
      * @return if this fulfills "search"
      */
     boolean fulfill(GlobalCMTSearch search) {
+        // date
         LocalDateTime cmtDate = getCMTTime();
         if (search.getStartDate().isAfter(cmtDate) || search.getEndDate().isBefore(cmtDate)) return false;
+
+        //
         if (!search.getPredicateSet().stream().allMatch(p -> p.test(this))) return false;
 
         // latitude & longitude
         HorizontalPosition position = new HorizontalPosition(centroidPosition.getLatitude(), centroidPosition.getLongitude());
-        if (!position.isInRange(search.getLowerLatitude(), search.getUpperLatitude(), search.getLowerLongitude(), search.getUpperLongitude()))
-            return false;
-
+        if (!position.isInRange(search.getLatitudeRange(), search.getLongitudeRange())) return false;
         // depth
-        double depth = 6371 - centroidPosition.getR();
-        if (depth < search.getLowerDepth() || search.getUpperDepth() < depth) return false;
-
-        // timeshift
-        if (timeDifference < search.getLowerCentroidTimeShift() || search.getUpperCentroidTimeShift() < timeDifference)
-            return false;
+        if (!search.getDepthRange().check(centroidPosition.getDepth())) return false;
         // body wave magnitude
-        if (mb < search.getLowerMb() || search.getUpperMb() < mb) return false;
+        if (!search.getMbRange().check(mb)) return false;
         // surface wave magnitude
-        if (ms < search.getLowerMs() || search.getUpperMs() < ms) return false;
+        if (!search.getMsRange().check(ms)) return false;
         // moment magnitude
-        if (momentTensor.getMw() < search.getLowerMw() || search.getUpperMw() < momentTensor.getMw()) return false;
+        if (!search.getMwRange().check(momentTensor.getMw())) return false;
+        // centroid timeshift
+        if (!search.getCentroidTimeShiftRange().check(timeDifference)) return false;
         // half duration
-        if (halfDuration < search.getLowerHalfDuration() ||
-                search.getUpperHalfDuration() < halfDuration) return false;
+        if (!search.getHalfDurationRange().check(halfDuration)) return false;
         // tension axis plunge
-        if (plunge0 < search.getLowerTensionAxisPlunge() || search.getUpperTensionAxisPlunge() < plunge0) return false;
+        if (!search.getTensionAxisPlungeRange().check(plunge0)) return false;
         // null axis plunge
-        return !(plunge1 < search.getLowerNullAxisPlunge() || search.getUpperNullAxisPlunge() < plunge1);
+        if (!search.getNullAxisPlungeRange().check(plunge1)) return false;
+        return true;
     }
 
     @Override

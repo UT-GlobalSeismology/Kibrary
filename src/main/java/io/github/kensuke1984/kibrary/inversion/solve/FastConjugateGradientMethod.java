@@ -21,7 +21,7 @@ import io.github.kensuke1984.kibrary.math.MatrixComputation;
  *      href=https://en.wikipedia.org/wiki/Conjugate_gradient_method>English
  *      wiki</a>
  */
-public class FastConjugateGradientMethod extends InverseProblem {
+public class FastConjugateGradientMethod extends InversionMethod {
 
 	public RealMatrix getP() {
 		return p;
@@ -58,7 +58,7 @@ public class FastConjugateGradientMethod extends InverseProblem {
 		this.damped = damped;
 		int column = atd.getDimension();
 		p = MatrixUtils.createRealMatrix(column, column);
-		ans = MatrixUtils.createRealMatrix(column, column);
+		answer = MatrixUtils.createRealMatrix(column, column);
 		alpha = new ArrayRealVector(column);
 	}
 	
@@ -69,7 +69,7 @@ public class FastConjugateGradientMethod extends InverseProblem {
 		this.damped = damped;
 		int column = atd.getDimension();
 		p = MatrixUtils.createRealMatrix(column, column);
-		ans = MatrixUtils.createRealMatrix(column, column);
+		answer = MatrixUtils.createRealMatrix(column, column);
 		alpha = new ArrayRealVector(column);
 		this.conditioner = conditioner;
 	}
@@ -78,7 +78,7 @@ public class FastConjugateGradientMethod extends InverseProblem {
 	public void compute() {
 		int column = atd.getDimension();
 		p = MatrixUtils.createRealMatrix(column, column);
-		ans = MatrixUtils.createRealMatrix(column, column);
+		answer = MatrixUtils.createRealMatrix(column, column);
 		alpha = new ArrayRealVector(column);
 		System.err.println("Solving by CG method.");
 		p.setColumnVector(0, atd.mapMultiply(-1));
@@ -110,7 +110,7 @@ public class FastConjugateGradientMethod extends InverseProblem {
 		
 		alpha.setEntry(0, r.dotProduct(p.getColumnVector(0)) / atap.dotProduct(p.getColumnVector(0))); // a0
 
-		ans.setColumnVector(0, p.getColumnVector(0).mapMultiply(alpha.getEntry(0)));
+		answer.setColumnVector(0, p.getColumnVector(0).mapMultiply(alpha.getEntry(0)));
 		
 		// ///////
 		int tmpN = 20;
@@ -141,7 +141,7 @@ public class FastConjugateGradientMethod extends InverseProblem {
 
 			alpha.setEntry(i, rp / paap);
 
-			ans.setColumnVector(i, p.getColumnVector(i).mapMultiply(alpha.getEntry(i)).add(ans.getColumnVector(i - 1)));
+			answer.setColumnVector(i, p.getColumnVector(i).mapMultiply(alpha.getEntry(i)).add(answer.getColumnVector(i - 1)));
 			t2 = System.nanoTime();
 //			System.out.println((t2-t1)*1e-9 + "s");
 		}

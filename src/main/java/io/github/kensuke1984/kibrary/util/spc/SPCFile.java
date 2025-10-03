@@ -96,61 +96,6 @@ public class SPCFile implements SPCFileAccess {
             specFile.np = np;
             // nbody
             int nbody = dis.readInt();
-            // ncomponents
-            int ncomp = dis.readInt();
-            //System.err.println(np + " " + nbody + " " + ncomp);
-
-            switch (ncomp) {
-            case 0: // isotropic 1D partial par2 (lambda)
-                specFile.spcFileType = spcFileName.getFileType();
-                specFile.nComponent = 3;
-                break;
-            case 3: // normal synthetic
-                specFile.nComponent = 3;
-                specFile.spcFileType = SPCType.SYNTHETIC;
-                break;
-            case 4:// forward propagation dislocation field. 4 is an identifier. The actual number of component is 3 (3 non-zero component).
-                specFile.nComponent = 3;
-                specFile.spcFileType = SPCType.UF;
-                break;
-            case 5:// back propagation dialocation filed. 5 is an identifier. The actual number of component is 9 (9 non-zero component).
-                specFile.nComponent = 9;
-                specFile.spcFileType = SPCType.UB;
-                break;
-            case 7: // back propagation PSV catalog. 7 is an identifier. The actual number of component is 27 (27 non-zero component).
-//				System.out.println("PBPSVCAT");
-                specFile.nComponent = 27;
-                specFile.spcFileType = SPCType.PBPSVCAT;
-                break;
-            case 8: // back propagation SH catalog. 8 is an identifier. The actual number of component is 27 (18 non-zero component).
-                specFile.nComponent = 27;
-                specFile.spcFileType = SPCType.PBSHCAT;
-                break;
-            case 9: // forward propagation (strain field)
-                specFile.nComponent = 9;
-                specFile.spcFileType = SPCType.PF;
-                break;
-            case 10: // forward propagation SH catalog. 10 is an identifier. The actual number of component is 9.
-                specFile.nComponent = 9;
-                specFile.spcFileType = SPCType.PFSHCAT;
-                break;
-//            case 11: // Optimized forward propagation SH catalog. 11 is an identifier. The actual number of component is 9.
-//                specFile.nComponent = 9;
-//                specFile.spcFileType = SPCType.PFSHO;
-//                break;
-            case 12: // forward propagation SH catalog. 10 is an identifier. The actual number of component is 9.
-                specFile.nComponent = 9;
-                specFile.spcFileType = SPCType.PFPSVCAT;
-                break;
-            case 27: // back propagation (strain field)
-                specFile.nComponent = 27;
-                specFile.spcFileType = SPCType.PB;
-                break;
-            default:
-                throw new RuntimeException("component can be only 3(synthetic), 4(uf), 5(ub), 7(bppsvcat), 8(bpshcat), 9(fp), 10(fpshcat), or 27(bp) right now");
-            }
-
-            //System.out.println(nbody);
             specFile.nbody = nbody;
             // ncomponents
             int typeNumber = dis.readInt();
@@ -335,14 +280,6 @@ public class SPCFile implements SPCFileAccess {
                             u[k] = new Complex(tmpReal, tmpImag);
                         }
                     }
-//                    else if (specFile.spcFileType.equals(SPCType.PFSHO)) {
-//                        for (int k = 0; k < specFile.nComponent; k++) {
-//                            if (SPCTensorComponent.isFPSHzero(k+1))
-//                                u[k] = Complex.ZERO;
-//                            else
-//                                u[k] = new Complex(dis.readDouble(), dis.readDouble());
-//                        }
-//                    }
                     else {
                         for (int k = 0; k < specFile.nComponent; k++) {
                             u[k] = new Complex(dis.readDouble(), dis.readDouble());
@@ -383,16 +320,6 @@ public class SPCFile implements SPCFileAccess {
     }
 
     /**
-     * (PB, PF, UB, UF) Return perturbation point code
-     * <p>
-     * (else) Return obsever code
-     */
-    @Override
-    public String getReceiverID() {
-        return receiverID;
-    }
-
-    /**
      * (PB, UB) Return observer code (source of back propagate wave)
      * <p>
      * (else) Return source ID
@@ -407,6 +334,11 @@ public class SPCFile implements SPCFileAccess {
      * <p>
      * (else) Return obsever code
      */
+    @Override
+    public String getReceiverID() {
+        return receiverID;
+    }
+
     @Override
     public FullPosition getSourcePosition() {
         return sourcePosition;

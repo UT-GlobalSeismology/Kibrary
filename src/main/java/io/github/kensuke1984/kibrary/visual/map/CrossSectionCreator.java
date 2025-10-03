@@ -28,20 +28,24 @@ public class CrossSectionCreator extends Operation {
 
     private final Property property;
     /**
-     * Path of the work folder
+     * Path of the work folder.
      */
     private Path workPath;
     /**
      * A tag to include in output folder name. When this is empty, no tag is used.
      */
     private String folderTag;
+    /**
+     * Whether to append date string at end of output folder name.
+     */
+    private boolean appendFolderDate;
 
     /**
-     * Path of perturbation file
+     * Path of perturbation file.
      */
     private Path perturbationPath;
     /**
-     * Path of perturbation file to be used as mask
+     * Path of perturbation file to be used as mask.
      */
     private Path maskPath;
 
@@ -127,6 +131,8 @@ public class CrossSectionCreator extends Operation {
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this blank.");
             pw.println("#folderTag ");
+            pw.println("##(boolean) Whether to append date string at end of output folder name. (true)");
+            pw.println("#appendFolderDate false");
             pw.println("##Path of perturbation file, must be set.");
             pw.println("#perturbationPath vsPercent.lst");
             pw.println("##Path of perturbation file for mask, when mask is to be applied.");
@@ -142,14 +148,14 @@ public class CrossSectionCreator extends Operation {
             pw.println("#pos1Latitude ");
             pw.println("##(double) Longitude of position 1, must be set.");
             pw.println("#pos1Longitude ");
-            pw.println("##(double) Distance along arc before position 0. (0)");
+            pw.println("##(double) Distance along arc before position 0 [deg]. (0)");
             pw.println("#beforePos0Deg ");
-            pw.println("##(double) Distance along arc after position 0. If not set, the following afterPos1Deg will be used.");
+            pw.println("##(double) Distance along arc after position 0 [deg]. If not set, the following afterPos1Deg will be used.");
             pw.println("#afterPos0Deg ");
-            pw.println("##(double) Distance along arc after position 1. (0)");
+            pw.println("##(double) Distance along arc after position 1 [deg]. (0)");
             pw.println("#afterPos1Deg ");
-            pw.println("##########Radius display settings");
-            pw.println("##(double) Radius of zero point of vertical axis. (0)");
+            pw.println("##########Radius display settings.");
+            pw.println("##(double) Radius of zero point of vertical axis [km]. (0)");
             pw.println("#zeroPointRadius 3480");
             pw.println("##Name of zero point of vertical axis. (0)");
             pw.println("#zeroPointName CMB");
@@ -166,7 +172,7 @@ public class CrossSectionCreator extends Operation {
             pw.println("#marginLongitudeDeg ");
             pw.println("##(double) Radius margin at both ends of region [km]. (25)");
             pw.println("#marginRadiusKm ");
-            pw.println("##########Parameters for perturbation values");
+            pw.println("##########Parameters for perturbation values.");
             pw.println("##(double) Range of percent scale. (3)");
             pw.println("#scale ");
             pw.println("##(boolean) Whether to display map as mosaic without smoothing. (false)");
@@ -185,6 +191,7 @@ public class CrossSectionCreator extends Operation {
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
         if (property.containsKey("folderTag")) folderTag = property.parseStringSingle("folderTag", null);
+        appendFolderDate = property.parseBoolean("appendFolderDate", "true");
 
         perturbationPath = property.parsePath("perturbationPath", null, true, workPath);
         if (property.containsKey("maskPath")) {
@@ -251,7 +258,7 @@ public class CrossSectionCreator extends Operation {
         }
 
         // create output folder
-        Path outPath = DatasetAid.createOutputFolder(workPath, "crossSection", folderTag, GadgetAid.getTemporaryString());
+        Path outPath = DatasetAid.createOutputFolder(workPath, "crossSection", folderTag, appendFolderDate, GadgetAid.getTemporaryString());
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         String modelFileNameRoot = FileAid.extractNameRoot(perturbationPath);

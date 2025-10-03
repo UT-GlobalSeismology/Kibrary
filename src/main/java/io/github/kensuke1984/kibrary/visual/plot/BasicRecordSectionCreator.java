@@ -21,6 +21,8 @@ import edu.sc.seis.TauP.TauP_Time;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotFile;
+import io.github.kensuke1984.kibrary.math.CircularRange;
+import io.github.kensuke1984.kibrary.math.LinearRange;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.MathAid;
@@ -52,25 +54,25 @@ import io.github.kensuke1984.kibrary.waveform.BasicIDPairUp;
 public class BasicRecordSectionCreator extends Operation {
 
     /**
-     * The interval of exporting travel times
+     * The interval of exporting travel times.
      */
     private static final double TRAVEL_TIME_INTERVAL = 1;
     /**
-     * The interval of deciding graph size; should be a multiple of TRAVEL_TIME_INTERVAL
+     * The interval of deciding graph size; should be a multiple of TRAVEL_TIME_INTERVAL.
      */
     private static final int GRAPH_SIZE_INTERVAL = 2;
     /**
-     * How much space to provide at the rim of the graph in the y axis
+     * How much space to provide at the rim of the graph in the y axis.
      */
     private static final int Y_AXIS_RIM = 2;
     /**
-     * How much space to provide at the rim of the graph in the time axis
+     * How much space to provide at the rim of the graph in the time axis.
      */
     private static final int TIME_RIM = 10;
 
     private final Property property;
     /**
-     * Path of the work folder
+     * Path of the work folder.
      */
     private Path workPath;
     /**
@@ -78,20 +80,20 @@ public class BasicRecordSectionCreator extends Operation {
      */
     private String fileTag;
     /**
-     * components to be included in the dataset
+     * Components to use.
      */
     private Set<SACComponent> components;
 
     /**
-     * Path of a basic waveform folder
+     * Path of a basic waveform folder.
      */
     private Path mainBasicPath;
     /**
-     * Path of reference waveform folder 1
+     * Path of reference waveform folder 1.
      */
     private Path refBasicPath1;
     /**
-     * Path of reference waveform folder 2
+     * Path of reference waveform folder 2.
      */
     private Path refBasicPath2;
 
@@ -104,15 +106,15 @@ public class BasicRecordSectionCreator extends Operation {
     private double ampScale;
 
     /**
-     * Whether to plot the figure with azimuth as the Y-axis
+     * Whether to plot the figure with azimuth as the Y-axis.
      */
     private boolean byAzimuth;
     /**
-     * Whether to set the azimuth range to [-180:180) instead of [0:360)
+     * Whether to set the azimuth range to [-180:180) instead of [0:360).
      */
     private boolean flipAzimuth;
     /**
-     * Names of phases to plot travel time curves
+     * Names of phases to plot travel time curves.
      */
     private String[] displayPhases;
     /**
@@ -120,18 +122,16 @@ public class BasicRecordSectionCreator extends Operation {
      */
     private String[] alignPhases;
     /**
-     * apparent slowness to use when reducing time [s/deg]
+     * Apparent slowness to use when reducing time [s/deg].
      */
     private double reductionSlowness;
     /**
-     * Name of structure to compute travel times
+     * Name of structure to compute travel times.
      */
     private String structureName;
 
-    private double lowerDistance;
-    private double upperDistance;
-    private double lowerAzimuth;
-    private double upperAzimuth;
+    private LinearRange distanceRange;
+    private CircularRange azimuthRange;
 
     private int unshiftedObsStyle;
     private String unshiftedObsName;
@@ -145,7 +145,7 @@ public class BasicRecordSectionCreator extends Operation {
     private String refSynName2;
 
     /**
-     * Inxtance of tool to use to compute travel times
+     * Instance of tool to use to compute travel times.
      */
     private TauP_Time timeTool;
     private String dateStr;
@@ -165,29 +165,29 @@ public class BasicRecordSectionCreator extends Operation {
         Path outPath = Property.generatePath(thisClass);
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
             pw.println("manhattan " + thisClass.getSimpleName());
-            pw.println("##Path of a working directory. (.)");
+            pw.println("##Path of work folder. (.)");
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output file names. If no tag is needed, leave this unset.");
             pw.println("#fileTag ");
-            pw.println("##SacComponents to be used, listed using spaces (Z R T)");
+            pw.println("##SacComponents to be used, listed using spaces. (Z R T)");
             pw.println("#components ");
-            pw.println("##Path of a basic waveform folder (.)");
+            pw.println("##Path of a basic waveform folder. (.)");
             pw.println("#mainBasicPath ");
-            pw.println("##Path of reference basic waveform folder 1, when plotting their waveforms");
+            pw.println("##Path of reference basic waveform folder 1, when plotting their waveforms.");
             pw.println("#refBasicPath1 ");
-            pw.println("##Path of reference basic waveform folder 2, when plotting their waveforms");
+            pw.println("##Path of reference basic waveform folder 2, when plotting their waveforms.");
             pw.println("#refBasicPath2 ");
             pw.println("##GlobalCMTIDs of events to work for, listed using spaces. To use all events, leave this unset.");
             pw.println("#tendEvents ");
-            pw.println("##Method for standarization of observed waveform amplitude, from {obsEach,synEach,obsMean,synMean} (synEach)");
+            pw.println("##Method for standarization of observed waveform amplitude, from {obsEach,synEach,obsMean,synMean}. (synEach)");
             pw.println("#obsAmpStyle ");
-            pw.println("##Method for standarization of synthetic waveform amplitude, from {obsEach,synEach,obsMean,synMean} (synEach)");
+            pw.println("##Method for standarization of synthetic waveform amplitude, from {obsEach,synEach,obsMean,synMean}. (synEach)");
             pw.println("#synAmpStyle ");
-            pw.println("##(double) Coefficient to multiply to all waveforms (1.0)");
+            pw.println("##(double) Coefficient to multiply to all waveforms. (1.0)");
             pw.println("#ampScale ");
-            pw.println("##(boolean) Whether to plot the figure with azimuth as the Y-axis (false)");
+            pw.println("##(boolean) Whether to plot the figure with azimuth as the Y-axis. (false)");
             pw.println("#byAzimuth ");
-            pw.println("##(boolean) Whether to set the azimuth range to [-180:180) instead of [0:360) (false)");
+            pw.println("##(boolean) Whether to set the azimuth range to [-180:180) instead of [0:360). (false)");
             pw.println("##  This is effective when using south-to-north raypaths in byAzimuth mode.");
             pw.println("#flipAzimuth ");
             pw.println("##Names of phases to plot travel time curves, listed using spaces. Only when byAzimuth is false.");
@@ -195,37 +195,37 @@ public class BasicRecordSectionCreator extends Operation {
             pw.println("##Names of phases to use for alignment, listed using spaces. When unset, the following reductionSlowness will be used.");
             pw.println("##  When multiple phases are set, the fastest arrival of them will be used for alignment.");
             pw.println("#alignPhases ");
-            pw.println("##(double) The apparent slowness to use for time reduction [s/deg] (0)");
+            pw.println("##(double) The apparent slowness to use for time reduction [s/deg]. (0)");
             pw.println("#reductionSlowness ");
-            pw.println("##(String) Name of structure to compute travel times using TauP (prem)");
+            pw.println("##(String) Name of structure to compute travel times using TauP. (prem)");
             pw.println("#structureName ");
-            pw.println("##(double) Lower limit of range of epicentral distance to be used [deg] [0:upperDistance) (0)");
+            pw.println("##(double) Lower limit of range of epicentral distance to be used [deg], inclusive; [0:upperDistance). (0)");
             pw.println("#lowerDistance ");
-            pw.println("##(double) Upper limit of range of epicentral distance to be used [deg] (lowerDistance:180] (180)");
+            pw.println("##(double) Upper limit of range of epicentral distance to be used [deg], exclusive; (lowerDistance:180]. (180)");
             pw.println("#upperDistance ");
-            pw.println("##(double) Lower limit of range of azimuth to be used [deg] [-360:upperAzimuth) (0)");
+            pw.println("##(double) Lower limit of range of azimuth to be used [deg], inclusive; [-180:360]. (0)");
             pw.println("#lowerAzimuth ");
-            pw.println("##(double) Upper limit of range of azimuth to be used [deg] (lowerAzimuth:360] (360)");
+            pw.println("##(double) Upper limit of range of azimuth to be used [deg], exclusive; [-180:360]. (360)");
             pw.println("#upperAzimuth ");
-            pw.println("##Plot style for unshifted observed waveform, from {0:no plot, 1:gray, 2:black} (1)");
+            pw.println("##Plot style for unshifted observed waveform, from {0:no plot, 1:gray, 2:black}. (1)");
             pw.println("#unshiftedObsStyle 0");
-            pw.println("##Name for unshifted observed waveform (unshifted)");
+            pw.println("##Name for unshifted observed waveform. (unshifted)");
             pw.println("#unshiftedObsName ");
-            pw.println("##Plot style for shifted observed waveform, from {0:no plot, 1:gray, 2:black} (2)");
+            pw.println("##Plot style for shifted observed waveform, from {0:no plot, 1:gray, 2:black}. (2)");
             pw.println("#shiftedObsStyle ");
-            pw.println("##Name for shifted observed waveform (shifted)");
+            pw.println("##Name for shifted observed waveform. (shifted)");
             pw.println("#shiftedObsName observed");
-            pw.println("##Plot style for main synthetic waveform, from {0:no plot, 1:red, 2:green, 3:blue} (1)");
+            pw.println("##Plot style for main synthetic waveform, from {0:no plot, 1:red, 2:green, 3:blue}. (1)");
             pw.println("#mainSynStyle 2");
-            pw.println("##Name for main synthetic waveform (synthetic)");
+            pw.println("##Name for main synthetic waveform. (synthetic)");
             pw.println("#mainSynName recovered");
-            pw.println("##Plot style for reference synthetic waveform 1, from {0:no plot, 1:red, 2:green, 3:blue} (0)");
+            pw.println("##Plot style for reference synthetic waveform 1, from {0:no plot, 1:red, 2:green, 3:blue}. (0)");
             pw.println("#refSynStyle1 1");
-            pw.println("##Name for reference synthetic waveform 1 (reference1)");
+            pw.println("##Name for reference synthetic waveform 1. (reference1)");
             pw.println("#refSynName1 initial");
-            pw.println("##Plot style for reference synthetic waveform 2, from {0:no plot, 1:red, 2:green, 3:blue} (0)");
+            pw.println("##Plot style for reference synthetic waveform 2, from {0:no plot, 1:red, 2:green, 3:blue}. (0)");
             pw.println("#refSynStyle2 ");
-            pw.println("##Name for reference synthetic waveform 2 (reference2)");
+            pw.println("##Name for reference synthetic waveform 2. (reference2)");
             pw.println("#refSynName2 ");
         }
         System.err.println(outPath + " is created.");
@@ -267,15 +267,13 @@ public class BasicRecordSectionCreator extends Operation {
         reductionSlowness = property.parseDouble("reductionSlowness", "0");
         structureName = property.parseString("structureName", "prem").toLowerCase();
 
-        lowerDistance = property.parseDouble("lowerDistance", "0");
-        upperDistance = property.parseDouble("upperDistance", "180");
-        if (lowerDistance < 0 || lowerDistance > upperDistance || 180 < upperDistance)
-            throw new IllegalArgumentException("Distance range " + lowerDistance + " , " + upperDistance + " is invalid.");
+        double lowerDistance = property.parseDouble("lowerDistance", "0");
+        double upperDistance = property.parseDouble("upperDistance", "180");
+        distanceRange = new LinearRange("Distance", lowerDistance, upperDistance, 0.0, 180.0);
 
-        lowerAzimuth = property.parseDouble("lowerAzimuth", "0");
-        upperAzimuth = property.parseDouble("upperAzimuth", "360");
-        if (lowerAzimuth < -360 || lowerAzimuth > upperAzimuth || 360 < upperAzimuth)
-            throw new IllegalArgumentException("Azimuth range " + lowerAzimuth + " , " + upperAzimuth + " is invalid.");
+        double lowerAzimuth = property.parseDouble("lowerAzimuth", "0");
+        double upperAzimuth = property.parseDouble("upperAzimuth", "360");
+        azimuthRange = new CircularRange("Azimuth", lowerAzimuth, upperAzimuth, -180.0, 360.0);
 
         unshiftedObsStyle = property.parseInt("unshiftedObsStyle", "1");
         unshiftedObsName = property.parseString("unshiftedObsName", "unshifted");
@@ -415,8 +413,7 @@ public class BasicRecordSectionCreator extends Operation {
                         .computeAzimuthRad(obsID.getObserver().getPosition()));
 
                 // skip waveform if distance or azimuth is out of bounds
-                if (distance < lowerDistance || upperDistance < distance
-                        || MathAid.checkAngleRange(azimuth, lowerAzimuth, upperAzimuth) == false) {
+                if (distanceRange.check(distance) == false || azimuthRange.check(azimuth) == false) {
                     continue;
                 }
 
@@ -469,11 +466,11 @@ public class BasicRecordSectionCreator extends Operation {
         }
 
         private void profilePlotSetup() {
-            // Here, generateOutputFileName() is used in an irregular way, without adding the file extension but adding the component.
-            String fileNameRoot = DatasetAid.generateOutputFileName("recordSection", fileTag, dateStr, "_" + component.toString());
+            // Here, generateOutputFilePath() is used in an irregular way, adding the component along with the file extension.
+            Path plotPath = DatasetAid.generateOutputFilePath(eventPath, "recordSection", fileTag, true, dateStr, "_" + component.toString() + ".plt");
 
-            gnuplot = new GnuplotFile(eventPath.resolve(fileNameRoot + ".plt"));
-            gnuplot.setOutput("pdf", fileNameRoot + ".pdf", 21, 29.7, true);
+            gnuplot = new GnuplotFile(plotPath);
+            gnuplot.setOutput("pdf", plotPath.getFileName().toString().replace(".plt", ".pdf"), 21, 29.7, true);
             gnuplot.setMarginH(15, 25);
             gnuplot.setMarginV(15, 15);
             gnuplot.setFont("Arial", 20, 15, 15, 15, 10);

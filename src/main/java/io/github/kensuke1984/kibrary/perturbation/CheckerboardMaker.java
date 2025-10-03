@@ -46,24 +46,28 @@ public class CheckerboardMaker extends Operation {
 
     private final Property property;
     /**
-     * Path of the work folder
+     * Path of the work folder.
      */
     private Path workPath;
     /**
      * A tag to include in output folder name. When this is empty, no tag is used.
      */
     private String folderTag;
+    /**
+     * Whether to append date string at end of output folder name.
+     */
+    private boolean appendFolderDate;
 
     /**
-     * Path of voxel information file
+     * Path of voxel information file.
      */
     private Path voxelPath;
     /**
-     * Structure file to use instead of PREM
+     * Structure file to use instead of PREM.
      */
     private Path structurePath;
     /**
-     * Structure to use
+     * Structure to use.
      */
     private String structureName;
 
@@ -89,15 +93,17 @@ public class CheckerboardMaker extends Operation {
         Path outPath = Property.generatePath(thisClass);
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
             pw.println("manhattan " + thisClass.getSimpleName());
-            pw.println("##Path of a working folder (.)");
+            pw.println("##Path of work folder. (.)");
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this unset.");
             pw.println("#folderTag ");
-            pw.println("##Path of a voxel information file, must be set");
+            pw.println("##(boolean) Whether to append date string at end of output folder name. (true)");
+            pw.println("#appendFolderDate false");
+            pw.println("##Path of a voxel information file, must be set.");
             pw.println("#voxelPath voxel.inf");
             pw.println("##Path of a structure file you want to use. If this is unset, the following structureName will be referenced.");
             pw.println("#structurePath ");
-            pw.println("##Name of a structure model you want to use (PREM)");
+            pw.println("##Name of a structure model you want to use. (PREM)");
             pw.println("#structureName ");
             pw.println("##Variable types to perturb, listed using spaces, must be set.");
             pw.println("#perturbVariableTypes ");
@@ -123,6 +129,7 @@ public class CheckerboardMaker extends Operation {
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
         if (property.containsKey("folderTag")) folderTag = property.parseStringSingle("folderTag", null);
+        appendFolderDate = property.parseBoolean("appendFolderDate", "true");
 
         voxelPath = property.parsePath("voxelPath", null, true, workPath);
         if (property.containsKey("structurePath")) {
@@ -193,7 +200,7 @@ public class CheckerboardMaker extends Operation {
             }
         }
 
-        Path outPath = DatasetAid.createOutputFolder(workPath, "checkerboard", folderTag, GadgetAid.getTemporaryString());
+        Path outPath = DatasetAid.createOutputFolder(workPath, "checkerboard", folderTag, appendFolderDate, GadgetAid.getTemporaryString());
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         System.err.println("Outputting perturbation list files.");

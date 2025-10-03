@@ -130,7 +130,7 @@ public class ScalingPerturbation extends Operation {
        List<KnownParameter> knowns = KnownParameterFile.read(modelPath);
 
        // create output folder
-       Path outPath = DatasetAid.createOutputFolder(workPath, "scaled", folderTag, GadgetAid.getTemporaryString());
+       Path outPath = DatasetAid.createOutputFolder(workPath, "scaled", folderTag, true, GadgetAid.getTemporaryString());
        property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
        List<KnownParameter> scaledList = new ArrayList<>();

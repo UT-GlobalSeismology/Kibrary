@@ -7,7 +7,7 @@ import java.io.IOException;
  * <p>This class is <b>IMMUTABLE</b></p>
  *
  * @author Kensuke Konishi
- * @version 2.0.1.1.1
+ * @since version 2.0.1.1.1
  * @see <a href=http://ds.iris.edu/ds/nodes/dmc/forms/sac/>SAC</a>
  */
 class SACHeader implements SACHeaderAccess, Cloneable {
@@ -91,9 +91,9 @@ class SACHeader implements SACHeaderAccess, Cloneable {
     private int nzsec = -12345;
     private int nzmsec = -12345;
     /**
-     * a version of header
+     * The version of header.
      */
-    private int nvhdr = 6; // ヘッダーのバージョン
+    private int nvhdr = 6;
     private int norid = -12345;
     private int nevid = -12345;
     private int npts = -12345;
@@ -124,12 +124,14 @@ class SACHeader implements SACHeaderAccess, Cloneable {
     private int num104 = -12345;
     private boolean leven = true;
     private boolean lpspol = false;
-    // write over ok or not
+    /**
+     * Whether "write over" is ok or not.
+     */
     private boolean lovrok = true;
     private boolean lcalda = true;
     private boolean num109 = false;
     /**
-     * a name of station
+     * The name of station.
      */
     private String kstnm = "-12345";
     private String kevnm = "-12345";
@@ -152,47 +154,18 @@ class SACHeader implements SACHeaderAccess, Cloneable {
     private String kuser2 = "-12345";
     private String kcmpnm = "-12345";
     /**
-     * a name of network
+     * The name of network.
      */
     private String knetwk = "-12345";
     private String kdatrd = "-12345";
     private String kinst = "-12345";
 
     /**
-     * Header values will be read in SAC named the input sacFileName
-     *
-     * @param sacFileName to be read
+     * Creates an instance by reading header values from the input SAC file.
+     * @param sacFileName ({@link SACFileName}) SAC file to read.
      * @throws IOException if an I/O error occurs.
      */
     SACHeader(SACFileName sacFileName) throws IOException {
-        read(sacFileName);
-    }
-
-    /**
-     * float &rarr; doubleの変換でゴミが着くので Stringを介して対処
-     *
-     * @param value in float
-     * @return value in double
-     */
-    private static double toDouble(float value) {
-        return Double.parseDouble(Float.toString(value));
-    }
-
-    @Override
-    public SACHeader clone() {
-        try {
-            return (SACHeader) super.clone();
-        } catch (Exception e) {
-            throw new RuntimeException("UNEXPecTEd");
-        }
-    }
-
-    /**
-     * 入力したsacファイルのヘッダーを読み込み上書きする
-     *
-     * @param sacFileName to read
-     */
-    private void read(SACFileName sacFileName) throws IOException {
         try (SACInputStream stream = new SACInputStream(sacFileName.toPath())) {
             delta = toDouble(stream.readFloat()); // 0
             depmin = toDouble(stream.readFloat()); // 1
@@ -330,10 +303,30 @@ class SACHeader implements SACHeaderAccess, Cloneable {
         }
     }
 
+    /**
+     * Method to convert float &rarr; double.
+     * This method is used to prevent values from becoming nasty.
+     * @param value (float) Input value.
+     * @return (double) Converted value.
+     */
+    private static double toDouble(float value) {
+        // Prevents value from becoming nasty by first changing to String, and then to double.
+        return Double.parseDouble(Float.toString(value));
+    }
+
+    @Override
+    public SACHeader clone() {
+        try {
+            return (SACHeader) super.clone();
+        } catch (Exception e) {
+            throw new RuntimeException("Could not clone this SACHeader.");
+        }
+    }
+
     @Override
     public boolean getBoolean(SACHeaderEnum sacHeaderEnum) {
         if (sacHeaderEnum.typeOf() == 99 || sacHeaderEnum.typeOf() == -1) return getSpecialBoolean(sacHeaderEnum);
-        if (sacHeaderEnum.typeOf() != 3) throw new IllegalArgumentException(sacHeaderEnum + " is not boolean");
+        if (sacHeaderEnum.typeOf() != 3) throw new IllegalArgumentException(sacHeaderEnum + " is not boolean.");
 
         switch (sacHeaderEnum) {
             case LEVEN:
@@ -347,16 +340,55 @@ class SACHeader implements SACHeaderAccess, Cloneable {
             // case num109:
             // return num109;
             default:
-                System.out.println(sacHeaderEnum + " is unused now.");
-                return false;
+                throw new IllegalArgumentException("Unexpected sacHeaderEnum " + sacHeaderEnum);
         }
-        // return Boolean.parseBoolean(header.get(she));
+    }
+
+    @Override
+    public int getInt(SACHeaderEnum sacHeaderEnum) {
+        if (sacHeaderEnum.typeOf() == 99 || sacHeaderEnum.typeOf() == -1) return getSpecialInt(sacHeaderEnum);
+        if (sacHeaderEnum.typeOf() != 1) throw new IllegalArgumentException(sacHeaderEnum + " is not integer.");
+
+        switch (sacHeaderEnum) {
+            case NZYEAR:
+                return nzyear;
+            case NZJDAY:
+                return nzjday;
+            case NZHOUR:
+                return nzhour;
+            case NZMIN:
+                return nzmin;
+            case NZSEC:
+                return nzsec;
+            case NZMSEC:
+                return nzmsec;
+            case NVHDR:
+                return nvhdr;
+            case NORID:
+                return norid;
+            case NEVID:
+                return nevid;
+            case NPTS:
+                return npts;
+            case NWFID:
+                return nwfid;
+            case NXSIZE:
+                return nxsize;
+            case NYSIZE:
+                return nysize;
+            // case num80:
+            // return num80;
+            // case num84:
+            // return num84;
+            default:
+                throw new IllegalArgumentException("Unexpected sacHeaderEnum " + sacHeaderEnum);
+        }
     }
 
     @Override
     public int getSACEnumerated(SACHeaderEnum sacHeaderEnum) {
         if (sacHeaderEnum.typeOf() == 99 || sacHeaderEnum.typeOf() == -1) return getSpecialSacEnumerated(sacHeaderEnum);
-        if (sacHeaderEnum.typeOf() != 2) throw new IllegalArgumentException(sacHeaderEnum + " is not enumerated value");
+        if (sacHeaderEnum.typeOf() != 2) throw new IllegalArgumentException(sacHeaderEnum + " is not enumerated.");
 
         switch (sacHeaderEnum) {
             case IFTYPE:
@@ -400,145 +432,14 @@ class SACHeader implements SACHeaderAccess, Cloneable {
             // case num104:
             // return num104;
             default:
-                throw new RuntimeException(sacHeaderEnum + " is unaticipated...");
-        }
-    }
-
-    @Override
-    public SACHeader setBoolean(SACHeaderEnum sacHeaderEnum, boolean bool) {
-        if (sacHeaderEnum.typeOf() == 99 || sacHeaderEnum.typeOf() == -1)
-            throw new UnsupportedOperationException(sacHeaderEnum + " is a special boolean.");
-        if (sacHeaderEnum.typeOf() != 3) throw new IllegalArgumentException(sacHeaderEnum + " is not boolean");
-        SACHeader sh = clone();
-        switch (sacHeaderEnum) {
-            case LEVEN:
-                sh.leven = bool;
-                return sh;
-            case LPSPOL:
-                sh.lpspol = bool;
-                return sh;
-            case LOVROK:
-                sh.lovrok = bool;
-                return sh;
-            case LCALDA:
-                sh.lcalda = bool;
-                return sh;
-            // case num109:
-            // return num109;
-            default:
-                throw new RuntimeException(sacHeaderEnum + " is unused now.");
-        }
-    }
-
-    /**
-     * unused or internal parameter
-     *
-     * @param sacHeaderEnum key for the value
-     * @return boolean parameter
-     */
-    private boolean getSpecialBoolean(SACHeaderEnum sacHeaderEnum) {
-        if (sacHeaderEnum.typeOf() != -1 && sacHeaderEnum.typeOf() != 99)
-            throw new IllegalArgumentException(sacHeaderEnum + " is not Special Boolean");
-
-        switch (sacHeaderEnum) {
-            case num109:
-                return num109;
-            default:
-                throw new RuntimeException(sacHeaderEnum + " is unaticipated...");
-        }
-    }
-
-    /**
-     * unused かinternalパラメタ
-     *
-     * @param sacHeaderEnum ヘッダー名
-     * @return enumerated value
-     */
-    private int getSpecialSacEnumerated(SACHeaderEnum sacHeaderEnum) {
-        if (sacHeaderEnum.typeOf() != -1 && sacHeaderEnum.typeOf() != 99)
-            throw new IllegalArgumentException(sacHeaderEnum + " is not Special Boolean");
-
-        switch (sacHeaderEnum) {
-            case num88:
-                return num88;
-            case num97:
-                return num97;
-            case num98:
-                return num98;
-            case num99:
-                return num99;
-            case num100:
-                return num100;
-            case num101:
-                return num101;
-            case num102:
-                return num102;
-            case num103:
-                return num103;
-            case num104:
-                return num104;
-            default:
-                throw new RuntimeException(sacHeaderEnum + " is unaticipated...");
-        }
-    }
-
-    /**
-     * unused or internal parameter
-     *
-     * @param sacHeaderEnum key
-     * @return value for the sacHeaderEnum
-     */
-    private int getSpecialInt(SACHeaderEnum sacHeaderEnum) {
-        if (sacHeaderEnum.typeOf() != -1 && sacHeaderEnum.typeOf() != 99)
-            throw new RuntimeException(sacHeaderEnum + " is not special int");
-
-        switch (sacHeaderEnum) {
-            case num80:
-                return num80;
-            case num84:
-                return num84;
-            default:
-                throw new RuntimeException(sacHeaderEnum + " is unaticipated...");
-        }
-    }
-
-    /**
-     * @param sacHeaderEnum key）
-     * @return value for the sacHeaderEnum
-     */
-    private double getSpecialValue(SACHeaderEnum sacHeaderEnum) {
-        if (sacHeaderEnum.typeOf() != -1 && sacHeaderEnum.typeOf() != 99)
-            throw new RuntimeException(sacHeaderEnum + " is not Special value");
-        switch (sacHeaderEnum) {
-            case num54:
-                return num54;
-            case num55:
-                return num55;
-            case num63:
-                return num63;
-            case num64:
-                return num64;
-            case num65:
-                return num65;
-            case num66:
-                return num66;
-            case num67:
-                return num67;
-            case num68:
-                return num68;
-            case num69:
-                return num69;
-            case num9:
-                return num9;
-            default:
-                throw new RuntimeException("Unanticipated happens");
+                throw new IllegalArgumentException("Unexpected sacHeaderEnum " + sacHeaderEnum);
         }
     }
 
     @Override
     public double getValue(SACHeaderEnum sacHeaderEnum) {
         if (sacHeaderEnum.typeOf() == -1 || sacHeaderEnum.typeOf() == 99) return getSpecialValue(sacHeaderEnum);
-        else if (sacHeaderEnum.typeOf() != 0) throw new IllegalArgumentException(sacHeaderEnum + " is not float");
+        else if (sacHeaderEnum.typeOf() != 0) throw new IllegalArgumentException(sacHeaderEnum + " is not float.");
 
         switch (sacHeaderEnum) {
             case DELTA:
@@ -681,138 +582,321 @@ class SACHeader implements SACHeaderAccess, Cloneable {
             // return num54;
             // case num55:
             // return num55;
-
             default:
-                throw new RuntimeException(sacHeaderEnum + " is unanticipated.");
+                throw new IllegalArgumentException("Unexpected sacHeaderEnum " + sacHeaderEnum);
         }
     }
 
     @Override
-    public int getInt(SACHeaderEnum sacHeaderEnum) {
-        if (sacHeaderEnum.typeOf() == 99 || sacHeaderEnum.typeOf() == -1) return getSpecialInt(sacHeaderEnum);
-        if (sacHeaderEnum.typeOf() != 1) throw new IllegalArgumentException(sacHeaderEnum + " is not integer");
+    public String getSACString(SACHeaderEnum sacHeaderEnum) {
+        if (sacHeaderEnum.typeOf() != 8 && sacHeaderEnum.typeOf() != 16)
+            throw new IllegalArgumentException(sacHeaderEnum + " is not String.");
 
-        switch (sacHeaderEnum) {
-            case NZYEAR:
-                return nzyear;
-            case NZJDAY:
-                return nzjday;
-            case NZHOUR:
-                return nzhour;
-            case NZMIN:
-                return nzmin;
-            case NZSEC:
-                return nzsec;
-            case NZMSEC:
-                return nzmsec;
-            case NVHDR:
-                return nvhdr;
-            case NORID:
-                return norid;
-            case NEVID:
-                return nevid;
-            case NPTS:
-                return npts;
-            case NWFID:
-                return nwfid;
-            case NXSIZE:
-                return nxsize;
-            case NYSIZE:
-                return nysize;
-            // case num80:
-            // return num80;
-            // case num84:
-            // return num84;
-
-            default:
-                throw new RuntimeException("Unexpected happens.");
-        }
-    }
-
-    @Override
-    public SACHeader setSACString(SACHeaderEnum sacHeaderEnum, String string) {
-        int length = sacHeaderEnum.typeOf();
-        if (length != 8 && length != 16) throw new IllegalArgumentException(sacHeaderEnum + " is not String value");
-        if (length < string.length()) throw new IllegalArgumentException(string + " is too long for " + sacHeaderEnum);
-        SACHeader sh = clone();
         switch (sacHeaderEnum) {
             case KSTNM:
-                sh.kstnm = string;
-                return sh;
+                return kstnm;
             case KEVNM:
-                sh.kevnm = string;
-                return sh;
+                return kevnm;
             case KHOLE:
-                sh.khole = string;
-                return sh;
+                return khole;
             case KO:
-                sh.ko = string;
-                return sh;
+                return ko;
             case KA:
-                sh.ka = string;
-                return sh;
+                return ka;
             case KT0:
-                sh.kt0 = string;
-                return sh;
+                return kt0;
             case KT1:
-                sh.kt1 = string;
-                return sh;
+                return kt1;
             case KT2:
-                sh.kt2 = string;
-                return sh;
+                return kt2;
             case KT3:
-                sh.kt3 = string;
-                return sh;
+                return kt3;
             case KT4:
-                sh.kt4 = string;
-                return sh;
+                return kt4;
             case KT5:
-                sh.kt5 = string;
-                return sh;
+                return kt5;
             case KT6:
-                sh.kt6 = string;
-                return sh;
+                return kt6;
             case KT7:
-                sh.kt7 = string;
-                return sh;
+                return kt7;
             case KT8:
-                sh.kt8 = string;
-                return sh;
+                return kt8;
             case KT9:
-                sh.kt9 = string;
-                return sh;
+                return kt9;
             case KF:
-                sh.kf = string;
-                return sh;
+                return kf;
             case KUSER0:
-                sh.kuser0 = string;
-                return sh;
+                return kuser0;
             case KUSER1:
-                sh.kuser1 = string;
-                return sh;
+                return kuser1;
             case KUSER2:
-                sh.kuser2 = string;
-                return sh;
+                return kuser2;
             case KCMPNM:
-                sh.kcmpnm = string;
-                return sh;
+                return kcmpnm;
             case KNETWK:
-                sh.knetwk = string;
-                return sh;
+                return knetwk;
             case KDATRD:
-                sh.kdatrd = string;
-                return sh;
+                return kdatrd;
             case KINST:
-                sh.kinst = string;
-                return sh;
+                return kinst;
             default:
-                throw new RuntimeException("Unanticipated happens on " + sacHeaderEnum);
+                throw new IllegalArgumentException("Unexpected sacHeaderEnum " + sacHeaderEnum);
+        }
+    }
+
+    /**
+     * Get value for an unused or internal parameter.
+     * @param sacHeaderEnum ({@link SACHeaderEnum}) Key.
+     * @return (boolean) Value.
+     */
+    private boolean getSpecialBoolean(SACHeaderEnum sacHeaderEnum) {
+        if (sacHeaderEnum.typeOf() != -1 && sacHeaderEnum.typeOf() != 99)
+            throw new IllegalArgumentException(sacHeaderEnum + " is not Special boolean.");
+
+        switch (sacHeaderEnum) {
+            case num109:
+                return num109;
+            default:
+                throw new IllegalArgumentException("Unexpected sacHeaderEnum " + sacHeaderEnum);
+        }
+    }
+
+    /**
+     * Get value for an unused or internal parameter.
+     * @param sacHeaderEnum ({@link SACHeaderEnum}) Key.
+     * @return (int) Value.
+     */
+    private int getSpecialInt(SACHeaderEnum sacHeaderEnum) {
+        if (sacHeaderEnum.typeOf() != -1 && sacHeaderEnum.typeOf() != 99)
+            throw new RuntimeException(sacHeaderEnum + " is not Special int.");
+
+        switch (sacHeaderEnum) {
+            case num80:
+                return num80;
+            case num84:
+                return num84;
+            default:
+                throw new IllegalArgumentException("Unexpected sacHeaderEnum " + sacHeaderEnum);
+        }
+    }
+
+    /**
+     * Get value for an unused or internal parameter.
+     * @param sacHeaderEnum ({@link SACHeaderEnum}) Key.
+     * @return (int) Value.
+     */
+    private int getSpecialSacEnumerated(SACHeaderEnum sacHeaderEnum) {
+        if (sacHeaderEnum.typeOf() != -1 && sacHeaderEnum.typeOf() != 99)
+            throw new IllegalArgumentException(sacHeaderEnum + " is not Special enumerated.");
+
+        switch (sacHeaderEnum) {
+            case num88:
+                return num88;
+            case num97:
+                return num97;
+            case num98:
+                return num98;
+            case num99:
+                return num99;
+            case num100:
+                return num100;
+            case num101:
+                return num101;
+            case num102:
+                return num102;
+            case num103:
+                return num103;
+            case num104:
+                return num104;
+            default:
+                throw new IllegalArgumentException("Unexpected sacHeaderEnum " + sacHeaderEnum);
+        }
+    }
+
+    /**
+     * Get value for an unused or internal parameter.
+     * @param sacHeaderEnum ({@link SACHeaderEnum}) Key.
+     * @return (double) Value.
+     */
+    private double getSpecialValue(SACHeaderEnum sacHeaderEnum) {
+        if (sacHeaderEnum.typeOf() != -1 && sacHeaderEnum.typeOf() != 99)
+            throw new RuntimeException(sacHeaderEnum + " is not Special value.");
+        switch (sacHeaderEnum) {
+            case num54:
+                return num54;
+            case num55:
+                return num55;
+            case num63:
+                return num63;
+            case num64:
+                return num64;
+            case num65:
+                return num65;
+            case num66:
+                return num66;
+            case num67:
+                return num67;
+            case num68:
+                return num68;
+            case num69:
+                return num69;
+            case num9:
+                return num9;
+            default:
+                throw new IllegalArgumentException("Unexpected sacHeaderEnum " + sacHeaderEnum);
         }
     }
 
     @Override
-    public SACHeader setValue(SACHeaderEnum sacHeaderEnum, double value) {
-        if (sacHeaderEnum.typeOf() != 0) throw new IllegalArgumentException(sacHeaderEnum + " is not float value");
+    public SACHeader withBoolean(SACHeaderEnum sacHeaderEnum, boolean bool) {
+        if (sacHeaderEnum.typeOf() != 3) throw new IllegalArgumentException(sacHeaderEnum + " is not boolean.");
+
+        SACHeader sh = clone();
+        switch (sacHeaderEnum) {
+            case LEVEN:
+                sh.leven = bool;
+                return sh;
+            case LPSPOL:
+                sh.lpspol = bool;
+                return sh;
+            case LOVROK:
+                sh.lovrok = bool;
+                return sh;
+            case LCALDA:
+                sh.lcalda = bool;
+                return sh;
+            // case num109:
+            // return num109;
+            default:
+                throw new IllegalArgumentException("Unexpected sacHeaderEnum " + sacHeaderEnum);
+        }
+    }
+
+    @Override
+    public SACHeader withInt(SACHeaderEnum sacHeaderEnum, int value) {
+        if (sacHeaderEnum.typeOf() != 1) throw new IllegalArgumentException(sacHeaderEnum + " is not integer.");
+
+        SACHeader sh = clone();
+        switch (sacHeaderEnum) {
+            case NZYEAR:
+                sh.nzyear = value;
+                return sh;
+            case NZJDAY:
+                sh.nzjday = value;
+                return sh;
+            case NZHOUR:
+                sh.nzhour = value;
+                return sh;
+            case NZMIN:
+                sh.nzmin = value;
+                return sh;
+            case NZSEC:
+                sh.nzsec = value;
+                return sh;
+            case NZMSEC:
+                sh.nzmsec = value;
+                return sh;
+            case NVHDR:
+                sh.nvhdr = value;
+                return sh;
+            case NORID:
+                sh.norid = value;
+                return sh;
+            case NEVID:
+                sh.nevid = value;
+                return sh;
+            case NPTS:
+                sh.npts = value;
+                return sh;
+            case NWFID:
+                sh.nwfid = value;
+                return sh;
+            case NXSIZE:
+                sh.nxsize = value;
+                return sh;
+            case NYSIZE:
+                sh.nysize = value;
+                return sh;
+            default:
+                throw new IllegalArgumentException("Unexpected sacHeaderEnum " + sacHeaderEnum);
+        }
+    }
+
+    @Override
+    public SACHeader withSACEnumerated(SACHeaderEnum sacHeaderEnum, int value) {
+        if (sacHeaderEnum.typeOf() != 2) throw new IllegalArgumentException(sacHeaderEnum + " is not enumerized.");
+
+        SACHeader sh = clone();
+        switch (sacHeaderEnum) {
+            case IFTYPE:
+                sh.iftype = value;
+                return sh;
+            case IDEP:
+                sh.idep = value;
+                return sh;
+            case IZTYPE:
+                sh.iztype = value;
+                return sh;
+            case IINST:
+                sh.iinst = value;
+                return sh;
+            case ISTREG:
+                sh.istreg = value;
+                return sh;
+            case IEVREG:
+                sh.ievreg = value;
+                return sh;
+            case IEVTYP:
+                sh.ievtyp = value;
+                return sh;
+            case IQUAL:
+                sh.iqual = value;
+                return sh;
+            case ISYNTH:
+                sh.isynth = value;
+                return sh;
+            case IMAGTYP:
+                sh.imagtyp = value;
+                return sh;
+            case IMAGSRC:
+                sh.imagsrc = value;
+                return sh;
+            // case num88:
+            // num88 = value;
+            // return;
+            // case num97:
+            // num97 = value;
+            // return;
+            // case num98:
+            // num98 = value;
+            // return;
+            // case num99:
+            // num99 = value;
+            // return;
+            // case num100:
+            // num100 = value;
+            // return;
+            // case num101:
+            // num101 = value;
+            // return;
+            // case num102:
+            // num102 = value;
+            // return;
+            // case num103:
+            // num103 = value;
+            // return;
+            // case num104:
+            // num104 = value;
+            // return;
+            default:
+                throw new IllegalArgumentException("Unexpected sacHeaderEnum " + sacHeaderEnum);
+        }
+    }
+
+    @Override
+    public SACHeader withValue(SACHeaderEnum sacHeaderEnum, double value) {
+        if (sacHeaderEnum.typeOf() != 0) throw new IllegalArgumentException(sacHeaderEnum + " is not float.");
+
         SACHeader sh = clone();
         switch (sacHeaderEnum) {
             case DELTA:
@@ -1016,188 +1100,89 @@ class SACHeader implements SACHeaderAccess, Cloneable {
             // case num55:
             // // return num55;
             default:
-                throw new RuntimeException(sacHeaderEnum + " is unused now");
+                throw new IllegalArgumentException("Unexpected sacHeaderEnum " + sacHeaderEnum);
         }
-
     }
 
     @Override
-    public SACHeader setSACEnumerated(SACHeaderEnum sacHeaderEnum, int value) {
-        if (sacHeaderEnum.typeOf() != 2)
-            throw new IllegalArgumentException(sacHeaderEnum + " is not an enumerized value");
+    public SACHeader withSACString(SACHeaderEnum sacHeaderEnum, String string) {
+        int length = sacHeaderEnum.typeOf();
+        if (length != 8 && length != 16) throw new IllegalArgumentException(sacHeaderEnum + " is not String.");
+        if (length < string.length()) throw new IllegalArgumentException(string + " is too long for " + sacHeaderEnum);
+
         SACHeader sh = clone();
-        switch (sacHeaderEnum) {
-            case IFTYPE:
-                sh.iftype = value;
-                return sh;
-            case IDEP:
-                sh.idep = value;
-                return sh;
-            case IZTYPE:
-                sh.iztype = value;
-                return sh;
-            case IINST:
-                sh.iinst = value;
-                return sh;
-            case ISTREG:
-                sh.istreg = value;
-                return sh;
-            case IEVREG:
-                sh.ievreg = value;
-                return sh;
-            case IEVTYP:
-                sh.ievtyp = value;
-                return sh;
-            case IQUAL:
-                sh.iqual = value;
-                return sh;
-            case ISYNTH:
-                sh.isynth = value;
-                return sh;
-            case IMAGTYP:
-                sh.imagtyp = value;
-                return sh;
-            case IMAGSRC:
-                sh.imagsrc = value;
-                return sh;
-            // case num88:
-            // num88 = value;
-            // return;
-            // case num97:
-            // num97 = value;
-            // return;
-            // case num98:
-            // num98 = value;
-            // return;
-            // case num99:
-            // num99 = value;
-            // return;
-            // case num100:
-            // num100 = value;
-            // return;
-            // case num101:
-            // num101 = value;
-            // return;
-            // case num102:
-            // num102 = value;
-            // return;
-            // case num103:
-            // num103 = value;
-            // return;
-            // case num104:
-            // num104 = value;
-            // return;
-            default:
-                throw new RuntimeException(sacHeaderEnum + " is unaticipated...");
-        }
-
-    }
-
-    @Override
-    public SACHeader setInt(SACHeaderEnum sacHeaderEnum, int value) {
-        if (sacHeaderEnum.typeOf() != 1) throw new IllegalArgumentException(sacHeaderEnum + " is not an integer value");
-        SACHeader sh = clone();
-        switch (sacHeaderEnum) {
-            case NZYEAR:
-                sh.nzyear = value;
-                return sh;
-            case NZJDAY:
-                sh.nzjday = value;
-                return sh;
-            case NZHOUR:
-                sh.nzhour = value;
-                return sh;
-            case NZMIN:
-                sh.nzmin = value;
-                return sh;
-            case NZSEC:
-                sh.nzsec = value;
-                return sh;
-            case NZMSEC:
-                sh.nzmsec = value;
-                return sh;
-            case NVHDR:
-                sh.nvhdr = value;
-                return sh;
-            case NORID:
-                sh.norid = value;
-                return sh;
-            case NEVID:
-                sh.nevid = value;
-                return sh;
-            case NPTS:
-                sh.npts = value;
-                return sh;
-            case NWFID:
-                sh.nwfid = value;
-                return sh;
-            case NXSIZE:
-                sh.nxsize = value;
-                return sh;
-            case NYSIZE:
-                sh.nysize = value;
-                return sh;
-
-            default:
-                throw new RuntimeException(sacHeaderEnum + " is unused now");
-        }
-
-    }
-
-    @Override
-    public String getSACString(SACHeaderEnum sacHeaderEnum) {
-        if (sacHeaderEnum.typeOf() != 8 && sacHeaderEnum.typeOf() != 16)
-            throw new IllegalArgumentException(sacHeaderEnum + " is not sac string");
-
         switch (sacHeaderEnum) {
             case KSTNM:
-                return kstnm;
+                sh.kstnm = string;
+                return sh;
             case KEVNM:
-                return kevnm;
+                sh.kevnm = string;
+                return sh;
             case KHOLE:
-                return khole;
+                sh.khole = string;
+                return sh;
             case KO:
-                return ko;
+                sh.ko = string;
+                return sh;
             case KA:
-                return ka;
+                sh.ka = string;
+                return sh;
             case KT0:
-                return kt0;
+                sh.kt0 = string;
+                return sh;
             case KT1:
-                return kt1;
+                sh.kt1 = string;
+                return sh;
             case KT2:
-                return kt2;
+                sh.kt2 = string;
+                return sh;
             case KT3:
-                return kt3;
+                sh.kt3 = string;
+                return sh;
             case KT4:
-                return kt4;
+                sh.kt4 = string;
+                return sh;
             case KT5:
-                return kt5;
+                sh.kt5 = string;
+                return sh;
             case KT6:
-                return kt6;
+                sh.kt6 = string;
+                return sh;
             case KT7:
-                return kt7;
+                sh.kt7 = string;
+                return sh;
             case KT8:
-                return kt8;
+                sh.kt8 = string;
+                return sh;
             case KT9:
-                return kt9;
+                sh.kt9 = string;
+                return sh;
             case KF:
-                return kf;
+                sh.kf = string;
+                return sh;
             case KUSER0:
-                return kuser0;
+                sh.kuser0 = string;
+                return sh;
             case KUSER1:
-                return kuser1;
+                sh.kuser1 = string;
+                return sh;
             case KUSER2:
-                return kuser2;
+                sh.kuser2 = string;
+                return sh;
             case KCMPNM:
-                return kcmpnm;
+                sh.kcmpnm = string;
+                return sh;
             case KNETWK:
-                return knetwk;
+                sh.knetwk = string;
+                return sh;
             case KDATRD:
-                return kdatrd;
+                sh.kdatrd = string;
+                return sh;
             case KINST:
-                return kinst;
+                sh.kinst = string;
+                return sh;
             default:
-                throw new RuntimeException("Unanticipated happens");
+                throw new IllegalArgumentException("Unexpected sacHeaderEnum " + sacHeaderEnum);
         }
     }
 

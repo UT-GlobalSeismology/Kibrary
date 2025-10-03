@@ -19,6 +19,8 @@ import org.apache.commons.math3.util.Precision;
 import io.github.kensuke1984.kibrary.entrance.RespDataFile;
 import io.github.kensuke1984.kibrary.external.ExternalProcess;
 import io.github.kensuke1984.kibrary.external.SAC;
+import io.github.kensuke1984.kibrary.math.CircularRange;
+import io.github.kensuke1984.kibrary.math.LinearRange;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.FileAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
@@ -59,20 +61,20 @@ class EventProcessor implements Runnable {
     private static final double SAMPLING_HZ = 20;
 
     /**
-     * Path of the input folder containing SAC files
+     * Path of the input folder containing SAC files.
      */
     private final Path inputSacSetPath;
     /**
-     * Path of the input folder containing RESP files
+     * Path of the input folder containing RESP files.
      */
     private final Path inputRespSetPath;
     /**
-     * Path of the output event folder
+     * Path of the output event folder.
      */
     private final Path outputPath;
 
     /**
-     * GlobalCMTData for the event in the seedfile
+     * GlobalCMTData for the event in the seedfile.
      */
     private GlobalCMTAccess event;
     /**
@@ -80,7 +82,7 @@ class EventProcessor implements Runnable {
      */
     private boolean byPDE = false;
     /**
-     * true: this class has finished running
+     * Whether this class has finished running.
      */
     private boolean hasRun = false;
     /**
@@ -89,27 +91,22 @@ class EventProcessor implements Runnable {
     private boolean problem = false;
 
     /**
-     * [deg] Minimum epicentral distance of SAC files to be output
+     * Epicentral distance range of SAC files to be output.
      */
-    private double minDistance = 0;
+    private LinearRange distanceRange = new LinearRange("Distance", 0.0, 180.0);
+    private LinearRange latitudeRange = new LinearRange("Latitude", -90.0, 90.0);
+    private CircularRange longitudeRange = new CircularRange("Longitude", -180.0, 180.0);
+
     /**
-     * [deg] Maximum epicentral distance of SAC files to be output
-     */
-    private double maxDistance = 180;
-    private double minLatitude = -90;
-    private double maxLatitude = 90;
-    private double minLongitude = -180;
-    private double maxLongitude = 180;
-    /**
-     * threshold to judge which stations are in the same position [deg]
+     * Threshold to judge which stations are in the same position [deg].
      */
     private double coordinateGrid = 0.01;
     /**
-     * The maximum length of output time series
+     * The maximum length of output time series.
      */
     private double maxTlen;
     /**
-     * if remove intermediate files
+     * Whether to remove intermediate files.
      */
     private boolean removeIntermediateFiles = true;
 
@@ -163,25 +160,20 @@ class EventProcessor implements Runnable {
     /**
      * Sets parameters.
      *
-     * @param minD (double) lower limit of epicentral distance
-     * @param maxD (double) upper limit of epicentral distance
-     * @param minLa (double) lower limit of latitude
-     * @param maxLa (double) upper limit of latitude
-     * @param minLo (double) lower limit of longitude
-     * @param maxLo (double) upper limit of longitude
-     * @param grid (double) threshold to judge which stations are in the same position
+     * @param distanceRange ({@link LinearRange}) Epicentral distance range.
+     * @param latitudeRange ({@link LinearRange}) Latitude range.
+     * @param longitudeRange ({@link CircularRange}) Longitude range.
+     * @param grid (double) Threshold to judge which stations are in the same position.
+     * @param maxTlen (double) The maximum length of output time series.
      * @param remove (boolean) If this is true, then all intermediate files will be removed at the end.
      */
-    void setParameters(double minD, double maxD, double minLa, double maxLa, double minLo, double maxLo, double grid, double maxT, boolean remove) {
-        minDistance = minD;
-        maxDistance = maxD;
-        minLatitude = minLa;
-        maxLatitude = maxLa;
-        minLongitude = minLo;
-        maxLongitude = maxLo;
-        coordinateGrid = grid;
-        maxTlen = maxT;
-        removeIntermediateFiles = remove;
+    void setParameters(LinearRange distanceRange, LinearRange latitudeRange, CircularRange longitudeRange, double grid, double maxTlen, boolean remove) {
+        this.distanceRange = distanceRange;
+        this.latitudeRange = latitudeRange;
+        this.longitudeRange = longitudeRange;
+        this.coordinateGrid = grid;
+        this.maxTlen = maxTlen;
+        this.removeIntermediateFiles = remove;
     }
 
     @Override
@@ -283,7 +275,7 @@ class EventProcessor implements Runnable {
                 HorizontalPosition position = new HorizontalPosition(latitude, longitude);
 
                 // check epicentral distance
-                if (distance < minDistance || maxDistance < distance) {
+                if (!distanceRange.check(distance)) {
                     // this is not written in standard error because it is too noisy
                     eliminatedWriter.println("!! unwanted epicentral distance : " + event.getGlobalCMTID() + " - " + sacFile.toString());
                     // no need to move files to trash, because nothing is copied yet
@@ -291,7 +283,7 @@ class EventProcessor implements Runnable {
                 }
 
                 // check station coordinate
-                if (!position.isInRange(minLatitude, maxLatitude, minLongitude, maxLongitude)) {
+                if (!position.isInRange(latitudeRange, longitudeRange)) {
                     // this is not written in standard error because it is too noisy
                     eliminatedWriter.println("!! unwanted station coordinate : " + event.getGlobalCMTID() + " - " + sacFile.toString());
                     // no need to move files to trash, because nothing is copied yet
@@ -423,14 +415,19 @@ class EventProcessor implements Runnable {
             for (Path sacPath : sacPathStream) {
                 SacModifier sm = new SacModifier(event, sacPath, byPDE);
 
-                // check whether the file can be zero-padded
+                // check whether the file is long enough to be tapered
+                if (!sm.canBeTapered()) {
+                    GadgetAid.dualPrintln(eliminatedWriter, "!! length is too short : " + event.getGlobalCMTID() + " - " + sacPath.getFileName());
+                    FileAid.moveToDirectory(sacPath, unModifiedPath, true);
+                    continue;
+                }
+                // check whether the start time is soon enough to be used as is or to be be zero-padded
                 if (!sm.canBeZeroPadded()) {
                     GadgetAid.dualPrintln(eliminatedWriter, "!! start time is too late : " + event.getGlobalCMTID() + " - " + sacPath.getFileName());
                     FileAid.moveToDirectory(sacPath, unModifiedPath, true);
                     continue;
                 }
-
-                // check whether the file can be trimmed
+                // check whether the end time is after event time so that the file can be trimmed
                 if (!sm.canBeTrimmed()) {
                     GadgetAid.dualPrintln(eliminatedWriter, "!! end time is before event time : " + event.getGlobalCMTID() + " - " + sacPath.getFileName());
                     FileAid.moveToDirectory(sacPath, unModifiedPath, true);
@@ -542,7 +539,7 @@ class EventProcessor implements Runnable {
                 }
 
                 if(sd.isNaN()) {
-                    GadgetAid.dualPrintln(eliminatedWriter, "!! spectra file is NAN or empty : " + event.getGlobalCMTID() + " - " + afterName);
+                    GadgetAid.dualPrintln(eliminatedWriter, "!! spectra file is NaN or empty : " + event.getGlobalCMTID() + " - " + afterName);
                     FileAid.moveToDirectory(modPath, invalidRespPath, true);
                     FileAid.moveToDirectory(spectraPath, invalidRespPath, true);
                     continue;

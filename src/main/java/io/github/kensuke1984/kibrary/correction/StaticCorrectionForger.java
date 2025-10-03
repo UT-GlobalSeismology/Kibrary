@@ -39,7 +39,7 @@ public class StaticCorrectionForger extends Operation {
 
     private final Property property;
     /**
-     * Path of the work folder
+     * Path of the work folder.
      */
     private Path workPath;
     /**
@@ -47,16 +47,20 @@ public class StaticCorrectionForger extends Operation {
      */
     private String fileTag;
     /**
-     * components for computation
+     * Whether to append date string at end of output file names.
+     */
+    private boolean appendFileDate;
+    /**
+     * Components to use.
      */
     private Set<SACComponent> components;
 
     /**
-     * Path of a timewindow information file
+     * Path of a timewindow data file.
      */
     private Path timewindowPath;
     /**
-     * Path of a reference static correction file
+     * Path of a reference static correction file.
      */
     private Path refStaticCorrectionPath;
 
@@ -75,15 +79,17 @@ public class StaticCorrectionForger extends Operation {
         Path outPath = Property.generatePath(thisClass);
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
             pw.println("manhattan " + thisClass.getSimpleName());
-            pw.println("##Path of a working folder (.)");
+            pw.println("##Path of work folder. (.)");
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output file names. If no tag is needed, leave this unset.");
             pw.println("#fileTag ");
-            pw.println("##SacComponents to be used, listed using spaces (Z R T)");
+            pw.println("##(boolean) Whether to append date string at end of output file names. (true)");
+            pw.println("#appendFileDate false");
+            pw.println("##SacComponents to be used, listed using spaces. (Z R T)");
             pw.println("#components ");
-            pw.println("##Path of a timewindow file, must be set");
+            pw.println("##Path of a timewindow file, must be set.");
             pw.println("#timewindowPath timewindow.dat");
-            pw.println("##Path of a reference static correction file, must be set");
+            pw.println("##Path of a reference static correction file, must be set.");
             pw.println("#refStaticCorrectionPath staticCorrection.dat");
         }
         System.err.println(outPath + " is created.");
@@ -97,6 +103,7 @@ public class StaticCorrectionForger extends Operation {
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
         if (property.containsKey("fileTag")) fileTag = property.parseStringSingle("fileTag", null);
+        appendFileDate = property.parseBoolean("appendFileDate", "true");
         components = Arrays.stream(property.parseStringArray("components", "Z R T"))
                 .map(SACComponent::valueOf).collect(Collectors.toSet());
 
@@ -141,7 +148,7 @@ public class StaticCorrectionForger extends Operation {
         }
 
         String dateStr = GadgetAid.getTemporaryString();
-        Path outputPath = workPath.resolve(DatasetAid.generateOutputFileName("staticCorrection", fileTag, dateStr, ".dat"));
+        Path outputPath = DatasetAid.generateOutputFilePath(workPath, "staticCorrection", fileTag, appendFileDate, dateStr, ".dat");
 
         StaticCorrectionDataFile.write(forgedStaticCorrectionSet, outputPath);
     }

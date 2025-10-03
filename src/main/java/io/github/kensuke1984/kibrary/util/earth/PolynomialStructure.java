@@ -70,13 +70,8 @@ public final class PolynomialStructure {
 
     /**
      * Set up a {@link PolynomialStructure} instance by either reading a {@link PolynomialStructureFile} or from a structure name.
-<<<<<<< HEAD
-     * @param structurePath (Path) A {@link PolynomialStructureFile}.
-     * @param structureName (String) A structure name.
-=======
      * @param structurePath (Path) A {@link PolynomialStructureFile}. Should be null when 'structureName' is to be referenced.
      * @param structureName (String) A structure name. May be null when 'structurePath' is to be referenced.
->>>>>>> ccd3c5aa84f9ccee7f059c1cbd0a0e701d914e32
      * @return ({@link PolynomialStructure}) Set structure.
      * @throws IOException
      *

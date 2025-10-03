@@ -4,6 +4,7 @@ import java.util.Arrays;
 
 import io.github.kensuke1984.kibrary.correction.FujiStaticCorrection;
 import io.github.kensuke1984.kibrary.correction.StaticCorrectionForger;
+import io.github.kensuke1984.kibrary.correction.StaticCorrectionMerge;
 import io.github.kensuke1984.kibrary.dsmsetup.OneDPartialDSMSetup;
 import io.github.kensuke1984.kibrary.dsmsetup.SyntheticDSMSetup;
 import io.github.kensuke1984.kibrary.dsmsetup.ThreeDPartialDSMSetup;
@@ -44,6 +45,7 @@ import io.github.kensuke1984.kibrary.visual.plot.BasicRecordSectionCreator;
 import io.github.kensuke1984.kibrary.visual.plot.BasicWaveformPlotter;
 import io.github.kensuke1984.kibrary.visual.plot.CatalogueErrorCalculator;
 import io.github.kensuke1984.kibrary.visual.plot.DataFeatureHistogram;
+import io.github.kensuke1984.kibrary.visual.plot.GeographicalFeatureHistogram;
 import io.github.kensuke1984.kibrary.visual.plot.ModelStructurePlotter;
 import io.github.kensuke1984.kibrary.visual.plot.PartialWaveformPlotter;
 import io.github.kensuke1984.kibrary.visual.plot.PolynomialStructurePlotter;
@@ -66,8 +68,8 @@ import io.github.kensuke1984.kibrary.waveform.VariableTypeConvert;
  * <p>
  * The value name set to this enum must be the same as its corresponding class name.
  *
- * @author otsuru
- * @since a long time ago
+ * @author Kensuke Konishi
+ * @since version 0.0.5.3
  * @version 2022/1/7 Recreated based on the original Manhattan.
  */
 enum Manhattan {
@@ -95,6 +97,7 @@ enum Manhattan {
     RaypathSelection(34, RaypathSelection.class),
     TimewindowMerge(37, TimewindowMerge.class),
     StaticCorrectionForger(38, StaticCorrectionForger.class),
+    StaticCorrectionMerge(39, StaticCorrectionMerge.class),
     // Compiled 40
     ActualWaveformCompiler(40, ActualWaveformCompiler.class),
     BasicIDMerge(41, BasicIDMerge.class),
@@ -102,6 +105,7 @@ enum Manhattan {
     BasicRecordSectionCreator(43, BasicRecordSectionCreator.class),
     BasicBinnedStackCreator(44, BasicBinnedStackCreator.class),
     DataFeatureHistogram(48, DataFeatureHistogram.class),
+    GeographicalFeatureHistogram(49, GeographicalFeatureHistogram.class),
     // Voxel 50
     VoxelLayoutDesigner(50, VoxelLayoutDesigner.class),
     VoxelFileMaker(51,VoxelFileMaker.class),

@@ -19,6 +19,7 @@ import org.apache.commons.math3.util.Precision;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotFile;
+import io.github.kensuke1984.kibrary.math.LinearRange;
 import io.github.kensuke1984.kibrary.selection.DataFeature;
 import io.github.kensuke1984.kibrary.selection.DataFeatureListFile;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
@@ -70,7 +71,7 @@ public class DataFeatureHistogram extends Operation {
 
     private final Property property;
     /**
-     * Path of the work folder
+     * Path of the work folder.
      */
     private Path workPath;
     /**
@@ -78,101 +79,105 @@ public class DataFeatureHistogram extends Operation {
      */
     private String folderTag;
     /**
-     * Path of the output folder
+     * Whether to append date string at end of output folder name.
+     */
+    private boolean appendFolderDate;
+    /**
+     * Path of the output folder.
      */
     private Path outPath;
     /**
-     * set of {@link SACComponent}
+     * Components to use.
      */
     private Set<SACComponent> components;
 
     /**
-     * Path of a data feature list file
+     * Path of a data feature list file.
      */
     private Path dataFeaturePath;
     /**
-     * path of basic waveform folder
+     * path of basic waveform folder.
      */
     private Path mainBasicPath;
     /**
-     * path of basic waveform folder
+     * path of basic waveform folder.
      */
     private Path extraBasicPath;
     /**
-     * Path of a data entry file
+     * Path of a data entry file.
      */
     private Path dataEntryPath;
     /**
-     * Path of a timewindow data file of improvement windows
+     * Path of a timewindow data file of improvement windows.
      */
     private Path improvementWindowPath;
 
     /**
-     * Color of histograms to create
+     * Color of histograms to create.
      */
     private String color;
     /**
-     * Lower bound of correlation coefficient to plot
+     * Lower bound of correlation coefficient to plot.
      */
     private double correlationLowerBound;
     /**
-     * Upper bound of correlation coefficient to plot
+     * Upper bound of correlation coefficient to plot.
      */
     private double correlationUpperBound;
     /**
-     * Upper bound of normalized variance to plot
+     * Upper bound of normalized variance to plot.
      */
     private double varianceUpperBound;
     /**
-     * Upper bound of amplitude ratio to plot
+     * Upper bound of amplitude ratio to plot.
      */
     private double ratioUpperBound;
     /**
-     * Upper bound of S/N ratio to plot
+     * Upper bound of S/N ratio to plot.
      */
     private double snRatioUpperBound;
     /**
-     * Interval of correlation coefficient
+     * Interval of correlation coefficient.
      */
     private double dCorrelation;
     /**
-     * Interval of normalized variance
+     * Interval of normalized variance.
      */
     private double dVariance;
     /**
-     * Interval of amplitude ratio
+     * Interval of amplitude ratio.
      */
     private double dRatio;
     /**
-     * Interval of S/N ratio
+     * Interval of S/N ratio.
      */
     private double dSNRatio;
     /**
-     * Minimum correlation coefficient that is selected
+     * Minimum correlation coefficient that is selected.
      */
     private double minSelectedCorrelation;
     /**
-     * Maximum correlation coefficient that is selected
+     * Maximum correlation coefficient that is selected.
      */
     private double maxSelectedCorrelation;
     /**
-     * Minimum normalized variance that is selected
+     * Minimum normalized variance that is selected.
      */
     private double minSelectedVariance;
     /**
-     * Maximum normalized variance that is selected
+     * Maximum normalized variance that is selected.
      */
     private double maxSelectedVariance;
     /**
-     * Minimum amplitude ratio that is selected
+     * Minimum amplitude ratio that is selected.
      */
     private double minSelectedRatio;
     /**
-     * Maximum amplitude ratio that is selected
+     * Maximum amplitude ratio that is selected.
      */
     private double maxSelectedRatio;
     /**
-     * Threshold of S/N ratio that is selected
+     * Threshold of S/N ratio that is selected.
      */
     private double minSelectedSNRatio;
 
@@ -191,63 +196,65 @@ public class DataFeatureHistogram extends Operation {
         Path outPath = Property.generatePath(thisClass);
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
             pw.println("manhattan " + thisClass.getSimpleName());
-            pw.println("##Path of a working directory. (.)");
+            pw.println("##Path of work folder. (.)");
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output folder name. If no tag is needed, set this unset.");
             pw.println("#folderTag ");
-            pw.println("##SacComponents to be used, listed using spaces (Z R T)");
+            pw.println("##(boolean) Whether to append date string at end of output folder name. (true)");
+            pw.println("#appendFolderDate false");
+            pw.println("##SacComponents to be used, listed using spaces. (Z R T)");
             pw.println("#components ");
             pw.println("##########Either a data feature file or a basicID&waveform file pair must be set.");
-            pw.println("##########Settings using data feature file");
+            pw.println("##########Settings using data feature file##########");
             pw.println("##Path of a data feature list file. If this is not set, the following basicID&waveform files will be used.");
             pw.println("##  The S/N ratio histogram can be created only when dataFeaturePath is set.");
             pw.println("#dataFeaturePath dataFeature.lst");
-            pw.println("##########Settings using basic folders");
-            pw.println("##Path of a basic waveform folder, must be set if dataFeaturePath is not set");
+            pw.println("##########Settings using basic folders##########");
+            pw.println("##Path of a basic waveform folder, must be set if dataFeaturePath is not set.");
             pw.println("#mainBasicPath ");
-            pw.println("##Path of an additional basic waveform folder, if any (e.g. data not used in inversion)");
+            pw.println("##Path of an additional basic waveform folder, if any (e.g. data not used in inversion).");
             pw.println("#extraBasicPath ");
-            pw.println("##Path of a timewindow data file of improvement windows, if you want to use those windows");
+            pw.println("##Path of a timewindow data file of improvement windows, if you want to use those windows.");
             pw.println("##  This is only used when basic ID and waveform files are used, not a data feature file.");
             pw.println("#improvementWindowPath timewindow.dat");
             pw.println("##########Common settings");
-            pw.println("##Path of a data entry list file, if you want to select raypaths");
+            pw.println("##Path of a data entry list file, if you want to select raypaths.");
             pw.println("#dataEntryPath selectedEntry.lst");
-            pw.println("##Color of histograms to create, from {red, green, blue} (red)");
+            pw.println("##Color of histograms to create, from {red, green, blue}. (red)");
             pw.println("#color ");
             pw.println("##########The following are parameters that decide the plot range and interval.");
-            pw.println("##(double) Lower bound of correlation coefficient to plot [-1:correlationUpperBound) (-1)");
+            pw.println("##(double) Lower bound of correlation coefficient to plot; [-1:correlationUpperBound). (-1)");
             pw.println("#correlationLowerBound ");
-            pw.println("##(double) Upper bound of correlation coefficient to plot (correlationLowerBound:1] (1)");
+            pw.println("##(double) Upper bound of correlation coefficient to plot; (correlationLowerBound:1]. (1)");
             pw.println("#correlationUpperBound ");
-            pw.println("##(double) Upper bound of normalized variance to plot (0:) (5)");
+            pw.println("##(double) Upper bound of normalized variance to plot; (0:). (5)");
             pw.println("#varianceUpperBound ");
-            pw.println("##(double) Upper bound of amplitude ratio to plot (0:) (5)");
+            pw.println("##(double) Upper bound of amplitude ratio to plot; (0:). (5)");
             pw.println("#ratioUpperBound ");
-            pw.println("##(double) Upper bound of S/N ratio to plot (0:) (5)");
+            pw.println("##(double) Upper bound of S/N ratio to plot; (0:). (5)");
             pw.println("#snRatioUpperBound ");
-            pw.println("##(double) Interval of correlation coefficient, must be positive (0.1)");
+            pw.println("##(double) Interval of correlation coefficient; (0:). (0.1)");
             pw.println("#dCorrelation ");
-            pw.println("##(double) Interval of normalized variance, must be positive (0.2)");
+            pw.println("##(double) Interval of normalized variance; (0:). (0.2)");
             pw.println("#dVariance ");
-            pw.println("##(double) Interval of amplitude ratio, must be positive (0.2)");
+            pw.println("##(double) Interval of amplitude ratio; (0:). (0.2)");
             pw.println("#dRatio ");
-            pw.println("##(double) Interval of S/N ratio, must be positive (0.2)");
+            pw.println("##(double) Interval of S/N ratio; (0:). (0.2)");
             pw.println("#dSNRatio ");
             pw.println("##########The following are parameters that decide the range of the background shaded box.");
-            pw.println("##(double) Lower end of selected range for correlation [-1:maxSelectedCorrelation] (0)");
+            pw.println("##(double) Lower end of selected range for correlation; [-1:maxSelectedCorrelation). (0)");
             pw.println("#minSelectedCorrelation ");
-            pw.println("##(double) Upper end of selected range for correlation [minSelectedCorrelation:1] (1)");
+            pw.println("##(double) Upper end of selected range for correlation; (minSelectedCorrelation:1]. (1)");
             pw.println("#maxSelectedCorrelation ");
-            pw.println("##(double) Lower end of selected range for normalized variance [0:maxSelectedVariance] (0)");
+            pw.println("##(double) Lower end of selected range for normalized variance; [0:maxSelectedVariance). (0)");
             pw.println("#minSelectedVariance ");
-            pw.println("##(double) Upper end of selected range for normalized variance [minSelectedVariance:) (2)");
+            pw.println("##(double) Upper end of selected range for normalized variance; (minSelectedVariance:). (2)");
             pw.println("#maxSelectedVariance ");
-            pw.println("##(double) Lower end of selected range for amplitude ratio [0:maxSelectedRatio] (0.5)");
+            pw.println("##(double) Lower end of selected range for amplitude ratio; [0:maxSelectedRatio). (0.5)");
             pw.println("#minSelectedRatio ");
-            pw.println("##(double) Upper end of selected range for amplitude ratio [minSelectedRatio:) (2)");
+            pw.println("##(double) Upper end of selected range for amplitude ratio; (minSelectedRatio:). (2)");
             pw.println("#maxSelectedRatio ");
-            pw.println("##(double) Lower end of selected range for S/N ratio [0:) (0)");
+            pw.println("##(double) Lower end of selected range for S/N ratio; [0:). (0)");
             pw.println("#minSelectedSNRatio ");
         }
         System.err.println(outPath + " is created.");
@@ -261,6 +268,7 @@ public class DataFeatureHistogram extends Operation {
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
         if (property.containsKey("folderTag")) folderTag = property.parseStringSingle("folderTag", null);
+        appendFolderDate = property.parseBoolean("appendFolderDate", "true");
         components = Arrays.stream(property.parseStringArray("components", "Z R T"))
                 .map(SACComponent::valueOf).collect(Collectors.toSet());
 
@@ -306,16 +314,13 @@ public class DataFeatureHistogram extends Operation {
 
         minSelectedCorrelation = property.parseDouble("minSelectedCorrelation", "0");
         maxSelectedCorrelation = property.parseDouble("maxSelectedCorrelation", "1");
-        if (minSelectedCorrelation < -1 || minSelectedCorrelation > maxSelectedCorrelation || 1 < maxSelectedCorrelation)
-            throw new IllegalArgumentException("Selected correlation range " + minSelectedCorrelation + " , " + maxSelectedCorrelation + " is invalid.");
+        LinearRange.checkValidity("Selected correlation", minSelectedCorrelation, maxSelectedCorrelation, -1.0, 1.0);
         minSelectedVariance = property.parseDouble("minSelectedVariance", "0");
         maxSelectedVariance = property.parseDouble("maxSelectedVariance", "2");
-        if (minSelectedVariance < 0 || minSelectedVariance > maxSelectedVariance)
-            throw new IllegalArgumentException("Selected normalized variance range " + minSelectedVariance + " , " + maxSelectedVariance + " is invalid.");
+        LinearRange.checkValidity("Selected normalized variance", minSelectedVariance, maxSelectedVariance, 0.0);
         minSelectedRatio = property.parseDouble("minSelectedRatio", "0.5");
         maxSelectedRatio = property.parseDouble("maxSelectedRatio", "2");
-        if (minSelectedRatio < 0 || minSelectedRatio > maxSelectedRatio)
-            throw new IllegalArgumentException("Selected amplitude ratio range " + minSelectedRatio + " , " + maxSelectedRatio + " is invalid.");
+        LinearRange.checkValidity("Selected amplitude ratio", minSelectedRatio, maxSelectedRatio, 0.0);
         minSelectedSNRatio = property.parseDouble("minSelectedSNRatio", "0");
         if (minSelectedSNRatio < 0)
             throw new IllegalArgumentException("Selected S/N ratio threshold " + minSelectedSNRatio + " is invalid, must be >= 0.");
@@ -361,7 +366,7 @@ public class DataFeatureHistogram extends Operation {
            }
        }
 
-       outPath = DatasetAid.createOutputFolder(workPath, "featureHistogram", folderTag, GadgetAid.getTemporaryString());
+       outPath = DatasetAid.createOutputFolder(workPath, "featureHistogram", folderTag, appendFolderDate, GadgetAid.getTemporaryString());
        property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
        // if input is in BasicID, export their features (for reference)

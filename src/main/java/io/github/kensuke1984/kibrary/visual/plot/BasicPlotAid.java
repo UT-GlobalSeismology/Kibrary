@@ -98,8 +98,8 @@ class BasicPlotAid {
             double[] time = phase.getTime();
 
             String phaseName = phase.getName();
-            String curveFileName = DatasetAid.generateOutputFileName("curve", fileTag, dateStr, "_" + component + "_" + phaseName + ".txt");
-            Path curvePath = eventPath.resolve(curveFileName);
+            Path curvePath = DatasetAid.generateOutputFilePath(eventPath, "curve", fileTag, true, dateStr, "_" + component + "_" + phaseName + ".txt");
+            String curveFileName = curvePath.getFileName().toString();
             boolean wrotePhaseLabel = false;
 
             // output file and add curve

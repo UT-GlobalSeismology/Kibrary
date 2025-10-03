@@ -18,6 +18,7 @@ import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.elastic.VariableType;
 import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotFile;
+import io.github.kensuke1984.kibrary.math.LinearRange;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.FileAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
@@ -35,22 +36,27 @@ import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
  */
 public class PolynomialStructurePlotter extends Operation {
 
-    private static final int MAX_INPUT = 3;
+    private static final int MAX_INPUT = 6;
     private static final int NUM_VARIABLES = 6;
     private static final String[] COLORS = {
-            "dark-magenta", "dark-orange", "web-green", "red", "web-blue", "dark-gray",
-            "purple", "goldenrod", "greenyellow", "salmon", "skyblue", "gray",
-            "plum", "khaki", "seagreen", "light-pink", "light-cyan", "light-gray"};
+            "dark-violet", "dark-orange", "dark-green", "red", "medium-blue", "gray30",
+            "purple", "orange", "web-green", "light-red", "web-blue", "dark-gray",
+            "plum", "goldenrod", "greenyellow", "salmon", "skyblue", "gray"};
+//            "plum", "khaki", "seagreen", "light-pink", "light-cyan", "light-gray"};
 
     private final Property property;
     /**
-     * Path of the work folder
+     * Path of the work folder.
      */
     private Path workPath;
     /**
      * A tag to include in output file names. When this is empty, no tag is used.
      */
     private String fileTag;
+    /**
+     * Whether to append date string at end of output file names.
+     */
+    private boolean appendFileDate;
 
     private Set<VariableType> variableTypes;
 
@@ -65,7 +71,7 @@ public class PolynomialStructurePlotter extends Operation {
     private double upperValue;
 
     /**
-     * structure file instead of PREM
+     * Structure file instead of PREM.
      */
     private Path[] structurePaths = new Path[MAX_INPUT];
     private String[] structureNames = new String[MAX_INPUT];
@@ -90,6 +96,8 @@ public class PolynomialStructurePlotter extends Operation {
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output file names. If no tag is needed, leave this unset.");
             pw.println("#fileTag ");
+            pw.println("##(boolean) Whether to append date string at end of output file names. (true)");
+            pw.println("#appendFileDate false");
             pw.println("##Variable types to map, listed using spaces, from {RHO,Vpv,Vph,Vsv,Vsh,ETA}. (RHO Vpv Vph Vsv Vsh ETA)");
             pw.println("#variableTypes ");
             pw.println("##(boolean) Whether to color structures differently. (true)");
@@ -111,7 +119,7 @@ public class PolynomialStructurePlotter extends Operation {
             pw.println("##########From here on, list up models to plot.");
             pw.println("########## Up to " + MAX_INPUT + " models can be managed. Any entry may be left unset.");
             for (int i = 1; i <= MAX_INPUT; i++) {
-                pw.println("##" + MathAid.ordinalNumber(i) + " model");
+                pw.println("##" + MathAid.ordinalNumber(i) + " model.");
                 pw.println("##Path of a structure file you want to use. If this is unset, the following structureName will be referenced.");
                 pw.println("#structurePath" + i + " ");
                 if (i == 1) pw.println("##Name of a structure model you want to use. (PREM)");
@@ -130,6 +138,7 @@ public class PolynomialStructurePlotter extends Operation {
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
         if (property.containsKey("fileTag")) fileTag = property.parseStringSingle("fileTag", null);
+        appendFileDate = property.parseBoolean("appendFileDate", "true");
 
         variableTypes = Arrays.stream(property.parseStringArray("variableTypes", "RHO Vpv Vph Vsv Vsh ETA")).map(VariableType::valueOf)
                 .collect(Collectors.toSet());
@@ -141,12 +150,10 @@ public class PolynomialStructurePlotter extends Operation {
 
         lowerRadius = property.parseDouble("lowerRadius", "0");
         upperRadius = property.parseDouble("upperRadius", "6371");
-        if (lowerRadius < 0 || lowerRadius > upperRadius)
-            throw new IllegalArgumentException("Radius range " + lowerRadius + " , " + upperRadius + " is invalid.");
+        LinearRange.checkValidity("Radius", lowerRadius, upperRadius, 0.0);
         lowerValue = property.parseDouble("lowerValue", "0");
         upperValue = property.parseDouble("upperValue", "15");
-        if (lowerValue > upperValue)
-            throw new IllegalArgumentException("Value range " + lowerValue + " , " + upperValue + " is invalid.");
+        LinearRange.checkValidity("Value", lowerValue, upperValue);
 
         for (int i = 1; i <= MAX_INPUT; i++) {
             String pathKey = "structurePath" + i;
@@ -166,8 +173,9 @@ public class PolynomialStructurePlotter extends Operation {
    @Override
    public void run() throws IOException {
        // set structures
+       // Structures existing in the input properties file are set in reverse order.
        List<PolynomialStructure> structures = new ArrayList<>();
-       for (int i = 0; i < MAX_INPUT; i++) {
+       for (int i = MAX_INPUT - 1; i >= 0; i--) {
            if (structurePaths[i] != null || structureNames[i] != null) {
                PolynomialStructure structure = PolynomialStructure.setupFromFileOrName(structurePaths[i], structureNames[i]);
                structures.add(structure);
@@ -175,7 +183,7 @@ public class PolynomialStructurePlotter extends Operation {
        }
 
        // create script
-       Path scriptPath = workPath.resolve(DatasetAid.generateOutputFileName("polynomial", fileTag, GadgetAid.getTemporaryString(), ".plt"));
+       Path scriptPath = DatasetAid.generateOutputFilePath(workPath, "polynomial", fileTag, appendFileDate, GadgetAid.getTemporaryString(), ".plt");
        createScript(scriptPath, structures);
    }
 
@@ -272,7 +280,7 @@ public class PolynomialStructurePlotter extends Operation {
        else if (dashByVariable) iDash = iVariable + 1;
        else iDash = 1;
 
-       String lineTypeString = "dt " + iDash + " lc rgb '" + COLORS[iColor] + "'";
+       String lineTypeString = "dt " + iDash + " lc rgb '" + COLORS[iColor % COLORS.length] + "'";
        return lineTypeString;
    }
 

@@ -39,7 +39,7 @@ public class CoarseGridDesigner extends Operation {
 
     private final Property property;
     /**
-     * Path of the work folder
+     * Path of the work folder.
      */
     private Path workPath;
     /**
@@ -47,16 +47,20 @@ public class CoarseGridDesigner extends Operation {
      */
     private String folderTag;
     /**
-     * Path of the output folder
+     * Whether to append date string at end of output folder name.
+     */
+    private boolean appendFolderDate;
+    /**
+     * Path of the output folder.
      */
     private Path outPath;
 
     /**
-     * Path of unknown parameter file
+     * Path of unknown parameter file.
      */
     private Path unknownParameterPath;
     /**
-     * Partial types of parameters to be fused
+     * Partial types of parameters to be fused.
      */
     private List<VariableType> variableTypes;
 
@@ -90,36 +94,38 @@ public class CoarseGridDesigner extends Operation {
         Path outPath = Property.generatePath(thisClass);
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
             pw.println("manhattan " + thisClass.getSimpleName());
-            pw.println("##Path of a working folder (.)");
+            pw.println("##Path of work folder. (.)");
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this unset.");
             pw.println("#folderTag ");
-            pw.println("##Path of an unknown parameter list file, must be set");
+            pw.println("##(boolean) Whether to append date string at end of output folder name. (true)");
+            pw.println("#appendFolderDate false");
+            pw.println("##Path of an unknown parameter list file, must be set.");
             pw.println("#unknownParameterPath unknowns.lst");
             pw.println("##Variable types of parameters to fuse. If not set, all variable types will be used.");
             pw.println("#variableTypes ");
-            pw.println("##########Settings for vertical fusion of voxels");
-            pw.println("##(boolean) Whether to fuse voxels vertically (false)");
+            pw.println("##########Settings for vertical fusion of voxels.");
+            pw.println("##(boolean) Whether to fuse voxels vertically. (false)");
             pw.println("#fuseVertically true");
-            pw.println("##(double) Radii of layer borders, listed using spaces [km] (3480 3530 3580 3630 3680 3730 3780 3830 3880)");
+            pw.println("##(double) Radii of layer borders, listed using spaces [km]. (3480 3530 3580 3630 3680 3730 3780 3830 3880)");
             pw.println("##  Parameters with radii outside this range will not be used.");
             pw.println("#borderRadii ");
-            pw.println("##########Settings for horzontal fusion of voxels");
-            pw.println("##(boolean) Whether to fuse voxels horizontally (false)");
+            pw.println("##########Settings for horzontal fusion of voxels.");
+            pw.println("##(boolean) Whether to fuse voxels horizontally. (false)");
             pw.println("#fuseHorizontally true");
             pw.println("##(double) Latitude spacing [km]. If this is unset, the following dLatitudeDeg will be used.");
             pw.println("##  The (roughly) median radius of target region will be used to convert this to degrees.");
             pw.println("#dLatitudeKm ");
-            pw.println("##(double) Latitude spacing [deg] (5)");
+            pw.println("##(double) Latitude spacing [deg]. (5)");
             pw.println("#dLatitudeDeg ");
-            pw.println("##(double) Offset of boundary latitude [deg], must be positive (2.5)");
+            pw.println("##(double) Offset of boundary latitude [deg], must be positive. (2.5)");
             pw.println("#latitudeOffset ");
             pw.println("##(double) Longitude spacing [km]. If this is unset, the following dLongitudeDeg will be used.");
             pw.println("##  The (roughly) median radius of target region will be used to convert this to degrees at each latitude.");
             pw.println("#dLongitudeKm ");
-            pw.println("##(double) Longitude spacing [deg] (5)");
+            pw.println("##(double) Longitude spacing [deg]. (5)");
             pw.println("#dLongitudeDeg ");
-            pw.println("##(double) Offset of boundary longitude, when dLongitudeDeg is used [deg] [0:dLongitudeDeg) (2.5)");
+            pw.println("##(double) Offset of boundary longitude, when dLongitudeDeg is used [deg]; [0:dLongitudeDeg). (2.5)");
             pw.println("#longitudeOffset ");
         }
         System.err.println(outPath + " is created.");
@@ -133,6 +139,7 @@ public class CoarseGridDesigner extends Operation {
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
         if (property.containsKey("folderTag")) folderTag = property.parseStringSingle("folderTag", null);
+        appendFolderDate = property.parseBoolean("appendFolderDate", "true");
 
         unknownParameterPath = property.parsePath("unknownParameterPath", null, true, workPath);
 
@@ -201,7 +208,7 @@ public class CoarseGridDesigner extends Operation {
         }
 
         // prepare output folder
-        outPath = DatasetAid.createOutputFolder(workPath, "coarseGrid", folderTag, GadgetAid.getTemporaryString());
+        outPath = DatasetAid.createOutputFolder(workPath, "coarseGrid", folderTag, appendFolderDate, GadgetAid.getTemporaryString());
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         // output fusion design file

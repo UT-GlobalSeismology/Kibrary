@@ -174,7 +174,7 @@ public class TimePartialsAssembler extends Operation {
     public void run() throws IOException {
 
         // create output folder
-        outPath = DatasetAid.createOutputFolder(workPath, "assembled", folderTag, GadgetAid.getTemporaryString());
+        outPath = DatasetAid.createOutputFolder(workPath, "assembled", folderTag, true, GadgetAid.getTemporaryString());
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
         logPath = outPath.resolve("assembler" + GadgetAid.getTemporaryString() + ".log");
         Files.createFile(logPath);

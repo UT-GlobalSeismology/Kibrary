@@ -46,7 +46,7 @@ import io.github.kensuke1984.kibrary.waveform.BasicIDPairUp;
 public class BasicWaveformPlotter extends Operation {
 
     /**
-     * Number of fields per page on output pdf file
+     * Number of fields per page on output pdf file.
      */
     private static final int NUM_PER_PAGE = 12;
     /**
@@ -56,7 +56,7 @@ public class BasicWaveformPlotter extends Operation {
 
     private final Property property;
     /**
-     * Path of the work folder
+     * Path of the work folder.
      */
     private Path workPath;
     /**
@@ -64,24 +64,24 @@ public class BasicWaveformPlotter extends Operation {
      */
     private String fileTag;
     /**
-     * components to be included in the dataset
+     * Components to use.
      */
     private Set<SACComponent> components;
 
     /**
-     * Path of a basic waveform folder
+     * Path of a basic waveform folder.
      */
     private Path mainBasicPath;
     /**
-     * Path of reference waveform folder 1
+     * Path of reference waveform folder 1.
      */
     private Path refBasicPath1;
     /**
-     * Path of reference waveform folder 2
+     * Path of reference waveform folder 2.
      */
     private Path refBasicPath2;
     /**
-     * Path of a travel time information file
+     * Path of a travel time information file.
      */
     private Path travelTimePath;
 
@@ -90,11 +90,11 @@ public class BasicWaveformPlotter extends Operation {
      */
     private Set<GlobalCMTID> tendEvents = new HashSet<>();
     /**
-     * Whether to export individual files for each component
+     * Whether to export individual files for each component.
      */
     private boolean splitComponents;
     /**
-     * The time length to plot
+     * The time length to plot.
      */
     private double timeLength;
 
@@ -112,7 +112,7 @@ public class BasicWaveformPlotter extends Operation {
     private String refSynName2;
 
     /**
-     * Set of information of travel times
+     * Set of information of travel times.
      */
     private Set<TravelTimeInformation> travelTimeInfoSet;
 
@@ -131,49 +131,49 @@ public class BasicWaveformPlotter extends Operation {
         Path outPath = Property.generatePath(thisClass);
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
             pw.println("manhattan " + thisClass.getSimpleName());
-            pw.println("##Path of a working directory. (.)");
+            pw.println("##Path of work folder. (.)");
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output file names. If no tag is needed, set this unset.");
             pw.println("#fileTag ");
-            pw.println("##SacComponents to be used, listed using spaces (Z R T)");
+            pw.println("##SacComponents to be used, listed using spaces. (Z R T)");
             pw.println("#components ");
-            pw.println("##Path of a basic waveform folder (.)");
+            pw.println("##Path of a basic waveform folder. (.)");
             pw.println("#mainBasicPath ");
-            pw.println("##Path of reference basic waveform folder 1, when plotting their waveforms");
+            pw.println("##Path of reference basic waveform folder 1, when plotting their waveforms.");
             pw.println("#refBasicPath1 ");
-            pw.println("##Path of reference basic waveform folder 2, when plotting their waveforms");
+            pw.println("##Path of reference basic waveform folder 2, when plotting their waveforms.");
             pw.println("#refBasicPath2 ");
-            pw.println("##Path of a travel time information file, if plotting travel times");
+            pw.println("##Path of a travel time information file, if plotting travel times.");
             pw.println("#travelTimePath travelTime.inf");
             pw.println("##GlobalCMTIDs of events to work for, listed using spaces. To use all events, leave this unset.");
             pw.println("#tendEvents ");
-            pw.println("##(boolean) Whether to export individual files for each component (true)");
+            pw.println("##(boolean) Whether to export individual files for each component. (true)");
             pw.println("#splitComponents ");
-            pw.println("##(double) Time length of each plot [s] (150)");
+            pw.println("##(double) Time length of each plot [s]. (150)");
             pw.println("#timeLength ");
-            pw.println("##Plot style for unshifted observed waveform, from {0:no plot, 1:gray, 2:black} (1)");
+            pw.println("##Plot style for unshifted observed waveform, from {0:no plot, 1:gray, 2:black}. (1)");
             pw.println("#unshiftedObsStyle 0");
-            pw.println("##Name for unshifted observed waveform (unshifted)");
+            pw.println("##Name for unshifted observed waveform. (unshifted)");
             pw.println("#unshiftedObsName ");
-            pw.println("##Plot style for shifted observed waveform, from {0:no plot, 1:gray, 2:black} (2)");
+            pw.println("##Plot style for shifted observed waveform, from {0:no plot, 1:gray, 2:black}. (2)");
             pw.println("#shiftedObsStyle ");
-            pw.println("##Name for shifted observed waveform (shifted)");
+            pw.println("##Name for shifted observed waveform. (shifted)");
             pw.println("#shiftedObsName observed");
-            pw.println("##Plot style for main synthetic waveform, from {0:no plot, 1:red, 2:green, 3:blue} (1)");
+            pw.println("##Plot style for main synthetic waveform, from {0:no plot, 1:red, 2:green, 3:blue}. (1)");
             pw.println("#mainSynStyle 2");
-            pw.println("##Name for main synthetic waveform (synthetic)");
+            pw.println("##Name for main synthetic waveform. (synthetic)");
             pw.println("#mainSynName recovered");
-            pw.println("##Plot style for main residual waveform, from {0:no plot, 1:sky blue} (1)");
+            pw.println("##Plot style for main residual waveform, from {0:no plot, 1:sky blue}. (1)");
             pw.println("#residualStyle 0");
-            pw.println("##Name for main residual waveform (residual)");
+            pw.println("##Name for main residual waveform. (residual)");
             pw.println("#residualName ");
-            pw.println("##Plot style for reference synthetic waveform 1, from {0:no plot, 1:red, 2:green, 3:blue} (0)");
+            pw.println("##Plot style for reference synthetic waveform 1, from {0:no plot, 1:red, 2:green, 3:blue}. (0)");
             pw.println("#refSynStyle1 1");
-            pw.println("##Name for reference synthetic waveform 1 (reference1)");
+            pw.println("##Name for reference synthetic waveform 1. (reference1)");
             pw.println("#refSynName1 initial");
-            pw.println("##Plot style for reference synthetic waveform 2, from {0:no plot, 1:red, 2:green, 3:blue} (0)");
+            pw.println("##Plot style for reference synthetic waveform 2, from {0:no plot, 1:red, 2:green, 3:blue}. (0)");
             pw.println("#refSynStyle2 ");
-            pw.println("##Name for reference synthetic waveform 2 (reference2)");
+            pw.println("##Name for reference synthetic waveform 2. (reference2)");
             pw.println("#refSynName2 ");
         }
         System.err.println(outPath + " is created.");
@@ -274,9 +274,9 @@ public class BasicWaveformPlotter extends Operation {
                            .sorted(Comparator.comparing(BasicID::getObserver))
                            .collect(Collectors.toList());
 
-                   // Here, generateOutputFileName() is used in an irregular way, without adding the file extension but adding the component.
-                   String fileNameRoot = DatasetAid.generateOutputFileName("plot", fileTag, dateStr, "_" + component.toString());
-                   createPlot(eventPath, useIds, fileNameRoot);
+                   // Here, generateOutputFilePath() is used in an irregular way, adding the component along with the file extension.
+                   Path plotPath = DatasetAid.generateOutputFilePath(eventPath, "plot", fileTag, true, dateStr, "_" + component.toString() + ".plt");
+                   createPlot(eventPath, plotPath, useIds);
                }
            } else {
                List<BasicID> useIds = mainBasicIDs.stream()
@@ -284,21 +284,20 @@ public class BasicWaveformPlotter extends Operation {
                        .sorted(Comparator.comparing(BasicID::getObserver).thenComparing(BasicID::getSacComponent))
                        .collect(Collectors.toList());
 
-               // Here, generateOutputFileName() is used in an irregular way, without adding the file extension.
-               String fileNameRoot = DatasetAid.generateOutputFileName("plot", fileTag, dateStr, "");
-               createPlot(eventPath, useIds, fileNameRoot);
+               Path plotPath = DatasetAid.generateOutputFilePath(eventPath, "plot", fileTag, true, dateStr, ".plt");
+               createPlot(eventPath, plotPath, useIds);
            }
 
        }
    }
 
     /**
-     * @param eventDir (EventFolder)
+     * @param eventPath (Path) Path of event folder.
+     * @param plotPath (Path) Gnuplot file path.
      * @param ids (BasicID) IDs to be plotted
-     * @param fileNameRoot (String) The root of file names of output plot and graph files
      * @throws IOException
      */
-    private void createPlot(Path eventPath, List<BasicID> ids, String fileNameRoot) throws IOException {
+    private void createPlot(Path eventPath, Path plotPath, List<BasicID> ids) throws IOException {
         if (ids.size() == 0) {
             return;
         }
@@ -307,9 +306,8 @@ public class BasicWaveformPlotter extends Operation {
         List<BasicID> obsList = pairer.getObsList();
         List<BasicID> synList = pairer.getSynList();
 
-        GnuplotFile gnuplot = new GnuplotFile(eventPath.resolve(fileNameRoot + ".plt"));
-
-        gnuplot.setOutput("pdf", fileNameRoot + ".pdf", 21, 29.7, true);
+        GnuplotFile gnuplot = new GnuplotFile(plotPath);
+        gnuplot.setOutput("pdf", plotPath.getFileName().toString().replace(".plt", ".pdf"), 21, 29.7, true);
         gnuplot.setMarginH(15, 5);
         gnuplot.setFont("Arial", 10, 8, 8, 8, 8);
         gnuplot.setCommonKey(true, false, "top right");

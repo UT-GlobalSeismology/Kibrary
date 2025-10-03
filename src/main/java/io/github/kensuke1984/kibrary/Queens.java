@@ -2,6 +2,11 @@ package io.github.kensuke1984.kibrary;
 
 import java.util.Random;
 
+/**
+ * Jokes.
+ * @author otsuru
+ * @since 2023/5/13 Imported from C version of spcsac.
+ */
 class Queens {
 
     private static int MAX = 18;

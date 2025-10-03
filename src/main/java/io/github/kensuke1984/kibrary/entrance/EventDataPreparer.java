@@ -2,6 +2,7 @@ package io.github.kensuke1984.kibrary.entrance;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
@@ -112,12 +113,14 @@ class EventDataPreparer {
                 "&starttime=" + toLine(startTime) + "&endtime=" + toLine(endTime) + "&format=miniseed&nodata=404";
         URL url = new URL(urlString);
 
-        try {
-            System.err.println(" ~ Downloading mseed file ...");
-            Files.createDirectories(mseedSetPath);
-            Path mseedPath = mseedSetPath.resolve(mseedFileName);
-            double sizeMiB = (double) Files.copy(url.openStream(), mseedPath, StandardCopyOption.REPLACE_EXISTING) / 1024 / 1024;
-            System.err.println(" ~ Downloaded : " + eventData + " - " + MathAid.roundToString(sizeMiB, 3) + " MiB");
+        Files.createDirectories(mseedSetPath);
+        Path mseedPath = mseedSetPath.resolve(mseedFileName);
+
+        System.err.print(" ~ Downloading mseed file ...");
+        try (InputStream inputStream = url.openStream()) {
+            double sizeMiB = (double) Files.copy(inputStream, mseedPath, StandardCopyOption.REPLACE_EXISTING) / 1024 / 1024;
+            System.err.println("\r ~ Downloaded : " + eventData + " - " + MathAid.roundToString(sizeMiB, 3) + " MiB  "
+                    + DateTimeFormatter.ofPattern("<yyyy/MM/dd HH:mm:ss>").format(LocalDateTime.now()));
         } catch (FileNotFoundException e) {
             // if there is no available data for this request, return false
             return false;
@@ -322,11 +325,12 @@ class EventDataPreparer {
 */
     /**
      * Downloads StationXML files for the event into "eventDir/station/", given a set of SAC files.
-     * The downloads may be skipped if the SAC file name is not in mseed-style.
+     * The downloads might be skipped if the SAC file name is not in mseed-style.
      * @param datacenter (String) The name of the datacenter to download from.
+     * @param redo (boolean) Whether to download existing stationXml files again.
      * @throws IOException
      */
-    void downloadXmlMseed(String datacenter) throws IOException {
+    void downloadXmlMseed(String datacenter, boolean redo) throws IOException {
         if (!Files.exists(mseedSetPath)) {
             return;
         }
@@ -345,7 +349,7 @@ class EventDataPreparer {
                 String channel = sacFile.getChannel();
 
                 StationXmlFile stationInfo = new StationXmlFile(network, station, location, channel, stationSetPath);
-                if (!Files.exists(stationInfo.getXmlPath())) {
+                if (!Files.exists(stationInfo.getXmlPath()) || redo) {
                     stationInfo.setRequest(datacenter, eventData.getCMTTime(), eventData.getCMTTime());
                     stationInfo.downloadStationXml();
                 }

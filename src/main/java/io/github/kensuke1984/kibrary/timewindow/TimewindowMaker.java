@@ -75,7 +75,7 @@ public class TimewindowMaker extends Operation {
 
     private final Property property;
     /**
-     * Path of the work folder
+     * Path of the work folder.
      */
     private Path workPath;
     /**
@@ -83,77 +83,81 @@ public class TimewindowMaker extends Operation {
      */
     private String fileTag;
     /**
-     * Path of the output timewindow file
+     * Whether to append date string at end of output file names.
+     */
+    private boolean appendFileDate;
+    /**
+     * Path of the output timewindow file.
      */
     private Path outTimewindowPath;
     /**
-     * Path of output file to list up SAC files that could not produce timewindows
+     * Path of output file to list up SAC files that could not produce timewindows.
      */
     private Path outInvalidPath;
     /**
-     * Path of the output travel time file
+     * Path of the output travel time file.
      */
     private Path outTravelTimePath;
     /**
-     * set of {@link SACComponent}
+     * Components to use.
      */
     private Set<SACComponent> components;
 
     /**
-     * Path of a data entry file
+     * Path of a data entry file.
      */
     private Path dataEntryPath;
     /**
-     * Path of a root folder containing observed dataset
+     * Path of a root folder containing observed dataset.
      */
     private Path obsPath;
 
     /**
-     * phases to be included in timewindows
+     * Phases to be included in timewindows.
      */
     private Set<Phase> usePhases;
     /**
-     * phases not to be included in timewindows
+     * Phases not to be included in timewindows.
      */
     private Set<Phase> avoidPhases;
     /**
-     * time length that the timewindow shall include before each phase arrival [sec]
+     * Time length that the timewindow shall include before each phase arrival [sec].
      * If the value is 5 (not -5), each timewindow starts 5 sec before the first usePhase arrival.
      */
     private double frontShift;
     /**
-     * time length that the timewindow shall include after each phase arrival [sec]
+     * Time length that the timewindow shall include after each phase arrival [sec].
      * If the value is 10, each timewindow ends 10 secs after the last usephase arrival.
      */
     private double rearShift;
     /**
-     * time length that the timewindow must not include before each arrival of phases to be avoided [sec]
+     * Time length that the timewindow must not include before each arrival of phases to be avoided [sec].
      */
     private double avoidFrontShift;
     /**
-     * time length that the timewindow must not include after each arrival of phases to be avoided [sec]
+     * Time length that the timewindow must not include after each arrival of phases to be avoided [sec].
      */
     private double avoidRearShift;
 
     /**
-     * minimum length of each timewindow
+     * Minimum length of each timewindow.
      */
     private double minLength;
 
     /**
      * Whether to allow split timewindows.
      * If not, timewindows are discarded when avoidPhases arrive between or near usePhases
-     * and blanks are filled when timewindows of usePhases aren't overlapped
+     * and blanks are filled when timewindows of usePhases aren't overlapped.
      */
     private boolean allowSplitWindows;
     /**
-     * Name of structure to compute travel times
+     * Name of structure to compute travel times.
      */
     private String structureName;
 
     private boolean majorArc;
     /**
-     * Whether to use duplicate arrivals of usePhases when deciding timewindows
+     * Whether to use duplicate arrivals of usePhases when deciding timewindows.
      * In case of triplication of usePhases, use only the first arrival.
      */
     private boolean useDuplicatePhases;
@@ -177,41 +181,43 @@ public class TimewindowMaker extends Operation {
         Path outPath = Property.generatePath(thisClass);
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
             pw.println("manhattan " + thisClass.getSimpleName());
-            pw.println("##Path of a working folder (.)");
+            pw.println("##Path of work folder. (.)");
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output file names. If no tag is needed, leave this unset.");
             pw.println("#fileTag ");
-            pw.println("##SacComponents to be used, listed using spaces (Z R T)");
+            pw.println("##(boolean) Whether to append date string at end of output file names. (true)");
+            pw.println("#appendFileDate false");
+            pw.println("##SacComponents to be used, listed using spaces. (Z R T)");
             pw.println("#components ");
             pw.println("##########Input: either a data entry list file or a dataset folder will be read.");
             pw.println("##Path of a data entry list file. If not set, the following obsPath will be used.");
             pw.println("#dataEntryPath dataEntry.lst");
-            pw.println("##Path of a root folder containing observed dataset (.)");
+            pw.println("##Path of a root folder containing observed dataset. (.)");
             pw.println("#obsPath ");
             pw.println("##########Settings of timewindows to be created.");
-            pw.println("##TauPPhases to be included in timewindow, listed using spaces (S)");
+            pw.println("##TauPPhases to be included in timewindow, listed using spaces. (S)");
             pw.println("#usePhases S ScS");
-            pw.println("##TauPPhases not to be included in timewindow, listed using spaces, if any");
+            pw.println("##TauPPhases not to be included in timewindow, listed using spaces, if any.");
             pw.println("#avoidPhases sS sScS");
-            pw.println("##(double) Time length to include before phase arrival of usePhases [sec] (20)");
+            pw.println("##(double) Time length to include before phase arrival of usePhases [s]. (20)");
             pw.println("#frontShift ");
-            pw.println("##(double) Time length to include after phase arrival of usePhases [sec] (60)");
+            pw.println("##(double) Time length to include after phase arrival of usePhases [s]. (60)");
             pw.println("#rearShift ");
-            pw.println("##(double) Time length to be excluded before phase arrival of avoidPhases [sec] (5)");
+            pw.println("##(double) Time length to be excluded before phase arrival of avoidPhases [s]. (5)");
             pw.println("#avoidFrontShift ");
-            pw.println("##(double) Time length to be excluded after phase arrival of avoidPhases [sec] (60)");
+            pw.println("##(double) Time length to be excluded after phase arrival of avoidPhases [s]. (60)");
             pw.println("#avoidRearShift ");
-            pw.println("##(double) Minimum length of timewindows [sec] (0)");
+            pw.println("##(double) Minimum length of timewindows [sec]. (0)");
             pw.println("#minLength ");
-            pw.println("##(boolean) Whether to allow split timewindows (false)");
+            pw.println("##(boolean) Whether to allow split timewindows. (false)");
             pw.println("##  If not, timewindows are discarded when avoidPhases arrive between or near usePhases");
             pw.println("##    and blanks are filled when timewindows of usePhases aren't overlapped.");
             pw.println("#allowSplitWindows ");
-            pw.println("##(String) Name of structure to compute travel times using TauP (prem)");
+            pw.println("##(String) Name of structure to compute travel times using TauP. (prem)");
             pw.println("#structureName ");
-            pw.println("##(boolean) Whether or not to use major arc phases (false)");
+            pw.println("##(boolean) Whether or not to use major arc phases. (false)");
             pw.println("#majorArc ");
-            pw.println("##(boolean) Whether to use duplicate arrivals of usePhases when deciding timewindows (e.g. in case of triplication) (true)");
+            pw.println("##(boolean) Whether to use duplicate arrivals of usePhases when deciding timewindows (e.g. in case of triplication). (true)");
             pw.println("##  If not, only the first arrival of each usePhase will be considered.");
             pw.println("#useDuplicatePhases ");
         }
@@ -226,6 +232,7 @@ public class TimewindowMaker extends Operation {
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
         if (property.containsKey("fileTag")) fileTag = property.parseStringSingle("fileTag", null);
+        appendFileDate = property.parseBoolean("appendFileDate", "true");
         components = Arrays.stream(property.parseStringArray("components", "Z R T"))
                 .map(SACComponent::valueOf).collect(Collectors.toSet());
 
@@ -248,9 +255,9 @@ public class TimewindowMaker extends Operation {
         useDuplicatePhases = property.parseBoolean("useDuplicatePhases","true");
 
         String dateStr = GadgetAid.getTemporaryString();
-        outTimewindowPath = workPath.resolve(DatasetAid.generateOutputFileName("timewindow", fileTag, dateStr, ".dat"));
-        outInvalidPath = workPath.resolve(DatasetAid.generateOutputFileName("invalidTimewindow", fileTag, dateStr, ".txt"));
-        outTravelTimePath = workPath.resolve(DatasetAid.generateOutputFileName("travelTime", fileTag, dateStr, ".inf"));
+        outTimewindowPath = DatasetAid.generateOutputFilePath(workPath, "timewindow", fileTag, appendFileDate, dateStr, ".dat");
+        outInvalidPath = DatasetAid.generateOutputFilePath(workPath, "invalidTimewindow", fileTag, appendFileDate, dateStr, ".txt");
+        outTravelTimePath = DatasetAid.generateOutputFilePath(workPath, "travelTime", fileTag, appendFileDate, dateStr, ".inf");
     }
 
     private static Set<Phase> phaseSet(String arg) {

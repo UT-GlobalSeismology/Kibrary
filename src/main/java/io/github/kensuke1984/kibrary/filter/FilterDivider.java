@@ -40,6 +40,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  * <p>
  * The lower and upper period limits of the filter will be written in headers USER0 and USER1 of resulting SAC files.
  *
+ * @author Kensuke Konishi
  * @since a long time ago
  * @version 2021/11/18 moved from selection.FilterDivider to filter.FilterDivider
  */
@@ -47,7 +48,7 @@ public class FilterDivider extends Operation {
 
     private final Property property;
     /**
-     * Path of the work folder
+     * Path of the work folder.
      */
     private Path workPath;
     /**
@@ -55,22 +56,24 @@ public class FilterDivider extends Operation {
      */
     private String folderTag;
     /**
-     * Path of the output folder
+     * Whether to append date string at end of output folder name.
+     */
+    private boolean appendFolderDate;
+    /**
+     * Path of the output folder.
      */
     private Path outPath;
     /**
-     * components to be applied the filter
+     * Components to use.
      */
     private Set<SACComponent> components;
 
     /**
-     * The root folder containing event folders which have observed SAC files to
-     * be filtered
+     * The root folder containing event folders which have observed SAC files to be filtered.
      */
     private Path obsPath;
     /**
-     * The root folder containing event folders which have synthetic SAC files
-     * to be filtered
+     * The root folder containing event folders which have synthetic SAC files to be filtered.
      */
     private Path synPath;
 
@@ -81,15 +84,15 @@ public class FilterDivider extends Operation {
      */
     private double delta;
     /**
-     * Type of filter to apply, from {lowpass, highpass, bandpass, bandstop}
+     * Type of filter to apply, from {lowpass, highpass, bandpass, bandstop}.
      */
     private String filterType;
     /**
-     * lower cut-off frequency [Hz]
+     * Lower cut-off frequency [Hz].
      */
     private double lowFreq;
     /**
-     * upper cut-off frequency [Hz]
+     * Upper cut-off frequency [Hz].
      */
     private double highFreq;
     /**
@@ -97,7 +100,7 @@ public class FilterDivider extends Operation {
      */
     private int np;
     /**
-     * Whether to apply causal filter. true: causal, false: zero-phase
+     * Whether to apply causal filter. {true: causal, false: zero-phase}
      */
     private boolean causal;
     /**
@@ -125,30 +128,32 @@ public class FilterDivider extends Operation {
         Path outPath = Property.generatePath(thisClass);
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
             pw.println("manhattan " + thisClass.getSimpleName());
-            pw.println("##Path of a working folder (.)");
+            pw.println("##Path of work folder. (.)");
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this unset.");
             pw.println("#folderTag ");
-            pw.println("##SacComponents to be applied the filter, listed using spaces (Z R T)");
+            pw.println("##(boolean) Whether to append date string at end of output folder name. (true)");
+            pw.println("#appendFolderDate false");
+            pw.println("##SacComponents to be applied the filter, listed using spaces. (Z R T)");
             pw.println("#components ");
-            pw.println("##Path of a root folder containing observed dataset (.)");
+            pw.println("##Path of a root folder containing observed dataset. (.)");
             pw.println("#obsPath ");
-            pw.println("##Path of a root folder containing synthetic dataset (.)");
+            pw.println("##Path of a root folder containing synthetic dataset. (.)");
             pw.println("#synPath ");
             pw.println("##DELTA in SAC files. The SAC files with other values of DELTA are to be ignored. (0.05)");
             pw.println("#delta ");
-            pw.println("##Filter type to be applied, from {lowpass, highpass, bandpass, bandstop} (bandpass)");
+            pw.println("##Filter type to be applied, from {lowpass, highpass, bandpass, bandstop}. (bandpass)");
             pw.println("#filterType ");
-            pw.println("##Lower limit of the frequency band [Hz] (0.005)");
+            pw.println("##Lower limit of the frequency band [Hz]. (0.005)");
             pw.println("#lowFreq ");
-            pw.println("##Higher limit of the frequency band [Hz] (0.08)");
+            pw.println("##Higher limit of the frequency band [Hz]. (0.08)");
             pw.println("#highFreq ");
-            pw.println("##The value of NP for the filter (4)");
+            pw.println("##(int) The value of NP for the filter. (4)");
             pw.println("#np ");
             pw.println("##(boolean) Whether to apply causal filter. When false, zero-phase filter is applied. (false)");
             pw.println("#causal ");
-            pw.println("##NPTS, only if you want to slim SAC files down to that specific number, must be a power of 2");
-            pw.println("## When this is set, SAC files are slimmed. SAC files with a value of NPTS below the set value are not slimmed.");
+            pw.println("##NPTS, only if you want to slim SAC files down to that specific number, must be a power of 2.");
+            pw.println("##  When this is set, SAC files are slimmed. SAC files with a value of NPTS below the set value are not slimmed.");
             pw.println("#npts ");
         }
         System.err.println(outPath + " is created.");
@@ -162,6 +167,7 @@ public class FilterDivider extends Operation {
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
         if (property.containsKey("folderTag")) folderTag = property.parseStringSingle("folderTag", null);
+        appendFolderDate = property.parseBoolean("appendFolderDate", "true");
         components = Arrays.stream(property.parseStringArray("components", "Z R T"))
                 .map(SACComponent::valueOf).collect(Collectors.toSet());
 
@@ -180,7 +186,7 @@ public class FilterDivider extends Operation {
 
     @Override
     public void run() throws IOException {
-        setFilter(lowFreq, highFreq, np);
+        setFilter();
 
         Set<EventFolder> eventDirs = new HashSet<>();
         eventDirs.addAll(Files.exists(obsPath) ? DatasetAid.eventFolderSet(obsPath) : Collections.emptySet());
@@ -194,7 +200,7 @@ public class FilterDivider extends Operation {
             return;
         }
 
-        outPath = DatasetAid.createOutputFolder(workPath, "filtered", folderTag, GadgetAid.getTemporaryString());
+        outPath = DatasetAid.createOutputFolder(workPath, "filtered", folderTag, appendFolderDate, GadgetAid.getTemporaryString());
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         ExecutorService es = ThreadAid.createFixedThreadPool();
@@ -232,26 +238,25 @@ public class FilterDivider extends Operation {
         };
     }
 
-    /**
-     * @param fMin [Hz] 透過帯域 最小周波数
-     * @param fMax [Hz] 透過帯域 最大周波数
-     * @param n    parameter n
-     */
-    private void setFilter(double fMin, double fMax, int n) {
-        double omegaH = fMax * 2 * Math.PI * delta;
-        double omegaL = fMin * 2 * Math.PI * delta;
+    private void setFilter() {
+        double omegaH = highFreq * 2 * Math.PI * delta;
+        double omegaL = lowFreq * 2 * Math.PI * delta;
         switch (filterType) {
             case "lowpass":
-                filter = new LowPassFilter(omegaL, n);
+                System.err.println("Designing filter. - " + highFreq);
+                filter = new LowPassFilter(omegaH, np);
                 break;
             case "highpass":
-                filter = new HighPassFilter(omegaH, n);
+                System.err.println("Designing filter. " + lowFreq + " - ");
+                filter = new HighPassFilter(omegaL, np);
                 break;
             case "bandpass":
-                filter = new BandPassFilter(omegaH, omegaL, n);
+                System.err.println("Designing filter. " + lowFreq + " - " + highFreq);
+                filter = new BandPassFilter(omegaH, omegaL, np);
                 break;
             case "bandstop":
-                filter = new BandStopFilter(omegaH, omegaL, n);
+                System.err.println("Designing filter. - " + lowFreq + " , " + highFreq + " -");
+                filter = new BandStopFilter(omegaH, omegaL, np);
                 break;
             default:
                 throw new IllegalArgumentException("No such filter as " + filterType);

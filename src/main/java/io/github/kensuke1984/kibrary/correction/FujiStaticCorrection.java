@@ -62,14 +62,13 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  * See {@link StaticCorrectionDataFile}.
  *
  * @author Kensuke Konishi
- * @version 0.2.2
- * @author anselme modify amplitude ratio computation; modify align method to consider the peak value
+ * @since version 0.2.2
  */
 public class FujiStaticCorrection extends Operation {
 
     private final Property property;
     /**
-     * Path of the work folder
+     * Path of the work folder.
      */
     private Path workPath;
     /**
@@ -77,28 +76,32 @@ public class FujiStaticCorrection extends Operation {
      */
     private String fileTag;
     /**
-     * Path of the output file
+     * Whether to append date string at end of output file names.
+     */
+    private boolean appendFileDate;
+    /**
+     * Path of the output file.
      */
     private Path outputPath;
     /**
-     * components for computation
+     * Components to use.
      */
     private Set<SACComponent> components;
     /**
-     * sampling Hz [Hz] in sac files
+     * Sampling Hz [Hz] in sac files.
      */
     private double sacSamplingHz;
 
     /**
-     * the timewindow data file to work for
+     * The timewindow data file to work for.
      */
     private Path timewindowPath;
     /**
-     * the directory of observed data
+     * Folder containing observed data.
      */
     private Path obsPath;
     /**
-     * the directory of synthetic data
+     * Folder containing synthetic data.
      */
     private Path synPath;
 
@@ -111,7 +114,7 @@ public class FujiStaticCorrection extends Operation {
      */
     private double threshold;
     /**
-     * range for search [s] ±searchRange
+     * Range for search [s]. ±searchRange
      */
     private double searchRange;
     private boolean mediantime;
@@ -134,27 +137,29 @@ public class FujiStaticCorrection extends Operation {
         Path outPath = Property.generatePath(thisClass);
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
             pw.println("manhattan " + thisClass.getSimpleName());
-            pw.println("##Path of a working folder (.)");
+            pw.println("##Path of work folder. (.)");
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output file names. If no tag is needed, leave this unset.");
             pw.println("#fileTag ");
-            pw.println("##SacComponents to be used, listed using spaces (Z R T)");
+            pw.println("##(boolean) Whether to append date string at end of output file names. (true)");
+            pw.println("#appendFileDate false");
+            pw.println("##SacComponents to be used, listed using spaces. (Z R T)");
             pw.println("#components ");
-            pw.println("##(double) sacSamplingHz (20)");
+            pw.println("##(double) SAC sampling frequency [Hz]. (20)");
             pw.println("#sacSamplingHz cant change now");
-            pw.println("##Path of a timewindow file, must be set");
+            pw.println("##Path of a timewindow file, must be set.");
             pw.println("#timewindowPath timewindow.dat");
-            pw.println("##Path of a root directory containing observed dataset (.)");
+            pw.println("##Path of a root directory containing observed dataset. (.)");
             pw.println("#obsPath ");
-            pw.println("##Path of a root directory containing synthetic dataset (.)");
+            pw.println("##Path of a root directory containing synthetic dataset. (.)");
             pw.println("#synPath ");
-            pw.println("##(boolean) Whether the synthetics have already been convolved (true)");
+            pw.println("##(boolean) Whether the synthetics have already been convolved. (true)");
             pw.println("#convolved ");
-            pw.println("##(double) Threshold for peak finder (0.2)");
+            pw.println("##(double) Threshold for peak finder. (0.2)");
             pw.println("#threshold ");
-            pw.println("##(double) searchRange [s] (10)");
+            pw.println("##(double) searchRange [s]. (10)");
             pw.println("#searchRange ");
-            pw.println("##(boolean) Use median time (false)");
+            pw.println("##(boolean) Use median time. (false)");
             pw.println("#mediantime ");
         }
         System.err.println(outPath + " is created.");
@@ -168,6 +173,7 @@ public class FujiStaticCorrection extends Operation {
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
         if (property.containsKey("fileTag")) fileTag = property.parseStringSingle("fileTag", null);
+        appendFileDate = property.parseBoolean("appendFileDate", "true");
         components = Arrays.stream(property.parseStringArray("components", "Z R T"))
                 .map(SACComponent::valueOf).collect(Collectors.toSet());
         sacSamplingHz = 20; // TODO property.parseDouble("sacSamplingHz", "20");
@@ -182,7 +188,7 @@ public class FujiStaticCorrection extends Operation {
         mediantime = property.parseBoolean("mediantime", "false");
 
         String dateStr = GadgetAid.getTemporaryString();
-        outputPath = workPath.resolve(DatasetAid.generateOutputFileName("staticCorrection", fileTag, dateStr, ".dat"));
+        outputPath = DatasetAid.generateOutputFilePath(workPath, "staticCorrection", fileTag, appendFileDate, dateStr, ".dat");
         staticCorrectionSet = Collections.synchronizedSet(new HashSet<>());
     }
 

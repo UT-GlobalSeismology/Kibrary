@@ -17,7 +17,7 @@ import io.github.kensuke1984.kibrary.util.GadgetAid;
  * <p>
  * In property files, all keys must either have a non-empty value or be commented out. Keys with empty values shall not exist.
  *
- * @author otsuru
+ * @author Kensuke Konishi
  * @since a long time ago
  * @version 2022/1/7 Recreated the original Property to extend Properties instead of generating its instance.
  */
@@ -39,7 +39,11 @@ public class Property extends Properties {
             throw new IllegalArgumentException("Too many arguments. You can specify only one Manhattan.");
         } else if (args.length == 1) {
             try {
-                manhattan = Manhattan.valueOf(args[0]);
+                if (StringUtils.isNumeric(args[0])) {
+                    manhattan = Manhattan.valueOf(Integer.parseInt(args[0]));
+                } else {
+                    manhattan = Manhattan.valueOf(args[0]);
+                }
             } catch (IllegalArgumentException iae) {
                 System.out.println(args[0] + " is not a Manhattan.");
                 System.out.println("Please choose one in:");
@@ -49,9 +53,9 @@ public class Property extends Properties {
         } else {
             Manhattan.printList();
             System.out.print("For which one do you want to create a property file? [" + Manhattan.numRange() + "] : ");
-            String input = GadgetAid.readInputLine();
-            if (input.isEmpty()) System.exit(9);
-            manhattan = Manhattan.valueOf(Integer.parseInt(input));
+            String valInput = GadgetAid.readInputLine();
+            if (valInput.isEmpty()) System.exit(9);
+            manhattan = Manhattan.valueOf(Integer.parseInt(valInput));
         }
 
         //~output file~//

@@ -514,21 +514,21 @@ public class SACMaker implements Runnable {
      * @param sac to set header on
      */
     private void setHeaderOn(SAC sac) {
-        if (beginDateTime != null) sac.setEventTime(beginDateTime);
-        sac.setValue(SACHeaderEnum.B, 0);
+        if (beginDateTime != null) sac.withEventTime(beginDateTime);
+        sac.withValue(SACHeaderEnum.B, 0);
 
-        sac.setObserver(observer);
+        sac.withObserver(observer);
         FullPosition eventPosition = primeSPC.getSourcePosition();
-        sac.setEventLocation(eventPosition);
-        sac.setSACString(SACHeaderEnum.KEVNM, primeSPC.getSourceID());
+        sac.withEventLocation(eventPosition);
+        sac.withSACString(SACHeaderEnum.KEVNM, primeSPC.getSourceID());
 
-        sac.setValue(SACHeaderEnum.GCARC, eventPosition.computeEpicentralDistanceDeg(observer.getPosition()));
-        sac.setValue(SACHeaderEnum.AZ, eventPosition.computeAzimuthDeg(observer.getPosition()));
-        sac.setValue(SACHeaderEnum.BAZ, eventPosition.computeBackAzimuthDeg(observer.getPosition()));
+        sac.withValue(SACHeaderEnum.GCARC, eventPosition.computeEpicentralDistanceDeg(observer.getPosition()));
+        sac.withValue(SACHeaderEnum.AZ, eventPosition.computeAzimuthDeg(observer.getPosition()));
+        sac.withValue(SACHeaderEnum.BAZ, eventPosition.computeBackAzimuthDeg(observer.getPosition()));
 
-        sac.setInt(SACHeaderEnum.NPTS, npts);
-        sac.setValue(SACHeaderEnum.E, delta * npts);
-        sac.setValue(SACHeaderEnum.DELTA, delta);
+        sac.withInt(SACHeaderEnum.NPTS, npts);
+        sac.withValue(SACHeaderEnum.E, delta * npts);
+        sac.withValue(SACHeaderEnum.DELTA, delta);
     }
 
     /**
@@ -579,7 +579,7 @@ public class SACMaker implements Runnable {
 
         private SAC of(SACComponent component) {
             SAC sac = clone();
-            sac = sac.setSACString(SACHeaderEnum.KCMPNM, component.toString());
+            sac = sac.withSACString(SACHeaderEnum.KCMPNM, component.toString());
 //            switch (component.valueOf()) {
 //            case 1:
 //                sac = sac.setSACString(SACHeaderEnum.KCMPNM, "vertical");
@@ -631,7 +631,7 @@ public class SACMaker implements Runnable {
         }
 
         @Override
-        public SAC setBoolean(SACHeaderEnum sacHeaderEnum, boolean bool) {
+        public SAC withBoolean(SACHeaderEnum sacHeaderEnum, boolean bool) {
             if (headerMap.containsKey(sacHeaderEnum))
                 throw new RuntimeException("UNEeXpExted");
             headerMap.put(sacHeaderEnum, String.valueOf(bool));
@@ -644,7 +644,7 @@ public class SACMaker implements Runnable {
         }
 
         @Override
-        public SAC setValue(SACHeaderEnum sacHeaderEnum, double value) {
+        public SAC withValue(SACHeaderEnum sacHeaderEnum, double value) {
             if (headerMap.containsKey(sacHeaderEnum))
                 throw new RuntimeException("UNEeXpExted");
             headerMap.put(sacHeaderEnum, String.valueOf(value));
@@ -652,7 +652,7 @@ public class SACMaker implements Runnable {
         }
 
         @Override
-        public SAC setInt(SACHeaderEnum sacHeaderEnum, int value) {
+        public SAC withInt(SACHeaderEnum sacHeaderEnum, int value) {
             if (headerMap.containsKey(sacHeaderEnum) && headerMap.get(sacHeaderEnum) != "-12345")
                 throw new RuntimeException("UNEeXpExted");
             headerMap.put(sacHeaderEnum, String.valueOf(value));
@@ -660,7 +660,7 @@ public class SACMaker implements Runnable {
         }
 
         @Override
-        public SAC setSACEnumerated(SACHeaderEnum sacHeaderEnum, int value) {
+        public SAC withSACEnumerated(SACHeaderEnum sacHeaderEnum, int value) {
             if (headerMap.containsKey(sacHeaderEnum))
                 throw new RuntimeException("UNEeXpExted");
             headerMap.put(sacHeaderEnum, String.valueOf(value));
@@ -668,7 +668,7 @@ public class SACMaker implements Runnable {
         }
 
         @Override
-        public SAC setSACString(SACHeaderEnum sacHeaderEnum, String string) {
+        public SAC withSACString(SACHeaderEnum sacHeaderEnum, String string) {
             if (headerMap.containsKey(sacHeaderEnum))
                 throw new RuntimeException("UNEeXpExted");
             headerMap.put(sacHeaderEnum, string);

@@ -44,6 +44,10 @@ public class VariableTypeConvert extends Operation {
       */
      private String folderTag;
      /**
+      * Whether to append date string at end of output folder name.
+      */
+     private boolean appendFolderDate;
+     /**
       * Path of the output folder
       */
      private Path outPath;
@@ -88,6 +92,8 @@ public class VariableTypeConvert extends Operation {
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output folder names. If no tag is needed, leave this unset.");
             pw.println("#folderTag ");
+            pw.println("##(boolean) Whether to append date string at end of output folder name. (true)");
+            pw.println("#appendFolderDate false");
             pw.println("##Path of a partial waveform folder, must be set.");
             pw.println("#partialPath partial");
             pw.println("##VariableTypes to input, listed using spaces (MU LAMBDA)");
@@ -111,6 +117,7 @@ public class VariableTypeConvert extends Operation {
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
         if (property.containsKey("folderTag")) folderTag = property.parseStringSingle("folderTag", null);
+        appendFolderDate = property.parseBoolean("appendFolderDate", "true");
 
         partialPath = property.parsePath("partialPath", null, true, workPath);
         inputVariableTypes = Arrays.stream(property.parseStringArray("inputVariableTypes", "MU LAMBDA")).map(VariableType::valueOf)
@@ -152,7 +159,7 @@ public class VariableTypeConvert extends Operation {
         List<PartialID> outPartials = convertVariableType(inputPartialMap, indexMap);
 
         // create output folder and files
-        outPath = DatasetAid.createOutputFolder(workPath, "partial", folderTag, GadgetAid.getTemporaryString());
+        outPath = DatasetAid.createOutputFolder(workPath, "partial", folderTag, appendFolderDate, GadgetAid.getTemporaryString());
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
         PartialIDFile.write(outPartials, outPath);
     }

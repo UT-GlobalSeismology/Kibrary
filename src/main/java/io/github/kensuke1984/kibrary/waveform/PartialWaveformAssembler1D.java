@@ -79,7 +79,7 @@ public class PartialWaveformAssembler1D extends Operation {
 
     private final Property property;
     /**
-     * Path of the work folder
+     * Path of the work folder.
      */
     private Path workPath;
     /**
@@ -87,11 +87,15 @@ public class PartialWaveformAssembler1D extends Operation {
      */
     private String folderTag;
     /**
-     * output directory Path
+     * Whether to append date string at end of output folder name.
+     */
+    private boolean appendFolderDate;
+    /**
+     * Path of the output folder.
      */
     private Path outPath;
     /**
-     * components to be used
+     * Components to use.
      */
     private Set<SACComponent> components;
     /**
@@ -104,15 +108,15 @@ public class PartialWaveformAssembler1D extends Operation {
     private double finalSamplingHz;
 
     /**
-     * Path of a timewindow information file
+     * Path of a timewindow file.
      */
     private Path timewindowPath;
     /**
-     * Path of a data entry list file
+     * Path of a data entry list file.
      */
     private Path dataEntryPath;
     /**
-     * set of variable types for computation
+     * Variable types for compute for.
      */
     private Set<VariableType> variableTypes;
     /**
@@ -122,49 +126,49 @@ public class PartialWaveformAssembler1D extends Operation {
     private Path shPath;
     private Path psvPath;
     /**
-     * The SPC modes that shall be used: SH, PSV, or BOTH
+     * The SPC modes that shall be used, from {SH, PSV, BOTH}.
      */
     private SpcFileAid.UsableSPCMode usableSPCMode;
     /**
-     * the name of a folder containing SPC files (e.g. PREM)（""）
+     * Name of folder containing SPC files (e.g. PREM).
      */
     private String modelName;
 
     /**
-     * source time function. 0: none, 1: boxcar, 2: triangle, 3: asymmetric triangle, 4: auto
+     * Source time function. {0: none, 1: boxcar, 2: triangle, 3: asymmetric triangle, 4: auto}
      */
     private SourceTimeFunctionType sourceTimeFunctionType;
     /**
-     * Folder containing user-defined source time functions
+     * Folder containing user-defined source time functions.
      */
     private Path userSourceTimeFunctionPath;
     /**
-     * Catalog containing source time function durations
+     * Catalog containing source time function durations.
      */
     private Path sourceTimeFunctionCatalogPath;
 
     /**
-     * time length (DSM parameter)
+     * Time length (DSM parameter).
      */
     private double tlen;
     /**
-     * step of frequency domain (DSM parameter)
+     * Number of steps in frequency domain (DSM parameter).
      */
     private int np;
     /**
-     * lower frequency of bandpass [Hz]
+     * Lower frequency of bandpass [Hz].
      */
-    private double minFreq;
+    private double lowFreq;
     /**
-     * upper frequency of bandpass [Hz]
+     * Upper frequency of bandpass [Hz].
      */
-    private double maxFreq;
+    private double highFreq;
     /**
      * see Saito, n
      */
     private int filterNp;
     /**
-     * Whether to apply causal filter. true: causal, false: zero-phase
+     * Whether to apply causal filter. {true: causal, false: zero-phase}
      */
     private boolean causal;
 
@@ -201,49 +205,51 @@ public class PartialWaveformAssembler1D extends Operation {
         Path outPath = Property.generatePath(thisClass);
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
             pw.println("manhattan " + thisClass.getSimpleName());
-            pw.println("##Path of a working folder (.)");
+            pw.println("##Path of work folder. (.)");
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this unset.");
             pw.println("#folderTag ");
-            pw.println("##SacComponents to be used (Z R T)");
+            pw.println("##(boolean) Whether to append date string at end of output folder name. (true)");
+            pw.println("#appendFolderDate false");
+            pw.println("##SacComponents to be used. (Z R T)");
             pw.println("#components ");
-            pw.println("##(double) Value of sac sampling Hz (20) can't be changed now");
+            pw.println("##(double) SAC sampling frequency [Hz]. (20) can't be changed now");
             pw.println("#partialSamplingHz the value will be ignored");
-            pw.println("##(double) Value of sampling Hz in output files, must be a factor of sacSamplingHz (1)");
+            pw.println("##(double) Sampling frequency in output files [Hz], must be a factor of sacSamplingHz. (1)");
             pw.println("#finalSamplingHz ");
-            pw.println("##Path of a timewindow data file, must be set");
+            pw.println("##Path of a timewindow data file, must be set.");
             pw.println("#timewindowPath timewindow.dat");
-            pw.println("##Path of a data entry list file, if you want to select raypaths");
+            pw.println("##Path of a data entry list file, if you want to select raypaths.");
             pw.println("#dataEntryPath selectedEntry.lst");
-            pw.println("##VariableTypes to compute for at each voxel, listed using spaces (MU)");
+            pw.println("##VariableTypes to compute for at each voxel, listed using spaces. (MU)");
             pw.println("#variableTypes ");
             pw.println("##(double[]) Layer radii, listed using spaces, if you want to select layers to be worked for.");
             pw.println("#layerRadii ");
-            pw.println("##Path of an SH folder (.)");
+            pw.println("##Path of an SH folder. (.)");
             pw.println("#shPath ");
-            pw.println("##Path of a PSV folder (.)");
+            pw.println("##Path of a PSV folder. (.)");
             pw.println("#psvPath ");
-            pw.println("##The mode of spc files that have been computed, from {SH, PSV, BOTH} (BOTH)");
+            pw.println("##The mode of spc files that have been computed, from {SH, PSV, BOTH}. (BOTH)");
             pw.println("#usableSPCMode ");
             pw.println("##The model name used; e.g. if it is PREM, spectrum files in 'eventDir/PREM' are used. (PREM)");
             pw.println("#modelName ");
-            pw.println("##########Computation settings");
+            pw.println("##########Computation settings.");
             pw.println("##Path of folder containing source time functions. If not set, the following sourceTimeFunctionType will be used.");
             pw.println("#userSourceTimeFunctionPath ");
-            pw.println("##Type of source time function, from {0:none, 1:boxcar, 2:triangle, 3:asymmetricTriangle, 4:auto} (0)");
+            pw.println("##Type of source time function, from {0:none, 1:boxcar, 2:triangle, 3:asymmetricTriangle, 4:auto}. (0)");
             pw.println("##  When 'auto' is selected, the function specified in the GCMT catalog will be used.");
             pw.println("#sourceTimeFunctionType ");
             pw.println("##Path of a catalog to set source time function durations. If unneeded, leave this unset.");
             pw.println("#sourceTimeFunctionCatalogPath ");
-            pw.println("##Time length to be computed, must be a power of 2 over 10 (3276.8)");
+            pw.println("##Time length to be computed, must be a power of 2 over 10. (3276.8)");
             pw.println("#tlen ");
-            pw.println("##Number of points to be computed in frequency domain, must be a power of 2 (512)");
+            pw.println("##Number of points to be computed in frequency domain, must be a power of 2. (512)");
             pw.println("#np ");
-            pw.println("##(double) Minimum value of passband (0.005)");
-            pw.println("#minFreq ");
-            pw.println("##(double) Maximum value of passband (0.08)");
-            pw.println("#maxFreq ");
-            pw.println("##(int) The value of np for the filter (4)");
+            pw.println("##Lower limit of the frequency band [Hz]. (0.005)");
+            pw.println("#lowFreq ");
+            pw.println("##Higher limit of the frequency band [Hz]. (0.08)");
+            pw.println("#highFreq ");
+            pw.println("##(int) The value of NP for the filter. (4)");
             pw.println("#filterNp ");
             pw.println("##(boolean) Whether to apply causal filter. When false, zero-phase filter is applied. (false)");
             pw.println("#causal ");
@@ -259,6 +265,7 @@ public class PartialWaveformAssembler1D extends Operation {
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
         if (property.containsKey("folderTag")) folderTag = property.parseStringSingle("folderTag", null);
+        appendFolderDate = property.parseBoolean("appendFolderDate", "true");
         components = Arrays.stream(property.parseStringArray("components", "Z R T"))
                 .map(SACComponent::valueOf).collect(Collectors.toSet());
         partialSamplingHz = 20;  // TODO property.parseDouble("sacSamplingHz", "20");
@@ -294,8 +301,8 @@ public class PartialWaveformAssembler1D extends Operation {
 
         tlen = property.parseDouble("tlen", "3276.8");
         np = property.parseInt("np", "512");
-        maxFreq = property.parseDouble("maxFreq", "0.08");
-        minFreq = property.parseDouble("minFreq", "0.005");
+        lowFreq = property.parseDouble("lowFreq", "0.005");
+        highFreq = property.parseDouble("highFreq", "0.08");
         filterNp = property.parseInt("filterNp", "4");
         causal = property.parseBoolean("causal", "false");
     }
@@ -335,10 +342,11 @@ public class PartialWaveformAssembler1D extends Operation {
         filter = designBandPassFilter();
 
         // create output folder
-        outPath = DatasetAid.createOutputFolder(workPath, "assembled", folderTag, GadgetAid.getTemporaryString());
+        outPath = DatasetAid.createOutputFolder(workPath, "assembled", folderTag, appendFolderDate, GadgetAid.getTemporaryString());
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         ExecutorService es = ThreadAid.createFixedThreadPool();
+        System.err.println("Working for " + eventSet.size() + " events.");
         // for each event, execute run() of class Worker, which is defined at the bottom of this java file
         eventSet.stream().map(Worker::new).forEach(es::execute);
         es.shutdown();
@@ -353,9 +361,9 @@ public class PartialWaveformAssembler1D extends Operation {
     }
 
     private ButterworthFilter designBandPassFilter() throws IOException {
-        System.err.println("Designing filter.");
-        double omegaH = maxFreq * 2 * Math.PI / partialSamplingHz;
-        double omegaL = minFreq * 2 * Math.PI / partialSamplingHz;
+        System.err.println("Designing filter. " + lowFreq + " - " + highFreq);
+        double omegaH = highFreq * 2 * Math.PI / partialSamplingHz;
+        double omegaL = lowFreq * 2 * Math.PI / partialSamplingHz;
         ButterworthFilter filter = new BandPassFilter(omegaH, omegaL, filterNp);
         filter.setCausal(causal);
         return filter;
@@ -507,7 +515,7 @@ public class PartialWaveformAssembler1D extends Operation {
             Trace resampledTrace = filteredTrace.resampleInWindow(timewindow, partialSamplingHz, finalSamplingHz);
 
             PartialID partialID = new PartialID(timewindow.getObserver(), event, timewindow.getComponent(), finalSamplingHz,
-                    timewindow.getStartTime(), resampledTrace.getLength(), 1 / maxFreq, 1 / minFreq,
+                    timewindow.getStartTime(), resampledTrace.getLength(), 1 / highFreq, 1 / lowFreq,
                     timewindow.getPhases(), sourceTimeFunctionType != SourceTimeFunctionType.NONE,
                     ParameterType.LAYER, variableType, new FullPosition(0, 0, bodyR), resampledTrace.getY());
             partialIDs.add(partialID);

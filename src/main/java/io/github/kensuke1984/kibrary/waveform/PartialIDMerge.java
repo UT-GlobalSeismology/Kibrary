@@ -27,17 +27,21 @@ public class PartialIDMerge extends Operation {
 
     private final Property property;
     /**
-     * Path of the work folder
+     * Path of the work folder.
      */
     private Path workPath;
     /**
-     * The first part of the name of output partial folder
+     * The first part of the name of output partial folder.
      */
     private String nameRoot;
     /**
      * A tag to include in output folder name. When this is empty, no tag is used.
      */
     private String folderTag;
+    /**
+     * Whether to append date string at end of output folder name.
+     */
+    private boolean appendFolderDate;
 
     private List<Path> partialPaths = new ArrayList<>();
 
@@ -57,16 +61,18 @@ public class PartialIDMerge extends Operation {
         Path outPath = Property.generatePath(thisClass);
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
             pw.println("manhattan " + thisClass.getSimpleName());
-            pw.println("##Path of a work folder (.)");
+            pw.println("##Path of work folder. (.)");
             pw.println("#workPath ");
-            pw.println("##(String) The first part of the name of output partial waveform folder (partial)");
+            pw.println("##(String) The first part of the name of output partial waveform folder. (partial)");
             pw.println("#nameRoot ");
             pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this unset.");
             pw.println("#folderTag ");
+            pw.println("##(boolean) Whether to append date string at end of output folder name. (true)");
+            pw.println("#appendFolderDate false");
             pw.println("##########From here on, list up paths of partial waveform folders to merge.");
             pw.println("########## Up to " + MAX_INPUT + " folders can be managed. Any entry may be left unset.");
             for (int i = 1; i <= MAX_INPUT; i++) {
-                pw.println("##" + MathAid.ordinalNumber(i) + " folder");
+                pw.println("##" + MathAid.ordinalNumber(i) + " folder.");
                 pw.println("#partialPath" + i + " partial");
             }
         }
@@ -82,6 +88,7 @@ public class PartialIDMerge extends Operation {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
         nameRoot = property.parseStringSingle("nameRoot", "partial");
         if (property.containsKey("folderTag")) folderTag = property.parseStringSingle("folderTag", null);
+        appendFolderDate = property.parseBoolean("appendFolderDate", "true");
 
         for (int i = 1; i <= MAX_INPUT; i++) {
             String partialKey = "partialPath" + i;
@@ -96,10 +103,10 @@ public class PartialIDMerge extends Operation {
     public void run() throws IOException {
         int inputNum = partialPaths.size();
         if (inputNum == 0) {
-            System.err.println("No input folders found.");
+            System.err.println("!! No input folders found.");
             return;
         } else if (inputNum == 1) {
-            System.err.println("Only 1 input folder found. Merging will not be done.");
+            System.err.println("!! Only 1 input folder found. Merging will not be done.");
             return;
         }
 
@@ -110,7 +117,7 @@ public class PartialIDMerge extends Operation {
             partialIDs.addAll(srcIDs);
         }
 
-        Path outPath = DatasetAid.createOutputFolder(workPath, nameRoot, folderTag, GadgetAid.getTemporaryString());
+        Path outPath = DatasetAid.createOutputFolder(workPath, nameRoot, folderTag, appendFolderDate, GadgetAid.getTemporaryString());
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         // output merged files

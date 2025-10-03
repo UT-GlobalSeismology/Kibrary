@@ -61,11 +61,11 @@ public class RaypathMapper extends Operation {
 
     private final Property property;
     /**
-     * Path of the work folder
+     * Path of the work folder.
      */
     private Path workPath;
     /**
-     * Path of an output foler to reuse, if reusing any
+     * Path of an output foler to reuse, if reusing any.
      */
     private Path reusePath;
     /**
@@ -73,15 +73,23 @@ public class RaypathMapper extends Operation {
      */
     private String folderTag;
     /**
+     * Whether to append date string at end of output folder name.
+     */
+    private boolean appendFolderDate;
+    /**
      * A tag to include in output file names. When this is empty, no tag is used.
      */
     private String fileTag;
     /**
-     * components for path
+     * Whether to append date string at end of output file names.
+     */
+    private boolean appendFileDate;
+    /**
+     * Components to use.
      */
     private Set<SACComponent> components;
     /**
-     * Path of the output folder
+     * Path of the output folder.
      */
     private Path outPath;
 
@@ -100,6 +108,9 @@ public class RaypathMapper extends Operation {
     private boolean drawOutsides;
     private Path outsideColorBinPath;
     private double rayTransparency;
+    /**
+     * Map region in the form lonMin/lonMax/latMin/latMax, when it is set manually.
+     */
     private String mapRegion;
     private String legendJustification;
 
@@ -114,8 +125,7 @@ public class RaypathMapper extends Operation {
     private String outsideFileName;
     private String turningPointFileName;
     private String pixelFileName;
-    private String gmtFileName;
-    private String psFileName;
+    private Path gmtPath;
 
     /**
      * @param args  none to create a property file <br>
@@ -132,51 +142,55 @@ public class RaypathMapper extends Operation {
         Path outPath = Property.generatePath(thisClass);
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
             pw.println("manhattan " + thisClass.getSimpleName());
-            pw.println("##Path of a working folder (.)");
+            pw.println("##Path of work folder. (.)");
             pw.println("#workPath ");
-            pw.println("##To reuse raypath data that have already been exported, set the folder containing them");
+            pw.println("##To reuse raypath data that have already been exported, set the folder containing them.");
             pw.println("#reusePath raypathMap");
             pw.println("##########The following is valid when reusePath is not set.");
             pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this unset.");
             pw.println("#folderTag ");
-            pw.println("##SacComponents of data to be used, listed using spaces (Z R T)");
+            pw.println("##(boolean) Whether to append date string at end of output folder name. (true)");
+            pw.println("#appendFolderDate false");
+            pw.println("##SacComponents of data to be used, listed using spaces. (Z R T)");
             pw.println("#components ");
             pw.println("##Path of a data entry file, must be set if reusePath is not set.");
             pw.println("#dataEntryPath dataEntry.lst");
             pw.println("##########To plot perturbation points, set the following.");
-            pw.println("##Path of a voxel information file");
+            pw.println("##Path of a voxel information file.");
             pw.println("#voxelPath voxel.inf");
             pw.println("##########Overall settings");
             pw.println("##(String) A tag to include in output file names. If no tag is needed, leave this unset.");
             pw.println("#fileTag ");
-            pw.println("##(boolean) Whether to enlarge labels in the figure to use for slides (true)");
+            pw.println("##(boolean) Whether to append date string at end of output file names. (true)");
+            pw.println("#appendFileDate false");
+            pw.println("##(boolean) Whether to enlarge labels in the figure to use for slides. (true)");
             pw.println("#forSlides ");
-            pw.println("##(boolean) Whether to cut raypaths at piercing points (true)");
+            pw.println("##(boolean) Whether to cut raypaths at piercing points. (true)");
             pw.println("#cutAtPiercePoint ");
             pw.println("##########The following settings are valid when reusePath is false and cutAtPiercePoint is true.");
-            pw.println("##Phases to compute pierce points for, listed using spaces (ScS)");
+            pw.println("##Phases to compute pierce points for, listed using spaces. (ScS)");
             pw.println("#piercePhases ");
-            pw.println("##(double) Lower radius to compute pierce points for [km] (3480)");
+            pw.println("##(double) Lower radius to compute pierce points for [km]. (3480)");
             pw.println("#lowerPierceRadius ");
-            pw.println("##(double) Upper radius to compute pierce points for [km] (3880)");
+            pw.println("##(double) Upper radius to compute pierce points for [km]. (3880)");
             pw.println("#upperPierceRadius ");
-            pw.println("##(String) Name of structure to use for calculating pierce points (prem)");
+            pw.println("##(String) Name of structure to use for calculating pierce points. (prem)");
             pw.println("#structureName ");
             pw.println("##########Settings for mapping");
             pw.println("##Mode of coloring of raypaths {0: single color, 1: color by phase, 2: bin by distance, 3: bin by azimuth,");
-            pw.println("## 4: bin by back azimuth, 5: bin by turning-point-azimuth} (0)");
+            pw.println("##  4: bin by back azimuth, 5: bin by turning-point-azimuth}. (0)");
             pw.println("#colorMode ");
-            pw.println("##Path of color bin file, must be set if colorMode is not 0");
+            pw.println("##Path of color bin file, must be set if colorMode is not 0.");
             pw.println("#colorBinPath ");
-            pw.println("##(boolean) Whether to draw the raypaths outside the pierce points (false)");
+            pw.println("##(boolean) Whether to draw the raypaths outside the pierce points. (false)");
             pw.println("#drawOutsides ");
-            pw.println("##Path of color bin file for the outside segments, must be set if colorMode is not 0 and drawOutsides is true");
+            pw.println("##Path of color bin file for the outside segments, must be set if colorMode is not 0 and drawOutsides is true.");
             pw.println("#outsideColorBinPath ");
-            pw.println("##(double) Transparency of raypaths and turning points [%] (0)");
+            pw.println("##(double) Transparency of raypaths and turning points [%]. (0)");
             pw.println("#rayTransparency ");
-            pw.println("##To specify the map region, set it in the form lonMin/lonMax/latMin/latMax, range lon:[-180,180] lat:[-90,90]");
+            pw.println("##To specify the map region, set it in the form lonMin/lonMax/latMin/latMax, range lon:[-180,180] lat:[-90,90].");
             pw.println("#mapRegion -180/180/-90/90");
-            pw.println("##The position of the legend, when colorMode>0, from {TL, TR, BL, BR, none} (BR)");
+            pw.println("##The position of the legend, when colorMode>0, from {TL, TR, BL, BR, none}. (BR)");
             pw.println("#legendJustification ");
         }
         System.err.println(outPath + " is created.");
@@ -190,6 +204,7 @@ public class RaypathMapper extends Operation {
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
         if (property.containsKey("folderTag")) folderTag = property.parseStringSingle("folderTag", null);
+        appendFolderDate = property.parseBoolean("appendFolderDate", "true");
         components = Arrays.stream(property.parseStringArray("components", "Z R T"))
                 .map(SACComponent::valueOf).collect(Collectors.toSet());
 
@@ -205,6 +220,7 @@ public class RaypathMapper extends Operation {
             voxelPath = property.parsePath("voxelPath", null, true, workPath);
         }
         if (property.containsKey("fileTag")) fileTag = property.parseStringSingle("fileTag", null);
+        appendFileDate = property.parseBoolean("appendFileDate", "true");
 
         forSlides = property.parseBoolean("forSlides", "true");
         cutAtPiercePoint = property.parseBoolean("cutAtPiercePoint", "true");
@@ -241,8 +257,6 @@ public class RaypathMapper extends Operation {
         outsideFileName = "raypathOutside.lst";
         turningPointFileName = "turningPoint.lst";
         pixelFileName = "pixel.lst";
-        gmtFileName = DatasetAid.generateOutputFileName("raypathMap", fileTag, dateStr, ".sh");
-        psFileName = DatasetAid.generateOutputFileName("raypathMap", fileTag, dateStr, ".eps");
     }
 
     @Override
@@ -266,8 +280,9 @@ public class RaypathMapper extends Operation {
         if (colorBinPath != null) colorBin = new ColorBinInformationFile(colorBinPath);
         if (outsideColorBinPath != null) outsideColorBin = new ColorBinInformationFile(outsideColorBinPath);
 
+        gmtPath = DatasetAid.generateOutputFilePath(outPath, "raypathMap", fileTag, appendFileDate, dateStr, ".sh");
         outputGMT();
-        System.err.println("After this finishes, please run " + outPath.resolve(gmtFileName));
+        System.err.println("After this finishes, please run " + gmtPath);
     }
 
     private void checkReusePath() {
@@ -297,7 +312,7 @@ public class RaypathMapper extends Operation {
         Set<GlobalCMTID> events = validEntrySet.stream().map(entry -> entry.getEvent()).collect(Collectors.toSet());
         Set<Observer> observers = validEntrySet.stream().map(entry -> entry.getObserver()).collect(Collectors.toSet());
 
-        outPath = DatasetAid.createOutputFolder(workPath, "raypathMap", folderTag, dateStr);
+        outPath = DatasetAid.createOutputFolder(workPath, "raypathMap", folderTag, appendFolderDate, dateStr);
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         EventListFile.write(events, outPath.resolve(eventFileName));
@@ -358,7 +373,7 @@ public class RaypathMapper extends Operation {
 
     /**
      * Creates output line for a raypath segment.
-     * Output line: lat1 lon1 lat2 lon2 dist azimuth backAzimuth (turningAzimuth)
+     * Output line: lat1 lon1 lat2 lon2 iPhase dist azimuth backAzimuth (turningAzimuth)
      *
      * @param raypath (Raypath) The whole raypath
      * @param raypathSegment (Raypath) The raypath segment
@@ -384,7 +399,6 @@ public class RaypathMapper extends Operation {
     }
 
     private void outputGMT() throws IOException {
-        Path gmtPath = outPath.resolve(gmtFileName);
         String fontSize = forSlides ? "25p" : "15p";
         String legendWidth = forSlides ? "6c" : "4.5cm";
         String rayTransparencyOption = (rayTransparency > 0) ? (" -t" + rayTransparency) : "";
@@ -392,7 +406,7 @@ public class RaypathMapper extends Operation {
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(gmtPath))) {
             pw.println("#!/bin/sh");
             pw.println("");
-            pw.println("outputps=\"" + psFileName + "\"");
+            pw.println("outputps=\"" + gmtPath.getFileName().toString().replace(".sh", ".eps") + "\"");
             pw.println("");
             pw.println("# GMT options");
             pw.println("gmt set COLOR_MODEL RGB");

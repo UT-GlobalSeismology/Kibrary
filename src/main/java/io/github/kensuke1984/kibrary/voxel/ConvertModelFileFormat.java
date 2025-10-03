@@ -111,7 +111,7 @@ public class ConvertModelFileFormat extends Operation {
        List<KnownParameter> knowns = KnownParameterFile.read(modelPath);
 
        // create output folder
-       Path outPath = DatasetAid.createOutputFolder(workPath, "models", folderTag, GadgetAid.getTemporaryString());
+       Path outPath = DatasetAid.createOutputFolder(workPath, "models", folderTag, true, GadgetAid.getTemporaryString());
        property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
        convertAndOutputModelFiles(knowns, initialStructure, valueFormat, variableTypes, outPath);

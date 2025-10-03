@@ -40,20 +40,24 @@ public class NetworkLookup extends Operation {
 
     private final Property property;
     /**
-     * Path of the work folder
+     * Path of the work folder.
      */
     private Path workPath;
     /**
      * A tag to include in output file names. When this is empty, no tag is used.
      */
     private String fileTag;
+    /**
+     * Whether to append date string at end of output file names.
+     */
+    private boolean appendFileDate;
 
     /**
-     * Path of a data entry file
+     * Path of a data entry file.
      */
     private Path dataEntryPath;
     /**
-     * Paths of data lobby files to collect network names from
+     * Paths of data lobby folders to collect network names from.
      */
     private List<Path> lobbyPaths = new ArrayList<>();
 
@@ -73,16 +77,18 @@ public class NetworkLookup extends Operation {
         Path outPath = Property.generatePath(thisClass);
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
             pw.println("manhattan " + thisClass.getSimpleName());
-            pw.println("##Path of a working directory. (.)");
+            pw.println("##Path of work folder. (.)");
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output file names. If no tag is needed, leave this unset.");
             pw.println("#fileTag ");
-            pw.println("##Path of a data entry list file, must be set");
+            pw.println("##(boolean) Whether to append date string at end of output file names. (true)");
+            pw.println("#appendFileDate false");
+            pw.println("##Path of a data entry list file, must be set.");
             pw.println("#dataEntryPath dataEntry.lst");
             pw.println("##########From here on, list up paths of data lobby folders containing stationXML files.");
             pw.println("##########  Up to " + MAX_NUM + " folders can be managed. Any index may be left blank.");
             for (int i = 1; i <= MAX_NUM; i++) {
-                pw.println("##" + MathAid.ordinalNumber(i) + " folder");
+                pw.println("##" + MathAid.ordinalNumber(i) + " folder.");
                 pw.println("#lobbyPath" + i + " ");
             }
         }
@@ -96,6 +102,8 @@ public class NetworkLookup extends Operation {
     @Override
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
+        if (property.containsKey("fileTag")) fileTag = property.parseStringSingle("fileTag", null);
+        appendFileDate = property.parseBoolean("appendFileDate", "true");
 
         dataEntryPath = property.parsePath("dataEntryPath", null, true, workPath);
 
@@ -140,7 +148,7 @@ public class NetworkLookup extends Operation {
 
        // output
        String dateStr = GadgetAid.getTemporaryString();
-       Path outputPath = workPath.resolve(DatasetAid.generateOutputFileName("network", fileTag, dateStr, ".txt"));
+       Path outputPath = DatasetAid.generateOutputFilePath(workPath, "network", fileTag, appendFileDate, dateStr, ".txt");
        System.err.println("Outputting in " + outputPath);
        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath))) {
            pw.println("# network|description");
