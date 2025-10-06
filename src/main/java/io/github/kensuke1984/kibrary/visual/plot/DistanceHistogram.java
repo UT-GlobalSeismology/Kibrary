@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
+import org.apache.commons.cli.OptionGroup;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.math3.util.Precision;
@@ -63,8 +64,13 @@ public class DistanceHistogram {
         Options options = Summon.defaultOptions();
 
         // input
-        options.addOption(Option.builder("e").longOpt("dataEntryFile").hasArg().argName("dataEntryFile").required()
+        OptionGroup inputOption = new OptionGroup();
+        inputOption.setRequired(true);
+        inputOption.addOption(Option.builder("e").longOpt("dataEntryFile").hasArg().argName("dataEntryFile")
                 .desc("Path of data entry list file.").build());
+        inputOption.addOption(Option.builder("w").longOpt("weightFile").hasArg().argName("weightListFile")
+                .desc("Path of data entry weight list file.").build());
+        options.addOptionGroup(inputOption);
 
         // settings
         options.addOption(Option.builder("c").longOpt("components").hasArg().argName("components")
@@ -79,7 +85,7 @@ public class DistanceHistogram {
         options.addOption(Option.builder("M").longOpt("maxDistance").hasArg().argName("maxDistance")
                 .desc("Maximum distance in histogram. (180)").build());
         // weighting
-        options.addOption(Option.builder("w").longOpt("weight")
+        options.addOption(Option.builder("W").longOpt("weight")
                 .desc("Decide weights.").build());
 
         // output
@@ -103,18 +109,31 @@ public class DistanceHistogram {
                 ? Arrays.stream(cmdLine.getOptionValue("c").split(",")).map(SACComponent::valueOf).collect(Collectors.toSet())
                 : SACComponent.componentSetOf("ZRT");
 
-        Path dataEntryPath = Paths.get(cmdLine.getOptionValue("e"));
-        Set<DataEntry> entrySet = DataEntryListFile.readAsSet(dataEntryPath).stream()
-                .filter(entry -> components.contains(entry.getComponent())).collect(Collectors.toSet());
+        // read input file
+        Set<DataEntry> entrySet;
+        Map<DataEntry, Double> weightMap = null;
+        if (cmdLine.hasOption("e")) {
+            Path dataEntryPath = Paths.get(cmdLine.getOptionValue("e"));
+            entrySet = DataEntryListFile.readAsSet(dataEntryPath).stream()
+                    .filter(entry -> components.contains(entry.getComponent())).collect(Collectors.toSet());
+        } else if (cmdLine.hasOption("w")) {
+            Path entryWeightPath = Paths.get(cmdLine.getOptionValue("w"));
+            weightMap = EntryWeightListFile.read(entryWeightPath);
+            entrySet = weightMap.keySet().stream()
+                    .filter(entry -> components.contains(entry.getComponent())).collect(Collectors.toSet());
+        } else {
+            throw new IllegalArgumentException("Data entry list file or data entry weight list file must be set.");
+        }
 
         double interval = cmdLine.hasOption("i") ? Double.parseDouble(cmdLine.getOptionValue("i")) : 2;
         double xtics = cmdLine.hasOption("x") ? Double.parseDouble(cmdLine.getOptionValue("x")) : 10;
         double minimum = cmdLine.hasOption("m") ? Double.parseDouble(cmdLine.getOptionValue("m")) : 0;
         double maximum = cmdLine.hasOption("M") ? Double.parseDouble(cmdLine.getOptionValue("M")) : 180;
-        boolean conductWeighting = cmdLine.hasOption("w");
+        boolean conductWeighting = cmdLine.hasOption("W");
 
         // count number of records in each interval
         int[] numberOfRecords = new int[(int) MathAid.ceil(360 / interval)];
+        double[] weightedNumberOfRecords = new double[numberOfRecords.length];
         Map<DataEntry, Double> distanceMap = new HashMap<>();
         for (DataEntry entry : entrySet) {
             FullPosition eventPosition = entry.getEvent().getEventData().getCmtPosition();
@@ -122,14 +141,28 @@ public class DistanceHistogram {
             double epicentralDistance = eventPosition.computeEpicentralDistanceDeg(observerPosition);
             numberOfRecords[(int) (epicentralDistance / interval)]++;
             distanceMap.put(entry, epicentralDistance);
+
+            // if weight file is input, count up weighted number of records
+            if (weightMap != null) weightedNumberOfRecords[(int) (epicentralDistance / interval)] += weightMap.get(entry);
         }
 
         // decide weights
-        double[] weights = decideWeights(numberOfRecords, conductWeighting);
-        Map<DataEntry, Double> weightMap = new HashMap<>();
-        for (DataEntry entry : entrySet) {
-            double weight = weights[(int) (distanceMap.get(entry) / interval)];
-            weightMap.put(entry, weight);
+        if (weightMap == null) {
+            double[] weights = decideWeights(numberOfRecords, conductWeighting);
+
+            // record weight for each entry
+            weightMap = new HashMap<>();
+            if (conductWeighting) {
+                for (DataEntry entry : entrySet) {
+                    double weight = weights[(int) (distanceMap.get(entry) / interval)];
+                    weightMap.put(entry, weight);
+                }
+            }
+
+            // calculate weighted number of records
+            for (int i = 0; i < numberOfRecords.length; i++) {
+                weightedNumberOfRecords[i] = numberOfRecords[i] * weights[i];
+            }
         }
 
         // output
@@ -137,15 +170,15 @@ public class DistanceHistogram {
         Path txtPath = outPath.resolve("distHistogram.txt");
         Path scriptPath = outPath.resolve("distHistogram.plt");
         Path weightPath = outPath.resolve("entryWeight_dist.lst");
-        writeHistogramData(txtPath, interval, numberOfRecords, weights);
+        writeHistogramData(txtPath, interval, numberOfRecords, weightedNumberOfRecords);
         createScript(scriptPath, interval, minimum, maximum, xtics, conductWeighting);
         if (conductWeighting) EntryWeightListFile.write(weightMap, weightPath);
     }
 
-    private static void writeHistogramData(Path txtPath, double interval, int[] numberOfRecords, double[] weights) throws IOException {
+    private static void writeHistogramData(Path txtPath, double interval, int[] numberOfRecords, double[] weightedNumberOfRecords) throws IOException {
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(txtPath))) {
             for (int i = 0; i < numberOfRecords.length; i++) {
-                pw.println(String.format("%.2f %d %.1f", i * interval, numberOfRecords[i], numberOfRecords[i] * weights[i]));
+                pw.println(String.format("%.2f %d %.1f", i * interval, numberOfRecords[i], weightedNumberOfRecords[i]));
             }
         }
     }
