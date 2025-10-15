@@ -36,6 +36,7 @@ import io.github.kensuke1984.kibrary.visual.map.VoxelMapper;
 import io.github.kensuke1984.kibrary.visual.plot.AzimuthHistogram;
 import io.github.kensuke1984.kibrary.visual.plot.DistanceHistogram;
 import io.github.kensuke1984.kibrary.visual.plot.EventHistogram;
+import io.github.kensuke1984.kibrary.visual.plot.RecordNumberPlot;
 import io.github.kensuke1984.kibrary.voxel.LayerInformationFile;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameterSetter;
 import io.github.kensuke1984.kibrary.waveform.BasicIDFile;
@@ -104,6 +105,7 @@ enum Brooklyn {
     // Scalar & Sensitivity 90
     PerturbationComparison(90, PerturbationComparison.class),
     // Temporal 100
+    RecordNumberPlot(100, RecordNumberPlot.class),
     ;
 
     private final Class<?> classObject;
