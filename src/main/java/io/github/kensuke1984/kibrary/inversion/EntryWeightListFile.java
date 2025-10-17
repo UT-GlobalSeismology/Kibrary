@@ -5,15 +5,18 @@ import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 
+import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.InformationFileReader;
 import io.github.kensuke1984.kibrary.util.data.DataEntry;
 import io.github.kensuke1984.kibrary.util.data.Observer;
+import io.github.kensuke1984.kibrary.util.data.RecordEntry;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
@@ -30,18 +33,18 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
  */
 public class EntryWeightListFile {
 
-    public static void write(Map<DataEntry, Double> weightMap, Path outputPath, OpenOption... options) throws IOException {
+    public static void write(Map<RecordEntry, Double> weightMap, Path outputPath, OpenOption... options) throws IOException {
         DatasetAid.printNumOutput(weightMap.size(), "data entry weight", "data entry weights", outputPath);
 
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath, options))) {
-            pw.println("# globalCMTID station network latitude longitude component weight");
+            pw.println("# globalCMTID station network latitude longitude component phases weight");
             weightMap.entrySet().stream().sorted(Comparator.comparing(entry -> entry.getKey()))
                     .forEach(entry -> pw.println(entry.getKey().toString() + " " + entry.getValue()));
         }
     }
 
-    public static Map<DataEntry, Double> read(Path inputPath) throws IOException {
-        Map<DataEntry, Double> weightMap = new HashMap<>();
+    public static Map<RecordEntry, Double> read(Path inputPath) throws IOException {
+        Map<RecordEntry, Double> weightMap = new HashMap<>();
 
         InformationFileReader reader = new InformationFileReader(inputPath, true);
         while (reader.hasNext()) {
@@ -50,9 +53,10 @@ public class EntryWeightListFile {
             HorizontalPosition hp = new HorizontalPosition(Double.parseDouble(parts[3]), Double.parseDouble(parts[4]));
             Observer observer = new Observer(parts[1], parts[2], hp);
             SACComponent component = SACComponent.valueOf(parts[5]);
-            double weight = Double.parseDouble(parts[6]);
+            Phase[] phases = Arrays.stream(parts[6].split(",")).map(Phase::create).toArray(Phase[]::new);
+            double weight = Double.parseDouble(parts[7]);
 
-            DataEntry entry = new DataEntry(event, observer, component);
+            RecordEntry entry = new RecordEntry(event, observer, component, phases);
             weightMap.put(entry, weight);
         }
 

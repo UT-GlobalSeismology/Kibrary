@@ -27,6 +27,7 @@ import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.data.DataEntry;
+import io.github.kensuke1984.kibrary.util.data.RecordEntry;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.waveform.BasicID;
@@ -67,7 +68,7 @@ public class WeightingHandler {
 
     private List<DataFeature> dataFeatures; // TODO apply
 
-    private List<Map<DataEntry, Double>> weightMaps = new ArrayList<>();
+    private List<Map<RecordEntry, Double>> weightMaps = new ArrayList<>();
 
     /**
      * Create default properties file.
@@ -195,7 +196,7 @@ public class WeightingHandler {
             String weightKey = "weightPath" + i;
             if (property.containsKey(weightKey)) {
                 Path weightPath = property.parsePath(weightKey, null, true, parentPath);
-                Map<DataEntry, Double> weightMap = EntryWeightListFile.read(weightPath);
+                Map<RecordEntry, Double> weightMap = EntryWeightListFile.read(weightPath);
                 weightMaps.add(weightMap);
             }
         }
@@ -214,6 +215,7 @@ public class WeightingHandler {
         // count number of timewindows for each component
         int numZ = 0, numR = 0, numT = 0;
         for (int i = 0; i < dVector.getNTimeWindow(); i++) {
+//            System.err.println(dVector.getObsID(i).toRecordEntry().toString()); //TODO delete
             switch (dVector.getObsID(i).getSacComponent()) {
             case Z: numZ++; break;
             case R: numR++; break;
@@ -279,7 +281,7 @@ public class WeightingHandler {
 
             // multiply values specified in weight files
             for (int k = 0; k < weightMaps.size(); k++) {
-                DataEntry entry = dVector.getObsID(i).toDataEntry();
+                RecordEntry entry = dVector.getObsID(i).toRecordEntry();
                 // Take square root because weighting matrix W will be multiplied twice, as tAWWAm=tAWWd
                 weighting *= Math.sqrt(weightMaps.get(k).get(entry));
             }

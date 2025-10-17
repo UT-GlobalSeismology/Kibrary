@@ -7,6 +7,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -19,6 +20,7 @@ import org.apache.commons.cli.ParseException;
 import org.apache.commons.math3.util.Precision;
 
 import edu.sc.seis.TauP.TauModelException;
+import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.Summon;
 import io.github.kensuke1984.kibrary.external.TauPPierceWrapper;
 import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotFile;
@@ -28,6 +30,7 @@ import io.github.kensuke1984.kibrary.util.FileAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.data.DataEntry;
 import io.github.kensuke1984.kibrary.util.data.DataEntryListFile;
+import io.github.kensuke1984.kibrary.util.data.RecordEntry;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
@@ -96,11 +99,13 @@ public class AzimuthHistogram {
         // TauP settings
         options.addOption(Option.builder("s").longOpt("structure").hasArg().argName("structure")
                 .desc("Name of structure to use to compute turning point. (prem)").build());
-        options.addOption(Option.builder("p").longOpt("phase").hasArg().argName("phase")
+        options.addOption(Option.builder("p").longOpt("turingPhase").hasArg().argName("phase")
                 .desc("Name of phase to use to compute turning point. (ScS)").build());
         // weighting
         options.addOption(Option.builder("w").longOpt("weight")
                 .desc("Whether to decide weights.").build());
+        options.addOption(Option.builder("P").longOpt("phases")
+                .desc("Name of phases to use to weight, listed using comma. (S,ScS)").build());
 
         // output
         options.addOption(Option.builder("T").longOpt("tag").hasArg().argName("folderTag")
@@ -124,8 +129,13 @@ public class AzimuthHistogram {
                 : SACComponent.componentSetOf("ZRT");
 
         Path dataEntryPath = Paths.get(cmdLine.getOptionValue("e"));
-        Set<DataEntry> entrySet = DataEntryListFile.readAsSet(dataEntryPath).stream()
+        Phase[] phases = Arrays.stream(cmdLine.getOptionValue("P").split(",")).map(Phase::create).toArray(Phase[]::new);;
+        Set<DataEntry> dataEntrySet = DataEntryListFile.readAsSet(dataEntryPath).stream()
                 .filter(entry -> components.contains(entry.getComponent())).collect(Collectors.toSet());
+        Set<RecordEntry> entrySet = new HashSet<>();
+        for (DataEntry dataEntry : dataEntrySet) {
+            entrySet.add(new RecordEntry(dataEntry.getEvent(), dataEntry.getObserver(), dataEntry.getComponent(), phases));
+        }
 
         double interval = cmdLine.hasOption("i") ? Double.parseDouble(cmdLine.getOptionValue("i")) : 5;
         double xtics = cmdLine.hasOption("x") ? Double.parseDouble(cmdLine.getOptionValue("x")) : 30;
@@ -143,7 +153,7 @@ public class AzimuthHistogram {
         if (useTurningAzimuth) {
             try {
                 pierceTool = new TauPPierceWrapper(structureName, turningPointPhase);
-                pierceTool.compute(entrySet);
+                pierceTool.compute(new HashSet<>(entrySet));
             } catch (TauModelException e) {
                 throw new RuntimeException(e);
             }
@@ -151,8 +161,8 @@ public class AzimuthHistogram {
 
         // count number of records in each interval
         int[] numberOfRecords = new int[(int) Math.ceil(360 / interval)];
-        Map<DataEntry, Double> azimuthMap = new HashMap<>();
-        for (DataEntry entry : entrySet) {
+        Map<RecordEntry, Double> azimuthMap = new HashMap<>();
+        for (RecordEntry entry : entrySet) {
             FullPosition eventPosition = entry.getEvent().getEventData().getCmtPosition();
             HorizontalPosition observerPosition = entry.getObserver().getPosition();
 
@@ -180,8 +190,8 @@ public class AzimuthHistogram {
 
         // decide weights
         double[] weights = decideWeights(numberOfRecords, conductWeighting);
-        Map<DataEntry, Double> weightMap = new HashMap<>();
-        for (DataEntry entry : entrySet) {
+        Map<RecordEntry, Double> weightMap = new HashMap<>();
+        for (RecordEntry entry : entrySet) {
             double weight = weights[(int) (azimuthMap.get(entry) / interval)];
             weightMap.put(entry, weight);
         }
