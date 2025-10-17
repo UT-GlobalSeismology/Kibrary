@@ -6,6 +6,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -18,17 +19,21 @@ import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.RealVector;
 
 import edu.sc.seis.TauP.TauModelException;
+import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.external.TauPPierceWrapper;
 import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotFile;
 import io.github.kensuke1984.kibrary.inversion.EntryWeightListFile;
+import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
+import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.FileAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.data.DataEntry;
 import io.github.kensuke1984.kibrary.util.data.DataEntryListFile;
+import io.github.kensuke1984.kibrary.util.data.RecordEntry;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
@@ -53,9 +58,17 @@ public class GeographicalFeatureHistogram extends Operation {
       */
      Set<SACComponent> components;
      /**
+      * Path of a timewindow information file.
+      */
+     private Path timewindowPath;
+     /**
       * Path of a data entry file.
       */
      private Path dataEntryPath;
+     /**
+      * Array of phases.
+      */
+     private Phase[] phases;
      /**
       * Interval of distance in histogram.
       */
@@ -108,7 +121,7 @@ public class GeographicalFeatureHistogram extends Operation {
       * Dumping parameters to calculate weights.
       */
      private double[] lambdas;
-     private List<DataEntry> entryList;
+     private List<RecordEntry> entryList;
 
 
     /**
@@ -134,8 +147,12 @@ public class GeographicalFeatureHistogram extends Operation {
             pw.println("#appendFolderDate false");
             pw.println("##SacComponents to be used, listed using spaces. (Z R T)");
             pw.println("#components ");
+            pw.println("##Path of a timewindow file. If not set, the following dataEntryPath & phases will be used.");
+            pw.println("#timewindowPath timewindow.dat");
             pw.println("##Path of a data entry list file. must be set.");
             pw.println("#dataEntryPath dataEntry.lst");
+            pw.println("##Phases to use, listed using spaces. (S ScS)");
+            pw.println("#phases ");
             pw.println("##Interval of distance in histogram. (2)");
             pw.println("#distanceInterval ");
             pw.println("##Interval of x tics in distance histogram. (10)");
@@ -178,7 +195,12 @@ public class GeographicalFeatureHistogram extends Operation {
         components = Arrays.stream(property.parseStringArray("components", "Z R T"))
                 .map(SACComponent::valueOf).collect(Collectors.toSet());
 
-        dataEntryPath = property.parsePath("dataEntryPath", null, true, workPath);
+        if (property.containsKey("timewindowPath")) {
+            timewindowPath = property.parsePath("timewindowPath", null, true, workPath);
+        } else {
+            dataEntryPath = property.parsePath("dataEntryPath", null, true, workPath);
+            phases = Arrays.stream(property.parseString("phases", "S ScS").split("\\s+")).map(Phase::create).toArray(Phase[]::new);
+        }
         distanceInterval = property.parseDouble("distanceInterval", "2");
         distanceXtics= property.parseDouble("distanceXtics", "10");
         distanceMin = property.parseDouble("distanceMin", "0");
@@ -199,15 +221,25 @@ public class GeographicalFeatureHistogram extends Operation {
    @Override
    public void run() throws IOException {
 
-        entryList = DataEntryListFile.readAsSet(dataEntryPath).stream()
-                .filter(entry -> components.contains(entry.getComponent())).collect(Collectors.toList());
+       entryList = new ArrayList<>();
+       if (timewindowPath != null) {
+           Set<TimewindowData> windows = TimewindowDataFile.read(timewindowPath);
+           for (TimewindowData window : windows) {
+               entryList.add(new RecordEntry(window.getGlobalCMTID(), window.getObserver(), window.getComponent(), window.getPhases()));
+           }
+       } else {
+           Set<DataEntry> dataEntries = DataEntryListFile.readAsSet(dataEntryPath);
+           for (DataEntry dataEntry : dataEntries) {
+               entryList.add(new RecordEntry(dataEntry.getEvent(), dataEntry.getObserver(), dataEntry.getComponent(), phases));
+           }
+       }
 
         int nDistance = (int) Math.ceil(360 / distanceInterval);
         int nAzimuth = (int) Math.ceil(360 / azimuthInterval);
         double[] distanceBins = new double[nDistance];
         double[] azimuthBins = new double[nAzimuth];
-        Map<DataEntry, Integer> distanceMap = new HashMap<>();
-        Map<DataEntry, Integer> azimuthMap = new HashMap<>();
+        Map<RecordEntry, Integer> distanceMap = new HashMap<>();
+        Map<RecordEntry, Integer> azimuthMap = new HashMap<>();
 
         Arrays.fill(distanceBins, 0.);
         Arrays.fill(azimuthBins, 0.);
@@ -221,7 +253,7 @@ public class GeographicalFeatureHistogram extends Operation {
                 throw new RuntimeException(e);
             }
         }
-        for (DataEntry entry : entryList) {
+        for (RecordEntry entry : entryList) {
             FullPosition eventPosition = entry.getEvent().getEventData().getCmtPosition();
             HorizontalPosition observerPosition = entry.getObserver().getPosition();
             double distance = Math.toDegrees(eventPosition.computeEpicentralDistanceRad(observerPosition));
@@ -343,7 +375,7 @@ public class GeographicalFeatureHistogram extends Operation {
         }
     }
 
-    private double[] computeWeights(double lambda, double[] bins, Map<DataEntry,Integer> map, Path outPath, String type) throws IOException {
+    private double[] computeWeights(double lambda, double[] bins, Map<RecordEntry,Integer> map, Path outPath, String type) throws IOException {
         int num = Arrays.stream(bins).filter(b -> b != 0.).toArray().length;
         double average = (double) entryList.size() / num;
         double[] weightArray = new double[bins.length];
@@ -360,8 +392,8 @@ public class GeographicalFeatureHistogram extends Operation {
         String lambdaCode = MathAid.simplestString(lambda, "d");
         plotHistograms(weightArray, outPath, lambdaCode, type);
 
-        Map<DataEntry, Double> weightMap = new HashMap<>();
-        for (DataEntry entry : entryList) {
+        Map<RecordEntry, Double> weightMap = new HashMap<>();
+        for (RecordEntry entry : entryList) {
             int index = map.get(entry);
             double weight = weightArray[index] / bins[index];
             weightMap.put(entry, weight);

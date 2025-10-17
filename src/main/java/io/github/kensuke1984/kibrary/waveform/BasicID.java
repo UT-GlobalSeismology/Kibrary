@@ -13,6 +13,7 @@ import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
 import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.data.DataEntry;
 import io.github.kensuke1984.kibrary.util.data.Observer;
+import io.github.kensuke1984.kibrary.util.data.RecordEntry;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.sac.WaveformType;
@@ -297,6 +298,15 @@ public class BasicID {
      */
     public DataEntry toDataEntry() {
         return new DataEntry(eventID, observer, component);
+    }
+
+    /**
+     * @return
+     * @since 2025/10/16
+     * @author rei
+     */
+    public RecordEntry toRecordEntry() {
+        return new RecordEntry(eventID, observer, component, phases);
     }
 
     @Override
