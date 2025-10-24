@@ -13,7 +13,6 @@ import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
 
-import org.apache.commons.math3.complex.Complex;
 import org.apache.commons.math3.linear.RealVector;
 
 import io.github.kensuke1984.kibrary.Operation;
@@ -292,7 +291,7 @@ public class SourceWaveletMaker2 extends Operation {
         @Override
         public void finalWork() {
             // divide by the number of time windows added to get average, and half duration to normalize the amplitude
-            double[] yArray = sumVector.mapDivide(num).toArray();
+            double[] yArray = sumVector.mapDivide(num).mapDivide(halfDuration).toArray();
             // taper
             yArray = FourierTransform.taper(yArray, TAPER_LENGTH_PERCENT, true);
 
@@ -310,13 +309,49 @@ public class SourceWaveletMaker2 extends Operation {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            
+
             double t0 = waveletTrace.getXforMaxYValue();
-            double t1 = computet1(waveletTrace, t0);
-            double t2 = computet2(waveletTrace, t0);
-            
+            int halfIndex1 = computet1(waveletTrace, t0);
+            double t1 = waveletTrace.getXAt(halfIndex1);
+            int halfIndex2 = computet2(waveletTrace, t0);
+            double t2 = waveletTrace.getXAt(halfIndex2);
+
             System.out.println(t0 + " " + t1 + " " + t2);
-            
+
+            double maxtau1 = t0 - waveletTrace.getXAt(0);
+            double maxtau2 = waveletTrace.getXAt(waveletTrace.getLength() - 1) - t0;
+            double delta = 0.1;
+            double minsum  = Double.POSITIVE_INFINITY;
+            double tau1 = 0;
+            double tau2 = 0;
+            System.out.println((t0 - t1) + " " + (t2 - t0));
+            System.out.println(maxtau1 + " " + maxtau2);
+            for (double temptau1 = t0 - t1; temptau1 <= maxtau1; temptau1 += delta) {
+                for (double temptau2 = t2 - t0; temptau2 <= maxtau2; temptau2 += delta) {
+                    double sum = 0;
+                    for (int i = halfIndex1; i <= halfIndex2; i++) {
+                        double t = waveletTrace.getXAt(i);
+                        double x = t - t0;
+                        double f = f(temptau1, temptau2, x);
+                        double y = waveletTrace.getYAt(i);
+                        sum += Math.pow(y - f, 2);
+                    }
+                    if (sum < minsum) {
+                        minsum = sum;
+                        tau1 = temptau1;
+                        tau2 = temptau2;
+                    }
+                }
+            }
+            System.out.println(tau1 + " " +tau2);
+
+            Path trianglePath = outPath.resolve(eventID + "_triangle.txt");
+            try {
+                writeTriangle(t0, tau1, tau2, maxtau2, trianglePath);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
             // zero-pad, with wavelet placed at the center of the time series
             //   Here, arrival + halfDuration is set at center.
             int npts = SPCFileAid.findNpts(tlen, sacSamplingHz);
@@ -327,18 +362,10 @@ public class SourceWaveletMaker2 extends Operation {
             }
 
             // convert to frequency domain
-            Complex[] complexWave = FourierTransform.convertToFrequencyDomain(paddedArray, np);
 
-            for (int i = 0; i < complexWave.length; i++) {
-                // divide sampling frequency [Hz] so that the FFT matches with the Fourier transform
-                complexWave[i] = complexWave[i].divide(sacSamplingHz);
-                // time-shift so that the wavelet is at time zero
-                // This is done by reversing sign of odd-number index entries.
-                if (i % 2 == 1) complexWave[i] = complexWave[i].multiply(-1.0);
-            }
 
             // output
-            SourceTimeFunction sourceTimeFunction = new SourceTimeFunction(complexWave, tlen);
+            SourceTimeFunction sourceTimeFunction = SourceTimeFunction.asymmetricTriangleSourceTimeFunction(np, tlen, tau1, tau2);
             Path waveletPath = outPath.resolve(eventID + ".stf");
             try {
                 sourceTimeFunction.write(waveletPath);
@@ -348,37 +375,57 @@ public class SourceWaveletMaker2 extends Operation {
         }
 
     }
-    
-    //t1,t2
-    private double computet1 (Trace waveletTrace, double t0) {
-    	double yhalf = waveletTrace.getMaxY() / 2;
-    	int xIndexforMax = waveletTrace.getXIndexforMaxYValue();
-    	int halfIndex1 = 0;
-    	for (int i = xIndexforMax; i >= 0; i--) {
-    		if(waveletTrace.getYAt(i) < yhalf) {
-    			halfIndex1 = i;
-    			break;
-    		}
-    	}
-    	if(halfIndex1 == 0) {
-    		throw new IllegalStateException();
-    	}
-    	return waveletTrace.getXAt(halfIndex1);
+    //output triangle
+    private void writeTriangle(double t0, double tau1, double tau2, double maxtau2, Path outputPath)throws IOException {
+        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath))) {
+            pw.println(0 + " " + 0);
+            pw.println((t0 - tau1) + " " + 0);
+            pw.println(t0 +" " + (2 / (tau1 +tau2)));
+            pw.println((t0 + tau2) + " " + 0);
+            pw.println((t0 + maxtau2)+ " " + 0);
+        }
     }
-    
-    private double computet2 (Trace waveletTrace, double t0) {
-    	double yhalf = waveletTrace.getMaxY() / 2;
-    	int xIndexforMax = waveletTrace.getXIndexforMaxYValue();
-    	int halfIndex2 = 0;
-    	for (int i = xIndexforMax; i < waveletTrace.getLength(); i++) {
-    		if(waveletTrace.getYAt(i) < yhalf) {
-    			halfIndex2 = i;
-    			break;
-    		}
-    	}
-    	if(halfIndex2 == 0) {
-    		throw new IllegalStateException();
-    	}
-    	return waveletTrace.getXAt(halfIndex2);
+    //t1
+    private int computet1(Trace waveletTrace, double t0) {
+        double yhalf = waveletTrace.getMaxY() / 2;
+        int xIndexforMax = waveletTrace.getXIndexforMaxYValue();
+        int halfIndex1 = 0;
+        for (int i = xIndexforMax; i >= 0; i--) {
+            if (waveletTrace.getYAt(i) < yhalf) {
+                halfIndex1 = i;
+                break;
+            }
+        }
+        if (halfIndex1 == 0) {
+            throw new IllegalStateException();
+        }
+        return halfIndex1;
+    }
+    //t2
+    private int computet2(Trace waveletTrace, double t0) {
+        double yhalf = waveletTrace.getMaxY() / 2;
+        int xIndexforMax = waveletTrace.getXIndexforMaxYValue();
+        int halfIndex2 = 0;
+        for (int i = xIndexforMax; i < waveletTrace.getLength(); i++) {
+            if (waveletTrace.getYAt(i) < yhalf) {
+                halfIndex2 = i;
+                break;
+            }
+        }
+        if (halfIndex2 == 0) {
+            throw new IllegalStateException();
+        }
+        return halfIndex2;
+    }
+
+    //f(x)
+    private double f(double tau1, double tau2, double x) {
+        if (x > -tau1 && x <= 0) {
+            return 2 / (tau1 + tau2) * (x + tau1) / tau1;
+        } else if (x > 0 && x < tau2) {
+            return 2 / (tau1 + tau2) * (tau2 - x) / tau2;
+        } else {
+            return 0;
+        }
     }
 }
