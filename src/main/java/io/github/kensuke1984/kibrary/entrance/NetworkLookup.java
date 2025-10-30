@@ -37,7 +37,7 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
  */
 public class NetworkLookup extends Operation {
 
-    private static final int MAX_NUM = 10;
+    private static final int MAX_NUM = 20;
 
     private final Property property;
     /**
@@ -177,17 +177,17 @@ public class NetworkLookup extends Operation {
        String description = null;
        String doi = null;
 
-       // search event folder in all dataLobby folders
+       // search station folder in event folder in all dataLobby folders
        for (Path lobbyPath : lobbyPaths) {
-           Path eventPath = lobbyPath.resolve(event.toString());
-           if (!Files.exists(eventPath)) {
+           Path stationPath = lobbyPath.resolve(event.toString()).resolve("station");
+           if (!Files.exists(stationPath)) {
                continue;
            }
 
            // search stationXML file of the specified network in eventFolder/station/
            List<Path> stationXMLPaths;
            // CAUTION: Files.list() must be in try-with-resources.
-           try (Stream<Path> stream = Files.list(eventPath.resolve("station"))) {
+           try (Stream<Path> stream = Files.list(stationPath)) {
                stationXMLPaths = stream.filter(p -> p.getFileName().toString().startsWith("station." + networkCode + "."))
                        .collect(Collectors.toList());
            }
