@@ -13,6 +13,7 @@ import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
 
+import org.apache.commons.math3.complex.Complex;
 import org.apache.commons.math3.linear.RealVector;
 
 import io.github.kensuke1984.kibrary.Operation;
@@ -310,6 +311,7 @@ public class SourceWaveletMaker2 extends Operation {
                 e.printStackTrace();
             }
 
+            //create triangle STF
             double t0 = waveletTrace.getXforMaxYValue();
             int halfIndex1 = computet1(waveletTrace, t0);
             double t1 = waveletTrace.getXAt(halfIndex1);
@@ -344,31 +346,83 @@ public class SourceWaveletMaker2 extends Operation {
                 }
             }
             System.out.println(tau1 + " " +tau2);
-
+            //write triangle STF
             Path trianglePath = outPath.resolve(eventID + "_triangle.txt");
             try {
                 writeTriangle(t0, tau1, tau2, maxtau2, trianglePath);
             } catch (IOException e) {
                 e.printStackTrace();
             }
+            //write cut Trace
+            Trace cutTrace = waveletTrace.cutWindow(t0 - tau1, t0 + tau2);
+            Path cutPath = outPath.resolve(eventID + "_cut.txt");
+            try {
+                cutTrace.write(cutPath);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+
+
+
+
+            //divide by the number of time windows added to get average, and half duration to normalize the amplitude
+            double[] cutYArray = cutTrace.getY();
+            // taper
+            cutYArray = FourierTransform.taper(cutYArray, TAPER_LENGTH_PERCENT, true);
 
             // zero-pad, with wavelet placed at the center of the time series
             //   Here, arrival + halfDuration is set at center.
             int npts = SPCFileAid.findNpts(tlen, sacSamplingHz);
-            int shiftNpts = (int) MathAid.roundForPrecision(2 * halfDuration * sacSamplingHz);
+            int shiftNpts = (int) MathAid.roundForPrecision(tau1 * sacSamplingHz);
             double[] paddedArray = new double[npts];
-            for (int i = 0; i < yArray.length; i++) {
-                paddedArray[npts / 2 - shiftNpts + i] = yArray[i];
+            for (int i = 0; i < cutYArray.length; i++) {
+                paddedArray[npts / 2 - shiftNpts + i] = cutYArray[i];
             }
 
-            // convert to frequency domain
-
-
-            // output
-            SourceTimeFunction sourceTimeFunction = SourceTimeFunction.asymmetricTriangleSourceTimeFunction(np, tlen, tau1, tau2);
-            Path waveletPath = outPath.resolve(eventID + ".stf");
+            // create X axis (time)
+            double[] cutXArray = new double[paddedArray.length];
+            for (int i = 0; i < paddedArray.length; i++) {
+                cutXArray[i] = i / sacSamplingHz;
+            }
+            // form Trace
+            Trace checkTrace = new Trace(cutXArray, paddedArray);
+            // write
+            Path checkTimePath = outPath.resolve(eventID + "_checkTime.txt");
             try {
-                sourceTimeFunction.write(waveletPath);
+                checkTrace.write(checkTimePath);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+
+
+
+            // convert to frequency domain
+            Complex[] complexWave = FourierTransform.convertToFrequencyDomain(paddedArray, np);
+
+            for (int i = 0; i < complexWave.length; i++) {
+                // divide sampling frequency [Hz] so that the FFT matches with the Fourier transform
+                complexWave[i] = complexWave[i].divide(sacSamplingHz);
+                // time-shift so that the wavelet is at time zero
+                // This is done by reversing sign of odd-number index entries.
+                if (i % 2 == 1) complexWave[i] = complexWave[i].multiply(-1.0);
+            }
+
+            // output stacked stf
+            SourceTimeFunction stackedSourceTimeFunction = new SourceTimeFunction(complexWave, tlen);
+            Path stackedWaveletPath = outPath.resolve(eventID + "_stack.stf");
+            try {
+                stackedSourceTimeFunction.write(stackedWaveletPath);
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
+            }
+
+            // output triangle stf
+            SourceTimeFunction triangleSourceTimeFunction = SourceTimeFunction.asymmetricTriangleSourceTimeFunction(np, tlen, tau1, tau2);
+            Path triangleWaveletPath = outPath.resolve(eventID + "_triangle.stf");
+            try {
+                triangleSourceTimeFunction.write(triangleWaveletPath);
             } catch (IOException e) {
                 throw new UncheckedIOException(e);
             }
