@@ -103,6 +103,8 @@ public class EntryWeightListFile {
         // settings
         options.addOption(Option.builder("c").longOpt("components").hasArg().argName("components")
                 .desc("Components to use, listed using commas.").build());
+        options.addOption(Option.builder("S").longOpt("syn")
+                .desc("Use amplitude of synthetic waveform (instead of observed waveform).").build());
 
         // input
         options.addOption(Option.builder("b").longOpt("basic").hasArg().argName("basicFolder")
@@ -128,13 +130,21 @@ public class EntryWeightListFile {
                 : SACComponent.componentSetOf("ZRT");
         String fileTag = cmdLine.hasOption("T") ? cmdLine.getOptionValue("T") : null;
         boolean appendFileDate = !cmdLine.hasOption("O");
+        boolean useSynAmp = cmdLine.hasOption("S");
         Path outputPath = DatasetAid.generateOutputFilePath(Paths.get(""), "entryAmplitude", fileTag, appendFileDate, null, ".lst");
 
         // read input basic folder
         Path basicPath = cmdLine.hasOption("b") ? Paths.get(cmdLine.getOptionValue("b")) : Paths.get(".");
-        List<BasicID> ids = BasicIDFile.read(basicPath, true).stream()
-                .filter(id -> components.contains(id.getSacComponent()) && id.getWaveformType() == WaveformType.SYN)
-                .collect(Collectors.toList());
+        List<BasicID> ids = BasicIDFile.read(basicPath, true);
+        if (useSynAmp) {
+            ids = ids.stream()
+                    .filter(id -> components.contains(id.getSacComponent()) && id.getWaveformType() == WaveformType.SYN)
+                    .collect(Collectors.toList());
+        } else {
+            ids = ids.stream()
+                    .filter(id -> components.contains(id.getSacComponent()) && id.getWaveformType() == WaveformType.OBS)
+                    .collect(Collectors.toList());
+        }
         System.err.println(" Using " + ids.size() + " ids.");
 
         // find amplitude of each entry
