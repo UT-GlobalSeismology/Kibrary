@@ -291,6 +291,10 @@ public class SourceWaveletMaker2 extends Operation {
 
         @Override
         public void finalWork() {
+
+            Path eventDirectryPath = outPath.resolve(eventID + "");
+
+
             // divide by the number of time windows added to get average, and half duration to normalize the amplitude
             double[] yArray = sumVector.mapDivide(num).mapDivide(halfDuration).toArray();
             // taper
@@ -304,8 +308,9 @@ public class SourceWaveletMaker2 extends Operation {
             // form Trace
             Trace waveletTrace = new Trace(xArray, yArray);
             // write
-            Path waveletTimePath = outPath.resolve(eventID + "_time.txt");
+            Path waveletTimePath = eventDirectryPath.resolve(eventID + "_time.txt");
             try {
+                Files.createDirectory(eventDirectryPath);
                 waveletTrace.write(waveletTimePath);
             } catch (IOException e) {
                 e.printStackTrace();
@@ -347,7 +352,7 @@ public class SourceWaveletMaker2 extends Operation {
             }
             System.out.println(tau1 + " " +tau2);
             //write triangle STF
-            Path trianglePath = outPath.resolve(eventID + "_triangle.txt");
+            Path trianglePath = eventDirectryPath.resolve(eventID + "_triangle.txt");
             try {
                 writeTriangle(t0, tau1, tau2, maxtau2, trianglePath);
             } catch (IOException e) {
@@ -355,7 +360,7 @@ public class SourceWaveletMaker2 extends Operation {
             }
             //write cut Trace
             Trace cutTrace = waveletTrace.cutWindow(t0 - tau1, t0 + tau2);
-            Path cutPath = outPath.resolve(eventID + "_cut.txt");
+            Path cutPath = eventDirectryPath.resolve(eventID + "_cut.txt");
             try {
                 cutTrace.write(cutPath);
             } catch (IOException e) {
@@ -388,7 +393,7 @@ public class SourceWaveletMaker2 extends Operation {
             // form Trace
             Trace checkTrace = new Trace(cutXArray, paddedArray);
             // write
-            Path checkTimePath = outPath.resolve(eventID + "_checkTime.txt");
+            Path checkTimePath = eventDirectryPath.resolve(eventID + "_checkTime.txt");
             try {
                 checkTrace.write(checkTimePath);
             } catch (IOException e) {
@@ -411,19 +416,26 @@ public class SourceWaveletMaker2 extends Operation {
 
             // output stacked stf
             SourceTimeFunction stackedSourceTimeFunction = new SourceTimeFunction(complexWave, tlen);
-            Path stackedWaveletPath = outPath.resolve(eventID + "_stack.stf");
-            try {
-                stackedSourceTimeFunction.write(stackedWaveletPath);
-            } catch (IOException e) {
+
+            Path stackDirectryPath = outPath.resolve("stack");
+            Path stackWaveletPath = stackDirectryPath.resolve(eventID + ".stf");
+            try{
+                Files.createDirectories(stackDirectryPath);
+                stackedSourceTimeFunction.write(stackWaveletPath);
+            }catch(IOException e){
                 throw new UncheckedIOException(e);
             }
 
             // output triangle stf
-            SourceTimeFunction triangleSourceTimeFunction = SourceTimeFunction.asymmetricTriangleSourceTimeFunction(np, tlen, tau1, tau2);
-            Path triangleWaveletPath = outPath.resolve(eventID + "_triangle.stf");
-            try {
+            SourceTimeFunction triangleSourceTimeFunction
+                = SourceTimeFunction.asymmetricTriangleSourceTimeFunction(np, tlen, tau1, tau2);
+
+            Path triangleDirectryPath = outPath.resolve("triangle");
+            Path triangleWaveletPath = triangleDirectryPath.resolve(eventID + ".stf");
+            try{
+                Files.createDirectories(triangleDirectryPath);
                 triangleSourceTimeFunction.write(triangleWaveletPath);
-            } catch (IOException e) {
+            }catch(IOException e){
                 throw new UncheckedIOException(e);
             }
         }
