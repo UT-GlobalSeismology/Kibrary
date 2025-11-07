@@ -27,6 +27,7 @@ import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.data.DataEntry;
 import io.github.kensuke1984.kibrary.util.data.DataEntryListFile;
+import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.sac.WaveformType;
 
@@ -91,6 +92,10 @@ public class BasicIDRebuilder extends Operation {
      * How many of the BasicIDs to sample [%]. (100% is the total number after selection)
      */
     private double subsamplingPercent;
+    /**
+     * Whether susmapling event, if not, subsampling records
+     */
+    private boolean samplingEvent;
 
     private List<BasicID> obsIDs;
     private List<BasicID> synIDs;
@@ -132,6 +137,8 @@ public class BasicIDRebuilder extends Operation {
             pw.println("##(double) Percent of basic IDs to use in subsampling test. (100)");
             pw.println("##  Here, 100% is the number of basic IDs after selection.");
             pw.println("#subsamplingPercent ");
+            pw.println("##(boolen) Subsampling events, if false, subsampling records (false)");
+            pw.println("#samplingEvent true");
         }
         System.err.println(outPath + " is created.");
     }
@@ -163,6 +170,7 @@ public class BasicIDRebuilder extends Operation {
         subsamplingPercent = property.parseDouble("subsamplingPercent", "100");
         if (subsamplingPercent < 0)
             throw new IllegalArgumentException("subsamplingPercent must be positive.");
+        samplingEvent = property.parseBoolean("samplingEvent", "false");
 
     }
 
@@ -188,12 +196,22 @@ public class BasicIDRebuilder extends Operation {
         }
 
         // select required number of basicIDs
-        if (bootstrap) {
-            resample(subsamplingPercent, true);
-        } else if (!Precision.equals(subsamplingPercent, 100)) {
-            resample(subsamplingPercent, false);
+        if (samplingEvent) {
+            if (bootstrap) {
+                resampleEvent(subsamplingPercent, true);
+            } else if (!Precision.equals(subsamplingPercent, 100)) {
+                resampleEvent(subsamplingPercent, false);
+            }
+            if (obsIDs.size() == 0) return;
+        } else {
+            if (bootstrap) {
+                resample(subsamplingPercent, true);
+            } else if (!Precision.equals(subsamplingPercent, 100)) {
+                resample(subsamplingPercent, false);
+            }
+            if (obsIDs.size() == 0) return;
         }
-        if (obsIDs.size() == 0) return;
+
 
         // collect all selected basicIDs
         List<BasicID> finalList = new ArrayList<>();
@@ -316,6 +334,50 @@ public class BasicIDRebuilder extends Operation {
                 selectedSynIDs.add(synIDs.get(shuffledIndices.get(i)));
             }
         }
+
+        // replace list by selected ones
+        obsIDs = selectedObsIDs;
+        synIDs = selectedSynIDs;
+    }
+
+    private void resampleEvent(double percent, boolean duplication) {
+        int numToSample = (int) (obsIDs.size() * percent / 100);
+        int selectedNum = 0;
+        List<GlobalCMTID> eventList = obsIDs.stream().map(BasicID::getGlobalCMTID).distinct().collect(Collectors.toList());
+        List<BasicID> selectedObsIDs = new ArrayList<>();
+        List<BasicID> selectedSynIDs = new ArrayList<>();
+
+        if (duplication) {
+            System.err.println("Subsampling events with duplication.");
+            Random random = new Random();
+            int[] shuffledIndices = random.ints(numToSample, 0, eventList.size()).toArray();
+            int i = 0;
+            while (selectedNum < numToSample) {
+                System.err.println(shuffledIndices[i]);
+                GlobalCMTID selectedEvent = eventList.get(shuffledIndices[i]);
+                List<BasicID> eventObsIDs = obsIDs.stream().filter(id -> id.getGlobalCMTID().equals(selectedEvent)).collect(Collectors.toList());
+                List<BasicID> eventSynIDs = synIDs.stream().filter(id -> id.getGlobalCMTID().equals(selectedEvent)).collect(Collectors.toList());
+                selectedObsIDs.addAll(eventObsIDs);
+                selectedSynIDs.addAll(eventSynIDs);
+                selectedNum += eventObsIDs.size();
+                i++;
+            }
+        } else {
+            System.err.println("Subsampling events without duplication.");
+            List<Integer> shuffledIndices = IntStream.range(0, eventList.size()).boxed().collect(Collectors.toList());
+            Collections.shuffle(shuffledIndices);
+            int i = 0;
+            while (selectedNum < numToSample) {
+                GlobalCMTID selectedEvent = eventList.get(shuffledIndices.get(i));
+                List<BasicID> eventObsIDs = obsIDs.stream().filter(id -> id.getGlobalCMTID().equals(selectedEvent)).collect(Collectors.toList());
+                List<BasicID> eventSynIDs = synIDs.stream().filter(id -> id.getGlobalCMTID().equals(selectedEvent)).collect(Collectors.toList());
+                selectedObsIDs.addAll(eventObsIDs);
+                selectedSynIDs.addAll(eventSynIDs);
+                selectedNum += eventObsIDs.size();
+                i++;
+            }
+        }
+        System.err.println("Selected " + selectedNum + " pairs of basic IDs.");
 
         // replace list by selected ones
         obsIDs = selectedObsIDs;
