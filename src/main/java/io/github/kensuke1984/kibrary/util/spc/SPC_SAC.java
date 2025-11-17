@@ -74,6 +74,10 @@ public final class SPC_SAC extends Operation {
      */
     private Path outPath;
     /**
+     * Path of a data entry file.
+     */
+    private Path dataEntryPath;
+    /**
      * Components to use.
      */
     private Set<SACComponent> components;
@@ -248,6 +252,9 @@ public final class SPC_SAC extends Operation {
             throw new IllegalStateException("Number of PSV files and SH files does not match.");
         }
 
+        //select TimeWindow
+
+
         outPath = DatasetAid.createOutputFolder(workPath, "spcsac", folderTag, appendFolderDate, null);
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
@@ -258,11 +265,15 @@ public final class SPC_SAC extends Operation {
         if (usableSPCMode != SPCFileAid.UsableSPCMode.BOTH) {
             for (SPCFileName spc : (usableSPCMode == SPCFileAid.UsableSPCMode.SH ? shSPCs : psvSPCs)) {
                 SPCFile spcFile = SPCFile.getInstance(spc);
-                // create event folder under outPath
-                Files.createDirectories(outPath.resolve(spc.getSourceID()));
                 // operate method createSACMaker() -> instance of an anonymous inner class is returned
                 // -> executes the run() of that class defined in createSACMaker()
-                es.execute(createSACMaker(spcFile, null));
+                SACMaker sm = createSACMaker(spcFile, null);
+                if (sm == null) {
+                    continue;
+                }
+                // create event folder under outPath
+                Files.createDirectories(outPath.resolve(spc.getSourceID()));
+                es.execute(sm);
                 nSAC++;
                 if (nSAC % 5 == 0) System.err.print("\rReading SPC files ... " + nSAC + " files");
             }
@@ -276,11 +287,15 @@ public final class SPC_SAC extends Operation {
                 }
                 SPCFile shFile = SPCFile.getInstance(shSPC);
                 SPCFile psvFile = SPCFile.getInstance(psvSPC);
-                // create event folder under outPath
-                Files.createDirectories(outPath.resolve(shSPC.getSourceID()));
                 // operate method createSACMaker() -> instance of an anonymous inner class is returned
                 // -> executes the run() of that class defined in createSACMaker()
-                es.execute(createSACMaker(shFile, psvFile));
+                SACMaker sm = createSACMaker(shFile, psvFile);
+                if (sm == null) {
+                    continue;
+                }
+                // create event folder under outPath
+                Files.createDirectories(outPath.resolve(shSPC.getSourceID()));
+                es.execute(sm);
                 nSAC++;
                 if (nSAC % 5 == 0) System.err.print("\rReading SPC files ... " + nSAC + " pairs");
             }
@@ -305,6 +320,11 @@ public final class SPC_SAC extends Operation {
     private SACMaker createSACMaker(SPCFile primarySPC, SPCFile secondarySPC) {
         SourceTimeFunction sourceTimeFunction = stfHandler.createSourceTimeFunction(primarySPC.np(), primarySPC.tlen(),
                 new GlobalCMTID(primarySPC.getSourceID()));
+
+        if(sourceTimeFunction == null) {
+            return null;
+        }
+
         // create instance of an anonymous inner class extending SACMaker with the following run() function
         SACMaker sm = new SACMaker(primarySPC, secondarySPC, sourceTimeFunction, samplingHz) {
             @Override
