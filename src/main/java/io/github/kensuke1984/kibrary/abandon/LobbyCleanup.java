@@ -5,7 +5,10 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
@@ -16,11 +19,12 @@ import org.apache.commons.io.FileUtils;
 import io.github.kensuke1984.kibrary.Summon;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.EventFolder;
-import io.github.kensuke1984.kibrary.util.FileAid;
 
 /**
  * Class to clean data lobby folders when they are not needed any more.
  * This deletes the sac/ and resp/ folders.
+ * Alternatively, this can copy mseed/ and station/ folders to a specified directory.
+ * All event directories under the current directory will be processed.
  *
  * @author otsuru
  * @since 2022/1/3
@@ -48,12 +52,10 @@ public class LobbyCleanup {
     public static Options defineOptions() {
         Options options = Summon.defaultOptions();
 
-        options.addOption(Option.builder("d").longOpt("delete")//TODO required
-                .desc("Delete sacs and resps.").build());
-        options.addOption(Option.builder("t")
-                .desc("Old file structure to new.").build());//TODO erase
         options.addOption(Option.builder("c").hasArg().argName("outPath")
-                .desc("Copy mseeds into new dataset folder.").build());//TODO erase
+                .desc("Copy mseeds and stationXMLs into new dataset folder.").build());
+        options.addOption(Option.builder("d").longOpt("delete")
+                .desc("Delete sacs and resps.").build());
 
         return options;
     }
@@ -64,12 +66,57 @@ public class LobbyCleanup {
      * @throws IOException
      */
     public static void run(CommandLine cmdLine) throws IOException {
+        if (cmdLine.hasOption("c")) copyNeeded(cmdLine.getOptionValue("c"));
+        if (cmdLine.hasOption("d")) deleteUnneeded();
+    }
 
-        if (cmdLine.hasOption("t")) organize_temp();//TODO erase
-        if (cmdLine.hasOption("c")) copyMseeds(cmdLine.getOptionValue("c"));//TODO erase
+    /**
+     * Copy mseed/ and station/ folders to a specified directory.
+     * @param output
+     * @throws IOException
+     */
+    private static void copyNeeded(String output) throws IOException {
+        Path outPath = Paths.get(output);
+        Path inPath = Paths.get(".");
+        List<EventFolder> inEventDirs = DatasetAid.eventFolderSet(inPath).stream()
+                .sorted(Comparator.comparing(EventFolder::getGlobalCMTID)).collect(Collectors.toList());
+        if (!DatasetAid.checkNum(inEventDirs.size(), "event", "events")) {
+            return;
+        }
 
-        if (!cmdLine.hasOption("d")) return;
+        Files.createDirectories(outPath);
+        System.err.println("Output folder is " + outPath);
 
+        int n = 0;
+        for (EventFolder inEventDir : inEventDirs) {
+            n++;
+            System.err.print("\r " + inEventDir.getGlobalCMTID() + " (" + n + " / " + inEventDirs.size() + ")");
+
+            // copy mseed/...
+            Path outMseedDirPath = outPath.resolve(inEventDir.toString()).resolve("mseed");
+            try (DirectoryStream<Path> inMseedPaths = Files.newDirectoryStream(inEventDir.toPath().resolve("mseed"), "*.mseed")) {
+                for (Path inMseedPath : inMseedPaths) {
+                    Files.createDirectories(outMseedDirPath);
+                    Files.copy(inMseedPath, outMseedDirPath.resolve(inMseedPath.getFileName().toString()));
+                }
+            }
+            // copy station/...
+            Path outStationDirPath = outPath.resolve(inEventDir.toString()).resolve("station");
+            try (DirectoryStream<Path> inXmlPaths = Files.newDirectoryStream(inEventDir.toPath().resolve("station"), "*.xml")) {
+                for (Path inXmlPath : inXmlPaths) {
+                    Files.createDirectories(outStationDirPath);
+                    Files.copy(inXmlPath, outStationDirPath.resolve(inXmlPath.getFileName().toString()));
+                }
+            }
+        }
+        System.err.println("\r Finished copying all events.");
+    }
+
+    /**
+     * Delete sac/ and resp/ folders.
+     * @throws IOException
+     */
+    private static void deleteUnneeded() throws IOException {
         Path workPath = Paths.get(".");
         Set<EventFolder> eventDirs = DatasetAid.eventFolderSet(workPath);
         if (!DatasetAid.checkNum(eventDirs.size(), "event", "events")) {
@@ -92,84 +139,6 @@ public class LobbyCleanup {
             FileUtils.deleteDirectory(respDirPath2.toFile());
             Path stationDirPath2 = eventDir.toPath().resolve("old_station");
             FileUtils.deleteDirectory(stationDirPath2.toFile());
-
-        }
-    }
-
-    /**
-     * @param input
-     * @param output
-     * @throws IOException
-     * @deprecated
-     */
-    private static void copyMseeds(String input) throws IOException {
-        Path inPath = Paths.get(input);
-        Path outPath = Paths.get(input + "new");
-
-        Set<EventFolder> inEventDirs = DatasetAid.eventFolderSet(inPath);
-        if (!DatasetAid.checkNum(inEventDirs.size(), "event", "events")) {
-            return;
-        }
-
-        Files.createDirectories(outPath);
-        System.err.println("Output folder is " + outPath);
-
-        for (EventFolder inEventDir : inEventDirs) {
-            Path outMseedDirPath = outPath.resolve(inEventDir.toString()).resolve("mseed");
-            try (DirectoryStream<Path> inMseedPaths = Files.newDirectoryStream(inEventDir.toPath().resolve("mseed"), "*.mseed")) {
-                for (Path inMseedPath : inMseedPaths) {
-                    Files.createDirectories(outMseedDirPath);
-                    Files.copy(inMseedPath, outMseedDirPath.resolve(inMseedPath.getFileName().toString()));
-                }
-            }
-        }
-    }
-
-    /**
-     * @throws IOException
-     * @deprecated
-     */
-    private static void organize_temp() throws IOException {
-        Path workPath = Paths.get(".");
-
-        Set<EventFolder> eventDirs = DatasetAid.eventFolderSet(workPath);
-        if (!DatasetAid.checkNum(eventDirs.size(), "event", "events")) {
-            return;
-        }
-
-        for (EventFolder eventDir : eventDirs) {
-
-            Path mseedDirPath = eventDir.toPath().resolve("mseed");
-            Files.createDirectories(mseedDirPath);
-            try (DirectoryStream<Path> mseedPaths = Files.newDirectoryStream(eventDir.toPath(), "*.mseed")) {
-                for (Path mseedPath : mseedPaths) {
-                    FileAid.moveToDirectory(mseedPath, mseedDirPath, true);
-                }
-            }
-
-            Path sacDirPath = eventDir.toPath().resolve("old_sac");
-            Files.createDirectories(sacDirPath);
-            try (DirectoryStream<Path> sacPaths = Files.newDirectoryStream(eventDir.toPath(), "*.SAC")) {
-                for (Path sacPath : sacPaths) {
-                    FileAid.moveToDirectory(sacPath, sacDirPath, true);
-                }
-            }
-
-            Path respDirPath = eventDir.toPath().resolve("old_resp");
-            Files.createDirectories(respDirPath);
-            try (DirectoryStream<Path> respPaths = Files.newDirectoryStream(eventDir.toPath(), "RESP.*")) {
-                for (Path respPath : respPaths) {
-                    FileAid.moveToDirectory(respPath, respDirPath, true);
-                }
-            }
-
-            Path stationDirPath = eventDir.toPath().resolve("old_station");
-            Files.createDirectories(stationDirPath);
-            try (DirectoryStream<Path> stationPaths = Files.newDirectoryStream(eventDir.toPath(), "STATION.*")) {
-                for (Path stationPath : stationPaths) {
-                    FileAid.moveToDirectory(stationPath, stationDirPath, true);
-                }
-            }
         }
     }
 

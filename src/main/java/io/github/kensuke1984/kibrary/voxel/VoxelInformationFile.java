@@ -80,9 +80,9 @@ public class VoxelInformationFile {
             }
             pw.println("");
 
-            pw.println("# horizontal rectangle on sphere [deg] (latitude longitude dLatitude dLongitude)");
+            pw.println("# horizontal rectangle on sphere [deg] (latitude longitude dLatitude dLongitude iLatitude iLongitude)");
             for (HorizontalPixel pixel : horizontalPixels) {
-                pw.println(pixel.getPosition() + " " + pixel.getDLatitude() + " " + pixel.getDLongitude());
+                pw.println(pixel.toString());
             }
         }
     }
@@ -104,7 +104,9 @@ public class VoxelInformationFile {
         while ((line = reader.next()) != null) {
             String[] parts = line.split("\\s+");
             HorizontalPosition position = new HorizontalPosition(Double.parseDouble(parts[0]), Double.parseDouble(parts[1]));
-            HorizontalPixel pixel = new HorizontalPixel(position, Double.parseDouble(parts[2]), Double.parseDouble(parts[3]));
+            HorizontalPixel pixel = (parts.length > 5) ?
+                    new HorizontalPixel(position, Double.parseDouble(parts[2]), Double.parseDouble(parts[3]), Integer.parseInt(parts[4]), Integer.parseInt(parts[5])) :
+                    new HorizontalPixel(position, Double.parseDouble(parts[2]), Double.parseDouble(parts[3]), 0, 0);  //TODO This is for older format.
             horizontalPixels.add(pixel);
         }
 

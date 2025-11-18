@@ -45,21 +45,21 @@ public final class Trace {
      * Upward convex is defined as
      * 0 &lt; (y(x[i])-y(x[i-1]))*(y(x[i])-y(x[i+1])) and y[i-1] &lt; y[i]
      */
-    private final int[] indexOfUpwardConvex;
+    private final int[] indicesOfUpwardConvex;
     /**
      * Index of downward convex, ordered by the absolute values of the convex.
      * <p>
      * Downward convex is defined as
      * 0 &lt; (y(x[i])-y(x[i-1])) * (y(x[i]) - y(x[i+1])) and y[i] &lt; y[i-1]
      */
-    private final int[] indexOfDownwardConvex;
+    private final int[] indicesOfDownwardConvex;
     /**
      * Index of a peak, ordered by the absolute values of the convex.
      * <p>
      * Peak is defined as
      * 0 &lt; (y(x[i])-y(x[i-1]))*(y(x[i])-y(x[i+1]))
      */
-    private final int[] indexOfPeak;
+    private final int[] indicesOfPeak;
 
     /**
      * Create trace from arrays of x and y by deep copy.
@@ -72,13 +72,13 @@ public final class Trace {
         yArray = y.clone();
         xVector = new ArrayRealVector(x, false);
         yVector = new ArrayRealVector(y, false);
-        indexOfDownwardConvex = IntStream.range(1, xArray.length - 1)
+        indicesOfDownwardConvex = IntStream.range(1, xArray.length - 1)
                 .filter(i -> yArray[i] < yArray[i - 1] && 0 < (yArray[i + 1] - yArray[i]) * (yArray[i - 1] - yArray[i])).boxed()
                 .sorted(Comparator.comparingDouble(o -> -yArray[o] * yArray[o])).mapToInt(i -> i).toArray();
-        indexOfUpwardConvex = IntStream.range(1, xArray.length - 1)
+        indicesOfUpwardConvex = IntStream.range(1, xArray.length - 1)
                 .filter(i -> yArray[i - 1] < yArray[i] && 0 < (yArray[i + 1] - yArray[i]) * (yArray[i - 1] - yArray[i])).boxed()
                 .sorted(Comparator.comparingDouble(o -> -yArray[o] * yArray[o])).mapToInt(i -> i).toArray();
-        indexOfPeak = IntStream.range(1, xArray.length - 1).filter(i -> 0 < (yArray[i + 1] - yArray[i]) * (yArray[i - 1] - yArray[i])).boxed()
+        indicesOfPeak = IntStream.range(1, xArray.length - 1).filter(i -> 0 < (yArray[i + 1] - yArray[i]) * (yArray[i - 1] - yArray[i])).boxed()
                 .sorted(Comparator.comparingDouble(o -> -yArray[o] * yArray[o])).mapToInt(i -> i).toArray();
     }
 
@@ -132,126 +132,128 @@ public final class Trace {
     }
 
     /**
-     * 最も相関の高い位置を探す 探し方は、短い方をずらしていく 同じ長さだと探さない。
+     * Find amount of shift with best correlation.
+     * The search is done by sliding the input ({@link Trace}).
+     * Assumed that the interval of x is the same in both Traces.
+     * @param trace ({@link Trace}) Input. Its length must be shorter than this.
+     * @return (Array of double) Contains 3 values: The shift value of input trace in x direction for best correlation,
+     *   corresponding correlation, and corresponding amplitude (L2 norm) ratio (input / this).
      *
-     * @param base    array
-     * @param compare array
-     * @return compareを何ポイントずらすか 0だと先頭から
+     * @author anselme
      */
-    public static int findBestShift(double[] base, double[] compare) {
-        double[] shorter;
-        double[] longer;
-        if (base.length == compare.length) return 0;
-        if (base.length < compare.length) {
-            shorter = base;
-            longer = compare;
-        } else {
-            shorter = compare;
-            longer = base;
-        }
-        int gap = longer.length - shorter.length;
-        int bestShift = 0;
-        double bestCorrelation = 0;
-        for (int shift = 0; shift < gap + 1; shift++) {
-            double[] partY = new double[shorter.length];
-            System.arraycopy(longer, shift, partY, 0, shorter.length);
-            RealVector partYVec = new ArrayRealVector(partY);
-            RealVector shorterVec = new ArrayRealVector(shorter);
-            double correlation = partYVec.dotProduct(shorterVec) / partYVec.getNorm() / shorterVec.getNorm();
-            if (bestCorrelation < correlation) {
-                bestCorrelation = correlation;
-                bestShift = shift;
-            }
-            // System.out.println(correlation);
-        }
-
-        return compare.length < base.length ? bestShift : -bestShift;
-    }
-
-    public static int findBestShiftParallel(double[] base, double[] compare) {
-        double[] shorter;
-        double[] longer;
-        if (base.length == compare.length) return 0;
-        if (base.length < compare.length) {
-            shorter = base;
-            longer = compare;
-        } else {
-            shorter = compare;
-            longer = base;
-        }
-        int gap = longer.length - shorter.length;
-        int bestShift = 0;
-        double bestCorrelation = 0;
-//        IntStream.range(0, gap + 1).parallel()
-        for (int shift = 0; shift < gap + 1; shift++) {
-            double[] partY = new double[shorter.length];
-            System.arraycopy(longer, shift, partY, 0, shorter.length);
-            RealVector partYVec = new ArrayRealVector(partY);
-            RealVector shorterVec = new ArrayRealVector(shorter);
-            double correlation = partYVec.dotProduct(shorterVec) / partYVec.getNorm() / shorterVec.getNorm();
-            if (bestCorrelation < correlation) {
-                bestCorrelation = correlation;
-                bestShift = shift;
-            }
-        }
-
-        return compare.length < base.length ? bestShift : -bestShift;
-    }
-
-    /**
-     * Assume the interval of x is same as that of this.
-     *
-     * @param trace which length must be shorter than this.
-     * @return the shift value x0 in x direction for best correlation.
-     * @author anselme RealVector.getNorm() returns a square-rooted norm
-     */
-    public double findBestShift(Trace trace) {
-        int gapLength = xArray.length - trace.getLength();
+    public double[] findBestShift(Trace trace) {
+        int traceLength = trace.getLength();
+        int gapLength = xArray.length - traceLength;
         if (gapLength <= 0) throw new IllegalArgumentException("Input trace must be shorter.");
-        double corMax = -1;
-        double compY2 = trace.yVector.getNorm();
+
+        // get the shorter vector to be slided
+        RealVector slidingVector = trace.getYVector();
+        double slidingNorm = slidingVector.getNorm();
+
+        // find best shift while sliding the input trace
         double shift = 0;
+        double corrMax = -1;
+        double normRatio = 0;
         for (int i = 0; i <= gapLength; i++) {
-            double cor = 0;
-            double y2 = 0;
-            for (int j = 0; j < trace.getLength(); j++) {
-                cor += yArray[i + j] * trace.yArray[j];
-                y2 += yArray[i + j] * yArray[i + j];
-            }
-//            cor /= y2 * compY2;
-            cor /= Math.sqrt(y2) * compY2;
-            if (corMax < cor) {
+            RealVector cutVector = yVector.getSubVector(i, traceLength);
+            double cutNorm = cutVector.getNorm();
+            if (cutNorm == 0)  continue;
+
+            double corr = cutVector.dotProduct(slidingVector) / cutNorm / slidingNorm;
+            if (corrMax < corr) {
                 shift = xArray[i] - trace.xArray[0];
-                corMax = cor;
+                corrMax = corr;
+                normRatio = slidingNorm / cutNorm;
             }
         }
-        return shift;
+        double[] result = {shift, corrMax, normRatio};
+        return result;
     }
 
     /**
-     * Assume the interval of x is same as that of this.
+     * Find amount of shift with best variance.
+     * The search is done by sliding the input ({@link Trace}).
+     * Assumed that the interval of x is the same in both Traces.
+     * @param trace ({@link Trace}) Input. Its length must be shorter than this.
+     * @return (Array of double) Contains 3 values: The shift value of input trace in x direction for best correlation,
+     *   corresponding variance, and corresponding amplitude (L2 norm) ratio (input / this).
      *
-     * @param trace which length must be shorter than this.
-     * @return the shift value x0 in x direction for best correlation.
+     * @author otsuru
+     * @since 2025/9/22
      */
-    public double findBestShiftParallel(Trace trace) {
-        int gapLength = xArray.length - trace.getLength();
+    public double[] findBestVarianceShift(Trace trace) {
+        int traceLength = trace.getLength();
+        int gapLength = xArray.length - traceLength;
         if (gapLength <= 0) throw new IllegalArgumentException("Input trace must be shorter.");
-        double compY2 = trace.yVector.getNorm();
-        double[] shifts = new double[gapLength + 1];
-        double[] cors = new double[gapLength + 1];
-        IntStream.range(0, gapLength + 1).parallel().forEach(i -> {
-            double cor = 0;
-            double y2 = 0;
-            for (int j = 0; j < trace.getLength(); j++) {
-                cor += yArray[i + j] * trace.yArray[j];
-                y2 += yArray[i + j] * yArray[i + j];
+
+        // get the shorter vector to be slided
+        RealVector slidingVector = trace.getYVector();
+        double slidingNorm = slidingVector.getNorm();
+
+        // find best shift while sliding the input trace
+        double shift = 0;
+        double varMin = Double.MAX_VALUE;
+        double normRatio = 0;
+        for (int i = 0; i <= gapLength; i++) {
+            RealVector cutVector = yVector.getSubVector(i, traceLength);
+            double cutNorm = cutVector.getNorm();
+            if (cutNorm == 0)  continue;
+
+            double var = Math.pow(cutVector.subtract(slidingVector).getNorm(), 2) / cutNorm / slidingNorm;
+            if (var < varMin) {
+                shift = xArray[i] - trace.xArray[0];
+                varMin = var;
+                normRatio = slidingNorm / cutNorm;
             }
-            cor /= Math.sqrt(y2) * compY2;
-            shifts[i] = xArray[i] - trace.xArray[0];
-            cors[i] = cor;
-        });
-        return shifts[new ArrayRealVector(cors).getMaxIndex()];
+        }
+        double[] result = {shift, varMin, normRatio};
+        return result;
+    }
+
+    /**
+     * Find amount of shift with best correlation.
+     * The search is done by sliding the input ({@link Trace}).
+     * Thie original Trace can be zero-padded at the front and back by the length of the input Trace before searching for the shift.
+     * Assumed that the interval of x is the same in both Traces.
+     * @param trace ({@link Trace}) Input. Its length must be shorter than this if not padding.
+     * @param frontPad (boolean) Whether to pad at the front.
+     * @param backPad (boolean) Whether to pad at the back.
+     * @param samplingHz (double) Sampling rate of this Trace.
+     * @return (Array of double) Contains 3 values: The shift value in x direction for best correlation,
+     *   corresponding correlation, and corresponding amplitude (L2 norm) ratio.
+     *
+     * @author otsuru
+     * @since 2025/8/18
+     */
+    public double[] findBestShift(Trace trace, boolean frontPad, boolean backPad, double samplingHz) {
+        int padLength = xArray.length;
+        Trace paddedTrace = this;
+        if (frontPad) paddedTrace = paddedTrace.frontPad(padLength, samplingHz);
+        if (backPad) paddedTrace = paddedTrace.backPad(padLength, samplingHz);
+        return paddedTrace.findBestShift(trace);
+    }
+
+    /**
+     * Find amount of shift with best variance.
+     * The search is done by sliding the input ({@link Trace}).
+     * Thie original Trace can be zero-padded at the front and back by the length of the input Trace before searching for the shift.
+     * Assumed that the interval of x is the same in both Traces.
+     * @param trace ({@link Trace}) Input. Its length must be shorter than this if not padding.
+     * @param frontPad (boolean) Whether to pad at the front.
+     * @param backPad (boolean) Whether to pad at the back.
+     * @param samplingHz (double) Sampling rate of this Trace.
+     * @return (Array of double) Contains 3 values: The shift value in x direction for best correlation,
+     *   corresponding variance, and corresponding amplitude (L2 norm) ratio.
+     *
+     * @author otsuru
+     * @since 2025/9/22
+     */
+    public double[] findBestVarianceShift(Trace trace, boolean frontPad, boolean backPad, double samplingHz) {
+        int padLength = xArray.length;
+        Trace paddedTrace = this;
+        if (frontPad) paddedTrace = paddedTrace.frontPad(padLength, samplingHz);
+        if (backPad) paddedTrace = paddedTrace.backPad(padLength, samplingHz);
+        return paddedTrace.findBestVarianceShift(trace);
     }
 
     public double findBestShiftConsiderAmplitude(Trace trace) {
@@ -281,51 +283,96 @@ public final class Trace {
         return shift;
     }
 
-    public double findBestL1Shift(Trace trace) {
-        int gapLength = xArray.length - trace.getLength();
-        if (gapLength <= 0) throw new IllegalArgumentException("Input trace must be shorter.");
-        double l1min = Double.MAX_VALUE;
-        double compY2 = trace.yVector.getNorm();
-        double shift = 0;
-        for (int i = 0; i <= gapLength; i++) {
-            double l1 = 0;
-            double y2 = 0;
-            for (int j = 0; j < trace.getLength(); j++) {
-                l1 += Math.abs(yArray[i + j] - trace.yArray[j]);
-//                y2 += Y[i + j] * Y[i + j];
-            }
-//            cor /= y2 * compY2;
-            if (l1 < l1min) {
-                shift = xArray[i] - trace.xArray[0];
-                l1min = l1;
-            }
-        }
-        return shift;
-    }
-
     /**
-     * f(x) &rarr; f(x-shift) Shifts "shift" in the direction of x axis. If you
-     * want to change like below: <br>
+     * Shifts the x values by amount "shift" in the direction of the x axis. <br>
+     * f(x) &rarr; f(x-shift) <br>
+     * If you want to shift like below: <br>
      * x:(3, 4, 5) &rarr; (0, 1, 2) <br>
-     * f(3) &rarr; f'(0)
+     * f(3) = f_new(0) <br>
      * then the value 'shift' should be -3
      *
-     * @param shift (double) Value of shift
-     * @return ({@link Trace}) f (x - shift), the values in y are deep copied.
+     * @param shift (double) Amount of shift.
+     * @return ({@link Trace}) f(x - shift). The values in y are deep copied.
      */
     public Trace shiftX(double shift) {
         return new Trace(Arrays.stream(xArray).map(d -> d + shift).toArray(), yArray);
     }
 
     /**
+     * Shifts the y values by "nShift" indices in the direction of the x axis. <br>
+     * f(x) &rarr; f(x+nShift*dx) <br>
+     * Y values that moved out of range will be discarded, and non-existent values will be set to 0.
+     * @param nShift (int) Number of indices to shift.
+     * @return ({@link Trace}) f(x+nShift*dx). The values in x are deep copied.
+     *
+     * @author otsuru
+     * @since 2025/8/25
+     */
+    public Trace shiftYInXDirection(int nShift) {
+        double[] newYArray = new double[yArray.length];
+        for (int i = 0; i < yArray.length; i++) {
+            int iBefore = i - nShift;
+            if (0 <= iBefore && iBefore < yArray.length) newYArray[i] = yArray[iBefore];
+            else newYArray[i] = 0.0;
+        }
+        return new Trace(xArray, newYArray);
+    }
+
+    /**
      * Replace x values with new ones. The original Trace is not changed.
      * @param xNew (double[]) The x values to replace with.
      * @return ({@link Trace}) New trace with x values replaced.
-     * @since 2022/12/12
+     *
      * @author otsuru
+     * @since 2022/12/12
      */
     public Trace withXAs(double[] xNew) {
         return new Trace(xNew, yArray);
+    }
+
+    /**
+     * Pad zeros at the front.
+     * @param padLength (int) Length to pad.
+     * @param samplingHz (double) Sampling rate of this trace.
+     * @return ({@link Trace}) Padded Trace.
+     *
+     * @author otsuru
+     * @since 2025/8/18
+     */
+    public Trace frontPad(int padLength, double samplingHz) {
+        int originalLength = xArray.length;
+        int newLength = padLength + originalLength;
+        double[] newXArray = new double[newLength];
+        double[] newYArray = new double[newLength];
+        double startX = xArray[0];
+        for (int i = 0; i < padLength; i++) {
+            newXArray[i] = startX - (padLength - i) / samplingHz;
+            newYArray[i] = 0;
+        }
+        System.arraycopy(xArray, 0, newXArray, padLength, originalLength);
+        System.arraycopy(yArray, 0, newYArray, padLength, originalLength);
+        return new Trace(newXArray, newYArray);
+    }
+
+    /**
+     * Pad zeros at the back.
+     * @param padLength (int) Length to pad.
+     * @param samplingHz (double) Sampling rate of this trace.
+     * @return ({@link Trace}) Padded Trace.
+     *
+     * @author otsuru
+     * @since 2025/8/18
+     */
+    public Trace backPad(int padLength, double samplingHz) {
+        int originalLength = xArray.length;
+        int newLength = padLength + originalLength;
+        double[] newXArray = Arrays.copyOf(xArray, newLength);
+        double[] newYArray = Arrays.copyOf(yArray, newLength);
+        double endX = xArray[originalLength - 1];
+        for (int i = 0; i < padLength; i++) {
+            newXArray[originalLength + i] = endX + (i + 1) / samplingHz;
+        }
+        return new Trace(newXArray, newYArray);
     }
 
     /**
@@ -339,6 +386,16 @@ public final class Trace {
      */
     public Trace subTrace(int iStart, int iEnd) {
         return new Trace(Arrays.copyOfRange(xArray, iStart, iEnd), Arrays.copyOfRange(yArray, iStart, iEnd));
+    }
+
+    /**
+     * Truncate the trace to a given length.
+     * The original Trace is not changed.
+     * @param length (int) Length to truncate the trace.
+     * @return ({@link Trace}) New trace that is truncated (deep copy).
+     */
+    public Trace truncateToLength(int length) {
+        return new Trace(Arrays.copyOfRange(xArray, 0, length), Arrays.copyOfRange(yArray, 0, length));
     }
 
     /**
@@ -469,16 +526,6 @@ public final class Trace {
      */
     public Trace resampleInWindow(TimeWindow timeWindow, double originalSamplingHz, double finalSamplingHz) {
         return resampleInWindow(timeWindow.getStartTime(), timeWindow.getEndTime(), originalSamplingHz, finalSamplingHz);
-    }
-
-    /**
-     * Truncate the trace to a given length.
-     * The original Trace is not changed.
-     * @param length (int) Length to truncate the trace.
-     * @return ({@link Trace}) New trace that is truncated (deep copy).
-     */
-    public Trace truncateToLength(int length) {
-        return new Trace(Arrays.copyOfRange(xArray, 0, length), Arrays.copyOfRange(yArray, 0, length));
     }
 
     /**
@@ -654,6 +701,18 @@ public final class Trace {
     }
 
     /**
+     * Create trace with same x values but 0 for all y values.
+     * @return ({@link Trace}) Trace with 0 for all y values.
+     *
+     * @author otsuru
+     * @since 2025/8/29
+     */
+    public Trace withZeroes() {
+        double[] zeroes = new double[xArray.length];
+        return new Trace(xArray, zeroes);
+    }
+
+    /**
      * @return DEEP copy of x
      */
     public double[] getX() {
@@ -747,24 +806,24 @@ public final class Trace {
     }
 
     /**
-     * @return index of maximal and minimal points. The order follows the absolute values of the points.
+     * @return (Array of int) Indices of maximal and minimal points. The order follows the absolute values of the points.
      */
-    public int[] getIndexOfPeak() {
-        return indexOfPeak.clone();
+    public int[] getIndicesOfPeak() {
+        return indicesOfPeak.clone();
     }
 
     /**
-     * @return index of minimal points. The order follows the absolute values of the points.
+     * @return (Array of int) Indices of minimal points. The order follows the absolute values of the points.
      */
-    public int[] getIndexOfDownwardConvex() {
-        return indexOfDownwardConvex.clone();
+    public int[] getIndicesOfDownwardConvex() {
+        return indicesOfDownwardConvex.clone();
     }
 
     /**
-     * @return index of maximal points. The order follows the absolute values of the points.
+     * @return (Array of int) Indices of maximal points. The order follows the absolute values of the points.
      */
-    public int[] getIndexOfUpwardConvex() {
-        return indexOfUpwardConvex.clone();
+    public int[] getIndicesOfUpwardConvex() {
+        return indicesOfUpwardConvex.clone();
     }
 
     /**

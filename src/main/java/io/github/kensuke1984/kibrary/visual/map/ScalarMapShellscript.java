@@ -105,7 +105,8 @@ public class ScalarMapShellscript {
         }
 
         // set file name root of output files
-        this.plotFileNameRoot = variable.toString().toLowerCase() + scalarType.toNaturalString() + ((tag != null) ? ("_" + tag + "_") : "");
+        this.plotFileNameRoot = (variable != null ? variable.toString().toLowerCase() : "scalar")
+                + scalarType.toNaturalString() + ((tag != null) ? ("_" + tag + "_") : "");
         // set this temporarily to display all layers (may be oveerwritten later)
         this.displayLayers = IntStream.range(0, radii.length).toArray();
         // set scalar file name
