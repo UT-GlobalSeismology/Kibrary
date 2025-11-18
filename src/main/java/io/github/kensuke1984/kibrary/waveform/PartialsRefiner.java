@@ -27,6 +27,7 @@ import io.github.kensuke1984.kibrary.timewindow.TimeWindow;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.ThreadAid;
 import io.github.kensuke1984.kibrary.util.data.DataEntry;
+import io.github.kensuke1984.kibrary.util.data.DataEntryListFile;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
@@ -73,6 +74,10 @@ public class PartialsRefiner extends Operation {
      */
     private Path voxelPath;
     /**
+     * Path of a data entry file for selection.
+     */
+    private Path dataEntryPath;
+    /**
      * Number of points in each direction to interpolate at.
      */
     private int nInterpolate;
@@ -81,15 +86,6 @@ public class PartialsRefiner extends Operation {
     private double baseLatitude;
     private double baseLongitude;
 
-
-//    /**
-//     * Events to work for.
-//     */
-//    private Set<GlobalCMTID> tendEvents;
-//    /**
-//     * Names of observers to work for, in the form "net_sta".
-//     */
-//    private Set<String> tendObserverNames;
 
     /**
      * Horizontal pixels.
@@ -115,6 +111,7 @@ public class PartialsRefiner extends Operation {
      * Number of processed parameters.
      */
     private AtomicInteger nProcessedEntry = new AtomicInteger();
+
 
     /**
      * @param args (String[]) Arguments: none to create a property file, path of property file to run it.
@@ -142,7 +139,9 @@ public class PartialsRefiner extends Operation {
             pw.println("#partialPath partial");
             pw.println("##Path of a voxel information file for perturbation points, must be set.");
             pw.println("#voxelPath voxel.inf");
-            pw.println("##(int) Number of points in each direction to interpolate at. (5)");
+            pw.println("##Path of a data entry list file, if you want to select raypaths.");
+            pw.println("#dataEntryPath selectedEntry.lst");
+            pw.println("##(int) Number of points in each direction to interpolate at. (25)");
             pw.println("#nInterpolate ");
             pw.println("##(boolean) Whether to use only every other perturbation point. (false)");
             pw.println("#onlyEveryOther ");
@@ -150,10 +149,6 @@ public class PartialsRefiner extends Operation {
             pw.println("#baseLatitude ");
             pw.println("##Longitude of a standard perturbation point to use, when onlyEveryOther is true. (0.0)");
             pw.println("#baseLongitude ");
-//            pw.println("##GlobalCMTIDs of events to work for, listed using spaces, must be set.");
-//            pw.println("#tendEvents ");
-//            pw.println("##Observers to work for, in form \"sta_net\", listed using spaces, must be set.");
-//            pw.println("#tendObserverNames ");
         }
         System.err.println(outPath + " is created.");
     }
@@ -172,15 +167,14 @@ public class PartialsRefiner extends Operation {
 
         partialPath = property.parsePath("partialPath", null, true, workPath);
         voxelPath = property.parsePath("voxelPath", null, true, workPath);
-        nInterpolate = property.parseInt("nInterpolate", "5");
+        if (property.containsKey("dataEntryPath")) {
+            dataEntryPath = property.parsePath("dataEntryPath", null, true, workPath);
+        }
+        nInterpolate = property.parseInt("nInterpolate", "25");
 
         onlyEveryOther = property.parseBoolean("onlyEveryOther", "false");
         baseLatitude = property.parseDouble("baseLatitude", "0.0");
         baseLongitude = property.parseDouble("baseLongitude", "0.0");
-
-//        tendEvents = Arrays.stream(property.parseStringArray("tendEvents", null)).map(GlobalCMTID::new)
-//                .collect(Collectors.toSet());
-//        tendObserverNames = Arrays.stream(property.parseStringArray("tendObserverNames", null)).collect(Collectors.toSet());
     }
 
     @Override
@@ -214,12 +208,17 @@ public class PartialsRefiner extends Operation {
         }
 
         // read partials
-        Set<PartialID> partialIDs = PartialIDFile.read(partialPath, true).stream().filter(id ->
-//                        components.contains(id.getSacComponent())
-//                         && tendEvents.contains(id.getGlobalCMTID())
-//                         && tendObserverNames.contains(id.getObserver().toString()))
-                components.contains(id.getSacComponent()))
-                .collect(Collectors.toSet());
+        Set<PartialID> partialIDs;
+        if (dataEntryPath != null) {
+            Set<DataEntry> selectEntries = DataEntryListFile.readAsSet(dataEntryPath);
+            partialIDs = PartialIDFile.read(partialPath, true).stream()
+                    .filter(id -> components.contains(id.getSacComponent()) && selectEntries.contains(id.toDataEntry()))
+                    .collect(Collectors.toSet());
+        } else {
+            partialIDs = PartialIDFile.read(partialPath, true).stream()
+                    .filter(id -> components.contains(id.getSacComponent()))
+                    .collect(Collectors.toSet());
+        }
         Set<DataEntry> dataEntries = partialIDs.stream().map(PartialID::toDataEntry).collect(Collectors.toSet());
 
         // work for each data entry

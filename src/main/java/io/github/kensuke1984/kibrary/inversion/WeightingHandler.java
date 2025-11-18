@@ -64,6 +64,7 @@ public class WeightingHandler {
     private List<DataFeature> dataFeatures; // TODO apply
 
     private SACComponent weightedComponent;
+    private Map<DataEntry, Double> amplitudeMap;
     private List<Map<DataEntry, Double>> weightMaps = new ArrayList<>();
 
     /**
@@ -110,6 +111,8 @@ public class WeightingHandler {
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
             pw.println("##Type of waveform, from {OBS,SYN}, when to multiply reciprocal of its amplitude.");
             pw.println("#reciprocalType OBS");
+            pw.println("##Path of entry amplitude list file, when to multiply reciprocal of the amplitude.");
+            pw.println("#amplitudePath ");
             pw.println("##Use amplitude of a specific component when multiplying reciprocal, from {Z, R, T}.");
             pw.println("#standardComponent ");
             pw.println("##(boolean) Whether to weigh the number of time windows of each component. (false)");
@@ -152,6 +155,7 @@ public class WeightingHandler {
             if (standardComponent != null) System.err.print("reciprocal_" + reciprocalType + "_" + standardComponent + ", ");
             else System.err.print("reciprocal_" + reciprocalType + ", ");
         }
+        if (amplitudeMap != null) System.err.print("using amplitude file, ");
         if (balanceComponent) System.err.print("balanceComponent, ");
         System.err.print("factorZ=" + factorForZComponent + ", ");
         System.err.print("factorR=" + factorForRComponent + ", ");
@@ -172,10 +176,14 @@ public class WeightingHandler {
     }
 
     private void set(Property property, Path parentPath) throws IOException {
-        if (property.containsKey("reciprocalType"))
+        if (property.containsKey("reciprocalType")) {
             reciprocalType = WaveformType.valueOf(property.parseString("reciprocalType", null));
-        else if (property.parseBoolean("amplitudeReciprocal", "false") == true)     // TODO delete (this is temporarily here for backward compatibility)
+        } else if (property.parseBoolean("amplitudeReciprocal", "false") == true) {     // TODO delete (this is temporarily here for backward compatibility)
             reciprocalType = WaveformType.OBS;                                      // TODO delete (this is temporarily here for backward compatibility)
+        } else if (property.containsKey("amplitudePath")) {
+            Path amplitudePath = property.parsePath("amplitudePath", null, true, parentPath);
+            amplitudeMap = EntryWeightListFile.read(amplitudePath);
+        }
         if (property.containsKey("standardComponent"))
             standardComponent = SACComponent.valueOf(property.parseString("standardComponent", null));
 
@@ -219,12 +227,20 @@ public class WeightingHandler {
 
         //~compute weight for each time window
         for (int i = 0; i < dVector.getNTimeWindow(); i++) {
+            DataEntry entry = dVector.getObsID(i).toDataEntry();
+            DataEntry weightedEntry = (weightedComponent != null) ? entry.withComponent(weightedComponent) : entry;
             double weighting = 1.0;
 
             // multiply reciprocal of amplitude
             // Square root is not taken for this because partial derivatives in A^T should also be weighted.
-            if (reciprocalType == WaveformType.OBS) weighting /= findObsAmplitude(dVector, i, standardComponent);
-            else if (reciprocalType == WaveformType.SYN) weighting /= findSynAmplitude(dVector, i, standardComponent);
+            if (reciprocalType == WaveformType.OBS) {
+                weighting /= findObsAmplitude(dVector, i, standardComponent);
+            } else if (reciprocalType == WaveformType.SYN) {
+                weighting /= findSynAmplitude(dVector, i, standardComponent);
+            } else if (amplitudeMap != null) {
+                if (!amplitudeMap.containsKey(weightedEntry)) throw new IllegalStateException("No amplitude value found for " + entry);
+                weighting /= amplitudeMap.get(weightedEntry);
+            }
 
             // balance component and multiply factor for each component
             // Take square root because weighting matrix W will be multiplied twice, as tAWWAm=tAWWd
@@ -251,11 +267,9 @@ public class WeightingHandler {
 
             // multiply values specified in weight files
             for (int k = 0; k < weightMaps.size(); k++) {
-                DataEntry entry = dVector.getObsID(i).toDataEntry();
-                if (weightedComponent != null) entry = entry.withComponent(weightedComponent);
-                if (!weightMaps.get(k).containsKey(entry)) throw new IllegalStateException("No weighting found for " + entry);
+                if (!weightMaps.get(k).containsKey(weightedEntry)) throw new IllegalStateException("No weighting found for " + entry);
                 // Take square root because weighting matrix W will be multiplied twice, as tAWWAm=tAWWd
-                weighting *= Math.sqrt(weightMaps.get(k).get(entry));
+                weighting *= Math.sqrt(weightMaps.get(k).get(weightedEntry));
             }
 
             //~create vector with the value 'weighting' for the whole time window

@@ -70,8 +70,13 @@ public class AzimuthHistogram {
         Options options = Summon.defaultOptions();
 
         // input
-        options.addOption(Option.builder("e").longOpt("dataEntryFile").hasArg().argName("dataEntryFile").required()
+        OptionGroup inputOption = new OptionGroup();
+        inputOption.setRequired(true);
+        inputOption.addOption(Option.builder("e").longOpt("dataEntryFile").hasArg().argName("dataEntryFile")
                 .desc("Path of data entry list file.").build());
+        inputOption.addOption(Option.builder("w").longOpt("weightFile").hasArg().argName("weightListFile")
+                .desc("Path of data entry weight list file.").build());
+        options.addOptionGroup(inputOption);
 
         // settings
         options.addOption(Option.builder("c").longOpt("components").hasArg().argName("components")
@@ -100,7 +105,7 @@ public class AzimuthHistogram {
         options.addOption(Option.builder("p").longOpt("phase").hasArg().argName("phase")
                 .desc("Name of phase to use to compute turning point. (ScS)").build());
         // weighting
-        options.addOption(Option.builder("w").longOpt("weight")
+        options.addOption(Option.builder("W").longOpt("weight")
                 .desc("Decide weights.").build());
 
         // output
@@ -124,9 +129,21 @@ public class AzimuthHistogram {
                 ? Arrays.stream(cmdLine.getOptionValue("c").split(",")).map(SACComponent::valueOf).collect(Collectors.toSet())
                 : SACComponent.componentSetOf("ZRT");
 
-        Path dataEntryPath = Paths.get(cmdLine.getOptionValue("e"));
-        Set<DataEntry> entrySet = DataEntryListFile.readAsSet(dataEntryPath).stream()
-                .filter(entry -> components.contains(entry.getComponent())).collect(Collectors.toSet());
+        // read input file
+        Set<DataEntry> entrySet;
+        Map<DataEntry, Double> weightMap = null;
+        if (cmdLine.hasOption("e")) {
+            Path dataEntryPath = Paths.get(cmdLine.getOptionValue("e"));
+            entrySet = DataEntryListFile.readAsSet(dataEntryPath).stream()
+                    .filter(entry -> components.contains(entry.getComponent())).collect(Collectors.toSet());
+        } else if (cmdLine.hasOption("w")) {
+            Path entryWeightPath = Paths.get(cmdLine.getOptionValue("w"));
+            weightMap = EntryWeightListFile.read(entryWeightPath);
+            entrySet = weightMap.keySet().stream()
+                    .filter(entry -> components.contains(entry.getComponent())).collect(Collectors.toSet());
+        } else {
+            throw new IllegalArgumentException("Data entry list file or data entry weight list file must be set.");
+        }
 
         double interval = cmdLine.hasOption("i") ? Double.parseDouble(cmdLine.getOptionValue("i")) : 5;
         double xtics = cmdLine.hasOption("x") ? Double.parseDouble(cmdLine.getOptionValue("x")) : 30;
@@ -137,7 +154,7 @@ public class AzimuthHistogram {
         boolean useTurningAzimuth = cmdLine.hasOption("t");
         String structureName = cmdLine.hasOption("s") ? cmdLine.getOptionValue("s") : "prem";
         String turningPointPhase = cmdLine.hasOption("p") ? cmdLine.getOptionValue("p") : "ScS";
-        boolean conductWeighting = cmdLine.hasOption("w");
+        boolean conductWeighting = cmdLine.hasOption("W");
 
         // if using turning point azimuth, compute using TauPPierce
         TauPPierceWrapper pierceTool = null;
@@ -153,6 +170,7 @@ public class AzimuthHistogram {
         // count number of records in each interval
         int domainWidth = expand ? 360 : 180;
         int[] numberOfRecords = new int[(int) MathAid.ceil(domainWidth / interval)];
+        double[] weightedNumberOfRecords = new double[numberOfRecords.length];
         Map<DataEntry, Double> azimuthMap = new HashMap<>();
         for (DataEntry entry : entrySet) {
             FullPosition eventPosition = entry.getEvent().getEventData().getCmtPosition();
@@ -178,19 +196,31 @@ public class AzimuthHistogram {
             if (!expand && azimuth > 180) azimuth -= 180;
             numberOfRecords[(int) (azimuth / interval)]++;
             azimuthMap.put(entry, azimuth);
+
+            // if weight file is input, count up weighted number of records
+            if (weightMap != null) weightedNumberOfRecords[(int) (azimuth / interval)] += weightMap.get(entry);
         }
 
         // decide weights
-        double[] weights = decideWeights(numberOfRecords, conductWeighting);
-        Map<DataEntry, Double> weightMap = new HashMap<>();
-        if (conductWeighting) {
-            for (DataEntry entry : entrySet) {
-                if (!azimuthMap.containsKey(entry)) {
-                    // If raypath with no azimuth information exists, weights cannot be computed.
-                    throw new IllegalStateException("No information for " + entry + ".");
+        if (weightMap == null) {
+            double[] weights = decideWeights(numberOfRecords, conductWeighting);
+
+            // record weight for each entry
+            weightMap = new HashMap<>();
+            if (conductWeighting) {
+                for (DataEntry entry : entrySet) {
+                    if (!azimuthMap.containsKey(entry)) {
+                        // If raypath with no azimuth information exists, weights cannot be computed.
+                        throw new IllegalStateException("No information for " + entry + ".");
+                    }
+                    double weight = weights[(int) (azimuthMap.get(entry) / interval)];
+                    weightMap.put(entry, weight);
                 }
-                double weight = weights[(int) (azimuthMap.get(entry) / interval)];
-                weightMap.put(entry, weight);
+            }
+
+            // calculate weighted number of records
+            for (int i = 0; i < numberOfRecords.length; i++) {
+                weightedNumberOfRecords[i] = numberOfRecords[i] * weights[i];
             }
         }
 
@@ -211,12 +241,12 @@ public class AzimuthHistogram {
         Path txtPath = outPath.resolve(typeName + "Histogram.txt");
         Path scriptPath = outPath.resolve(typeName + "Histogram.plt");
         Path weightPath = outPath.resolve("entryWeight_" + typeName + ".lst");
-        writeHistogramData(txtPath, interval, domainWidth, minimum, maximum, numberOfRecords, weights);
+        writeHistogramData(txtPath, interval, domainWidth, minimum, maximum, numberOfRecords, weightedNumberOfRecords);
         createScript(scriptPath, xlabel, interval, minimum, maximum, xtics, conductWeighting);
         if (conductWeighting) EntryWeightListFile.write(weightMap, weightPath);
     }
 
-    private static void writeHistogramData(Path txtPath, double interval, double domainWidth, double minimum, double maximum, int[] numberOfRecords, double[] weights) throws IOException {
+    private static void writeHistogramData(Path txtPath, double interval, double domainWidth, double minimum, double maximum, int[] numberOfRecords, double[] weightedNumberOfRecords) throws IOException {
         // figure out which domain the minimum and maximum are in
         int minLoop = (int) MathAid.floor(minimum / domainWidth);
         int maxLoop = (int) MathAid.ceil(maximum / domainWidth) - 1;
@@ -224,7 +254,7 @@ public class AzimuthHistogram {
             // output for all domains needed in the plot
             for (int loop = minLoop; loop <= maxLoop; loop++) {
                 for (int i = 0; i < numberOfRecords.length; i++) {
-                    pw.println(String.format("%.2f %d %.1f", i * interval + loop * domainWidth, numberOfRecords[i], numberOfRecords[i] * weights[i]));
+                    pw.println(String.format("%.2f %d %.1f", i * interval + loop * domainWidth, numberOfRecords[i], weightedNumberOfRecords[i]));
                 }
             }
         }

@@ -14,6 +14,7 @@ import io.github.kensuke1984.kibrary.external.specfem.SPECFEMModelMaker;
 import io.github.kensuke1984.kibrary.external.specfem.SPECFEMPostProcess;
 import io.github.kensuke1984.kibrary.external.specfem.SPECFEMSetup;
 import io.github.kensuke1984.kibrary.inversion.DiagATAExtract;
+import io.github.kensuke1984.kibrary.inversion.EntryWeightListFile;
 import io.github.kensuke1984.kibrary.inversion.WeightingHandler;
 import io.github.kensuke1984.kibrary.math.MatrixFile;
 import io.github.kensuke1984.kibrary.math.VectorFile;
@@ -36,6 +37,7 @@ import io.github.kensuke1984.kibrary.visual.map.VoxelMapper;
 import io.github.kensuke1984.kibrary.visual.plot.AzimuthHistogram;
 import io.github.kensuke1984.kibrary.visual.plot.DistanceHistogram;
 import io.github.kensuke1984.kibrary.visual.plot.EventHistogram;
+import io.github.kensuke1984.kibrary.visual.plot.RecordNumberPlot;
 import io.github.kensuke1984.kibrary.voxel.LayerInformationFile;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameterSetter;
 import io.github.kensuke1984.kibrary.waveform.BasicIDFile;
@@ -85,6 +87,7 @@ enum Brooklyn {
     VarianceComputer(41, VarianceComputer.class),
     DistanceHistogram(42, DistanceHistogram.class),
     AzimuthHistogram(43, AzimuthHistogram.class),
+    EntryWeightListFile(44, EntryWeightListFile.class),
     // Voxel 50
     LayerInformationFile(50, LayerInformationFile.class),
     VoxelMapper(51, VoxelMapper.class),
@@ -104,6 +107,7 @@ enum Brooklyn {
     // Scalar & Sensitivity 90
     PerturbationComparison(90, PerturbationComparison.class),
     // Temporal 100
+    RecordNumberPlot(100, RecordNumberPlot.class),
     ;
 
     private final Class<?> classObject;
