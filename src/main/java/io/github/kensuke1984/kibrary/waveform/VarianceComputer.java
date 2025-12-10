@@ -5,6 +5,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
@@ -19,6 +20,7 @@ import io.github.kensuke1984.kibrary.inversion.setup.DVectorBuilder;
 import io.github.kensuke1984.kibrary.timewindow.TimeWindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimeWindowDataFile;
 import io.github.kensuke1984.kibrary.util.MathAid;
+import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 
 /**
  * Computes variance of {@link BasicIDFile}s, with the specified weighting.
@@ -88,6 +90,28 @@ public class VarianceComputer {
             basicIDs = cutOutImprovementWindows(basicIDs, improvementWindowSet);
         }
 
+        List<GlobalCMTID> events = basicIDs.stream().map(id -> id.getGlobalCMTID()).distinct().collect(Collectors.toList());
+        for(GlobalCMTID event:events) {
+            List<BasicID> basicIDsForEvent = basicIDs.stream().filter(id -> id.getGlobalCMTID().equals(event)).collect(Collectors.toList());
+
+            // set DVector
+            System.err.println("Setting data for d vector");
+            DVectorBuilder dVectorBuilder = new DVectorBuilder(basicIDsForEvent);
+
+            // set weighting
+            System.err.println("Setting weighting");
+            RealVector[] weighting = weightingHandler.weightWaveforms(dVectorBuilder);
+
+            // assemble d
+            System.err.println("Assembling d vector");
+            RealVector d = dVectorBuilder.buildWithWeight(weighting);
+
+            // compute variance
+            RealVector obs = dVectorBuilder.fullObsVecWithWeight(weighting);
+            double normalizedVariance = MathAid.computeVariance(d, obs);
+            System.err.println("Npts of whole waveform is " + obs.getDimension());
+            System.err.println("Normalized variance for " + event + " is " + normalizedVariance);
+        }
         // set DVector
         System.err.println("Setting data for d vector");
         DVectorBuilder dVectorBuilder = new DVectorBuilder(basicIDs);
@@ -104,7 +128,7 @@ public class VarianceComputer {
         RealVector obs = dVectorBuilder.fullObsVecWithWeight(weighting);
         double normalizedVariance = MathAid.computeVariance(d, obs);
         System.err.println("Npts of whole waveform is " + obs.getDimension());
-        System.err.println("Normalized variance is " + normalizedVariance);
+        System.err.println("Normalized variance for all events is " + normalizedVariance);
     }
 
     /**

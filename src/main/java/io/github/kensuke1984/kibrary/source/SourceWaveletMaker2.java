@@ -294,6 +294,12 @@ public class SourceWaveletMaker2 extends Operation {
 
             Path eventDirectryPath = outPath.resolve(eventID + "");
 
+            // omit events with less than 5 observation
+            if(num < 5) {
+                System.out.println(eventID + " has less than 5 observation");
+                return;
+            }
+
 
             // divide by the number of time windows added to get average, and half duration to normalize the amplitude
             double[] yArray = sumVector.mapDivide(num).mapDivide(halfDuration).toArray();
