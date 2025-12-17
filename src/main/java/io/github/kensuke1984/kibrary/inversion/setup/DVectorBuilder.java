@@ -58,15 +58,15 @@ public final class DVectorBuilder {
     private final int[] startPoints;
 
     public DVectorBuilder(BasicID[] basicIDs) {
-        this(Arrays.asList(basicIDs));
+        this(Arrays.asList(basicIDs), true);
     }
 
-    public DVectorBuilder(List<BasicID> basicIDs) {
+    public DVectorBuilder(List<BasicID> basicIDs, boolean writeMessage) {
         // check if IDs are valid
         if (!check(basicIDs)) throw new RuntimeException("Input IDs do not have waveform data.");
 
         // sort observed and synthetic
-        BasicIDPairUp pairer = new BasicIDPairUp(basicIDs);
+        BasicIDPairUp pairer = new BasicIDPairUp(basicIDs, writeMessage);
         obsIDs = pairer.getObsList().toArray(new BasicID[0]);
         synIDs = pairer.getSynList().toArray(new BasicID[0]);
         nTimeWindow = synIDs.length;
@@ -74,8 +74,9 @@ public final class DVectorBuilder {
         obsVecs = new RealVector[nTimeWindow];
         synVecs = new RealVector[nTimeWindow];
         startPoints = new int[nTimeWindow];
-        System.err.println(" " + MathAid.switchSingularPlural(nTimeWindow, "time window is", "time windows are") + " used");
-
+        if(writeMessage) {
+            System.err.println(" " + MathAid.switchSingularPlural(nTimeWindow, "time window is", "time windows are") + " used");
+        }
         totalNpts = read();
         numIndependent = computeNumIndependent();
     }

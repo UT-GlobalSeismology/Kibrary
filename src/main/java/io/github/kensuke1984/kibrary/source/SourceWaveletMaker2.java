@@ -294,7 +294,7 @@ public class SourceWaveletMaker2 extends Operation {
 
             Path eventDirectryPath = outPath.resolve(eventID + "");
 
-            // omit events with less than 5 observation
+            // omit events with less than 5 observation reffering Yamaya et al.
             if(num < 5) {
                 System.out.println(eventID + " has less than 5 observation");
                 return;
@@ -444,6 +444,20 @@ public class SourceWaveletMaker2 extends Operation {
             }catch(IOException e){
                 throw new UncheckedIOException(e);
             }
+
+            // make graphs of stacked and triangle stf
+            Path stackPltPath = eventDirectryPath.resolve(eventID + ".plt");
+            try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(stackPltPath))) {
+                pw.println("set term pngcairo enhanced size 1600,800 font 'Helvetica.20'");
+                pw.println("set output 'wave.png'");
+                pw.println("set xrange [0:12]");
+                pw.println("p \"" + eventID + "_time.txt\" w l title \"stacked\", \"" + eventID + "_triangle.txt\" w l title \"LSTF\"");
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+
+
         }
 
     }

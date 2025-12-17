@@ -386,7 +386,7 @@ public class DataFeatureHistogram extends Operation {
        Set<DataFeature> featureSet = new HashSet<>();
 
        // sort observed and synthetic
-       BasicIDPairUp pairer = new BasicIDPairUp(basicIDs);
+       BasicIDPairUp pairer = new BasicIDPairUp(basicIDs, true);
        List<BasicID> obsIDs = pairer.getObsList();
        List<BasicID> synIDs = pairer.getSynList();
 
