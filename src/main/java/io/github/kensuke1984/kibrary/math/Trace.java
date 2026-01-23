@@ -399,6 +399,24 @@ public final class Trace {
     }
 
     /**
+     * Resample the trace by extracting elements corresponding to the indexes
+     * @param indexes (int[]) array of index to be extracted
+     * @return ({@link Trace}) Resampled trace
+     *
+     * @author rei
+     * @since 2025/12/24
+     */
+    public Trace resample(int[] indexes) {
+        double[] sampledX = new double[indexes.length];
+        double[] sampledY = new double[indexes.length];
+        for (int i = 0; i < indexes.length; i++) {
+            sampledX[i] = xArray[indexes[i]];
+            sampledY[i] = yArray[indexes[i]];
+        }
+        return new Trace(sampledX, sampledY);
+    }
+
+    /**
      * Cut out while resampling the part of this Trace in the specified range.
      * @param iStart (int) Start index of the range to be copied, inclusive.
      * @param step (int) Interval in which to resample.
