@@ -1,9 +1,15 @@
 package io.github.kensuke1984.kibrary.inversion.solve;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+
 import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.MatrixUtils;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
+
+import io.github.kensuke1984.kibrary.math.MatrixFile;
 
 /**
  * Conjugate gradient method.
@@ -99,6 +105,9 @@ public class ConjugateGradientMethod extends InversionMethod {
      * Cov(<b>m</b><sub>j</sub>) = &sigma;<sub>D</sub><sup>2</sup> &Sigma;<sub>i=1</sub><sup>j</sup>
      *  (<b>p</b><sub>i</sub> <b>p</b><sub>i</sub><sup>T</sup>)
      *  / (<b>p</b><sub>i</sub><sup>T</sup> A<sup>T</sup>A <b>p</b><sub>i</sub>) . <br>
+     *  (Truncation of &sigma;<sub>d</sub><sup>2</sup> P L<sup>-1</sup> P<sup>T</sup> .)
+     *
+     * <p>
      * See eq. (A33) of Kawai et al. (2014).
      */
     @Override
@@ -116,7 +125,33 @@ public class ConjugateGradientMethod extends InversionMethod {
     }
 
     @Override
-    public RealMatrix getBaseVectors() {
+    public void outputBasisVectors(Path outPath) throws IOException {
+        Files.createDirectories(outPath);
+        System.err.println("Outputting base vectors in " + outPath);
+        MatrixFile.write(p, outPath.resolve("pMatrix.lst"));
+    }
+
+    public static void computeResolutionMatrix(Path inversionPath, Path resultPath, int nBasis, Path outputPath) throws IOException {
+        RealMatrix ata = MatrixFile.read(inversionPath.resolve("ata.lst"));
+        RealMatrix p = MatrixFile.read(resultPath.resolve("pMatrix.lst"));
+
+        int dimension = ata.getColumnDimension();
+        if (p.getColumnDimension() != dimension) throw new IllegalStateException("Size of AtA and P do not match.");
+
+        RealMatrix resMatrix = MatrixUtils.createRealMatrix(dimension, dimension);
+
+        for (int j = 0; j < nBasis; j++) {
+            RealVector pjVec = p.getColumnVector(j);
+            double paap = pjVec.dotProduct(ata.operate(pjVec));
+            RealMatrix pjMat = p.getColumnMatrix(j);
+            resMatrix = resMatrix.add(pjMat.multiply(pjMat.transpose()).scalarMultiply(1/paap));
+        }
+
+        MatrixFile.write(resMatrix, outputPath);
+    }
+
+    @Override
+    public RealMatrix getBasisVectors() {
         return p;
     }
 
