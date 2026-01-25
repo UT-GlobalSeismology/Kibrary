@@ -83,7 +83,8 @@ public class ModelSetMapper extends Operation {
      * Solvers for equation.
      */
     private Set<InverseMethodEnum> inverseMethods;
-    private int maxNum;
+    private int maxBasis;
+    private int basisInterval;
     private double[] boundaries;
     /**
      * Indices of layers to display in the figure. Listed from the inside. Layers are numbered 0, 1, 2, ... from the inside.
@@ -144,7 +145,9 @@ public class ModelSetMapper extends Operation {
             pw.println("##Names of inverse methods, listed using spaces, from {CG,SVD,LS,NNLS,BCGS,FCG,FCGD,NCG,CCG}. (CG)");
             pw.println("#inverseMethods ");
             pw.println("##(int) Maximum number of basis vectors to map. (10)");
-            pw.println("#maxNum ");
+            pw.println("#maxBasis ");
+            pw.println("##(int) Interval of basis vectors to map. (1)");
+            pw.println("#basisInterval ");
             pw.println("##(double[]) The display values of each layer boundary, listed from the inside using spaces. (0 50 100 150 200 250 300 350 400)");
             pw.println("#boundaries ");
             pw.println("##(int[]) Indices of layers to display, listed from the inside using spaces, when specific layers are to be displayed.");
@@ -204,7 +207,8 @@ public class ModelSetMapper extends Operation {
                 .collect(Collectors.toSet());
         inverseMethods = Arrays.stream(property.parseStringArray("inverseMethods", "CG")).map(InverseMethodEnum::of)
                 .collect(Collectors.toSet());
-        maxNum = property.parseInt("maxNum", "10");
+        maxBasis = property.parseInt("maxBasis", "10");
+        basisInterval = property.parseInt("basisInterval", "1");
 
         boundaries = property.parseDoubleArray("boundaries", "0 50 100 150 200 250 300 350 400");
         if (property.containsKey("displayLayers")) displayLayers = property.parseIntArray("displayLayers", null);
@@ -273,7 +277,7 @@ public class ModelSetMapper extends Operation {
                 continue;
             }
 
-            for (int k = 1; k <= maxNum; k++){
+            for (int k = basisInterval; k <= maxBasis; k += basisInterval){
                 Path answerPath = methodPath.resolve(method.simpleName() + k + ".lst");
                 if (!Files.exists(answerPath)) {
                     System.err.println("Results for " + method.simpleName() + k + " do not exist, skipping.");
@@ -324,7 +328,7 @@ public class ModelSetMapper extends Operation {
             pw.println("#!/bin/sh");
             for (InverseMethodEnum method : inverseMethods) {
                 pw.println("");
-                pw.println("for i in `seq 1 " + maxNum + "`");
+                pw.println("for i in `seq " + basisInterval + " " + basisInterval + " " + maxBasis + "`");
                 pw.println("do");
                 pw.println("    cd " + method.simpleName() + "$i");
                 pw.println("    ln -s ../" + fileNameRoot + "Grid.sh .");

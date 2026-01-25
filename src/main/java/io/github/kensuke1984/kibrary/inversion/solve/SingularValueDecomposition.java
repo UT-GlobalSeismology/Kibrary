@@ -107,6 +107,20 @@ public class SingularValueDecomposition extends InversionMethod {
         return covarianceMatrix;
     }
 
+    public static void computeResolutionMatrix(Path inversionPath, Path resultPath, int nBasis, Path outputPath) throws IOException {
+        RealMatrix v = MatrixFile.read(resultPath.resolve("vMatrix.lst"));
+        int dimension = v.getColumnDimension();
+
+        RealMatrix resMatrix = MatrixUtils.createRealMatrix(dimension, dimension);
+
+        for (int j = 0; j < nBasis; j++) {
+            RealMatrix vjMat = v.getColumnMatrix(j);
+            resMatrix = resMatrix.add(vjMat.multiply(vjMat.transpose()));
+        }
+
+        MatrixFile.write(resMatrix, outputPath);
+    }
+
     @Override
     public void outputBasisVectors(Path outPath) throws IOException {
         Files.createDirectories(outPath);

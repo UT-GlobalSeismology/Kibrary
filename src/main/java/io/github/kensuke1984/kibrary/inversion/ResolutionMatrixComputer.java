@@ -12,6 +12,7 @@ import org.apache.commons.cli.ParseException;
 import io.github.kensuke1984.kibrary.Summon;
 import io.github.kensuke1984.kibrary.inversion.solve.ConjugateGradientMethod;
 import io.github.kensuke1984.kibrary.inversion.solve.InverseMethodEnum;
+import io.github.kensuke1984.kibrary.inversion.solve.SingularValueDecomposition;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 
 /**
@@ -72,8 +73,15 @@ public class ResolutionMatrixComputer {
         boolean appendFileDate = !cmdLine.hasOption("O");
         Path outputPath = DatasetAid.generateOutputFilePath(Paths.get(""), "resolution", fileTag, appendFileDate, null, ".lst");
 
-        if (inverseMethod == InverseMethodEnum.CONJUGATE_GRADIENT)
+        switch (inverseMethod) {
+        case CONJUGATE_GRADIENT:
             ConjugateGradientMethod.computeResolutionMatrix(resultPath.toAbsolutePath().normalize().getParent(), resultPath, i, outputPath);
+            break;
+        case SINGULAR_VALUE_DECOMPOSITION:
+            SingularValueDecomposition.computeResolutionMatrix(resultPath.toAbsolutePath().normalize().getParent(), resultPath, i, outputPath);
+            break;
+        default:
+        }
     }
 
 }

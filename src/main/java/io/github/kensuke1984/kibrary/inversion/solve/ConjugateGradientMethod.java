@@ -124,13 +124,6 @@ public class ConjugateGradientMethod extends InversionMethod {
         return covariance;
     }
 
-    @Override
-    public void outputBasisVectors(Path outPath) throws IOException {
-        Files.createDirectories(outPath);
-        System.err.println("Outputting base vectors in " + outPath);
-        MatrixFile.write(p, outPath.resolve("pMatrix.lst"));
-    }
-
     public static void computeResolutionMatrix(Path inversionPath, Path resultPath, int nBasis, Path outputPath) throws IOException {
         RealMatrix ata = MatrixFile.read(inversionPath.resolve("ata.lst"));
         RealMatrix p = MatrixFile.read(resultPath.resolve("pMatrix.lst"));
@@ -148,6 +141,13 @@ public class ConjugateGradientMethod extends InversionMethod {
         }
 
         MatrixFile.write(resMatrix, outputPath);
+    }
+
+    @Override
+    public void outputBasisVectors(Path outPath) throws IOException {
+        Files.createDirectories(outPath);
+        System.err.println("Outputting base vectors in " + outPath);
+        MatrixFile.write(p, outPath.resolve("pMatrix.lst"));
     }
 
     @Override
