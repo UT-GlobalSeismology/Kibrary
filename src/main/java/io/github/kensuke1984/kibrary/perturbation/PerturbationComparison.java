@@ -19,6 +19,7 @@ import org.apache.commons.math3.linear.RealVector;
 
 import io.github.kensuke1984.kibrary.Summon;
 import io.github.kensuke1984.kibrary.elastic.VariableType;
+import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 
@@ -57,6 +58,9 @@ public class PerturbationComparison {
                 .desc("Path of scalar file to compare.").build());
         options.addOption(Option.builder("d").longOpt("denominator").hasArg().argName("scalarFile").required()
                 .desc("Path of scalar file to compare to.").build());
+
+        options.addOption(Option.builder("S").longOpt("scatter")
+                .desc("Create scatter plot.").build());
 
         // output
         options.addOption(Option.builder("T").longOpt("tag").hasArg().argName("folderTag")
@@ -122,6 +126,14 @@ public class PerturbationComparison {
         // output similarity and distance in a txt file
         Path comparisonPath = outPath.resolve("comparison.txt");
         outputComparison(comparisonPath, numeratorPath, denominatorPath, cosineSimilarity, l2Distance, l2Average, l2Denominator);
+
+        // output values in a txt file
+        if (cmdLine.hasOption("S")) {
+            Path valuesPath = outPath.resolve("values.txt");
+            Path scatterPath = outPath.resolve("valueScatterPlot.plt");
+            outputValues(valuesPath, positions, numeratorValues, denominatorValues);
+            createScatterPlot(scatterPath);
+        }
     }
 
     private static Map<FullPosition, Double> constructMapFromVector(List<FullPosition> positions, RealVector vector) {
@@ -133,6 +145,27 @@ public class PerturbationComparison {
             map.put(positions.get(i), vector.getEntry(i));
         }
         return map;
+    }
+
+    private static void outputValues(Path outputPath, List<FullPosition> positions, double[] numeratorValues, double[] denominatorValues) throws IOException {
+        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath))) {
+            for (int i = 0; i < positions.size(); i++) {
+                pw.println(positions.get(i) + " " + denominatorValues[i] + " " + numeratorValues[i]);
+            }
+        }
+    }
+
+    private static void createScatterPlot(Path scatterPath) throws IOException {
+        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(scatterPath))) {
+            pw.println("set term pngcairo enhanced size 600,600 font 'Helvetica,20'");
+            pw.println("set output 'valueScatterPlot.png'");
+            pw.println("set xlabel \"{/Symbol d}Vs/Vs (%)\"");
+            pw.println("set ylabel \"{/Symbol d}Vs/Vs (%)\"");
+            pw.println("set zeroaxis lt 1 lc \"black\"");
+            pw.println("p \"values.txt\" u 4:5 w p pt 7 notitle");
+        }
+        GnuplotFile plot = new GnuplotFile(scatterPath);
+        plot.execute();
     }
 
     private static void outputComparison(Path outputPath, Path numeratorPath, Path denominatorPath,
@@ -150,4 +183,5 @@ public class PerturbationComparison {
             pw.println("  " + l2Distance + " / " + l2Denominator + " = " + (l2Distance / l2Denominator));
         }
     }
+
 }
