@@ -64,6 +64,8 @@ public class ExtractValuesFromMatrix {
         criteriaOption.setRequired(true);
         criteriaOption.addOption(Option.builder("d").longOpt("diagonals")
                 .desc("Extract diagonals.").build());
+        criteriaOption.addOption(Option.builder("r").longOpt("row").hasArg().argName("iRow")
+                .desc("Extract i-th row.").build());
         criteriaOption.addOption(Option.builder("c").longOpt("column").hasArg().argName("iColumn")
                 .desc("Extract i-th column.").build());
         options.addOptionGroup(criteriaOption);
@@ -87,7 +89,8 @@ public class ExtractValuesFromMatrix {
         VariableType variable = VariableType.valueOf(cmdLine.getOptionValue("v"));
         Path matrixPath = Paths.get(cmdLine.getOptionValue("m"));
         boolean diagonals = cmdLine.hasOption("d");
-        int iColumn = diagonals ? -1 : Integer.parseInt(cmdLine.getOptionValue("c"));
+        int iRow = cmdLine.hasOption("r") ? Integer.parseInt(cmdLine.getOptionValue("r")) : -1;
+        int iColumn = cmdLine.hasOption("c") ? Integer.parseInt(cmdLine.getOptionValue("c")) : -1;
         String fileTag = cmdLine.hasOption("T") ? cmdLine.getOptionValue("T") : null;
         boolean appendFileDate = !cmdLine.hasOption("O");
         Path outputPath = ScalarListFile.generateFilePath(Paths.get(""), null, ScalarType.ABSOLUTE, fileTag, appendFileDate, null);
@@ -112,7 +115,11 @@ public class ExtractValuesFromMatrix {
             if (!unknown.getVariableType().equals(variable)) continue;
 
             // get value from specified column
-            double value = diagonals ? values[i][i] : values[i][iColumn];
+            double value;
+            if (diagonals) value = values[i][i];
+            else if (iRow >= 0) value = values[iRow][i];
+            else if (iColumn >= 0) value = values[i][iColumn];
+            else throw new IllegalArgumentException("Criteria of components to extract must be set.");
 
             scalarMap.put(unknown.getPosition(), value);
         }

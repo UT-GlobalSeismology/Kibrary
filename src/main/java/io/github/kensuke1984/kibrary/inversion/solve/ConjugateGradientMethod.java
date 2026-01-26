@@ -74,30 +74,36 @@ public class ConjugateGradientMethod extends InversionMethod {
 
         // r_0 = Atd - AtA m_0
         RealVector r = atd.subtract(ata.operate(m0));
+        double rrNew = r.dotProduct(r);
+        double rrOld = rrNew;
         // p_0 = r_0
-        p.setColumnVector(0, r);
+        RealVector p_i = r;
+        p.setColumnVector(0, p_i);
 
         // remember AtA p
-        RealVector atap = ata.operate(p.getColumnVector(0));
-        // alpha = r p / p AtA p
-        alpha.setEntry(0, p.getColumnVector(0).dotProduct(r) / p.getColumnVector(0).dotProduct(atap));
+        RealVector atap = ata.operate(p_i);
+        // alpha = r r / p AtA p
+        alpha.setEntry(0, rrNew / p_i.dotProduct(atap));
         // m_1 = m_0 + alpha p
-        answer.setColumnVector(0, p.getColumnVector(0).mapMultiply(alpha.getEntry(0)).add(m0));
+        answer.setColumnVector(0, p_i.mapMultiply(alpha.getEntry(0)).add(m0));
 
         for (int i = 1; i < ata.getColumnDimension(); i++) {
             // r_{k+1} = r_k - alpha AtA p
             r = r.subtract(atap.mapMultiply(alpha.getEntry(i - 1)));
-            // beta = - r AtA p / p AtA p
-            double b = - r.dotProduct(atap) / p.getColumnVector(i - 1).dotProduct(atap);
+            // beta = r_{k+1} r_{k+1} / r_k r_k
+            rrNew = r.dotProduct(r);
+            double b = rrNew / rrOld;
+            rrOld = rrNew;
             // p_{k+1} = r + beta p
-            p.setColumnVector(i, r.add(p.getColumnVector(i - 1).mapMultiply(b)));
+            p_i = r.add(p.getColumnVector(i - 1).mapMultiply(b));
+            p.setColumnVector(i, p_i);
 
             // remember new AtA p
-            atap = ata.operate(p.getColumnVector(i));
-            // alpha = r p / p AtA p
-            alpha.setEntry(i, p.getColumnVector(i).dotProduct(r) / p.getColumnVector(i).dotProduct(atap));
+            atap = ata.operate(p_i);
+            // alpha = r r / p AtA p
+            alpha.setEntry(i, rrNew / p_i.dotProduct(atap));
             // m_{k+1} = m_k + alpha p
-            answer.setColumnVector(i, p.getColumnVector(i).mapMultiply(alpha.getEntry(i)).add(answer.getColumnVector(i - 1)));
+            answer.setColumnVector(i, p_i.mapMultiply(alpha.getEntry(i)).add(answer.getColumnVector(i - 1)));
         }
     }
 
@@ -131,15 +137,17 @@ public class ConjugateGradientMethod extends InversionMethod {
         int dimension = ata.getColumnDimension();
         if (p.getColumnDimension() != dimension) throw new IllegalStateException("Size of AtA and P do not match.");
 
-        RealMatrix resMatrix = MatrixUtils.createRealMatrix(dimension, dimension);
-
+        // compute PLP
+        RealMatrix plp = MatrixUtils.createRealMatrix(dimension, dimension);
         for (int j = 0; j < nBasis; j++) {
             RealVector pjVec = p.getColumnVector(j);
             double paap = pjVec.dotProduct(ata.operate(pjVec));
             RealMatrix pjMat = p.getColumnMatrix(j);
-            resMatrix = resMatrix.add(pjMat.multiply(pjMat.transpose()).scalarMultiply(1/paap));
+            plp = plp.add(pjMat.multiply(pjMat.transpose()).scalarMultiply(1/paap));
         }
 
+        // compute resolution matrix and output
+        RealMatrix resMatrix = plp.multiply(ata);
         MatrixFile.write(resMatrix, outputPath);
     }
 
