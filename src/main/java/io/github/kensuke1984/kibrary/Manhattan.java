@@ -25,6 +25,7 @@ import io.github.kensuke1984.kibrary.perturbation.BlockModelMaker;
 import io.github.kensuke1984.kibrary.perturbation.CheckerboardMaker;
 import io.github.kensuke1984.kibrary.perturbation.ModelResampler;
 import io.github.kensuke1984.kibrary.perturbation.ModelSmoothener;
+import io.github.kensuke1984.kibrary.perturbation.ScalarResampler;
 import io.github.kensuke1984.kibrary.quick.PartialsRefineOutput;
 import io.github.kensuke1984.kibrary.quick.PartialsShiftComputer;
 import io.github.kensuke1984.kibrary.selection.DataSelection;
@@ -154,6 +155,7 @@ enum Manhattan {
     ScalarStructurePlotter(91, ScalarStructurePlotter.class),
     ScalarMapper(92, ScalarMapper.class),
     CrossSectionCreator(93, CrossSectionCreator.class),
+    ScalarResampler(94, ScalarResampler.class),
     SensitivityKernelPlotter1D(96, SensitivityKernelPlotter1D.class),
     SensitivityKernelMapper3D(97, SensitivityKernelMapper3D.class),
     PartialsMovieMaker(99, PartialsMovieMaker.class),

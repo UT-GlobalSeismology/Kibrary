@@ -14,8 +14,11 @@ import java.util.stream.IntStream;
 import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
 import org.apache.commons.math3.util.Precision;
 
+import io.github.kensuke1984.kibrary.math.geometry.IntegerXY;
+import io.github.kensuke1984.kibrary.math.geometry.XY;
 import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
+import io.github.kensuke1984.kibrary.voxel.HorizontalPixel;
 
 /**
  * Methods concerning interpolation of values on a line or surface.
@@ -47,6 +50,8 @@ public class Interpolation {
     }
 
     /**
+     * Given a map on a 3-D longitude-staggered grid, resample values at a specified set of longitudes on each radius & latitude.
+     *
      * @param originalMap (Map of {@link FullPosition}, Double) Map data to be interpolated.
      * @param sampleLongitudes (double[]) Longitudes at which to interpolate.
      * @param longitudeMargin (double) The margin to append at the western and eastern ends of the region (including edges of voxel gaps).
@@ -78,6 +83,24 @@ public class Interpolation {
         return interpolatedMap;
     }
 
+    /**
+     * Given a map on a 3-D longitude-staggered grid, resample values at a specified set of longitudes on a certain radius & latitude.
+     *
+     * @param originalMap (Map of {@link FullPosition}, Double) Map data to be interpolated.
+     * @param radius (double) Radius to process.
+     * @param latitude (double) Latitude to process.
+     * @param sampleLongitudes (double[]) Longitudes at which to interpolate.
+     * @param longitudeMargin (double) The margin to append at the western and eastern ends of the region (including edges of voxel gaps).
+     *          Also used to recognize voxel gaps in the longitude direction.
+     * @param longitudeInKm (boolean) Whether the above value is given in [km] or [deg].
+     * @param meanRadius (double) Mean radius of target region [km].
+     * @param crossDateLine (boolean) Whether to use longitude range [0:360). Otherwise, [-180:180).
+     * @param mosaic (boolean) Whether to create a mosaic-style map. When false, a smooth map will be created.
+     * @return (LinkedHashMap of {@link FullPosition} to Double) Interpolated map data.
+     *
+     * @author otsuru
+     * @since 2023/3/24
+     */
     public static Map<FullPosition, Double> forWestEastLine(Map<FullPosition, Double> originalMap, double radius, double latitude, double[] sampleLongitudes,
             double longitudeMargin, boolean longitudeInKm, double meanRadius, boolean crossDateLine, boolean mosaic) {
         // This is created as LinkedHashMap to preserve the order of grid points
@@ -118,6 +141,142 @@ public class Interpolation {
         return interpolatedMap;
     }
 
+    public static Map<FullPosition, Double> cartesianInEachMapLayer(Map<FullPosition, Double> originalMap, double gridInterval,
+            List<HorizontalPixel> pixelList, boolean crossDateLine, boolean mosaic) {
+
+        Set<FullPosition> allPositions = originalMap.keySet();
+        double[] radii = allPositions.stream().mapToDouble(pos -> pos.getR()).distinct().sorted().toArray();
+
+        for (double radius : radii) {
+            Set<FullPosition> inLayerPositions = allPositions.stream()
+                    .filter(pos -> Precision.equals(pos.getR(), radius, FullPosition.RADIUS_EPSILON)).collect(Collectors.toSet());
+
+            // realign map on integer grid
+            Map<IntegerXY, Double> integerGridMap = new HashMap<>();
+            for (FullPosition position : inLayerPositions) {
+                HorizontalPixel pixel = pixelList.stream().filter(pix -> pix.getPosition().equals(position)).findAny().get();
+                int x = pixel.getILongitude();
+                int y = pixel.getILatitude();
+                IntegerXY pixelXY = new IntegerXY(x, y);
+                integerGridMap.put(pixelXY, originalMap.get(position));
+            }
+
+            double[] latitudes = inLayerPositions.stream().mapToDouble(pos -> pos.getLatitude()).distinct().sorted().toArray();
+            double[] longitudes = inLayerPositions.stream().mapToDouble(pos -> pos.getLongitude(crossDateLine)).distinct().sorted().toArray();
+            double minLatitude = Arrays.stream(latitudes).min().getAsDouble();
+            double maxLatitude = Arrays.stream(latitudes).max().getAsDouble();
+            double minLongitude = Arrays.stream(longitudes).min().getAsDouble();
+            double maxLongitude = Arrays.stream(longitudes).max().getAsDouble();
+
+            int minILatitude = (int) Math.ceil(minLatitude / gridInterval);
+            int maxILatitude = (int) Math.floor(maxLatitude / gridInterval);
+            for (int j = minILatitude; j <= maxILatitude; j++) {
+                double latitude = j * gridInterval;
+            }
+
+
+        }
+        return null;
+    }
+
+    /**
+     * Interpolation from a 2-D integer grid.
+     * This method supposes that data points are on a 2-D integer grid.
+     * Values can be resampled at an arbitrary set of coordinates.
+     * <p>
+     * In mosaic mode, a nearest-neighbor interpolation is done.
+     * In smooth interpolation, a two-step cubic interpolation is done: first in the x direction, then in the y.
+     *
+     * @param integerGridMap (Map of {@link IntegerXY}, Double) Map data to be interpolated.
+     * @param sampleCoordinates (List of {@link XY}) Coordinates at which to interpolate.
+     * @param mosaic (boolean) Whether to create a mosaic-style map. When false, a smooth map will be created.
+     * @return (LinkedHashMap of {@link XY} to Double) Interpolated map data.
+     *
+     * @author otsuru
+     * @since 2026/2/5
+     */
+    public static Map<XY, Double> onIntegerGrid(Map<IntegerXY, Double> integerGridMap, List<XY> sampleCoordinates, boolean mosaic) {
+        if (mosaic) {
+            return onIntegerGridMosaic(integerGridMap, sampleCoordinates);
+        } else {
+            return onIntegerGridSmooth(integerGridMap, sampleCoordinates);
+        }
+    }
+    private static Map<XY, Double> onIntegerGridMosaic(Map<IntegerXY, Double> integerGridMap, List<XY> sampleCoordinates) {
+        // This is created as LinkedHashMap to preserve the order of grid points
+        Map<XY, Double> interpolatedMap = new LinkedHashMap<>();
+
+        for (XY sampleXY : sampleCoordinates) {
+            int x = (int) Math.round(sampleXY.getX());
+            int y = (int) Math.round(sampleXY.getY());
+            IntegerXY nearestXY = new IntegerXY(x, y);
+            interpolatedMap.put(sampleXY, integerGridMap.get(nearestXY));
+        }
+        return interpolatedMap;
+    }
+    private static Map<XY, Double> onIntegerGridSmooth(Map<IntegerXY, Double> integerGridMap, List<XY> sampleCoordinates) {
+        // This is created as LinkedHashMap to preserve the order of grid points
+        Map<XY, Double> interpolatedMap = new LinkedHashMap<>();
+
+        // extract grid range
+        Set<IntegerXY> integerGrid = integerGridMap.keySet();
+        int minY = integerGrid.stream().mapToInt(IntegerXY::y).min().getAsInt();
+        int maxY = integerGrid.stream().mapToInt(IntegerXY::y).max().getAsInt();
+
+        //~interpolate each segment in the x-direction
+        Map<IntegerXY, PolynomialFunction> segmentFunctionMap = new LinkedHashMap<>();
+        for (int j = minY; j <= maxY; j++) {
+            int y = j;
+            List<IntegerXY> inLatitudeXYs = integerGrid.stream().filter(xy -> xy.y() == y)
+                    .sorted(Comparator.comparing(xy -> xy.x())).collect(Collectors.toList());
+
+            // pack data values at original points along this latitude in a Trace
+            double[] xArray = inLatitudeXYs.stream().mapToDouble(xy -> xy.x()).toArray();
+            double[] values = inLatitudeXYs.stream().mapToDouble(xy -> integerGridMap.get(xy)).toArray();
+            Trace originalTrace = new Trace(xArray, values);
+
+            // split the trace at gaps
+            List<Trace> splitTraces = splitTraceAtGaps(originalTrace, 0.5);
+
+            // with each trace, interpolate each segment
+            for (Trace trace : splitTraces) {
+                int firstX = (int) Math.round(trace.getMinX());
+                int lastX = (int) Math.round(trace.getMaxX());
+                double[] valueArray = trace.getY();
+
+                for (int i = -1 ; i <= lastX - firstX; i++) {
+                    IntegerXY xy = new IntegerXY(i + firstX, j);
+                    segmentFunctionMap.put(xy, cubic(valueArray, i));
+                }
+            }
+        }
+
+        for (XY sampleXY : sampleCoordinates) {
+            double x = sampleXY.getX();
+            double y = sampleXY.getY();
+            int leftX = (int) Math.floor(x);
+            int lowerY = (int) Math.floor(y);
+
+            // list up segments at this x with closest 4 y's that exist in segment map
+            List<IntegerXY> segmentXYs = new ArrayList<>();
+            for (int j = -1 ; j <= 2; j++) {
+                IntegerXY segmentXY = new IntegerXY(leftX, lowerY + j);
+                if (segmentFunctionMap.containsKey(segmentXY)) segmentXYs.add(segmentXY);
+            }
+
+            // pack data values at each y along this x in a Trace
+            double[] yArray = segmentXYs.stream().mapToDouble(xy -> xy.y()).toArray();
+            double[] values = segmentXYs.stream().mapToDouble(xy -> segmentFunctionMap.get(xy).value(x - leftX)).toArray();
+            Trace traceForX = new Trace(yArray, values);
+
+            // interpolate at y
+            double value = interpolateTraceAtPoint(traceForX, y, 0.5, false);
+            interpolatedMap.put(sampleXY, value);
+        }
+
+        return interpolatedMap;
+    }
+
     /**
      * Interpolation on each horizontal 2-D surface.
      * This method supposes that
@@ -126,7 +285,8 @@ public class Interpolation {
      * <li> data points are aligned, equally spaced, on several distinct latitudes </li>
      * <li> longitudes of the points are equally spaced along each latitude </li>
      * </ul>
-     *
+     * (longitude-staggered grid).
+     * <p>
      * In mosaic mode, a two-step nearest-neighbor interpolation is done: first in the longitude direction, then in the latitude.
      * In smooth interpolation, a two-step cubic interpolation is done: first in the longitude direction, then in the latitude.
      *
@@ -273,6 +433,7 @@ public class Interpolation {
     /**
      * Interpolates a given 1-D plot at all points that are within the domain and are multiples of the specified grid interval.
      * The domain is taken with a margin on either side, as [xMin-margin:xMax+margin].
+     * <p>
      * In mosaic mode, nearest-neighbor interpolation is done; otherwise, cubic interpolation.
      *
      * @param originalTrace ({@link Trace}) Original 1-D plot.
@@ -301,6 +462,7 @@ public class Interpolation {
      * Interpolates a given 1-D plot at a set of specified points.
      * The domain is taken with a margin on either side, as [xMin-margin:xMax+margin].
      * If a specified point is outside this domain, it will not be used.
+     * <p>
      * In mosaic mode, nearest-neighbor interpolation is done; otherwise, cubic interpolation.
      *
      * @param originalTrace ({@link Trace}) Original 1-D plot.
@@ -351,6 +513,7 @@ public class Interpolation {
     /**
      * Interpolates a given 1-D plot at a specified point.
      * The domain is taken with a margin on either side, as [xMin-margin:xMax+margin].
+     * <p>
      * In mosaic mode, nearest-neighbor interpolation is done; otherwise, cubic interpolation.
      *
      * @param originalTrace ({@link Trace}) Original 1-D plot.

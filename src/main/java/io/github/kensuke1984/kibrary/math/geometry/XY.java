@@ -7,13 +7,13 @@ package io.github.kensuke1984.kibrary.math.geometry;
  * @author Kensuke Konishi
  * @version 0.0.1.1
  */
-class XY {
+public class XY {
 
     final double x;
 
     final double y;
 
-    XY(double x, double y) {
+    public XY(double x, double y) {
         this.x = x;
         this.y = y;
     }

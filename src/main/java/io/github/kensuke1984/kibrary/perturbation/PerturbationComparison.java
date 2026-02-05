@@ -161,8 +161,11 @@ public class PerturbationComparison {
             pw.println("set output 'valueScatterPlot.png'");
             pw.println("set xlabel \"{/Symbol d}Vs/Vs (%)\"");
             pw.println("set ylabel \"{/Symbol d}Vs/Vs (%)\"");
+            pw.println("#set xrange [-5:5]");
+            pw.println("#set yrange [-5:5]");
             pw.println("set zeroaxis lt 1 lc \"black\"");
-            pw.println("p \"values.txt\" u 4:5 w p pt 7 notitle");
+            pw.println("p x w l lc rgb \"black\" notitle,\\");
+            pw.println("  \"values.txt\" u 4:5 w p pt 7 lc \"dark-violet\" notitle");
         }
         GnuplotFile plot = new GnuplotFile(scatterPath);
         plot.execute();
