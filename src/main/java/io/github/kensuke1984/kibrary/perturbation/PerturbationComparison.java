@@ -61,6 +61,12 @@ public class PerturbationComparison extends Operation {
     private boolean createScatter;
 
     /**
+     * Path of scalar file to be used as mask.
+     */
+    private Path maskPath;
+    private double maskThreshold;
+
+    /**
      * @param args (String[]) Arguments: none to create a property file, path of property file to run it.
      * @throws IOException
      */
@@ -86,6 +92,10 @@ public class PerturbationComparison extends Operation {
             pw.println("#denominatorPath scalar.Vs.PERCENT.lst");
             pw.println("##(boolean) Whether to create scatter plot. (false)");
             pw.println("#createScatter true");
+            pw.println("##Path of scalar file for mask, when mask is to be applied.");
+            pw.println("#maskPath scalar.Vs.PERCENT_RATIO.lst");
+            pw.println("##(double) Threshold for mask. (0.3)");
+            pw.println("#maskThreshold ");
         }
         System.err.println(outPath + " is created.");
     }
@@ -103,6 +113,11 @@ public class PerturbationComparison extends Operation {
         numeratorPath = property.parsePath("numeratorPath", null, true, workPath);
         denominatorPath = property.parsePath("denominatorPath", null, true, workPath);
         createScatter = property.parseBoolean("createScatter", "true");
+
+        if (property.containsKey("maskPath")) {
+            maskPath = property.parsePath("maskPath", null, true, workPath);
+        }
+        maskThreshold = property.parseDouble("maskThreshold", "0.3");
     }
 
     @Override
@@ -120,12 +135,23 @@ public class PerturbationComparison extends Operation {
         Map<FullPosition, Double> numeratorMap = numeratorFile.getValueMap();
         Map<FullPosition, Double> denominatorMap = denominatorFile.getValueMap();
 
-        // reconstruct the list of values in each map
-        // This is done because the number of voxels and/or their order may be different.
-        // Only voxels that exist in both maps are used.
+        // select positions that exist in both maps
         List<FullPosition> positions = numeratorMap.keySet().stream()
                 .filter(pos -> denominatorMap.containsKey(pos)).collect(Collectors.toList());
         boolean crossDateLine = HorizontalPosition.crossesDateLine(positions);
+
+        // extract positions based on mask
+        List<FullPosition> discardedPositions = null;
+        if (maskPath != null) {
+            ScalarListFile maskInputFile = new ScalarListFile(maskPath);
+            Map<FullPosition, Double> maskMap = maskInputFile.getValueMap();
+            discardedPositions = positions.stream().filter(pos -> maskMap.get(pos) < maskThreshold).collect(Collectors.toList());
+            positions.removeAll(discardedPositions);
+        }
+
+        // reconstruct the list of values in each map
+        // This is done because the number of voxels and/or their order may be different.
+        // Only voxels that exist in both maps are used.
         double[] numeratorValues = positions.stream().mapToDouble(pos -> numeratorMap.get(pos)).toArray();
         double[] denominatorValues = positions.stream().mapToDouble(pos -> denominatorMap.get(pos)).toArray();
 
@@ -158,9 +184,20 @@ public class PerturbationComparison extends Operation {
         // output values in a txt file
         if (createScatter) {
             Path valuesPath = outPath.resolve("values.txt");
-            Path scatterPath = outPath.resolve("valueScatterPlot.plt");
             outputValues(valuesPath, positions, crossDateLine, numeratorValues, denominatorValues);
-            createScatterPlot(scatterPath);
+
+            // output values at discarded positions
+            if (maskPath != null) {
+                double[] discardedNumeratorValues = discardedPositions.stream().mapToDouble(pos -> numeratorMap.get(pos)).toArray();
+                double[] discardedDenominatorValues = discardedPositions.stream().mapToDouble(pos -> denominatorMap.get(pos)).toArray();
+
+                Path discardedValuesPath = outPath.resolve("discardedValues.txt");
+                outputValues(discardedValuesPath, discardedPositions, crossDateLine, discardedNumeratorValues, discardedDenominatorValues);
+            }
+
+            // create scatter plot
+            Path scatterPath = outPath.resolve("valueScatterPlot.plt");
+            createScatterPlot(scatterPath, (maskPath != null));
         }
     }
 
@@ -183,7 +220,7 @@ public class PerturbationComparison extends Operation {
         }
     }
 
-    private static void createScatterPlot(Path scatterPath) throws IOException {
+    private static void createScatterPlot(Path scatterPath, boolean hasDiscarded) throws IOException {
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(scatterPath))) {
             pw.println("set term pngcairo enhanced size 600,600 font 'Helvetica,20'");
             pw.println("set output 'valueScatterPlot.png'");
@@ -193,6 +230,9 @@ public class PerturbationComparison extends Operation {
             pw.println("#set yrange [-5:5]");
             pw.println("set zeroaxis lt 1 lc \"black\"");
             pw.println("p x w l lc rgb \"black\" notitle,\\");
+            if (hasDiscarded) {
+                pw.println("  \"discardedValues.txt\" u 4:5 w p pt 7 lc \"light-gray\" notitle,\\");
+            }
             pw.println("  \"values.txt\" u 4:5 w p pt 7 lc \"dark-violet\" notitle");
         }
         GnuplotFile plot = new GnuplotFile(scatterPath);
