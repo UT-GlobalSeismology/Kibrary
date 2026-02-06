@@ -25,6 +25,7 @@ import io.github.kensuke1984.kibrary.perturbation.BlockModelMaker;
 import io.github.kensuke1984.kibrary.perturbation.CheckerboardMaker;
 import io.github.kensuke1984.kibrary.perturbation.ModelResampler;
 import io.github.kensuke1984.kibrary.perturbation.ModelSmoothener;
+import io.github.kensuke1984.kibrary.perturbation.PerturbationComparison;
 import io.github.kensuke1984.kibrary.perturbation.ScalarResampler;
 import io.github.kensuke1984.kibrary.quick.PartialsRefineOutput;
 import io.github.kensuke1984.kibrary.quick.PartialsShiftComputer;
@@ -152,6 +153,7 @@ enum Manhattan {
     OrthogonalityTest(87, OrthogonalityTest.class),
     OrthogonalitySumUp(88, OrthogonalitySumUp.class),
     // Scalar & Sensitivity 90
+    PerturbationComparison(90, PerturbationComparison.class),
     ScalarStructurePlotter(91, ScalarStructurePlotter.class),
     ScalarMapper(92, ScalarMapper.class),
     CrossSectionCreator(93, CrossSectionCreator.class),

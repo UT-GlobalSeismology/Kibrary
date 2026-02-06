@@ -5,80 +5,108 @@ import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.Option;
-import org.apache.commons.cli.Options;
-import org.apache.commons.cli.ParseException;
 import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.RealVector;
 
-import io.github.kensuke1984.kibrary.Summon;
+import io.github.kensuke1984.kibrary.Operation;
+import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.elastic.VariableType;
 import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
+import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 
 /**
  * Class to compare 2 models.
  * The difference and ratio of the two models are exported.
  * The cosine similarity and L2 model distance is also computed.
+ * A scatter plot between perturbations of the 2 models can be created.
  *
  * @author otsuru
  * @since 2022/12/1
  */
-public class PerturbationComparison {
+public class PerturbationComparison extends Operation {
+
+    private final Property property;
+    /**
+     * Path of the work folder.
+     */
+    private Path workPath;
+    /**
+     * A tag to include in output folder name. When this is empty, no tag is used.
+     */
+    private String folderTag;
+    /**
+     * Whether to append date string at end of output folder name.
+     */
+    private boolean appendFolderDate;
 
     /**
-     * Compare two perturbation models.
-     * @param args Options.
+     * Path of numerator scalar file.
+     */
+    private Path numeratorPath;
+    /**
+     * Path of denominator scalar file.
+     */
+    private Path denominatorPath;
+    /**
+     * Whether to create scatter plot.
+     */
+    private boolean createScatter;
+
+    /**
+     * @param args (String[]) Arguments: none to create a property file, path of property file to run it.
      * @throws IOException
      */
     public static void main(String[] args) throws IOException {
-        Options options = defineOptions();
-        try {
-            run(Summon.parseArgs(options, args));
-        } catch (ParseException e) {
-            Summon.showUsage(options);
+        if (args.length == 0) writeDefaultPropertiesFile(null);
+        else Operation.mainFromSubclass(args);
+    }
+
+    public static void writeDefaultPropertiesFile(String tag) throws IOException {
+        String className = new Object(){}.getClass().getEnclosingClass().getSimpleName();
+        Path outPath = DatasetAid.generateOutputFilePath(Paths.get(""), className, tag, true, null, ".properties");
+        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
+            pw.println("manhattan " + className);
+            pw.println("##Path of work folder. (.)");
+            pw.println("#workPath ");
+            pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this unset.");
+            pw.println("#folderTag ");
+            pw.println("##(boolean) Whether to append date string at end of output folder name. (true)");
+            pw.println("#appendFolderDate false");
+            pw.println("##Path of numerator scalar file, must be set.");
+            pw.println("#numeratorPath scalar.Vs.PERCENT.lst");
+            pw.println("##Path of denominator scalar file, must be set.");
+            pw.println("#denominatorPath scalar.Vs.PERCENT.lst");
+            pw.println("##(boolean) Whether to create scatter plot. (false)");
+            pw.println("#createScatter true");
         }
+        System.err.println(outPath + " is created.");
     }
 
-    /**
-     * To be called from {@link Summon}.
-     * @return options
-     */
-    public static Options defineOptions() {
-        Options options = Summon.defaultOptions();
-
-        options.addOption(Option.builder("n").longOpt("numerator").hasArg().argName("scalarFile").required()
-                .desc("Path of scalar file to compare.").build());
-        options.addOption(Option.builder("d").longOpt("denominator").hasArg().argName("scalarFile").required()
-                .desc("Path of scalar file to compare to.").build());
-
-        options.addOption(Option.builder("S").longOpt("scatter")
-                .desc("Create scatter plot.").build());
-
-        // output
-        options.addOption(Option.builder("T").longOpt("tag").hasArg().argName("folderTag")
-                .desc("A tag to include in output folder name.").build());
-        options.addOption(Option.builder("O").longOpt("omitDate")
-                .desc("Omit date string in output folder name.").build());
-
-        return options;
+    public PerturbationComparison(Property property) throws IOException {
+        this.property = (Property) property.clone();
     }
 
-    /**
-     * To be called from {@link Summon}.
-     * @param cmdLine options
-     * @throws IOException
-     */
-    public static void run(CommandLine cmdLine) throws IOException {
-        Path numeratorPath = Paths.get(cmdLine.getOptionValue("n"));
-        Path denominatorPath = Paths.get(cmdLine.getOptionValue("d"));
+    @Override
+    public void set() throws IOException {
+        workPath = property.parsePath("workPath", ".", true, Paths.get(""));
+        if (property.containsKey("folderTag")) folderTag = property.parseStringSingle("folderTag", null);
+        appendFolderDate = property.parseBoolean("appendFolderDate", "true");
+
+        numeratorPath = property.parsePath("numeratorPath", null, true, workPath);
+        denominatorPath = property.parsePath("denominatorPath", null, true, workPath);
+        createScatter = property.parseBoolean("createScatter", "true");
+    }
+
+    @Override
+    public void run() throws IOException {
 
         // read input files
         ScalarListFile numeratorFile = new ScalarListFile(numeratorPath);
@@ -97,6 +125,7 @@ public class PerturbationComparison {
         // Only voxels that exist in both maps are used.
         List<FullPosition> positions = numeratorMap.keySet().stream()
                 .filter(pos -> denominatorMap.containsKey(pos)).collect(Collectors.toList());
+        boolean crossDateLine = HorizontalPosition.crossesDateLine(positions);
         double[] numeratorValues = positions.stream().mapToDouble(pos -> numeratorMap.get(pos)).toArray();
         double[] denominatorValues = positions.stream().mapToDouble(pos -> denominatorMap.get(pos)).toArray();
 
@@ -113,25 +142,24 @@ public class PerturbationComparison {
         double l2Denominator = denominatorVector.getNorm();
 
         // create output folder
-        String folderTag = cmdLine.hasOption("T") ? cmdLine.getOptionValue("T") : null;
-        boolean appendFolderDate = !cmdLine.hasOption("O");
-        Path outPath = DatasetAid.createOutputFolder(Paths.get(""), "comparison", folderTag, appendFolderDate, null);
+        Path outPath = DatasetAid.createOutputFolder(workPath, "comparison", folderTag, appendFolderDate, null);
+        property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         // output ratio and difference maps as perturbation list files
         Path differenceMapPath = outPath.resolve(ScalarListFile.generateFileName(variable, ScalarType.PERCENT_DIFFERENCE));
         Path ratioMapPath = outPath.resolve(ScalarListFile.generateFileName(variable, ScalarType.PERCENT_RATIO));
-        ScalarListFile.write(constructMapFromVector(positions, differenceVector), differenceMapPath);
-        ScalarListFile.write(constructMapFromVector(positions, ratioVector), ratioMapPath);
+        ScalarListFile.write(constructMapFromVector(positions, differenceVector), crossDateLine, differenceMapPath);
+        ScalarListFile.write(constructMapFromVector(positions, ratioVector), crossDateLine, ratioMapPath);
 
         // output similarity and distance in a txt file
         Path comparisonPath = outPath.resolve("comparison.txt");
         outputComparison(comparisonPath, numeratorPath, denominatorPath, cosineSimilarity, l2Distance, l2Average, l2Denominator);
 
         // output values in a txt file
-        if (cmdLine.hasOption("S")) {
+        if (createScatter) {
             Path valuesPath = outPath.resolve("values.txt");
             Path scatterPath = outPath.resolve("valueScatterPlot.plt");
-            outputValues(valuesPath, positions, numeratorValues, denominatorValues);
+            outputValues(valuesPath, positions, crossDateLine, numeratorValues, denominatorValues);
             createScatterPlot(scatterPath);
         }
     }
@@ -147,10 +175,10 @@ public class PerturbationComparison {
         return map;
     }
 
-    private static void outputValues(Path outputPath, List<FullPosition> positions, double[] numeratorValues, double[] denominatorValues) throws IOException {
+    private static void outputValues(Path outputPath, List<FullPosition> positions, boolean crossDateLine, double[] numeratorValues, double[] denominatorValues) throws IOException {
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath))) {
             for (int i = 0; i < positions.size(); i++) {
-                pw.println(positions.get(i) + " " + denominatorValues[i] + " " + numeratorValues[i]);
+                pw.println(positions.get(i).toString(crossDateLine) + " " + denominatorValues[i] + " " + numeratorValues[i]);
             }
         }
     }

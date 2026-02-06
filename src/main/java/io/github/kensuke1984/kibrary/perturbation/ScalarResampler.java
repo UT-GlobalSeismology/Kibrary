@@ -126,19 +126,19 @@ public class ScalarResampler extends Operation {
         VoxelInformationFile resampleVoxelFile = new VoxelInformationFile(resampleVoxelPath);
         double[] resampleRadii = resampleVoxelFile.getRadii();
         List<HorizontalPixel> resamplePixels = resampleVoxelFile.getHorizontalPixels();
-        Set<HorizontalPosition> resamplePositions = resamplePixels.stream().map(pixel -> pixel.getPosition()).collect(Collectors.toSet());
+        List<HorizontalPosition> resamplePositions = resamplePixels.stream().map(pixel -> pixel.getPosition()).collect(Collectors.toList());
         boolean crossDateLine = HorizontalPosition.crossesDateLine(resamplePositions);
 
         // find smallest longitude and latitude of input discrete map
         double minLatitude = discretePositions.stream().mapToDouble(FullPosition::getLatitude).min().getAsDouble();
-        double minLongitude = discretePositions.stream().mapToDouble(FullPosition::getLongitude).min().getAsDouble();
+        double minLongitude = discretePositions.stream().mapToDouble(pos -> pos.getLongitude(crossDateLine)).min().getAsDouble();
 
         // calculate coordinate of sample points on the integer grid
         List<XY> resampleCoordinates = new ArrayList<>();
         Map<XY, HorizontalPosition> resampleCoordinateMap = new HashMap<>();
         for (HorizontalPosition position : resamplePositions) {
             double y = (position.getLatitude() - minLatitude) / gridInterval;
-            double x = (position.getLongitude() - minLongitude) / gridInterval;
+            double x = (position.getLongitude(crossDateLine) - minLongitude) / gridInterval;
             XY xy = new XY(x, y);
             resampleCoordinates.add(xy);
             resampleCoordinateMap.put(xy, position);
@@ -159,7 +159,7 @@ public class ScalarResampler extends Operation {
             Map<IntegerXY, Double> integerGridMap = new LinkedHashMap<>();
             for (FullPosition position : inLayerDiscretePositions) {
                 int y = (int) Math.round((position.getLatitude() - minLatitude) / gridInterval);
-                int x = (int) Math.round((position.getLongitude() - minLongitude) / gridInterval);
+                int x = (int) Math.round((position.getLongitude(crossDateLine) - minLongitude) / gridInterval);
                 IntegerXY integerXY = new IntegerXY(x, y);
                 integerGridMap.put(integerXY, discreteMap.get(position));
             }

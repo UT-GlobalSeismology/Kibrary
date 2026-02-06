@@ -202,18 +202,22 @@ public class Interpolation {
             return onIntegerGridSmooth(integerGridMap, sampleCoordinates);
         }
     }
+
     private static Map<XY, Double> onIntegerGridMosaic(Map<IntegerXY, Double> integerGridMap, List<XY> sampleCoordinates) {
         // This is created as LinkedHashMap to preserve the order of grid points
         Map<XY, Double> interpolatedMap = new LinkedHashMap<>();
 
+        // get value at nearest integer grid point
         for (XY sampleXY : sampleCoordinates) {
             int x = (int) Math.round(sampleXY.getX());
             int y = (int) Math.round(sampleXY.getY());
             IntegerXY nearestXY = new IntegerXY(x, y);
             interpolatedMap.put(sampleXY, integerGridMap.get(nearestXY));
         }
+
         return interpolatedMap;
     }
+
     private static Map<XY, Double> onIntegerGridSmooth(Map<IntegerXY, Double> integerGridMap, List<XY> sampleCoordinates) {
         // This is created as LinkedHashMap to preserve the order of grid points
         Map<XY, Double> interpolatedMap = new LinkedHashMap<>();
@@ -251,6 +255,7 @@ public class Interpolation {
             }
         }
 
+        //~compute value at sample coordinate by interpolating 4 values in y-direction
         for (XY sampleXY : sampleCoordinates) {
             double x = sampleXY.getX();
             double y = sampleXY.getY();
