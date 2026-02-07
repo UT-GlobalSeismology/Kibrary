@@ -75,13 +75,22 @@ public abstract class InversionMethod {
         }
     }
 
+    /**
+     * Output the answers inside a certain folder.
+     * @param unknowns (List of {@link UnknownParameter}) Unknown parameters.
+     * @param outPath (Path) Output folder.
+     * @throws IOException
+     */
+    public void outputAnswers(List<UnknownParameter> unknowns, Path outPath) throws IOException {
+        if (unknowns.size() != getNParameter()) throw new IllegalArgumentException("Number of unknowns and answer dimension differ.");
 
-//    public void setANS(int i, RealVector v) {
-//        ans.setColumnVector(i - 1, v);
-//    }
-
-    private int getNAnswer() {
-        return answer.getColumnDimension();
+        Files.createDirectories(outPath);
+        System.err.println("Outputting the answer files in " + outPath);
+        for (int i = 0; i < getNAnswer(); i++) {
+            Path outputPath = outPath.resolve(getEnum().simpleName() + (i+1) + ".lst");
+            double[] m = answer.getColumn(i);
+            KnownParameterFile.write(unknowns, m, outputPath);
+        }
     }
 
     public RealMatrix getAnswers() {
@@ -97,48 +106,38 @@ public abstract class InversionMethod {
         return answer.getColumnVector(i - 1);
     }
 
+    private int getNAnswer() {
+        return answer.getColumnDimension();
+    }
+
     /**
      * @return the number of unknown parameters
      */
     public int getNParameter() {
-        if (ata != null)
-            return ata.getColumnDimension();
-        else
-            return atd.getDimension();
-    }
-
-    /**
-     * Output the answers inside a certain folder.
-     * @param unknowns (List)
-     * @param outPath (Path) Output folder
-     * @throws IOException
-     */
-    public void outputAnswers(List<UnknownParameter> unknowns, Path outPath) throws IOException {
-        if (unknowns.size() != getNParameter()) throw new IllegalArgumentException("Number of unknowns and answer dimension differ.");
-
-        Files.createDirectories(outPath);
-        System.err.println("Outputting the answer files in " + outPath);
-        for (int i = 0; i < getNAnswer(); i++) {
-            Path outputPath = outPath.resolve(getEnum().simpleName() + (i+1) + ".lst");
-            double[] m = answer.getColumn(i);
-            KnownParameterFile.write(unknowns, m, outputPath);
-        }
+        if (ata != null) return ata.getColumnDimension();
+        else return atd.getDimension();
     }
 
     public abstract void compute();
 
     /**
      * @param sigmaD (double) &sigma;<sub>d</sub>
-     * @param j      (int) index (1, 2, ...)
-     * @return j番目の解の共分散行列 &sigma;<sub>d</sub> <sup>2</sup> V (&Lambda;
-     * <sup>T</sup>&Lambda;) <sup>-1</sup> V<sup>T</sup>
+     * @param j (int) index (1, 2, ...)
+     * @return (int) The covariance matrix of the j-th answer Cov(<b>m</b><sub>j</sub>).
      */
     public abstract RealMatrix computeCovariance(double sigmaD, int j);
 
     /**
+     * Output the basis vectors inside a certain folder.
+     * @param outPath (Path) Output folder.
+     * @throws IOException
+     */
+    public abstract void outputBasisVectors(Path outPath) throws IOException;
+
+    /**
      * @return (RealMatrix) Matrix that has the i-th basis vector as the i-th column.
      */
-    public abstract RealMatrix getBaseVectors();
+    public abstract RealMatrix getBasisVectors();
 
     abstract InverseMethodEnum getEnum();
 

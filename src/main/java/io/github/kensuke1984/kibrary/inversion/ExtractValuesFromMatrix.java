@@ -10,27 +10,29 @@ import java.util.Map;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
+import org.apache.commons.cli.OptionGroup;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
 import io.github.kensuke1984.kibrary.Summon;
 import io.github.kensuke1984.kibrary.elastic.VariableType;
 import io.github.kensuke1984.kibrary.perturbation.ScalarListFile;
-import io.github.kensuke1984.kibrary.util.DatasetAid;
+import io.github.kensuke1984.kibrary.perturbation.ScalarType;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameterFile;
 
 /**
- * Class to extract diagonal components of ATA matrix.
+ * Class to extract specified components of a matrix to get values for each {@link UnknownParameter}.
  *
  * @author otsuru
  * @since 2023/6/29
+ * @version 2026/1/25 Renamed from DiagATAExtract to ExtractValuesFromMatrix.
  */
-public class DiagATAExtract {
+public class ExtractValuesFromMatrix {
 
     /**
-     * Extract diagonal components of ATA matrix.
+     * Extract specified components of an input matrix.
      * @param args Options.
      * @throws IOException
      */
@@ -52,10 +54,23 @@ public class DiagATAExtract {
 
         options.addOption(Option.builder("u").longOpt("unknowns").hasArg().argName("unknownParameterFile").required()
                 .desc("Path of unknown parameter file.").build());
-        options.addOption(Option.builder("a").longOpt("ata").hasArg().argName("ataFile").required()
-                .desc("Path of ATA file.").build());
         options.addOption(Option.builder("v").longOpt("variable").hasArg().argName("variableType").required()
                 .desc("Variable type.").build());
+        options.addOption(Option.builder("m").longOpt("matrix").hasArg().argName("matrixFile").required()
+                .desc("Path of input matrix file.").build());
+
+        // criteria of values to extract
+        OptionGroup criteriaOption = new OptionGroup();
+        criteriaOption.setRequired(true);
+        criteriaOption.addOption(Option.builder("d").longOpt("diagonals")
+                .desc("Extract diagonals.").build());
+        criteriaOption.addOption(Option.builder("r").longOpt("row").hasArg().argName("iRow")
+                .desc("Extract i-th row.").build());
+        criteriaOption.addOption(Option.builder("c").longOpt("column").hasArg().argName("iColumn")
+                .desc("Extract i-th column.").build());
+        options.addOptionGroup(criteriaOption);
+
+        // output
         options.addOption(Option.builder("T").longOpt("tag").hasArg().argName("fileTag")
                 .desc("A tag to include in output file name.").build());
         options.addOption(Option.builder("O").longOpt("omitDate")
@@ -71,15 +86,18 @@ public class DiagATAExtract {
      */
     public static void run(CommandLine cmdLine) throws IOException {
         Path unknownsPath = Paths.get(cmdLine.getOptionValue("u"));
-        Path ataPath = Paths.get(cmdLine.getOptionValue("a"));
         VariableType variable = VariableType.valueOf(cmdLine.getOptionValue("v"));
+        Path matrixPath = Paths.get(cmdLine.getOptionValue("m"));
+        boolean diagonals = cmdLine.hasOption("d");
+        int iRow = cmdLine.hasOption("r") ? Integer.parseInt(cmdLine.getOptionValue("r")) : -1;
+        int iColumn = cmdLine.hasOption("c") ? Integer.parseInt(cmdLine.getOptionValue("c")) : -1;
         String fileTag = cmdLine.hasOption("T") ? cmdLine.getOptionValue("T") : null;
         boolean appendFileDate = !cmdLine.hasOption("O");
-        Path outputPath = DatasetAid.generateOutputFilePath(Paths.get(""), "diagATA", fileTag, appendFileDate, null, ".lst");
+        Path outputPath = ScalarListFile.generateFilePath(Paths.get(""), null, ScalarType.ABSOLUTE, fileTag, appendFileDate, null);
 
-        // read parameter information and ATA
+        // read parameter information and matrix
         List<UnknownParameter> parameterList = UnknownParameterFile.read(unknownsPath);
-        List<String> lines = Files.readAllLines(ataPath);
+        List<String> lines = Files.readAllLines(matrixPath);
         if (lines.size() != parameterList.size())
             throw new IllegalStateException("Unknowns and ATA do not match.");
         double[][] values = new double[lines.size()][lines.size()];
@@ -90,16 +108,22 @@ public class DiagATAExtract {
             }
         }
 
-        // extract diagonal components of ATA
-        Map<FullPosition, Double> diagATAMap = new LinkedHashMap<>();
+        // extract specified components of the matrix
+        Map<FullPosition, Double> scalarMap = new LinkedHashMap<>();
         for (int i = 0; i < parameterList.size(); i++) {
             UnknownParameter unknown = parameterList.get(i);
-            if (!unknown.getVariableType().equals(variable))
-                continue;
-            double diagonal = values[i][i];
-            diagATAMap.put(unknown.getPosition(), diagonal);
+            if (!unknown.getVariableType().equals(variable)) continue;
+
+            // get value from specified column
+            double value;
+            if (diagonals) value = values[i][i];
+            else if (iRow >= 0) value = values[iRow][i];
+            else if (iColumn >= 0) value = values[i][iColumn];
+            else throw new IllegalArgumentException("Criteria of components to extract must be set.");
+
+            scalarMap.put(unknown.getPosition(), value);
         }
-        ScalarListFile.write(diagATAMap, outputPath);
+        ScalarListFile.write(scalarMap, outputPath);
     }
 
 }

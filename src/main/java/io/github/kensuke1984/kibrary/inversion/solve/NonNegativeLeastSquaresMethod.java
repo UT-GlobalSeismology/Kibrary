@@ -1,5 +1,7 @@
 package io.github.kensuke1984.kibrary.inversion.solve;
 
+import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -246,7 +248,11 @@ public class NonNegativeLeastSquaresMethod extends InversionMethod {
     }
 
     @Override
-    public RealMatrix getBaseVectors() {
+    public void outputBasisVectors(Path outPath) throws IOException {
+    }
+
+    @Override
+    public RealMatrix getBasisVectors() {
         throw new RuntimeException("No base vectors.");
     }
 
