@@ -197,6 +197,9 @@ public class ScalarMapper extends Operation {
         Set<FullPosition> positions = discreteMap.keySet();
         double[] radii = positions.stream().mapToDouble(pos -> pos.getR()).distinct().sorted().toArray();
 
+        // read coordinate converver file
+        CoordinateConverter converter = (converterPath != null) ? new CoordinateConverter(converterPath) : null;
+
         // decide map region
         if (mapRegion == null) mapRegion = ScalarMapShellscript.decideMapRegion(positions);
         boolean crossDateLine = HorizontalPosition.crossesDateLine(positions);
@@ -209,16 +212,17 @@ public class ScalarMapper extends Operation {
         // copy discrete perturbation file to outPath
         Path outputDiscretePath = outPath.resolve(ScalarListFile.generateFileName(variable, scalarType));
         Files.copy(scalarPath, outputDiscretePath);
-        // interpolate
+
+        // interpolate map
         Map<FullPosition, Double> interpolatedMap;
         if (converterPath != null) {
-            CoordinateConverter converter = new CoordinateConverter(converterPath);
             interpolatedMap = Interpolation.curvilinearInEachMapLayer(discreteMap, gridInterval, converter, mosaic);
         } else {
             interpolatedMap = Interpolation.inEachMapLayer(discreteMap, gridInterval,
-                marginLatitudeRaw, setMarginLatitudeByKm, marginLongitudeRaw, setMarginLongitudeByKm, crossDateLine, mosaic);
+                    marginLatitudeRaw, setMarginLatitudeByKm, marginLongitudeRaw, setMarginLongitudeByKm, crossDateLine, mosaic);
         }
-        // output interpolated perturbation file
+
+        // output interpolated perturbation file, in range [0:360) when crossDateLine==true so that mapping will succeed
         Path outputInterpolatedPath = outPath.resolve(ScalarListFile.generateFileName(variable, scalarType, "XY"));
         ScalarListFile.write(interpolatedMap, crossDateLine, outputInterpolatedPath);
 
@@ -230,12 +234,20 @@ public class ScalarMapper extends Operation {
             maskVariable = maskInputFile.getVariable();
             maskScalarType = maskInputFile.getScalarType();
             Map<FullPosition, Double> discreteMaskMap = maskInputFile.getValueMap();
+
             // copy discrete mask file to outPath
             Path outMaskPath = outPath.resolve(ScalarListFile.generateFileName(maskVariable, maskScalarType, "forMask"));
             Files.copy(maskPath, outMaskPath);
+
             // interpolate mask
-            Map<FullPosition, Double> interpolatedMaskMap = Interpolation.inEachMapLayer(discreteMaskMap, gridInterval,
-                    marginLatitudeRaw, setMarginLatitudeByKm, marginLongitudeRaw, setMarginLongitudeByKm, crossDateLine, mosaic);
+            Map<FullPosition, Double> interpolatedMaskMap;
+            if (converterPath != null) {
+                interpolatedMaskMap = Interpolation.curvilinearInEachMapLayer(discreteMaskMap, gridInterval, converter, mosaic);
+            } else {
+                interpolatedMaskMap = Interpolation.inEachMapLayer(discreteMaskMap, gridInterval,
+                        marginLatitudeRaw, setMarginLatitudeByKm, marginLongitudeRaw, setMarginLongitudeByKm, crossDateLine, mosaic);
+            }
+
             // output interpolated perturbation file, in range [0:360) when crossDateLine==true so that mapping will succeed
             Path outputInterpolatedMaskPath = outPath.resolve(ScalarListFile.generateFileName(maskVariable, maskScalarType, "forMaskXY"));
             ScalarListFile.write(interpolatedMaskMap, crossDateLine, outputInterpolatedMaskPath);

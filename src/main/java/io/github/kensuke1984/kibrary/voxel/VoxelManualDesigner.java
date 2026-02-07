@@ -9,10 +9,13 @@ import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.math.LinearRange;
+import io.github.kensuke1984.kibrary.math.geometry.CoordinateConverter;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
@@ -207,8 +210,16 @@ public class VoxelManualDesigner extends Operation {
         }
 
         // output
-        Path outputPath = DatasetAid.generateOutputFilePath(workPath, "voxel", fileTag, appendFileDate, null, ".inf");
-        VoxelInformationFile.write(layerThicknesses, layerRadii, horizontalPixels, outputPath);
+        Path voxelPath = DatasetAid.generateOutputFilePath(workPath, "voxel", fileTag, appendFileDate, null, ".inf");
+        VoxelInformationFile.write(layerThicknesses, layerRadii, horizontalPixels, voxelPath);
+
+        // write coordinate converter file
+        Set<HorizontalPosition> positions = horizontalPixels.stream().map(HorizontalPixel::getPosition).collect(Collectors.toSet());
+        boolean crossDateLine = HorizontalPosition.crossesDateLine(positions);
+        CoordinateConverter converter = new CoordinateConverter(dLatitudeKm, dLatitudeDeg, setLatitudeByKm, latitudeOffset,
+                dLongitudeKm, dLongitudeDeg, setLongitudeByKm, baseLongitude, centerRadius, crossDateLine);
+        Path converterPath = DatasetAid.generateOutputFilePath(workPath, "converter", fileTag, appendFileDate, null, ".inf");
+        converter.writeToFile(converterPath);
     }
 
     private List<HorizontalPixel> designHorizontalPixels() {

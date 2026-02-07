@@ -33,6 +33,8 @@ public class CoordinateConverter {
     private final boolean crossDateLine;
 
     public void writeToFile(Path outputPath, OpenOption... options) throws IOException {
+        System.err.println("Writing " + outputPath);
+
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath, options))) {
             pw.println("#rotation");
             pw.println(0.0 + " " + 0.0 + " " + 0.0);
