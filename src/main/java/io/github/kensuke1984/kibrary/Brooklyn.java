@@ -19,7 +19,6 @@ import io.github.kensuke1984.kibrary.inversion.ResolutionMatrixComputer;
 import io.github.kensuke1984.kibrary.inversion.WeightingHandler;
 import io.github.kensuke1984.kibrary.math.MatrixFile;
 import io.github.kensuke1984.kibrary.math.VectorFile;
-import io.github.kensuke1984.kibrary.perturbation.PerturbationComparison;
 import io.github.kensuke1984.kibrary.source.SourceTimeFunction;
 import io.github.kensuke1984.kibrary.timewindow.TimeWindowDataFile;
 import io.github.kensuke1984.kibrary.timewindow.TimeWindowSubtract;
@@ -107,7 +106,6 @@ enum Brooklyn {
     SPECFEMModelMaker(81, SPECFEMModelMaker.class),
     SPECFEMPostProcess(82, SPECFEMPostProcess.class),
     // Scalar & Sensitivity 90
-    PerturbationComparison(90, PerturbationComparison.class),
     // Temporal 100
     RecordNumberPlot(100, RecordNumberPlot.class),
     ;

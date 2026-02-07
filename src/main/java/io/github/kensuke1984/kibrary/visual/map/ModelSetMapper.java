@@ -19,6 +19,7 @@ import io.github.kensuke1984.kibrary.fusion.FusionDesign;
 import io.github.kensuke1984.kibrary.fusion.FusionInformationFile;
 import io.github.kensuke1984.kibrary.inversion.solve.InverseMethodEnum;
 import io.github.kensuke1984.kibrary.math.Interpolation;
+import io.github.kensuke1984.kibrary.math.geometry.CoordinateConverter;
 import io.github.kensuke1984.kibrary.perturbation.PerturbationModel;
 import io.github.kensuke1984.kibrary.perturbation.ScalarListFile;
 import io.github.kensuke1984.kibrary.perturbation.ScalarType;
@@ -78,6 +79,10 @@ public class ModelSetMapper extends Operation {
      * Path of a {@link FusionInformationFile}.
      */
     private Path fusionPath;
+    /**
+     * Path of coordinate converter file to be used when interpolating.
+     */
+    private Path converterPath;
     private Set<VariableType> variableTypes;
     /**
      * Solvers for equation.
@@ -140,6 +145,8 @@ public class ModelSetMapper extends Operation {
             pw.println("#referenceStructureName ");
             pw.println("##Path of a fusion information file, if adaptive grid inversion is conducted.");
             pw.println("#fusionPath fusion.inf");
+            pw.println("##Path of coordinate converter file, when interpolating on curvilinear grid.");
+            pw.println("#converterPath converter.inf");
             pw.println("##Variable types to map, listed using spaces. (Vs)");
             pw.println("#variableTypes ");
             pw.println("##Names of inverse methods, listed using spaces, from {CG,SVD,LS,NNLS,BCGS,FCG,FCGD,NCG,CCG}. (CG)");
@@ -200,8 +207,12 @@ public class ModelSetMapper extends Operation {
         } else {
             referenceStructureName = property.parseString("referenceStructureName", "PREM");
         }
-        if (property.containsKey("fusionPath"))
+        if (property.containsKey("fusionPath")) {
             fusionPath = property.parsePath("fusionPath", null, true, workPath);
+        }
+        if (property.containsKey("converterPath")) {
+            converterPath = property.parsePath("converterPath", null, true, workPath);
+        }
 
         variableTypes = Arrays.stream(property.parseStringArray("variableTypes", "Vs")).map(VariableType::valueOf)
                 .collect(Collectors.toSet());
@@ -255,10 +266,10 @@ public class ModelSetMapper extends Operation {
         double[] radii = positions.stream().mapToDouble(pos -> pos.getR()).distinct().sorted().toArray();
 
         // read fusion file
-        FusionDesign fusionDesign = null;
-        if (fusionPath != null) {
-            fusionDesign = FusionInformationFile.read(fusionPath);
-        }
+        FusionDesign fusionDesign = (fusionPath != null) ? FusionInformationFile.read(fusionPath) : null;
+
+        // read coordinate converver file
+        CoordinateConverter converter = (converterPath != null) ? new CoordinateConverter(converterPath) : null;
 
         // decide map region
         if (mapRegion == null) mapRegion = ScalarMapShellscript.decideMapRegion(positions);
@@ -300,9 +311,17 @@ public class ModelSetMapper extends Operation {
                     Map<FullPosition, Double> discreteMap = model.getValueMap(variable, ScalarType.PERCENT);
                     Path outputDiscretePath = outBasisPath.resolve(ScalarListFile.generateFileName(variable, ScalarType.PERCENT));
                     ScalarListFile.write(discreteMap, outputDiscretePath);
+
+                    // interpolate
+                    Map<FullPosition, Double> interpolatedMap;
+                    if (converterPath != null) {
+                        interpolatedMap = Interpolation.curvilinearInEachMapLayer(discreteMap, gridInterval, converter, mosaic);
+                    } else {
+                        interpolatedMap = Interpolation.inEachMapLayer(discreteMap, gridInterval,
+                                marginLatitudeRaw, setMarginLatitudeByKm, marginLongitudeRaw, setMarginLongitudeByKm, crossDateLine, mosaic);
+                    }
+
                     // output interpolated perturbation file, in range [0:360) when crossDateLine==true so that mapping will succeed
-                    Map<FullPosition, Double> interpolatedMap = Interpolation.inEachMapLayer(discreteMap, gridInterval,
-                            marginLatitudeRaw, setMarginLatitudeByKm, marginLongitudeRaw, setMarginLongitudeByKm, crossDateLine, mosaic);
                     Path outputInterpolatedPath = outBasisPath.resolve(ScalarListFile.generateFileName(variable, ScalarType.PERCENT, "XY"));
                     ScalarListFile.write(interpolatedMap, crossDateLine, outputInterpolatedPath);
                 }

@@ -17,6 +17,7 @@ import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.external.TauPPierceWrapper;
 import io.github.kensuke1984.kibrary.math.LinearRange;
+import io.github.kensuke1984.kibrary.math.geometry.CoordinateConverter;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.data.DataEntry;
@@ -85,6 +86,7 @@ public class VoxelAutoDesigner extends Operation {
      * The (roughly) median radius of target region.
      */
     private double centerRadius;
+    private double baseLongitude;
 
     /**
      * @param args (String[]) Arguments: none to create a property file, path of property file to run it.
@@ -247,8 +249,14 @@ public class VoxelAutoDesigner extends Operation {
         }
 
         // output
-        Path outputPath = DatasetAid.generateOutputFilePath(workPath, "voxel", fileTag, appendFileDate, null, ".inf");
-        VoxelInformationFile.write(layerThicknesses, layerRadii, horizontalPixels, outputPath);
+        Path voxelPath = DatasetAid.generateOutputFilePath(workPath, "voxel", fileTag, appendFileDate, null, ".inf");
+        VoxelInformationFile.write(layerThicknesses, layerRadii, horizontalPixels, voxelPath);
+
+        // write coordinate converter file
+        CoordinateConverter converter = new CoordinateConverter(dLatitudeKm, dLatitudeDeg, setLatitudeByKm, 90.0 + latitudeOffset,
+                dLongitudeKm, dLongitudeDeg, setLongitudeByKm, baseLongitude, centerRadius, crossDateLine);
+        Path converterPath = DatasetAid.generateOutputFilePath(workPath, "converter", fileTag, appendFileDate, null, ".inf");
+        converter.writeToFile(converterPath);
     }
 
     private List<HorizontalPixel> designHorizontalPixels(List<Raypath> insideSegments) {
@@ -301,7 +309,6 @@ public class VoxelAutoDesigner extends Operation {
         }
 
         //~decide the longitude at which to align voxels
-        double baseLongitude;
         if (setLongitudeByKm) {
             double minLongitude = Arrays.stream(minLongitudes).min().getAsDouble();
             double maxLongitude = Arrays.stream(maxLongitudes).max().getAsDouble();

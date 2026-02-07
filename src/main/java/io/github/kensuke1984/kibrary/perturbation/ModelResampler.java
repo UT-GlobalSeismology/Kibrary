@@ -142,12 +142,14 @@ public class ModelResampler extends Operation {
         List<KnownParameter> interpolatedKnowns = new ArrayList<>();
 
         for (VariableType variable : variables) {
-            // This is created as LinkedHashMap to preserve the order of grid points
+            // set original map
+            // This is created as LinkedHashMap to preserve the order of grid points.
             Map<FullPosition, Double> originalMap = new LinkedHashMap<>();
             // extract model values for this parameter
-            knowns = knowns.stream().filter(known -> known.getParameter().getVariableType().equals(variable)).collect(Collectors.toList());
+            List<KnownParameter> knownsForVariable = knowns.stream()
+                    .filter(known -> known.getParameter().getVariableType().equals(variable)).collect(Collectors.toList());
             // set model values, with latitude values in voxel set
-            for (KnownParameter known : knowns) {
+            for (KnownParameter known : knownsForVariable) {
                 FullPosition knownPosition = known.getParameter().getPosition();
                 double knownLatitude = knownPosition.getLatitude();
                 OptionalDouble latitudeOpt = Arrays.stream(latitudes).filter(lat -> Math.abs(lat - knownLatitude) < 0.01).distinct().sorted().findFirst();
@@ -158,7 +160,8 @@ public class ModelResampler extends Operation {
                 originalMap.put(position, known.getValue());
             }
 
-            // This is created as LinkedHashMap to preserve the order of grid points
+            // create interpolated map
+            // This is created as LinkedHashMap to preserve the order of grid points.
             Map<FullPosition, Double> interpolatedMap = new LinkedHashMap<>();
             // interpolate at each radius and latitude
             for (double radius : radii) {
