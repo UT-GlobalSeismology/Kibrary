@@ -224,6 +224,7 @@ public class LetMeInvert extends Operation {
             InversionMethod inversion = InversionMethod.construct(method, ata, atd, lambdas_LS, tMatrix_LS, etaVector_LS, m0Vector_CG);
             inversion.compute();
             inversion.outputAnswers(unknowns, outMethodPath);
+            inversion.outputBasisVectors(outMethodPath);
 
             // compute normalized variance and AIC
             switch (method) {
