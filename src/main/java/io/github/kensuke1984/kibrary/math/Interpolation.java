@@ -14,11 +14,12 @@ import java.util.stream.IntStream;
 import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
 import org.apache.commons.math3.util.Precision;
 
+import io.github.kensuke1984.kibrary.math.geometry.CoordinateConverter;
 import io.github.kensuke1984.kibrary.math.geometry.IntegerXY;
 import io.github.kensuke1984.kibrary.math.geometry.XY;
 import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
-import io.github.kensuke1984.kibrary.voxel.HorizontalPixel;
+import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 
 /**
  * Methods concerning interpolation of values on a line or surface.
@@ -141,46 +142,89 @@ public class Interpolation {
         return interpolatedMap;
     }
 
-    public static Map<FullPosition, Double> cartesianInEachMapLayer(Map<FullPosition, Double> originalMap, double gridInterval,
-            List<HorizontalPixel> pixelList, boolean crossDateLine, boolean mosaic) {
+    /**
+     * Interpolation on each horizontal 2-D surface.
+     * This method supposes that
+     * <ul>
+     * <li> data points are given on several distinct radii </li>
+     * <li> data points are given on a curvilinear integer grid </li>
+     * </ul>
+     * <p>
+     * In mosaic mode, a nearest-neighbor interpolation is done.
+     * In smooth interpolation, a two-step cubic interpolation is done: first in the longitude direction, then in the latitude.
+     *
+     * @param originalMap (Map of {@link FullPosition}, Double) Map data to be interpolated.
+     * @param gridInterval (double) Grid spacing to be used in output map.
+     * @param converter ({@link CoordinateConverter}) Coordinate converter.
+     * @param mosaic (boolean) Whether to create a mosaic-style map. When false, a smooth map will be created.
+     * @return (LinkedHashMap of {@link FullPosition} to Double) Interpolated map data.
+     *
+     * @author otsuru
+     * @since 2026/2/7
+     */
+    public static Map<FullPosition, Double> curvilinearInEachMapLayer(Map<FullPosition, Double> originalMap, double gridInterval,
+            CoordinateConverter converter, boolean mosaic) {
+        // This is created as LinkedHashMap to preserve the order of grid points
+        Map<FullPosition, Double> resampledMap = new LinkedHashMap<>();
 
+        // extract positions of original map
         Set<FullPosition> allPositions = originalMap.keySet();
         double[] radii = allPositions.stream().mapToDouble(pos -> pos.getR()).distinct().sorted().toArray();
 
+        // set up resample coordinates
+        List<XY> resampleCoordinates = new ArrayList<>();
+        Map<XY, HorizontalPosition> resampleCoordinateMap = new HashMap<>();
+        double[] latitudes = allPositions.stream().mapToDouble(pos -> pos.getLatitude()).distinct().sorted().toArray();
+        double[] longitudes = allPositions.stream().mapToDouble(pos -> pos.getLongitude(converter.isCrossDateLine())).distinct().sorted().toArray();
+        double minLatitude = Arrays.stream(latitudes).min().getAsDouble() - converter.getDLatitude();
+        double maxLatitude = Arrays.stream(latitudes).max().getAsDouble() + converter.getDLatitude();
+        double minLongitude = Arrays.stream(longitudes).min().getAsDouble() - converter.getLargestDLongitude();
+        double maxLongitude = Arrays.stream(longitudes).max().getAsDouble() + converter.getLargestDLongitude();
+        int minILatitude = (int) Math.ceil(minLatitude / gridInterval);
+        int maxILatitude = (int) Math.floor(maxLatitude / gridInterval);
+        int minILongitude = (int) Math.ceil(minLongitude / gridInterval);
+        int maxILongitude = (int) Math.floor(maxLongitude / gridInterval);
+        for (int j = minILatitude; j <= maxILatitude; j++) {
+            double latitude = j * gridInterval;
+            if (latitude < -90 || 90 < latitude) continue;
+            for (int i = minILongitude; i <= maxILongitude; i++) {
+                double longitude = i * gridInterval;
+                if (longitude < -180 || 360 < longitude) continue;
+                HorizontalPosition position = new HorizontalPosition(latitude, longitude);
+                XY xy = converter.computeXY(position);
+                resampleCoordinates.add(xy);
+                resampleCoordinateMap.put(xy, position);
+            }
+        }
+
+        // process for each radius
         for (double radius : radii) {
             Set<FullPosition> inLayerPositions = allPositions.stream()
                     .filter(pos -> Precision.equals(pos.getR(), radius, FullPosition.RADIUS_EPSILON)).collect(Collectors.toSet());
 
-            // realign map on integer grid
+            // recast map onto integer grid
             Map<IntegerXY, Double> integerGridMap = new HashMap<>();
             for (FullPosition position : inLayerPositions) {
-                HorizontalPixel pixel = pixelList.stream().filter(pix -> pix.getPosition().equals(position)).findAny().get();
-                int x = pixel.getILongitude();
-                int y = pixel.getILatitude();
-                IntegerXY pixelXY = new IntegerXY(x, y);
-                integerGridMap.put(pixelXY, originalMap.get(position));
+                XY xy = converter.computeXY(position);
+                IntegerXY integerXY = xy.toNearestIntegerXY();
+                integerGridMap.put(integerXY, originalMap.get(position));
             }
 
-            double[] latitudes = inLayerPositions.stream().mapToDouble(pos -> pos.getLatitude()).distinct().sorted().toArray();
-            double[] longitudes = inLayerPositions.stream().mapToDouble(pos -> pos.getLongitude(crossDateLine)).distinct().sorted().toArray();
-            double minLatitude = Arrays.stream(latitudes).min().getAsDouble();
-            double maxLatitude = Arrays.stream(latitudes).max().getAsDouble();
-            double minLongitude = Arrays.stream(longitudes).min().getAsDouble();
-            double maxLongitude = Arrays.stream(longitudes).max().getAsDouble();
+            // resample
+            Map<XY, Double> resampledXYMap = onIntegerGrid(integerGridMap, resampleCoordinates, mosaic);
 
-            int minILatitude = (int) Math.ceil(minLatitude / gridInterval);
-            int maxILatitude = (int) Math.floor(maxLatitude / gridInterval);
-            for (int j = minILatitude; j <= maxILatitude; j++) {
-                double latitude = j * gridInterval;
+            // recast resampled map on 3-D spherical coordinate
+            for (Map.Entry<XY, Double> entry : resampledXYMap.entrySet()) {
+                FullPosition position = resampleCoordinateMap.get(entry.getKey()).toFullPosition(radius);
+                resampledMap.put(position, entry.getValue());
             }
-
-
         }
-        return null;
+
+        return resampledMap;
     }
 
     /**
-     * Interpolation from a 2-D integer grid.
+     * Interpolation from a 2-D curvilinear integer grid.
      * This method supposes that data points are on a 2-D integer grid.
      * Values can be resampled at an arbitrary set of coordinates.
      * <p>
@@ -209,10 +253,10 @@ public class Interpolation {
 
         // get value at nearest integer grid point
         for (XY sampleXY : sampleCoordinates) {
-            int x = (int) Math.round(sampleXY.getX());
-            int y = (int) Math.round(sampleXY.getY());
-            IntegerXY nearestXY = new IntegerXY(x, y);
-            interpolatedMap.put(sampleXY, integerGridMap.get(nearestXY));
+            IntegerXY nearestXY = sampleXY.toNearestIntegerXY();
+            if (integerGridMap.containsKey(nearestXY)) {
+                interpolatedMap.put(sampleXY, integerGridMap.get(nearestXY));
+            }
         }
 
         return interpolatedMap;
@@ -261,6 +305,10 @@ public class Interpolation {
             double y = sampleXY.getY();
             int leftX = (int) Math.floor(x);
             int lowerY = (int) Math.floor(y);
+
+            // check that coordinate is in range
+            IntegerXY nearestXY = sampleXY.toNearestIntegerXY();
+            if (!integerGridMap.containsKey(nearestXY)) continue;
 
             // list up segments at this x with closest 4 y's that exist in segment map
             List<IntegerXY> segmentXYs = new ArrayList<>();

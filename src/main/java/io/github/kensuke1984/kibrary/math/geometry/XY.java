@@ -55,6 +55,10 @@ public class XY {
         return new XY(x, y);
     }
 
+    public IntegerXY toNearestIntegerXY() {
+        return new IntegerXY((int) Math.round(x), (int) Math.round(y));
+    }
+
     /**
      * @param xy target
      * @return xyとの内積 inner product with the xy

@@ -13,6 +13,7 @@ import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.elastic.VariableType;
 import io.github.kensuke1984.kibrary.math.Interpolation;
+import io.github.kensuke1984.kibrary.math.geometry.CoordinateConverter;
 import io.github.kensuke1984.kibrary.perturbation.ScalarListFile;
 import io.github.kensuke1984.kibrary.perturbation.ScalarType;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
@@ -50,6 +51,10 @@ public class ScalarMapper extends Operation {
      * Path of scalar file to be used as mask.
      */
     private Path maskPath;
+    /**
+     * Path of coordinate converter file to be used when interpolating.
+     */
+    private Path converterPath;
 
     private double[] boundaries;
     /**
@@ -99,6 +104,8 @@ public class ScalarMapper extends Operation {
             pw.println("#scalarPath scalar.Vs.PERCENT.lst");
             pw.println("##Path of scalar file for mask, when mask is to be applied.");
             pw.println("#maskPath scalar.Vs.PERCENT_RATIO.lst");
+            pw.println("##Path of coordinate converter file, when interpolating on curvilinear grid.");
+            pw.println("#converterPath converter.inf");
             pw.println("##(double[]) The display values of each layer boundary, listed from the inside using spaces. (0 50 100 150 200 250 300 350 400)");
             pw.println("#boundaries ");
             pw.println("##(int[]) Indices of layers to display, listed from the inside using spaces, when specific layers are to be displayed.");
@@ -145,6 +152,9 @@ public class ScalarMapper extends Operation {
         scalarPath = property.parsePath("scalarPath", null, true, workPath);
         if (property.containsKey("maskPath")) {
             maskPath = property.parsePath("maskPath", null, true, workPath);
+        }
+        if (property.containsKey("converterPath")) {
+            converterPath = property.parsePath("converterPath", null, true, workPath);
         }
 
         boundaries = property.parseDoubleArray("boundaries", "0 50 100 150 200 250 300 350 400");
@@ -199,12 +209,20 @@ public class ScalarMapper extends Operation {
         // copy discrete perturbation file to outPath
         Path outputDiscretePath = outPath.resolve(ScalarListFile.generateFileName(variable, scalarType));
         Files.copy(scalarPath, outputDiscretePath);
-        // output interpolated perturbation file
-        Map<FullPosition, Double> interpolatedMap = Interpolation.inEachMapLayer(discreteMap, gridInterval,
+        // interpolate
+        Map<FullPosition, Double> interpolatedMap;
+        if (converterPath != null) {
+            CoordinateConverter converter = new CoordinateConverter(converterPath);
+            interpolatedMap = Interpolation.curvilinearInEachMapLayer(discreteMap, gridInterval, converter, mosaic);
+        } else {
+            interpolatedMap = Interpolation.inEachMapLayer(discreteMap, gridInterval,
                 marginLatitudeRaw, setMarginLatitudeByKm, marginLongitudeRaw, setMarginLongitudeByKm, crossDateLine, mosaic);
+        }
+        // output interpolated perturbation file
         Path outputInterpolatedPath = outPath.resolve(ScalarListFile.generateFileName(variable, scalarType, "XY"));
         ScalarListFile.write(interpolatedMap, crossDateLine, outputInterpolatedPath);
 
+        // create mask
         VariableType maskVariable = null;
         ScalarType maskScalarType = null;
         if (maskPath != null) {
@@ -215,9 +233,10 @@ public class ScalarMapper extends Operation {
             // copy discrete mask file to outPath
             Path outMaskPath = outPath.resolve(ScalarListFile.generateFileName(maskVariable, maskScalarType, "forMask"));
             Files.copy(maskPath, outMaskPath);
-            // output interpolated perturbation file, in range [0:360) when crossDateLine==true so that mapping will succeed
+            // interpolate mask
             Map<FullPosition, Double> interpolatedMaskMap = Interpolation.inEachMapLayer(discreteMaskMap, gridInterval,
                     marginLatitudeRaw, setMarginLatitudeByKm, marginLongitudeRaw, setMarginLongitudeByKm, crossDateLine, mosaic);
+            // output interpolated perturbation file, in range [0:360) when crossDateLine==true so that mapping will succeed
             Path outputInterpolatedMaskPath = outPath.resolve(ScalarListFile.generateFileName(maskVariable, maskScalarType, "forMaskXY"));
             ScalarListFile.write(interpolatedMaskMap, crossDateLine, outputInterpolatedMaskPath);
         }

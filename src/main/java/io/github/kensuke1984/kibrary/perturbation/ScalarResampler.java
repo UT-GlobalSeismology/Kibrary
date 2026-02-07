@@ -20,6 +20,7 @@ import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.elastic.VariableType;
 import io.github.kensuke1984.kibrary.math.Interpolation;
+import io.github.kensuke1984.kibrary.math.geometry.CoordinateConverter;
 import io.github.kensuke1984.kibrary.math.geometry.IntegerXY;
 import io.github.kensuke1984.kibrary.math.geometry.XY;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
@@ -31,7 +32,7 @@ import io.github.kensuke1984.kibrary.voxel.VoxelInformationFile;
 /**
  * Class to resample a {@link ScalarListFile} at specified positions.
  * <p>
- * This class assumes that the input grid can be recasted onto an integer grid.
+ * This class assumes that the input grid can be recasted onto a curvilinear grid.
  * The resampling points are arbitrary.
  *
  * @author otsuru
@@ -57,15 +58,21 @@ public class ScalarResampler extends Operation {
      * Path of scalar file.
      */
     private Path scalarPath;
-    /**
-     * Grid interval of input scalar file [deg].
-     */
-    private double gridInterval;
 
     /**
      * Path of voxel information file.
      */
     private Path resampleVoxelPath;
+
+    private double dLatitudeKm;
+    private double dLatitudeDeg;
+    private boolean setLatitudeByKm;
+    private double baseLatitude;
+
+    private double dLongitudeKm;
+    private double dLongitudeDeg;
+    private boolean setLongitudeByKm;
+    private double baseLongitude;
 
     /**
      * @param args (String[]) Arguments: none to create a property file, path of property file to run it.
@@ -89,10 +96,23 @@ public class ScalarResampler extends Operation {
             pw.println("#appendFolderDate false");
             pw.println("##Path of scalar file to resample, must be set.");
             pw.println("#scalarPath scalar.Vs.PERCENT.lst");
-            pw.println("##(double) Grid interval of input scalar file [deg]. (5)");
-            pw.println("#gridInterval ");
             pw.println("##Path of a voxel information file defining the points at which to resample, must be set.");
             pw.println("#resampleVoxelPath voxel.inf");
+            pw.println("##########In the following, provide information about INPUT scalar file.");
+            pw.println("##(double) Latitude spacing [km]; (0:). If unset, the following dLatitudeDeg will be used.");
+            pw.println("##  The (roughly) median radius of target region will be used to convert this to degrees.");
+            pw.println("#dLatitudeKm ");
+            pw.println("##(double) Latitude spacing [deg]; (0:). (5)");
+            pw.println("#dLatitudeDeg ");
+            pw.println("##(double) Arbitrary voxel latitude [deg]. (0)");
+            pw.println("#baseLatitude ");
+            pw.println("##(double) Longitude spacing [km]; (0:). If unset, the following dLongitudeDeg will be used.");
+            pw.println("##  The (roughly) median radius of target region will be used to convert this to degrees at each latitude.");
+            pw.println("#dLongitudeKm ");
+            pw.println("##(double) Longitude spacing [deg]; (0:). (5)");
+            pw.println("#dLongitudeDeg ");
+            pw.println("##(double) Longitude at which voxels are aligned [deg]. (0)");
+            pw.println("#baseLongitude ");
         }
         System.err.println(outPath + " is created.");
     }
@@ -108,8 +128,29 @@ public class ScalarResampler extends Operation {
         appendFolderDate = property.parseBoolean("appendFolderDate", "true");
 
         scalarPath = property.parsePath("scalarPath", null, true, workPath);
-        gridInterval = property.parseDouble("gridInterval", "5");
         resampleVoxelPath = property.parsePath("resampleVoxelPath", null, true, workPath);
+
+        if (property.containsKey("dLatitudeKm")) {
+            dLatitudeKm = property.parseDouble("dLatitudeKm", null);
+            if (dLatitudeKm <= 0.0) throw new IllegalArgumentException("dLatitudeKm must be positive.");
+            setLatitudeByKm = true;
+        } else {
+            dLatitudeDeg = property.parseDouble("dLatitudeDeg", "5");
+            if (dLatitudeDeg <= 0.0) throw new IllegalArgumentException("dLatitudeDeg must be positive.");
+            setLatitudeByKm = false;
+        }
+        baseLatitude = property.parseDouble("baseLatitude", "0");
+
+        if (property.containsKey("dLongitudeKm")) {
+            dLongitudeKm = property.parseDouble("dLongitudeKm", null);
+            if (dLongitudeKm <= 0.0) throw new IllegalArgumentException("dLongitudeKm must be positive.");
+            setLongitudeByKm = true;
+        } else {
+            dLongitudeDeg = property.parseDouble("dLongitudeDeg", "5");
+            if (dLongitudeDeg <= 0.0) throw new IllegalArgumentException("dLongitudeDeg must be positive.");
+            setLongitudeByKm = false;
+        }
+        baseLongitude = property.parseDouble("baseLongitude", "0");
     }
 
     @Override
@@ -121,6 +162,7 @@ public class ScalarResampler extends Operation {
         ScalarType scalarType = scalarFile.getScalarType();
         Map<FullPosition, Double> discreteMap = scalarFile.getValueMap();
         Set<FullPosition> discretePositions = discreteMap.keySet();
+        double centerRadius = discretePositions.stream().mapToDouble(FullPosition::getR).distinct().average().getAsDouble();
 
         // read voxel file
         VoxelInformationFile resampleVoxelFile = new VoxelInformationFile(resampleVoxelPath);
@@ -129,17 +171,14 @@ public class ScalarResampler extends Operation {
         List<HorizontalPosition> resamplePositions = resamplePixels.stream().map(pixel -> pixel.getPosition()).collect(Collectors.toList());
         boolean crossDateLine = HorizontalPosition.crossesDateLine(resamplePositions);
 
-        // find smallest longitude and latitude of input discrete map
-        double minLatitude = discretePositions.stream().mapToDouble(FullPosition::getLatitude).min().getAsDouble();
-        double minLongitude = discretePositions.stream().mapToDouble(pos -> pos.getLongitude(crossDateLine)).min().getAsDouble();
+        CoordinateConverter converter = new CoordinateConverter(dLatitudeKm, dLatitudeDeg, setLatitudeByKm, baseLatitude,
+                dLongitudeKm, dLongitudeDeg, setLongitudeByKm, baseLongitude, centerRadius, crossDateLine);
 
-        // calculate coordinate of sample points on the integer grid
+        // calculate coordinate of sample points on the curvilinear grid
         List<XY> resampleCoordinates = new ArrayList<>();
         Map<XY, HorizontalPosition> resampleCoordinateMap = new HashMap<>();
         for (HorizontalPosition position : resamplePositions) {
-            double y = (position.getLatitude() - minLatitude) / gridInterval;
-            double x = (position.getLongitude(crossDateLine) - minLongitude) / gridInterval;
-            XY xy = new XY(x, y);
+            XY xy = converter.computeXY(position);
             resampleCoordinates.add(xy);
             resampleCoordinateMap.put(xy, position);
         }
@@ -155,12 +194,11 @@ public class ScalarResampler extends Operation {
                 continue;
             }
 
-            // recast input map as map on integer grid
+            // recast input map as map on curvilinear grid
             Map<IntegerXY, Double> integerGridMap = new LinkedHashMap<>();
             for (FullPosition position : inLayerDiscretePositions) {
-                int y = (int) Math.round((position.getLatitude() - minLatitude) / gridInterval);
-                int x = (int) Math.round((position.getLongitude(crossDateLine) - minLongitude) / gridInterval);
-                IntegerXY integerXY = new IntegerXY(x, y);
+                XY xy = converter.computeXY(position);
+                IntegerXY integerXY = xy.toNearestIntegerXY();
                 integerGridMap.put(integerXY, discreteMap.get(position));
             }
 
