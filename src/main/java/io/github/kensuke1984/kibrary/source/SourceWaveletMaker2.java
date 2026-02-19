@@ -21,6 +21,7 @@ import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.Test_temp;
 import io.github.kensuke1984.kibrary.correction.StaticCorrectionData;
 import io.github.kensuke1984.kibrary.correction.StaticCorrectionDataFile;
+import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotFile;
 import io.github.kensuke1984.kibrary.math.FourierTransform;
 import io.github.kensuke1984.kibrary.math.Trace;
 import io.github.kensuke1984.kibrary.timewindow.TimeWindow;
@@ -113,6 +114,11 @@ public class SourceWaveletMaker2 extends Operation {
      */
     private int np;
 
+    /**
+     * Whether to normalize input waveforms by synthetic waveforms or observed waveforms.
+     */
+    private boolean normalizeBySyn;
+
     private Set<TimeWindowData> sourceTimeWindowSet;
     private Set<StaticCorrectionData> staticCorrectionSet;
 
@@ -158,6 +164,8 @@ public class SourceWaveletMaker2 extends Operation {
             pw.println("#tlen ");
             pw.println("##(int) Number of points to compute in frequency domain, should not exceed tlen*sacSamplingHz/2. (512)");
             pw.println("#np ");
+            pw.println("##(boolean) Whether to normalize input waveforms by synthetic waveforms. (true)");
+            pw.println("#normalizeBySyn ");
         }
         System.err.println(outPath + " is created.");
     }
@@ -191,6 +199,8 @@ public class SourceWaveletMaker2 extends Operation {
 
         tlen = property.parseDouble("tlen", "3276.8");
         np = property.parseInt("np", "512");
+
+        normalizeBySyn = property.parseBoolean("normalizeBySyn", "true");
     }
 
     @Override
@@ -269,9 +279,27 @@ public class SourceWaveletMaker2 extends Operation {
             double synMin = synTrace.getMinY();
             double synMax = synTrace.getMaxY();
             double synAmp = (-synMin > synMax) ? synMin : synMax;
+            double t2 = timeWindow.getStartTime() + frontShift + halfDuration;
+            RealVector normalizedVector;
+            if (normalizeBySyn) {
+                Trace integrateSynTrace = synTrace.integrate();
+                double synArea = integrateSynTrace.findYAtNearestX(t2);
+//              System.out.print("SynArea is " + synArea);
+//              System.out.print(" SynAmp is " + synAmp);
+//              System.out.println(" HalfDuration is " + halfDuration);
 
-            // divide observed trace by signed max amplitude of synthetic (This should result on positive side for most cases.)
-            RealVector normalizedVector = obsTrace.multiply(1 / synAmp).getYVector();
+                // divide observed trace by signed area of synthetic (This should result on positive side for most cases.)
+                normalizedVector = obsTrace.multiply(1 / synArea).getYVector();
+            } else {
+                Trace integrateObsTrace = obsTrace.integrate();
+                double obsArea = integrateObsTrace.findYAtNearestX(t2);
+                if (obsArea == 0) {
+                    System.out.println("obsArea = 0.");
+                    return;
+                }
+                // divide observed trace by signed area of observed (This should result on positive side for most cases.)
+                normalizedVector = obsTrace.multiply(1 / obsArea).getYVector();
+            }
 
             // stack
             if (sumVector == null) {
@@ -300,9 +328,8 @@ public class SourceWaveletMaker2 extends Operation {
                 return;
             }
 
-
-            // divide by the number of time windows added to get average, and half duration to normalize the amplitude
-            double[] yArray = sumVector.mapDivide(num).mapDivide(halfDuration).toArray();
+            // divide by the number of time windows added to get average
+            double[] yArray = sumVector.mapDivide(num).toArray();
             // taper
             yArray = FourierTransform.taper(yArray, TAPER_LENGTH_PERCENT, true);
 
@@ -329,7 +356,7 @@ public class SourceWaveletMaker2 extends Operation {
             int halfIndex2 = computet2(waveletTrace, t0);
             double t2 = waveletTrace.getXAt(halfIndex2);
 
-            System.out.println(t0 + " " + t1 + " " + t2);
+            //System.out.println(t0 + " " + t1 + " " + t2);
 
             double maxtau1 = t0 - waveletTrace.getXAt(0);
             double maxtau2 = waveletTrace.getXAt(waveletTrace.getLength() - 1) - t0;
@@ -337,8 +364,8 @@ public class SourceWaveletMaker2 extends Operation {
             double minsum  = Double.POSITIVE_INFINITY;
             double tau1 = 0;
             double tau2 = 0;
-            System.out.println((t0 - t1) + " " + (t2 - t0));
-            System.out.println(maxtau1 + " " + maxtau2);
+            //System.out.println((t0 - t1) + " " + (t2 - t0));
+            //System.out.println(maxtau1 + " " + maxtau2);
             for (double temptau1 = t0 - t1; temptau1 <= maxtau1; temptau1 += delta) {
                 for (double temptau2 = t2 - t0; temptau2 <= maxtau2; temptau2 += delta) {
                     double sum = 0;
@@ -356,7 +383,7 @@ public class SourceWaveletMaker2 extends Operation {
                     }
                 }
             }
-            System.out.println(tau1 + " " +tau2);
+            //System.out.println(tau1 + " " +tau2);
             //write triangle STF
             Path trianglePath = eventDirectryPath.resolve(eventID + "_triangle.txt");
             try {
@@ -372,10 +399,6 @@ public class SourceWaveletMaker2 extends Operation {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-
-
-
-
 
             //divide by the number of time windows added to get average, and half duration to normalize the amplitude
             double[] cutYArray = cutTrace.getY();
@@ -405,9 +428,6 @@ public class SourceWaveletMaker2 extends Operation {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-
-
-
 
             // convert to frequency domain
             Complex[] complexWave = FourierTransform.convertToFrequencyDomain(paddedArray, np);
@@ -445,19 +465,24 @@ public class SourceWaveletMaker2 extends Operation {
                 throw new UncheckedIOException(e);
             }
 
+            double windowLength = waveletTrace.getMaxX() - waveletTrace.getMinX();
             // make graphs of stacked and triangle stf
             Path stackPltPath = eventDirectryPath.resolve(eventID + ".plt");
             try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(stackPltPath))) {
                 pw.println("set term pngcairo enhanced size 1600,800 font 'Helvetica.20'");
                 pw.println("set output 'wave.png'");
-                pw.println("set xrange [0:12]");
+                pw.println("set xrange [0:" + windowLength + "]");
                 pw.println("p \"" + eventID + "_time.txt\" w l title \"stacked\", \"" + eventID + "_triangle.txt\" w l title \"LSTF\"");
             } catch (IOException e) {
                 e.printStackTrace();
             }
 
-
-
+            GnuplotFile gnuplot = new GnuplotFile(stackPltPath);
+            try {
+                if (!gnuplot.execute()) System.err.println("gnuplot failed!!");
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
 
     }

@@ -61,6 +61,8 @@ public final class Trace {
      */
     private final int[] indexOfPeak;
 
+    
+    
     /**
      * Create trace from arrays of x and y by deep copy.
      * @param x (double[]) Array for x.
@@ -654,6 +656,14 @@ public final class Trace {
     }
 
     /**
+     * @param target value of x to look for the nearest x value to
+     * @return y at the closest x to the target
+     */
+    public double findYAtNearestX(double target) {
+        return yArray[findNearestXIndex(target)];
+    }
+
+    /**
      * @return DEEP copy of x
      */
     public double[] getX() {
@@ -731,9 +741,9 @@ public final class Trace {
     public double getXforMaxYValue() {
         return xArray[yVector.getMaxIndex()];
     }
-    
+
     public int getXIndexforMaxYValue() {
-    	return yVector.getMaxIndex();
+        return yVector.getMaxIndex();
     }
 
     /**
