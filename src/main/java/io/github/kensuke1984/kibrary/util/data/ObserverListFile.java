@@ -21,12 +21,11 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
 import io.github.kensuke1984.kibrary.Summon;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
+import io.github.kensuke1984.kibrary.timewindow.TimeWindowData;
+import io.github.kensuke1984.kibrary.timewindow.TimeWindowDataFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.InformationFileReader;
-import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
@@ -39,7 +38,7 @@ import io.github.kensuke1984.kibrary.waveform.BasicIDFile;
  * Each line: station code, network code, latitude, longitude.
  *
  * @author Kensuke Konishi
- * @version 0.2.0.4
+ * @since a long time ago
  */
 public final class ObserverListFile {
     private ObserverListFile() {}
@@ -52,9 +51,7 @@ public final class ObserverListFile {
      * @throws IOException if an I/O error occurs
      */
     public static void write(Set<Observer> observerSet, Path outputPath, OpenOption... options) throws IOException {
-        System.err.println("Outputting "
-                + MathAid.switchSingularPlural(observerSet.size(), "observer", "observers")
-                + " in " + outputPath);
+        DatasetAid.printNumOutput(observerSet.size(), "observer", "observers", outputPath);
 
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath, options))) {
             pw.println("# station network latitude longitude");
@@ -82,17 +79,19 @@ public final class ObserverListFile {
                 throw new RuntimeException("There is duplication of " + observer + " in " + inputPath + ".");
         }
 
-        DatasetAid.checkNum(observerSet.size(), "observer", "observers");
+        DatasetAid.printNumInput(observerSet.size(), "observer", "observers", inputPath);
         return Collections.unmodifiableSet(observerSet);
     }
+
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     /**
      * Reads observer information from an input source
      * and creates an observer list file under the working folder.
      * The input source may be SAC files in event directories under a dataset folder,
-     * a timewindow file, or a basic ID file.
-     *
-     * @param args
+     * a time window file, or a basic ID file.
+     * @param args Options.
      * @throws IOException if an I/O error occurs
      */
     public static void main(String[] args) throws IOException {
@@ -113,23 +112,25 @@ public final class ObserverListFile {
 
         // settings
         options.addOption(Option.builder("c").longOpt("components").hasArg().argName("components")
-                .desc("Components to use, listed using commas").build());
+                .desc("Components to use, listed using commas.").build());
 
         // input
         OptionGroup inputOption = new OptionGroup();
         inputOption.addOption(Option.builder("d").longOpt("dataset").hasArg().argName("datasetFolder")
-                .desc("Use dataset folder containing event folders as input").build());
+                .desc("Use dataset folder containing event folders as input.").build());
         inputOption.addOption(Option.builder("e").longOpt("entry").hasArg().argName("dataEntryFile")
-                .desc("Use data entry file as input").build());
-        inputOption.addOption(Option.builder("t").longOpt("timewindow").hasArg().argName("timewindowFile")
-                .desc("Use timewindow file as input").build());
+                .desc("Use data entry file as input.").build());
+        inputOption.addOption(Option.builder("t").longOpt("timeWindow").hasArg().argName("timeWindowFile")
+                .desc("Use time window file as input.").build());
         inputOption.addOption(Option.builder("b").longOpt("basic").hasArg().argName("basicFolder")
-                .desc("Use basic waveform folder as input").build());
+                .desc("Use basic waveform folder as input.").build());
         options.addOptionGroup(inputOption);
 
         // output
-        options.addOption(Option.builder("o").longOpt("output").hasArg().argName("outputFile")
-                .desc("Set path of output file").build());
+        options.addOption(Option.builder("T").longOpt("tag").hasArg().argName("fileTag")
+                .desc("A tag to include in output file name.").build());
+        options.addOption(Option.builder("O").longOpt("omitDate")
+                .desc("Omit date string in output file name.").build());
 
         return options;
     }
@@ -140,13 +141,12 @@ public final class ObserverListFile {
      * @throws IOException
      */
     public static void run(CommandLine cmdLine) throws IOException {
-
         Set<SACComponent> components = cmdLine.hasOption("c")
                 ? Arrays.stream(cmdLine.getOptionValue("c").split(",")).map(SACComponent::valueOf).collect(Collectors.toSet())
                 : SACComponent.componentSetOf("ZRT");
-
-        Path outputPath = cmdLine.hasOption("o") ? Paths.get(cmdLine.getOptionValue("o"))
-                : Paths.get("observer" + GadgetAid.getTemporaryString() + ".lst");
+        String fileTag = cmdLine.hasOption("T") ? cmdLine.getOptionValue("T") : null;
+        boolean appendFileDate = !cmdLine.hasOption("O");
+        Path outputPath = DatasetAid.generateOutputFilePath(Paths.get(""), "observer", fileTag, appendFileDate, null, ".lst");
 
         Set<Observer> observerSet;
         if (cmdLine.hasOption("d")) {
@@ -155,9 +155,9 @@ public final class ObserverListFile {
             Set<DataEntry> entries = DataEntryListFile.readAsSet(Paths.get(cmdLine.getOptionValue("e")));
             observerSet = entries.stream().map(DataEntry::getObserver).collect(Collectors.toSet());
         } else if (cmdLine.hasOption("t")) {
-            Set<TimewindowData> timewindows =  TimewindowDataFile.read(Paths.get(cmdLine.getOptionValue("t")));
-            observerSet = timewindows.stream().filter(timewindow -> components.contains(timewindow.getComponent()))
-                    .map(TimewindowData::getObserver).collect(Collectors.toSet());
+            Set<TimeWindowData> timeWindows =  TimeWindowDataFile.read(Paths.get(cmdLine.getOptionValue("t")));
+            observerSet = timeWindows.stream().filter(timeWindow -> components.contains(timeWindow.getComponent()))
+                    .map(TimeWindowData::getObserver).collect(Collectors.toSet());
         } else if (cmdLine.hasOption("b")) {
             List<BasicID> basicIDs =  BasicIDFile.read(Paths.get(cmdLine.getOptionValue("b")), false);
             observerSet = basicIDs.stream().filter(id -> components.contains(id.getSacComponent()))

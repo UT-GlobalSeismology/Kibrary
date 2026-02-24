@@ -9,16 +9,16 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.util.Precision;
 
 import edu.sc.seis.TauP.TauModelException;
 import edu.sc.seis.TauP.TauP_Time;
+import io.github.kensuke1984.kibrary.elastic.VariableType;
 import io.github.kensuke1984.kibrary.math.Trace;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
-import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure_old;
+import io.github.kensuke1984.kibrary.util.earth.DefaultStructure;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.sac.WaveformType;
@@ -31,19 +31,18 @@ public class RotationWaveformVisual {
 
     public static void main(String[] args) throws IOException, TauModelException {
         Path waveformPath = Paths.get(args[0]);
-        Path waveformIDPath = Paths.get(args[1]);
 
-        BasicID[] ids = BasicIDFile.read(waveformIDPath, waveformPath);
+        List<BasicID> ids = BasicIDFile.read(waveformPath, true);
 
-        Set<GlobalCMTID> events = Stream.of(ids).map(id -> id.getGlobalCMTID()).collect(Collectors.toSet());
+        Set<GlobalCMTID> events = ids.stream().map(id -> id.getGlobalCMTID()).collect(Collectors.toSet());
 
         Path stackDir = Paths.get("stack" + GadgetAid.getTemporaryString());
         Files.createDirectory(stackDir);
 
-        double dt = 1./ ids[0].getSamplingHz();
+        double dt = 1./ ids.get(0).getSamplingHz();
 
-        List<BasicID> ids_Z = Stream.of(ids).filter(id -> id.getSacComponent().equals(SACComponent.Z)).collect(Collectors.toList());
-        List<BasicID> tmp_R = Stream.of(ids).filter(id -> id.getSacComponent().equals(SACComponent.R)).collect(Collectors.toList());
+        List<BasicID> ids_Z = ids.stream().filter(id -> id.getSacComponent().equals(SACComponent.Z)).collect(Collectors.toList());
+        List<BasicID> tmp_R = ids.stream().filter(id -> id.getSacComponent().equals(SACComponent.R)).collect(Collectors.toList());
         List<BasicID> ids_R = new ArrayList<>();
         for (BasicID idZ : ids_Z) {
             BasicID idR = tmp_R.stream().filter(id -> id.getGlobalCMTID().equals(idZ.getGlobalCMTID()) && id.getObserver().equals(idZ.getObserver())
@@ -77,7 +76,7 @@ public class RotationWaveformVisual {
 
                 timeTool.calcTime(distance);
                 double p = timeTool.getArrival(0).getRayParamDeg();
-                double theta = p * 6371. * PolynomialStructure_old.PREM.getVphAt(6371.);
+                double theta = p * 6371. * DefaultStructure.PREM.getAtRadius(VariableType.Vph, 6371.);
                 System.out.println(theta);
                 theta = Math.asin(Math.toRadians(theta));
 

@@ -20,6 +20,8 @@ import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotColorName;
 import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotFile;
+import io.github.kensuke1984.kibrary.math.CircularRange;
+import io.github.kensuke1984.kibrary.math.LinearRange;
 import io.github.kensuke1984.kibrary.math.Trace;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.EventFolder;
@@ -133,10 +135,8 @@ public class SacRecordSectionCreator extends Operation {
 
     private double lowerTime;
     private double upperTime;
-    private double lowerDistance;
-    private double upperDistance;
-    private double lowerAzimuth;
-    private double upperAzimuth;
+    private LinearRange distanceRange;
+    private CircularRange azimuthRange;
 
     private int mainSynStyle;
     private String mainSynName;
@@ -161,15 +161,15 @@ public class SacRecordSectionCreator extends Operation {
      * @throws IOException if any
      */
     public static void main(String[] args) throws IOException {
-        if (args.length == 0) writeDefaultPropertiesFile();
+        if (args.length == 0) writeDefaultPropertiesFile(null);
         else Operation.mainFromSubclass(args);
     }
 
-    public static void writeDefaultPropertiesFile() throws IOException {
-        Class<?> thisClass = new Object(){}.getClass().getEnclosingClass();
-        Path outPath = Property.generatePath(thisClass);
+    public static void writeDefaultPropertiesFile(String tag) throws IOException {
+        String className = new Object(){}.getClass().getEnclosingClass().getSimpleName();
+        Path outPath = DatasetAid.generateOutputFilePath(Paths.get(""), className, tag, true, null, ".properties");
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
-            pw.println("manhattan " + thisClass.getSimpleName());
+            pw.println("manhattan " + className);
             pw.println("##Path of a working directory. (.)");
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output file names. If no tag is needed, leave this unset.");
@@ -279,15 +279,13 @@ public class SacRecordSectionCreator extends Operation {
         lowerTime = property.parseDouble("lowerTime", "NaN");
         upperTime = property.parseDouble("upperTime", "NaN");
 
-        lowerDistance = property.parseDouble("lowerDistance", "0");
-        upperDistance = property.parseDouble("upperDistance", "180");
-        if (lowerDistance < 0 || lowerDistance > upperDistance || 180 < upperDistance)
-            throw new IllegalArgumentException("Distance range " + lowerDistance + " , " + upperDistance + " is invalid.");
+        double lowerDistance = property.parseDouble("lowerDistance", "0");
+        double upperDistance = property.parseDouble("upperDistance", "180");
+        distanceRange = new LinearRange("Distance", lowerDistance, upperDistance, 0.0, 180.0);
 
-        lowerAzimuth = property.parseDouble("lowerAzimuth", "0");
-        upperAzimuth = property.parseDouble("upperAzimuth", "360");
-        if (lowerAzimuth < -360 || lowerAzimuth > upperAzimuth || 360 < upperAzimuth)
-            throw new IllegalArgumentException("Azimuth range " + lowerAzimuth + " , " + upperAzimuth + " is invalid.");
+        double lowerAzimuth = property.parseDouble("lowerAzimuth", "0");
+        double upperAzimuth = property.parseDouble("upperAzimuth", "360");
+        azimuthRange = new CircularRange("Azimuth", lowerAzimuth, upperAzimuth, -180.0, 360.0);
 
         mainSynStyle = property.parseInt("mainSynStyle", "1");
         mainSynName = property.parseString("mainSynName", "synthetic");
@@ -423,8 +421,7 @@ public class SacRecordSectionCreator extends Operation {
                 double azimuth = sacData.getValue(SACHeaderEnum.AZ);
 
                 // skip waveform if distance or azimuth is out of bounds
-                if (distance < lowerDistance || upperDistance < distance
-                        || MathAid.checkAngleRange(azimuth, lowerAzimuth, upperAzimuth) == false) {
+                if (distanceRange.check(distance) == false || azimuthRange.check(azimuth) == false) {
                     continue;
                 }
 

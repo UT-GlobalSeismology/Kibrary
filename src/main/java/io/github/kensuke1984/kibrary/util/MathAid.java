@@ -1,27 +1,35 @@
 package io.github.kensuke1984.kibrary.util;
 
+import java.time.LocalDate;
+
 import org.apache.commons.math3.linear.RealVector;
 import org.apache.commons.math3.util.FastMath;
 import org.apache.commons.math3.util.Precision;
 
 /**
- * Some calculation Utilities.
+ * Some calculation utilities.
  *
+ * @author otsuru
  * @since 2021/11/21 - created when Utilities.java was split up.
  */
 public final class MathAid {
     private MathAid() {}
 
     /**
-     * The number of decimal places to decide if 0.9999... = 1.
+     * The number of decimal places to decide if 0.00...01 = 0, 0.9999... = 1, etc.
      */
-    private static final int PRECISION_DIGIT = 10;
+    public static final int PRECISION_DECIMALS = 10;
+    /**
+     * The margin to decide if 0.00...01 = 0, 0.9999... = 1, etc.
+     */
+    public static final double PRECISION_EPSILON = FastMath.pow(10, -PRECISION_DECIMALS);
 
     /**
-     * @param variance variance
-     * @param n        Number of independent data
-     * @param k        Degree of freedom
-     * @return aic
+     * Compute AIC.
+     * @param variance (double) Variance.
+     * @param n (int) Number of independent data.
+     * @param k (int) Degree of freedom.
+     * @return (double) AIC value.
      */
     public static double computeAIC(double variance, int n, int k) {
         final double log2pi = Math.log(2 * Math.PI);
@@ -29,10 +37,10 @@ public final class MathAid {
     }
 
     /**
-     * Compute the normalized variance of residual waveform
-     * @param d (RealVector) Residual waveform
-     * @param obs (RealVector) Observed waveform
-     * @return (double) normalized variance
+     * Compute the normalized variance of residual waveform.
+     * @param d (RealVector) Residual waveform.
+     * @param obs (RealVector) Observed waveform.
+     * @return (double) Normalized variance.
      */
     public static double computeVariance(RealVector d, RealVector obs) {
         return d.dotProduct(d) / obs.dotProduct(obs);
@@ -40,9 +48,9 @@ public final class MathAid {
 
     /**
      * Division of two integers, but round up when not divisible.
-     * @param dividend (int) a in a/b
-     * @param divisor (int) b in a/b
-     * @return (int) a/b, rounded up
+     * @param dividend (int) a in a/b.
+     * @param divisor (int) b in a/b.
+     * @return (int) a/b, rounded up.
      *
      * @author otsuru
      * @since 2023/1/15
@@ -52,17 +60,42 @@ public final class MathAid {
     }
 
     /**
+     * Check if a value is integer.
+     * @param value (double) Value to check.
+     * @return (boolean) Whether the value is integer.
+     *
+     * @author otsuru
+     * @since 2024/4/6
+     */
+    public static boolean isInteger(double value) {
+        // compare the integer part with the value rounded to get rid of the error
+        return Math.floor(value) == Precision.round(value, PRECISION_DECIMALS);
+    }
+
+    /**
+     * Check if a value is a terminating decimal.
+     * @param value (double) Value to check.
+     * @return (boolean) Whether the value is a terminating decimal.
+     *
+     * @author otsuru
+     * @since 2024/4/10
+     */
+    public static boolean isTerminatingDecimal(double value) {
+        return Precision.round(value, PRECISION_DECIMALS) == Precision.round(value, PRECISION_DECIMALS + 2);
+    }
+
+    /**
      * Rounds value to n effective digits.
      *
-     * @param value (double) The value to be rounded
-     * @param n (int) The number of effective digits
-     * @return (double) The rounded value which has n effective digits
+     * @param value (double) The value to be rounded.
+     * @param n (int) The number of effective digits.
+     * @return (double) The rounded value which has n effective digits.
      */
     public static double roundToEffective(double value, int n) {
         if (n < 1)
             throw new IllegalArgumentException("invalid input n");
 
-        final long log10 = (long) Math.floor(Math.log10(Math.abs(value)));
+        final long log10 = (long) MathAid.floor(Math.log10(Math.abs(value)));
         final double power10 = FastMath.pow(10, log10 - n + 1);
         return Math.round(value / power10) * power10;
     }
@@ -90,7 +123,7 @@ public final class MathAid {
      * This method exports integer values without ".0" (which is always left in integer values when simply changing double to String).
      * The decimal point can be changed to a specified letter.
      *
-     * @param value (int) The value to turn into a String.
+     * @param value (double) The value to turn into a String.
      * @param decimalLetter (String) The letter to use instead of the decimal point.
      * @return (String) Simple String form of the value.
      */
@@ -197,18 +230,19 @@ public final class MathAid {
     }
 
     /**
-     * Turns a positive number into an ordinal number String (i.e. 1st, 2nd, ...)
-     * @param n (int) Number to get the ordinal of
-     * @return (String)
+     * Turns a positive number into an ordinal number String (i.e. 1st, 2nd, ...).
+     * @param n (int) Number to get the ordinal of.
+     * @return (String) Ordinal number.
      *
      * @author otsuru
      * @since 2022/4/24
      */
     public static String ordinalNumber(int n) {
-        if (n < 0) throw new IllegalArgumentException("Input n must be positive");
+        if (n < 0) throw new IllegalArgumentException("Input n must be positive.");
 
         // always "th" when the digit in the tens place is 1
         if (n % 100 / 10 == 1) return  n + "th";
+        // otherwise, switch by digit in the ones place
         else if (n % 10 == 1) return n + "st";
         else if (n % 10 == 2) return n + "nd";
         else if (n % 10 == 3) return n + "rd";
@@ -218,10 +252,10 @@ public final class MathAid {
     /**
      * Switches the wording to use based on whether a value is singular or plural.
      * For counting objects (file/files) or changing verbs (is/are).
-     * @param n (int) Number
-     * @param singularCase (String) Words to append when the number is singular
-     * @param pluralCase (String) Words to append when the number is plural
-     * @return (String) Number followd by appended words
+     * @param n (int) Number.
+     * @param singularCase (String) Words to append when the number is singular.
+     * @param pluralCase (String) Words to append when the number is plural.
+     * @return (String) Number followd by appended words.
      *
      * @author otsuru
      * @since 2022/4/24
@@ -235,6 +269,20 @@ public final class MathAid {
     }
 
     /**
+     * Check if a date range is valid (i.e. first value &lt;= second value).
+     * Note that the date range includes the end date.
+     * @param startDate (LocalDate) Date that is supposed to be start of range.
+     * @param endDate (LocalDate) Date that is supposed to be end of range.
+     *
+     * @author otsuru
+     * @since 2023/12/4
+     */
+    public static void checkDateRangeValidity(LocalDate startDate, LocalDate endDate) {
+        if (startDate.isAfter(endDate))
+            throw new IllegalArgumentException("Date range [" + startDate + ":" + endDate + "] is invalid.");
+    }
+
+    /**
      * Same as Math.floor(), but consider precision, fixing 0.9999... to 1.
      * @param value (double) Input value.
      * @return (double) Rounded result.
@@ -243,7 +291,7 @@ public final class MathAid {
      * @since 2023/11/8
      */
     public static double floor(double value) {
-        return Math.floor(Precision.round(value, PRECISION_DIGIT));
+        return Math.floor(Precision.round(value, PRECISION_DECIMALS));
     }
 
     /**
@@ -255,27 +303,19 @@ public final class MathAid {
      * @since 2023/12/14
      */
     public static double ceil(double value) {
-        return Math.ceil(Precision.round(value, PRECISION_DIGIT));
+        return Math.ceil(Precision.round(value, PRECISION_DECIMALS));
     }
 
     /**
-     * Check if an angle is within a specified range.
-     * @param angle [0:360)
-     * @param lower [-360:upper)
-     * @param upper (lower:360]
-     * @return (boolean) true if "angle" is within the range set by "lower" and "upper"
+     * Round a value to git rid of computation error (ex. fixing 0.9999... to 1 or fixing 1.00...01 to 1).
+     * @param value (double) Input value.
+     * @return (double) Rounded result.
+     *
+     * @author otsuru
+     * @since 2024/4/6
      */
-    public static boolean checkAngleRange(double angle, double lower, double upper) {
-        if (angle < 0 || 360 <= angle || lower < -360 || upper < lower || 360 < upper) {
-            throw new IllegalArgumentException("The input angles " + angle + "," + lower + "," + upper + " are invalid.");
-        }
-
-        // In the following, the third part is for the case of angle==0
-        if ((lower <= angle && angle <= upper) || (lower+360 <= angle && angle <= upper+360) || (lower-360 <= angle && angle <= upper-360)) {
-            return true;
-        } else {
-            return false;
-        }
+    public static double roundForPrecision(double value) {
+        return Precision.round(value, PRECISION_DECIMALS);
     }
 
 }

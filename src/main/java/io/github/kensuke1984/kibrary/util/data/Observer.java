@@ -5,9 +5,13 @@ import java.nio.ByteBuffer;
 
 import org.apache.commons.lang3.StringUtils;
 
+import io.github.kensuke1984.kibrary.correction.StaticCorrectionDataFile;
+import io.github.kensuke1984.kibrary.timewindow.TimeWindowDataFile;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderAccess;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
+import io.github.kensuke1984.kibrary.waveform.BasicIDFile;
+import io.github.kensuke1984.kibrary.waveform.PartialIDFile;
 
 /**
  * <p>
@@ -35,13 +39,10 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  * (because a single event means a single time moment).
  *
  * @author Kensuke Konishi
+ * @since a long time ago
  */
 public final class Observer implements Comparable<Observer> {
 
-    /**
-     * network code for stations in synthetic datasets TODO delete?
-     */
-    public static final String SYN = "DSM";
     /**
      * maximum length to allow for an observer ID
      */
@@ -105,15 +106,8 @@ public final class Observer implements Comparable<Observer> {
      * @return Station of the input sacHeaderData
      */
     public static Observer of(SACHeaderAccess sacHeaderData) {
-        return sacHeaderData.getSACString(SACHeaderEnum.KNETWK) == "-12345"
-                ? new Observer(sacHeaderData.getSACString(SACHeaderEnum.KSTNM).trim(),
-                        SYN,
-                        new HorizontalPosition(sacHeaderData.getValue(SACHeaderEnum.STLA),
-                                sacHeaderData.getValue(SACHeaderEnum.STLO)))
-                : new Observer(sacHeaderData.getSACString(SACHeaderEnum.KSTNM).trim(),
-                        sacHeaderData.getSACString(SACHeaderEnum.KNETWK).trim(),
-                        new HorizontalPosition(sacHeaderData.getValue(SACHeaderEnum.STLA),
-                                sacHeaderData.getValue(SACHeaderEnum.STLO)));
+        return new Observer(sacHeaderData.getSACString(SACHeaderEnum.KSTNM).trim(), sacHeaderData.getSACString(SACHeaderEnum.KNETWK).trim(),
+                new HorizontalPosition(sacHeaderData.getValue(SACHeaderEnum.STLA), sacHeaderData.getValue(SACHeaderEnum.STLO)));
     }
 
     /**
@@ -121,8 +115,8 @@ public final class Observer implements Comparable<Observer> {
      * <p>
      * The bytes must contain Name(8), NETWORK(8), latitude(4), longitude(4)
      * <p>
-     * The bytes are written in header parts of BasicIDFile PartialIDFile
-     * TimewindowInformationFile.
+     * The bytes are written in header parts of {@link TimeWindowDataFile}, {@link StaticCorrectionDataFile},
+     * {@link BasicIDFile}, and {@link PartialIDFile}.
      *
      * @param bytes for one station
      * @return Station created from the input bytes

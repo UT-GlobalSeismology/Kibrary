@@ -5,7 +5,9 @@ import java.util.Arrays;
 /**
  * Tensor components of a spc file
  * <p>
- * R:Z, T(theta):R, P(phi): T <br>
+ * R(radius): Z,
+ * T(theta): R,
+ * P(phi): T
  * <p>
  * <p>
  * ij &rarr; U<sub>ij</sub><br>
@@ -18,7 +20,7 @@ import java.util.Arrays;
  * tpp 19: prr 20: prt 21: prp 22: ptr 23: ptt 24: ptp 25: ppr 26: ppt 27: ppp
  *
  * @author Kensuke Konishi
- * @version 0.1.1.1 TODO
+ * @since a long time ago
  */
 public enum SPCTensorComponent {
     RR(1), RT(2), RP(3), TR(4), TT(5), TP(6), PR(7), PT(8), PP(9), //
@@ -26,35 +28,39 @@ public enum SPCTensorComponent {
     TRR(10), TRT(11), TRP(12), TTR(13), TTT(14), TTP(15), TPR(16), TPT(17), TPP(18), //
     PRR(19), PRT(20), PRP(21), PTR(22), PTT(23), PTP(24), PPR(25), PPT(26), PPP(27);
 
-    private int value;
+    private int number;
 
-    SPCTensorComponent(int n) {
-        value = n;
+    private SPCTensorComponent(int number) {
+        this.number = number;
+    }
+
+    public int getNumber() {
+        return number;
     }
 
     /**
-     * back propagate のETAri,sのコンポーネントを返す it returns rtp when i=1 r=2 s=3
+     * Returns component of ETAri,s for back propagate (ex. rtp when i=1, r=2, s=3).
      *
      * @param i 1, 2, 3
      * @param r 1, 2, 3
      * @param s 1, 2, 3
      * @return SPCTensorComponent for the input i r s
      */
-    public static SPCTensorComponent valueOf27Conmponent(int i, int r, int s) {
+    public static SPCTensorComponent valueOf27Component(int i, int r, int s) {
         if (i < 1 || 3 < i || r < 1 || 3 < r || s < 1 || 3 < s) throw new IllegalArgumentException(
                 "Input (i, r, s) = (" + i + ", " + r + ", " + s + ") must be 1, 2 or 3.");
         return Arrays.stream(values())
-                .filter(stc -> stc.value == (i - 1) * 9 + 3 * (r - 1) + s && stc.name().length() == 3).findAny()
+                .filter(stc -> stc.number == (i - 1) * 9 + 3 * (r - 1) + s && stc.name().length() == 3).findAny()
                 .orElseThrow(() -> new IllegalArgumentException(
                         "input i, r, s: " + i + " " + r + " " + s + " are invalid."));
     }
 
     /**
-     * forward propagate のUp,qのコンポーネントを返す p=1, q=2の時 rtを返す
+     * Returns component of Up,q for forward propagate (ex. rt when p=1, q=2).
      * <p>
-     * or
+     * OR
      * <p>
-     * back propagate のETAjiのコンポーネントを返す i=1, j=2の時 rtを返す
+     * Returns component of ETAji for back propagate (ex. rt when i=1, j=2).
      *
      * @param p 1, 2, 3
      * @param q 1, 2, 3
@@ -63,12 +69,8 @@ public enum SPCTensorComponent {
     public static SPCTensorComponent valueOf9Component(int p, int q) {
         if (p < 1 || 3 < p || q < 1 || 3 < q)
             throw new IllegalArgumentException("Input (p, q) = (" + p + ", " + q + ") must be 1, 2 or 3.");
-        return Arrays.stream(values()).filter(stc -> stc.value == (p - 1) * 3 + q && stc.name().length() == 2).findAny()
+        return Arrays.stream(values()).filter(stc -> stc.number == (p - 1) * 3 + q && stc.name().length() == 2).findAny()
                 .orElseThrow(() -> new IllegalArgumentException("input p, q: " + p + " " + q + " are invalid."));
-    }
-
-    public int valueOf() {
-        return value;
     }
 
     /**

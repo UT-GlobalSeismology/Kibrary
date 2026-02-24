@@ -22,7 +22,7 @@ import io.github.kensuke1984.kibrary.elastic.VariableType;
  * Xgbm Davis and Henson, 1993
  *
  * @author Kensuke Konishi
- * @version 0.1.3
+ * @since a long time ago
  */
 public class NamedDiscontinuityStructure implements Serializable {
 

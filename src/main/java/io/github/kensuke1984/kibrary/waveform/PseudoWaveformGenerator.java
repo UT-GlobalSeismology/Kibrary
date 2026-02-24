@@ -21,7 +21,6 @@ import io.github.kensuke1984.kibrary.inversion.setup.DVectorBuilder;
 import io.github.kensuke1984.kibrary.inversion.setup.MatrixAssembly;
 import io.github.kensuke1984.kibrary.math.ParallelizedMatrix;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
-import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.voxel.KnownParameter;
 import io.github.kensuke1984.kibrary.voxel.KnownParameterFile;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
@@ -36,14 +35,14 @@ import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
  * White noise can be added to the waveform.
  *
  * @author Kensuke Konishi
- * @since version 0.2.2
+ * @since a long time ago
  * @version 2022/2/23 Moved & renamed from inversion.CheckerBoardTest to waveform.PseudoWaveformGenerator
  */
 public class PseudoWaveformGenerator extends Operation {
 
     private final Property property;
     /**
-     * Path of the work folder
+     * Path of the work folder.
      */
     private Path workPath;
     /**
@@ -51,66 +50,71 @@ public class PseudoWaveformGenerator extends Operation {
      */
     private String folderTag;
     /**
-     * Path of the output folder
+     * Whether to append date string at end of output folder name.
+     */
+    private boolean appendFolderDate;
+    /**
+     * Path of the output folder.
      */
     private Path outPath;
 
     /**
-     * basic waveform folder
+     * Basic waveform folder.
      */
     private Path basicPath;
     /**
-     * partial waveform folder
+     * Partial waveform folder.
      */
     private Path partialPath;
     /**
-     * Path of a {@link KnownParameterFile} file containing psudoM
+     * Path of a {@link KnownParameterFile} file containing psudoM.
      */
     private Path modelPath;
 
     /**
-     * Which to set the psuedo waveform as. true: synthetic, false: observed
+     * Whether to set the psuedo waveform as synthetic. {true: synthetic, false: observed}
      */
     private boolean setPseudoAsSyn;
     private boolean noise;
     private double noisePower;
     /**
-     * Fill 0 to empty partial waveforms or not.
+     * Whether to fill 0 to empty partial waveforms or not.
      */
     private boolean fillEmptyPartial;
 
     /**
-     * @param args  none to create a property file <br>
-     *              [property file] to run
-     * @throws IOException if any
+     * @param args (String[]) Arguments: none to create a property file, path of property file to run it.
+     * @throws IOException
      */
     public static void main(String[] args) throws IOException {
-        if (args.length == 0) writeDefaultPropertiesFile();
+        if (args.length == 0) writeDefaultPropertiesFile(null);
         else Operation.mainFromSubclass(args);
     }
 
-    public static void writeDefaultPropertiesFile() throws IOException {
-        Class<?> thisClass = new Object(){}.getClass().getEnclosingClass();
-        Path outPath = Property.generatePath(thisClass);
+    public static void writeDefaultPropertiesFile(String tag) throws IOException {
+        String className = new Object(){}.getClass().getEnclosingClass().getSimpleName();
+        Path outPath = DatasetAid.generateOutputFilePath(Paths.get(""), className, tag, true, null, ".properties");
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
-            pw.println("manhattan " + thisClass.getSimpleName());
-            pw.println("##Path of a working folder (.)");
+            pw.println("manhattan " + className);
+            pw.println("##Path of work folder. (.)");
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this unset.");
             pw.println("#folderTag ");
-            pw.println("##Path of a basic waveform folder, must be set");
+            pw.println("##(boolean) Whether to append date string at end of output folder name. (true)");
+            pw.println("#appendFolderDate false");
+            pw.println("##Path of a basic waveform folder, must be set.");
             pw.println("#basicPath actual");
-            pw.println("##Path of a partial waveform folder, must be set");
+            pw.println("##Path of a partial waveform folder, must be set.");
             pw.println("#partialPath partial");
-            pw.println("##Path of a model file, must be set");
+            pw.println("##Path of a model file, must be set.");
             pw.println("#modelPath model.lst");
             pw.println("##(boolean) Whether to set the psuedo waveform as synthetic. If false, observed. (false)");
             pw.println("#setPseudoAsSyn ");
-            pw.println("##(boolean) Whether to add noise (false)");
+            pw.println("##(boolean) Whether to add noise. (false)");
             pw.println("#noise ");
-            pw.println("##(double) Noise power [ ] (1000)"); // TODO what is the unit?
+            pw.println("##(double) Noise power [ ]. (1000)"); // TODO what is the unit?
             pw.println("#noisePower ");
-            pw.println("##(boolean) Fill 0 to empty partial waveforms (false)");
+            pw.println("##(boolean) Fill 0 to empty partial waveforms. (false)");
             pw.println("#fillEmptyPartial ");
         }
         System.err.println(outPath + " is created.");
@@ -124,6 +128,7 @@ public class PseudoWaveformGenerator extends Operation {
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
         if (property.containsKey("folderTag")) folderTag = property.parseStringSingle("folderTag", null);
+        appendFolderDate = property.parseBoolean("appendFolderDate", "true");
 
         basicPath = property.parsePath("basicPath", null, true, workPath);
         partialPath = property.parsePath("partialPath", null, true, workPath);
@@ -143,11 +148,9 @@ public class PseudoWaveformGenerator extends Operation {
         // read input
         List<KnownParameter> knowns = KnownParameterFile.read(modelPath);
         List<UnknownParameter> params = KnownParameter.extractParameterList(knowns);
-        List<BasicID> basicIDs = BasicIDFile.read(basicPath, true);
-        List<PartialID> partialIDs = PartialIDFile.read(partialPath, true);
 
         // assemble matrices (they should not be weighted)
-        MatrixAssembly assembler = new MatrixAssembly(basicIDs, partialIDs, params, WeightingHandler.IDENTITY, fillEmptyPartial);
+        MatrixAssembly assembler = new MatrixAssembly(basicPath, partialPath, params, WeightingHandler.IDENTITY, fillEmptyPartial);
         ParallelizedMatrix a = assembler.getA();
         RealVector m = new ArrayRealVector(KnownParameter.extractValueArray(knowns), false);
 
@@ -160,7 +163,7 @@ public class PseudoWaveformGenerator extends Operation {
         if (noise) pseudoWaveform = pseudoWaveform.add(createRandomNoise(dVectorBuilder));
 
         // prepare output folder
-        outPath = DatasetAid.createOutputFolder(workPath, "pseudo", folderTag, GadgetAid.getTemporaryString());
+        outPath = DatasetAid.createOutputFolder(workPath, "pseudo", folderTag, appendFolderDate, null);
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         // output

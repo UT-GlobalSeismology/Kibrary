@@ -11,8 +11,8 @@ package io.github.kensuke1984.kibrary.entrance;
  * <li> formatted: "IU.MAJO.00.BH2.M.2014.202.14.44.000.SAC" </li>
  * </ul>
  *
- * @since 2021/11/19
  * @author otsuru
+ * @since 2021/11/19
  */
 class SacFileName {
     /**

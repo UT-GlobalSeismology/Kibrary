@@ -7,6 +7,7 @@ import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -14,7 +15,6 @@ import java.util.stream.Collectors;
 
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.InformationFileReader;
-import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 
@@ -30,6 +30,8 @@ import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
  * .<br>
  * .<br>
  * latm lonm dLatm dLonm
+ * <p>
+ * This class is <b>IMMUTABLE</b>.
  *
  * @author otsuru
  * @since 2022/2/11
@@ -37,18 +39,17 @@ import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 public class VoxelInformationFile {
 
     /**
-     * thickness of each layer
+     * Thickness of each layer.
      */
-    private double[] layerThicknesses;
+    private final double[] layerThicknesses;
     /**
-     * Radii of voxel center points, sorted, no duplication
+     * Radii of voxel center points, sorted, no duplication.
      */
-    private double[] layerRadii;
+    private final double[] layerRadii;
     /**
-     * Horizontal distribution of voxels
+     * Horizontal distribution of voxels.
      */
-    private List<HorizontalPixel> horizontalPixels = new ArrayList<>();
-
+    private final List<HorizontalPixel> horizontalPixels = new ArrayList<>();
 
     /**
      * Writes a voxel information file given arrays of radii and positions.
@@ -64,9 +65,7 @@ public class VoxelInformationFile {
         if (layerThicknesses.length != layerRadii.length)
             throw new IllegalArgumentException("The number of thicknesses and radii does not match.");
 
-        System.err.println("Outputting "
-                + MathAid.switchSingularPlural(layerRadii.length * horizontalPixels.size(), "voxel", "voxels")
-                + " in " + outputPath);
+        DatasetAid.printNumOutput(layerRadii.length * horizontalPixels.size(), "voxel", "voxels", outputPath);
 
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath, options))) {
             pw.println("# thicknesses of each layer [km]");
@@ -81,16 +80,16 @@ public class VoxelInformationFile {
             }
             pw.println("");
 
-            pw.println("# horizontal rectangle on sphere [deg] (latitude longitude dLatitude dLongitude)");
+            pw.println("# horizontal rectangle on sphere [deg] (latitude longitude dLatitude dLongitude iLatitude iLongitude)");
             for (HorizontalPixel pixel : horizontalPixels) {
-                pw.println(pixel.getPosition() + " " + pixel.getDLatitude() + " " + pixel.getDLongitude());
+                pw.println(pixel.toString());
             }
         }
     }
 
     /**
-     * Reads in a voxel information file.
-     * @param filePath (Path)
+     * Read in a voxel information file.
+     * @param filePath (Path) Input file path.
      * @throws IOException
      */
     public VoxelInformationFile(Path filePath) throws IOException {
@@ -105,32 +104,34 @@ public class VoxelInformationFile {
         while ((line = reader.next()) != null) {
             String[] parts = line.split("\\s+");
             HorizontalPosition position = new HorizontalPosition(Double.parseDouble(parts[0]), Double.parseDouble(parts[1]));
-            HorizontalPixel pixel = new HorizontalPixel(position, Double.parseDouble(parts[2]), Double.parseDouble(parts[3]));
+            HorizontalPixel pixel = (parts.length > 5) ?
+                    new HorizontalPixel(position, Double.parseDouble(parts[2]), Double.parseDouble(parts[3]), Integer.parseInt(parts[4]), Integer.parseInt(parts[5])) :
+                    new HorizontalPixel(position, Double.parseDouble(parts[2]), Double.parseDouble(parts[3]), 0, 0);  //TODO This is for older format.
             horizontalPixels.add(pixel);
         }
 
-        DatasetAid.checkNum(layerRadii.length * horizontalPixels.size(), "voxel", "voxels");
+        DatasetAid.printNumInput(layerRadii.length * horizontalPixels.size(), "voxel", "voxels", filePath);
     }
 
     /**
-     * Get information of layer thicknesses.
-     * @return (double[])
+     * Get layer thicknesses.
+     * @return (double[]) Layer thicknesses.
      */
     public double[] getThicknesses() {
-        return layerThicknesses;
+        return layerThicknesses.clone();
     }
 
     /**
-     * Get radii information. The radii should be sorted, and there should be no duplication.
-     * @return (double[])
+     * Get radii. The radii should be sorted, and there should be no duplication.
+     * @return (double[]) Radii.
      */
     public double[] getRadii() {
-        return layerRadii;
+        return layerRadii.clone();
     }
 
     /**
-     * Get horizontal position information. They may not be sorted. There may be duplication.
-     * @return
+     * Get horizontal positions. They may not be sorted. There may be duplication.
+     * @return (List of {@link HorizontalPosition}) Horizontal positions.
      */
     public List<HorizontalPosition> getHorizontalPositions() {
         return horizontalPixels.stream().map(HorizontalPixel::getPosition).collect(Collectors.toList());
@@ -138,15 +139,15 @@ public class VoxelInformationFile {
 
     /**
      * Get horizontal pixels. They may not be sorted. There may be duplication.
-     * @return
+     * @return (List of {@link HorizontalPixel}) Horizontal pixels.
      */
     public List<HorizontalPixel> getHorizontalPixels() {
-        return horizontalPixels;
+        return Collections.unmodifiableList(horizontalPixels);
     }
 
     /**
-     * Get set of full position information.
-     * @return
+     * Get full positions.
+     * @return (Set of {@link FullPosition}) Full positions.
      */
     public Set<FullPosition> fullPositionSet() {
         Set<FullPosition> voxelSet = new HashSet<>();

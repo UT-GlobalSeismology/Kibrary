@@ -14,6 +14,8 @@ import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameterFile;
 
 /**
+ * File with information of fused parameters.
+ *
  * @author otsuru
  * @since 2022/8/3
  */

@@ -22,9 +22,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
  * (2010)
  *
  * @author Kensuke Konishi
- *
- * @version 0.0.1.3
- *
+ * @since a long time ago
  */
 public final class VSConversion {
 
@@ -69,13 +67,13 @@ public final class VSConversion {
             SPCBody body = spectrum.getSpcBodyList().get(i);
             SPCBody newBody = new SPCBody(3, np);
             for (int ip = 0; ip < np + 1; ip++) {
-                Complex[] uIm = new Complex[body.getNumberOfComponent()];
-                for (int iComponent = 0; iComponent < body.getNumberOfComponent(); iComponent++) {
-                    Complex u = body.getSpcComponent(SACComponent.getComponent(iComponent + 1))
+                Complex[] uIm = new Complex[body.getNElement()];
+                for (int iComponent = 0; iComponent < body.getNElement(); iComponent++) {
+                    Complex u = body.getSpcElement(SACComponent.ofNumber(iComponent + 1))
                             .getValueInFrequencyDomain()[ip];
                     uIm[iComponent] = u.multiply(fact);
                 }
-                newBody.add(ip, uIm);
+                newBody.setValues(ip, uIm);
             }
             spcBodyList.add(newBody);
         }
@@ -139,11 +137,6 @@ public final class VSConversion {
             @Override
             public SPCFileName getSpcFileName() {
                 return spcFileName;
-            }
-
-            @Override
-            public void setSpcBody(int i, SPCBody body) {
-//				spcBody.set(i, body); //TODO
             }
         };
 

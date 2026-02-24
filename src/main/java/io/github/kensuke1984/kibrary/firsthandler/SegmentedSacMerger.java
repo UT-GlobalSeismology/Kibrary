@@ -14,9 +14,10 @@ import io.github.kensuke1984.kibrary.util.FileAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 
 /**
- * Merging of SAC files
+ * Merging of SAC files.
  *
  * @author Kensuke Konishi
+ * @since a long time ago
  */
 class SegmentedSacMerger {
 

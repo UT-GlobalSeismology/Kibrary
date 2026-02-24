@@ -21,8 +21,7 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
  * 'PSV', 'SH' must be upper case.
  *
  * @author Kensuke Konishi
- * @version 0.2.0
- * @author anselme add network
+ * @since a long time ago
  */
 public abstract class SPCFileName extends File {
 

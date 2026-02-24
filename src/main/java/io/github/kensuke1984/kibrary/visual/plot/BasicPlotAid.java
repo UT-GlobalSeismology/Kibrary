@@ -1,19 +1,44 @@
 package io.github.kensuke1984.kibrary.visual.plot;
 
-import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotColorName;
-import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotLineAppearance;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 
+import edu.sc.seis.TauP.Arrival;
+import edu.sc.seis.TauP.SeismicPhase;
+import edu.sc.seis.TauP.TauModelException;
+import edu.sc.seis.TauP.TauP_Time;
+import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotColorName;
+import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotFile;
+import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotLineAppearance;
+import io.github.kensuke1984.kibrary.util.DatasetAid;
+import io.github.kensuke1984.kibrary.util.sac.SACComponent;
+
+/**
+ * Utils for plotting basic waveforms.
+ *
+ * @author otsuru
+ * @since 2023/2/12
+ */
 class BasicPlotAid {
+    private BasicPlotAid() {}
+
     static final GnuplotLineAppearance UNSHIFTED_APPEARANCE = new GnuplotLineAppearance(2, GnuplotColorName.gray, 1);
     static final GnuplotLineAppearance SHIFTED_APPEARANCE = new GnuplotLineAppearance(1, GnuplotColorName.black, 1);
-    static final GnuplotLineAppearance RED_APPEARANCE = new GnuplotLineAppearance(1, GnuplotColorName.red, 1);
+    static final GnuplotLineAppearance RED_APPEARANCE = new GnuplotLineAppearance(1, GnuplotColorName.orange_red, 1);
     static final GnuplotLineAppearance GREEN_APPEARANCE = new GnuplotLineAppearance(1, GnuplotColorName.web_green, 1);
     static final GnuplotLineAppearance BLUE_APPEARANCE = new GnuplotLineAppearance(1, GnuplotColorName.web_blue, 1);
+    static final GnuplotLineAppearance GRAY_APPEARANCE = new GnuplotLineAppearance(1, GnuplotColorName.gray, 1);
     static final GnuplotLineAppearance RESIDUAL_APPEARANCE = new GnuplotLineAppearance(1, GnuplotColorName.skyblue, 1);
 
     static final GnuplotLineAppearance ZERO_APPEARANCE = new GnuplotLineAppearance(1, GnuplotColorName.light_gray, 1);
     static final GnuplotLineAppearance USE_PHASE_APPEARANCE = new GnuplotLineAppearance(1, GnuplotColorName.turquoise, 1);
     static final GnuplotLineAppearance AVOID_PHASE_APPEARANCE = new GnuplotLineAppearance(1, GnuplotColorName.violet, 1);
+    static final GnuplotLineAppearance SHADE_PHASE_APPEARANCE = new GnuplotLineAppearance(1, GnuplotColorName.SHADE, 70);
 
     static GnuplotLineAppearance switchObservedAppearance(int num) {
         switch(num) {
@@ -27,6 +52,7 @@ class BasicPlotAid {
         case 1: return RED_APPEARANCE;
         case 2: return GREEN_APPEARANCE;
         case 3: return BLUE_APPEARANCE;
+        case 4: return GRAY_APPEARANCE;
         default: throw new IllegalArgumentException("Undefined style number for synthetic: " + num);
         }
     }
@@ -56,6 +82,74 @@ class BasicPlotAid {
             return synMeanMax / ampScale;
         default:
             throw new IllegalArgumentException("Input AmpStyle is unknown.");
+        }
+    }
+
+    static void plotTravelTimeCurve(TauP_Time timeTool, String[] displayPhases, boolean shadeCurve,
+            String[] alignPhases, double reductionSlowness, double startDistance, double endDistance,
+            String fileTag, String dateString, Path eventPath, SACComponent component, GnuplotFile gnuplot) throws IOException, TauModelException {
+        // set names of all phases to display, and the phases to align on if specified
+        timeTool.setPhaseNames(displayPhases);
+        if (alignPhases != null) {
+            for (String phase : alignPhases) timeTool.appendPhaseName(phase);
+        }
+
+        // The following is needed to apply source depth if calcTime() has not been done yet.
+        timeTool.depthCorrect(timeTool.getSourceDepth(), timeTool.getReceiverDepth());
+
+        // compute travel times
+        List<SeismicPhase> phaseList = timeTool.getSeismicPhases();
+        // extract information for phases to be used for alignment
+        List<SeismicPhase> alignPhaseList = null;
+        if (alignPhases != null) {
+            List<String> alignPhaseNameList = Arrays.asList(alignPhases);
+            alignPhaseList = phaseList.stream().filter(phase -> alignPhaseNameList.contains(phase.getName())).collect(Collectors.toList());
+        }
+
+        // output file and add curve for each phase
+        for (SeismicPhase phase : phaseList) {
+            if (!phase.hasArrivals()) {
+                continue;
+            }
+
+            double[] dist = phase.getDist();
+            double[] time = phase.getTime();
+
+            String phaseName = phase.getName();
+            Path curvePath = DatasetAid.generateOutputFilePath(eventPath, "curve", fileTag, true, dateString, "_" + component + "_" + phaseName + ".txt");
+            String curveFileName = curvePath.getFileName().toString();
+            boolean wrotePhaseLabel = false;
+
+            // output file and add curve
+            try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(curvePath))) {
+                for(int i = 0; i < dist.length; i++) {
+                    double distance = Math.toDegrees(dist[i]);
+                    double arrivalTime = time[i];
+
+                    // calculate time to reduce
+                    double reduceTime;
+                    if (alignPhases != null) {
+                        Arrival relativeArrival = SeismicPhase.getEarliestArrival(alignPhaseList, distance);
+                        if (relativeArrival == null) {
+                            // no relative arrival at this dist, skip
+                            continue;
+                        }
+                        reduceTime = relativeArrival.getTime();
+                    } else {
+                        reduceTime = reductionSlowness * distance;
+                    }
+
+                    pw.println(distance + " " + (arrivalTime - reduceTime));
+
+                    // add label at first appearance
+                    if (wrotePhaseLabel == false && startDistance < distance && distance < endDistance) {
+                        gnuplot.addLabel(phaseName, "first", arrivalTime - reduceTime, distance, GnuplotColorName.turquoise);
+                        wrotePhaseLabel = true;
+                    }
+                }
+            }
+            if (shadeCurve) gnuplot.addLine(curveFileName, "($2+1):1", SHADE_PHASE_APPEARANCE, "");
+            else gnuplot.addLine(curveFileName, 2, 1, USE_PHASE_APPEARANCE, "");
         }
     }
 

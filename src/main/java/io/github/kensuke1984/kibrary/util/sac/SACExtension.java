@@ -10,16 +10,16 @@ package io.github.kensuke1984.kibrary.util.sac;
  * ?sct is temporal partial derivative after <i>convolution</i>. <br>
  *
  * @author Kensuke Konishi
- * @version 0.0.4.1
+ * @since a long time ago
  * @see <a href=http://ds.iris.edu/ds/nodes/dmc/forms/sac/>SAC</a>
  */
 public enum SACExtension {
     Z(1), R(2), T(3), Zs(1), Rs(2), Ts(3), Zsc(1), Rsc(2), Tsc(3), Zst(1), Rst(2), Tst(3), Zsct(1), Rsct(2), Tsct(3),;
 
-    private final int value;
+    private final int number;
 
-    SACExtension(int n) {
-        value = n;
+    private SACExtension(int number) {
+        this.number = number;
     }
 
     /**
@@ -118,7 +118,7 @@ public enum SACExtension {
     }
 
     public SACComponent getComponent() {
-        return SACComponent.getComponent(value);
+        return SACComponent.ofNumber(number);
     }
 
     /**
