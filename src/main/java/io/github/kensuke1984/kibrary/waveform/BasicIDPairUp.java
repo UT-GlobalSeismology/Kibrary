@@ -26,10 +26,10 @@ public class BasicIDPairUp {
     private final List<BasicID> synList;
 
     public BasicIDPairUp(BasicID[] basicIDs) {
-        this(Arrays.asList(basicIDs));
+        this(Arrays.asList(basicIDs), true);
     }
 
-    public BasicIDPairUp(List<BasicID> basicIDs) {
+    public BasicIDPairUp(List<BasicID> basicIDs, boolean writeMessage) {
         // extract observed IDs
         List<BasicID> tempObsList = basicIDs.stream().filter(id -> id.getWaveformType() == WaveformType.OBS)
                 .collect(Collectors.toList());
@@ -48,7 +48,9 @@ public class BasicIDPairUp {
                 if (tempSynList.get(i).equals(tempSynList.get(j)))
                     throw new RuntimeException("Duplicate synthetic IDs detected");
 
-        System.err.println(" Number of obs IDs before pairing with syn IDs: " + tempObsList.size());
+        if (writeMessage) {
+            System.err.println(" Number of obs IDs before pairing with syn IDs: " + tempObsList.size());
+        }
         if (tempObsList.size() != tempSynList.size())
             System.err.println(" The numbers of observed IDs " + tempObsList.size() + " and " + " synthetic IDs "
                     + tempSynList.size() + " are different ");
@@ -73,7 +75,8 @@ public class BasicIDPairUp {
 
         if (resultObsList.size() != resultSynList.size())
             throw new RuntimeException("unanticipated");
-        System.err.println(" Number of pairs created: " + resultObsList.size());
+        if (writeMessage)
+            System.err.println(" Number of pairs created: " + resultObsList.size());
 
         obsList = Collections.unmodifiableList(resultObsList);
         synList = Collections.unmodifiableList(resultSynList);
@@ -92,6 +95,5 @@ public class BasicIDPairUp {
     public List<BasicID> getSynList() {
         return synList;
     }
-
 
 }

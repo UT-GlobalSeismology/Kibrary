@@ -84,7 +84,7 @@ public class MatrixAssembly {
 
         // set DVector
         System.err.println("Setting data for d vector");
-        dVectorBuilder = new DVectorBuilder(basicIDs);
+        dVectorBuilder = new DVectorBuilder(basicIDs, true);
 
         // set weighting
         System.err.println("Setting weighting");
