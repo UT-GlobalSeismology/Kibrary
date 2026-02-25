@@ -10,7 +10,10 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang3.StringUtils;
+
 import io.github.kensuke1984.kibrary.elastic.VariableType;
+import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.InformationFileReader;
 import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
@@ -54,7 +57,29 @@ public class ScalarListFile {
      * @return (String) Generated file name.
      */
     public static String generateFileName(VariableType variable, ScalarType scalarType, String tag) {
-        return "scalar" + ((tag != null) ? ("_" + tag) : "") + "." + variable.toString() + "." + scalarType.toString() + ".lst";
+        return "scalar" + ((tag != null) ? ("_" + tag) : "") + "." + (variable != null ? variable.toString() : "") + "." + scalarType.toString() + ".lst";
+    }
+
+    /**
+     * Generate a file name for a {@link ScalarListFile}.
+     * Fails if a file with the same name, including the same date string, already exists.
+     * @param workPath (Path) Path to create the output file under.
+     * @param variable ({@link VariableType}) Variable that the file is for.
+     * @param scalarType ({@link ScalarType}) Scalar type that the file is for.
+     * @param tag (String) Tag to put in file name. When no tag is needed, set null.
+     * @param appendDate (boolean) Whether to append the date string in output file name.
+     *    Even if this is false, the date string will be appended if a file with same name already exists.
+     * @param inputDateString (String) The date string part of output file name. When null, a new one will be generated.
+     * @return (Path) Generated path of file.
+     *
+     * @author otsuru
+     * @since 2026/1/25
+     */
+    public static Path generateFilePath(Path workPath, VariableType variable, ScalarType scalarType, String tag, boolean appendDate, String inputDateString) {
+        String nameRoot = "scalar";
+        String nameEnd = "." + (variable != null ? variable.toString() : "") + "." + scalarType.toString() + ".lst";
+
+        return DatasetAid.generateOutputFilePath(workPath, nameRoot, tag, appendDate, inputDateString, nameEnd);
     }
 
     /**
@@ -131,7 +156,7 @@ public class ScalarListFile {
         String fileName = inputPath.getFileName().toString();
         String[] fileNameParts = fileName.split("\\.");
         if (fileNameParts.length != 4) throw new IllegalArgumentException("Invalid file name: " + fileName);
-        variable = VariableType.valueOf(fileNameParts[1]);
+        variable = (StringUtils.isEmpty(fileNameParts[1]) ? null : VariableType.valueOf(fileNameParts[1]));
         scalarType = ScalarType.valueOf(fileNameParts[2]);
 
         InformationFileReader reader = new InformationFileReader(inputPath, true);

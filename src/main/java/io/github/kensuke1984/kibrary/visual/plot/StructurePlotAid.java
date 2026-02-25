@@ -123,7 +123,8 @@ public class StructurePlotAid {
      * @param variableDistinguisher ({@link Distinguisher}) How to distinguish variables.
      * @param variableTypes (List of {@link VariableType}) Variables that will be used.
      */
-    StructurePlotAid(Distinguisher structureDistinguisher, Distinguisher modelDistinguisher, Distinguisher variableDistinguisher, List<VariableType> variableTypes) {
+    StructurePlotAid(Distinguisher structureDistinguisher, Distinguisher modelDistinguisher, Distinguisher variableDistinguisher,
+            List<VariableType> variableTypes) {
         this.structureDistinguisher = structureDistinguisher;
         this.modelDistinguisher = modelDistinguisher;
         this.variableDistinguisher = variableDistinguisher;
@@ -189,7 +190,9 @@ public class StructurePlotAid {
         case NONE: break;
         }
         // when structure color is set, overwrite color
-        if (colors != null && colors.get(iStructure) != null && colors.get(iStructure) != Color.NONE) iColor = colors.get(iStructure).getNumber();
+        if (colors != null && colors.get(iStructure) != null && colors.get(iStructure) != Color.NONE) {
+            iColor = colors.get(iStructure).getNumber();
+        }
         // create and return String
         String lineTypeString = "dt " + iDash + " lc rgb '" + COLORS[iColor][iShade] + "'";
         return lineTypeString;

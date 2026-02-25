@@ -23,6 +23,7 @@ import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.data.DataEntry;
 import io.github.kensuke1984.kibrary.util.data.DataEntryListFile;
+import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 
 /**
@@ -70,13 +71,17 @@ public class BasicIDRebuilder extends Operation {
      */
     private String[] requiredPhases;
     /**
-     * Whether to choose BasicIDs with duplication.
-     */
-    private boolean bootstrap;
-    /**
-     * How many of the BasicIDs to sample [%]. (100% is the total number after selection)
+     * How much of the data to sample [%]. (100% is the total number after the other selections.)
      */
     private double subsamplingPercent;
+    /**
+     * Whether to choose by events instead of basic IDs.
+     */
+    private boolean selectByEvents;
+    /**
+     * Whether to choose with duplication.
+     */
+    private boolean duplication;
 
     private List<BasicID> obsIDs;
     private List<BasicID> synIDs;
@@ -109,11 +114,14 @@ public class BasicIDRebuilder extends Operation {
             pw.println("#dataEntryPath selectedEntry.lst");
             pw.println("##Phases to be included in time windows to use, listed using spaces. To use all phases, leave this unset.");
             pw.println("#requiredPhases ");
-            pw.println("##(boolean) Whether to perform bootstrap test. (false)");
-            pw.println("#bootstrap ");
-            pw.println("##(double) Percent of basic IDs to use in subsampling test. (100)");
-            pw.println("##  Here, 100% is the number of basic IDs after selection.");
+            pw.println("##########Settings for subsampling test.");
+            pw.println("##(double) Percent to use in subsampling test. (100)");
+            pw.println("##  Here, 100% is the number after the above selections.");
             pw.println("#subsamplingPercent ");
+            pw.println("##(boolean) Whether to choose by events instead of basic IDs. (false)");
+            pw.println("#selectByEvents ");
+            pw.println("##(boolean) Whether to choose with duplication (for bootstrap test). (false)");
+            pw.println("#duplication ");
         }
         System.err.println(outPath + " is created.");
     }
@@ -138,11 +146,11 @@ public class BasicIDRebuilder extends Operation {
         if (property.containsKey("requiredPhases"))
             requiredPhases = property.parseStringArray("requiredPhases", null);
 
-        bootstrap = property.parseBoolean("bootstrap", "false");
         subsamplingPercent = property.parseDouble("subsamplingPercent", "100");
         if (subsamplingPercent < 0)
             throw new IllegalArgumentException("subsamplingPercent must be positive.");
-
+        selectByEvents = property.parseBoolean("selectByEvents", "false");
+        duplication = property.parseBoolean("duplication", "false");
     }
 
     @Override
@@ -162,10 +170,12 @@ public class BasicIDRebuilder extends Operation {
         if (obsIDs.size() == 0) return;
 
         // select required number of basicIDs
-        if (bootstrap) {
-            resample(subsamplingPercent, true);
-        } else if (!Precision.equals(subsamplingPercent, 100)) {
-            resample(subsamplingPercent, false);
+        if (!Precision.equals(subsamplingPercent, 100) || duplication) {
+            if (selectByEvents) {
+                resampleIDsByEvents(subsamplingPercent, duplication);
+            } else {
+                resampleIDs(subsamplingPercent, duplication);
+            }
         }
         if (obsIDs.size() == 0) return;
 
@@ -180,7 +190,6 @@ public class BasicIDRebuilder extends Operation {
 
         // output
         BasicIDFile.write(finalList, outPath);
-
     }
 
     private void selectByCriteria() throws IOException {
@@ -225,7 +234,34 @@ public class BasicIDRebuilder extends Operation {
         synIDs = selectedSynIDs;
     }
 
-    private void resample(double percent, boolean duplication) {
+    private void resampleIDsByEvents(double percent, boolean duplication) {
+        List<GlobalCMTID> events = obsIDs.stream().map(BasicID::getGlobalCMTID).distinct().sorted().collect(Collectors.toList());
+        int numToSample = (int) (events.size() * percent / 100);
+        List<GlobalCMTID> selectedEvents = new ArrayList<>();
+
+        if (duplication) {
+            System.err.println("Selecting " + numToSample + " events from " + events.size() + " events with duplication.");
+            Random random = new Random();
+            int[] shuffledIndices = random.ints(numToSample, 0, events.size()).toArray();
+            for (int i = 0; i < numToSample; i++) {
+//                System.err.println(shuffledIndices[i]);
+                selectedEvents.add(events.get(shuffledIndices[i]));
+            }
+        } else {
+            System.err.println("Selecting " + numToSample + " of " + events.size() + " events without duplication.");
+            List<Integer> shuffledIndices = IntStream.range(0, events.size()).boxed().collect(Collectors.toList());
+            Collections.shuffle(shuffledIndices);
+            for (int i = 0; i < numToSample; i++) {
+                selectedEvents.add(events.get(shuffledIndices.get(i)));
+            }
+        }
+
+        // extract IDs of selected events
+        obsIDs = obsIDs.stream().filter(id -> selectedEvents.contains(id.getGlobalCMTID())).collect(Collectors.toList());
+        synIDs = synIDs.stream().filter(id -> selectedEvents.contains(id.getGlobalCMTID())).collect(Collectors.toList());
+    }
+
+    private void resampleIDs(double percent, boolean duplication) {
         int numToSample = (int) (obsIDs.size() * percent / 100);
         List<BasicID> selectedObsIDs = new ArrayList<>();
         List<BasicID> selectedSynIDs = new ArrayList<>();
@@ -235,7 +271,7 @@ public class BasicIDRebuilder extends Operation {
             Random random = new Random();
             int[] shuffledIndices = random.ints(numToSample, 0, obsIDs.size()).toArray();
             for (int i = 0; i < numToSample; i++) {
-                System.err.println(shuffledIndices[i]);
+//                System.err.println(shuffledIndices[i]);
                 selectedObsIDs.add(obsIDs.get(shuffledIndices[i]));
                 selectedSynIDs.add(synIDs.get(shuffledIndices[i]));
             }
@@ -253,4 +289,5 @@ public class BasicIDRebuilder extends Operation {
         obsIDs = selectedObsIDs;
         synIDs = selectedSynIDs;
     }
+
 }

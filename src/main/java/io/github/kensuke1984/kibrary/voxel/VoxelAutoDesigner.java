@@ -17,6 +17,7 @@ import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.external.TauPPierceWrapper;
 import io.github.kensuke1984.kibrary.math.LinearRange;
+import io.github.kensuke1984.kibrary.math.geometry.CoordinateConverter;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.data.DataEntry;
@@ -85,6 +86,7 @@ public class VoxelAutoDesigner extends Operation {
      * The (roughly) median radius of target region.
      */
     private double centerRadius;
+    private double baseLongitude;
 
     /**
      * @param args (String[]) Arguments: none to create a property file, path of property file to run it.
@@ -247,8 +249,14 @@ public class VoxelAutoDesigner extends Operation {
         }
 
         // output
-        Path outputPath = DatasetAid.generateOutputFilePath(workPath, "voxel", fileTag, appendFileDate, null, ".inf");
-        VoxelInformationFile.write(layerThicknesses, layerRadii, horizontalPixels, outputPath);
+        Path voxelPath = DatasetAid.generateOutputFilePath(workPath, "voxel", fileTag, appendFileDate, null, ".inf");
+        VoxelInformationFile.write(layerThicknesses, layerRadii, horizontalPixels, voxelPath);
+
+        // write coordinate converter file
+        CoordinateConverter converter = new CoordinateConverter(dLatitudeKm, dLatitudeDeg, setLatitudeByKm, 90.0 + latitudeOffset,
+                dLongitudeKm, dLongitudeDeg, setLongitudeByKm, baseLongitude, centerRadius, crossDateLine);
+        Path converterPath = DatasetAid.generateOutputFilePath(workPath, "converter", fileTag, appendFileDate, null, ".inf");
+        converter.writeToFile(converterPath);
     }
 
     private List<HorizontalPixel> designHorizontalPixels(List<Raypath> insideSegments) {
@@ -301,7 +309,6 @@ public class VoxelAutoDesigner extends Operation {
         }
 
         //~decide the longitude at which to align voxels
-        double baseLongitude;
         if (setLongitudeByKm) {
             double minLongitude = Arrays.stream(minLongitudes).min().getAsDouble();
             double maxLongitude = Arrays.stream(maxLongitudes).max().getAsDouble();
@@ -332,14 +339,13 @@ public class VoxelAutoDesigner extends Operation {
             }
 
             // the min and max longitudes are set so that all sample points are included
-            double minLongitude = Math.round((minLongitudes[i] - baseLongitude) / dLongitudeForRow) * dLongitudeForRow + baseLongitude;
-            double maxLongitude = Math.round((maxLongitudes[i] - baseLongitude) / dLongitudeForRow) * dLongitudeForRow + baseLongitude;
-            int nLongitude = (int) ((maxLongitude - minLongitude) / dLongitudeForRow) + 1;
-            for (int j = 0; j < nLongitude; j++) {
+            int jMin = (int) Math.round((minLongitudes[i] - baseLongitude) / dLongitudeForRow);
+            int jMax = (int) Math.round((maxLongitudes[i] - baseLongitude) / dLongitudeForRow);
+            for (int j = jMin; j <= jMax; j++) {
                 // center longitude of each horizontal pixel
-                double longitude = minLongitude + j * dLongitudeForRow;
+                double longitude = baseLongitude + j * dLongitudeForRow;
                 // add horizontal pixel to list
-                horizontalPixels.add(new HorizontalPixel(new HorizontalPosition(latitude, longitude), dLatitude, dLongitudeForRow));
+                horizontalPixels.add(new HorizontalPixel(new HorizontalPosition(latitude, longitude), dLatitude, dLongitudeForRow, i, j));
             }
         }
 

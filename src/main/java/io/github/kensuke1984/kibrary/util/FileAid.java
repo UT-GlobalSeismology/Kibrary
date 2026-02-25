@@ -49,6 +49,21 @@ public final class FileAid {
     }
 
     /**
+     * Given a Path, this method extracts the extension of the file.
+     * The path of parent folders and the root of the file name is removed.
+     * @param filePath (Path) The file to extract extension.
+     * @return (String) File extension (including period). Returns "" when extension does not exist.
+     *
+     * @author otsuru
+     * @since 2025/7/24
+     */
+    public static String extractExtension(Path filePath) {
+        String fileName = filePath.getFileName().toString();
+        if (!fileName.contains(".")) return "";
+        return fileName.substring(fileName.lastIndexOf('.'));
+    }
+
+    /**
      * Moves a given file to a specified directory.
      * @param srcPath       {@link Path} of the file to be moved
      * @param destDirectory {@link Path} of the destination directory

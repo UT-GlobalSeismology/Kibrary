@@ -83,6 +83,10 @@ public class SyntheticRecordSection extends Operation {
      * Path of a reference root folder2 containing synthetic dataset
      */
     private Path refSynPath2;
+    /**
+     * Path of a reference root folder3 containing synthetic dataset
+     */
+    private Path refSynPath3;
 
     /**
      * Events to work for. If this is empty, work for all events in workPath.
@@ -132,6 +136,8 @@ public class SyntheticRecordSection extends Operation {
     private String refSynName1;
     private int refSynStyle2;
     private String refSynName2;
+    private int refSynStyle3;
+    private String refSynName3;
 
     /**
      * Instance of tool to use to compute travel times.
@@ -167,6 +173,8 @@ public class SyntheticRecordSection extends Operation {
             pw.println("#refSynPath1 ");
             pw.println("##Path of a reference root folder 2 containing synthetic dataset, when plotting their waveforms.");
             pw.println("#refSynPath2 ");
+            pw.println("##Path of a reference root folder 3 containing synthetic dataset, when plotting their waveforms.");
+            pw.println("#refSynPath3 ");
             pw.println("##GlobalCMTIDs of events to work for, listed using spaces. To use all events, leave this unset.");
             pw.println("#tendEvents ");
             pw.println("##Method for standarization of synthetic waveform amplitude, from {synEach,synMean}. (synEach)");
@@ -203,18 +211,22 @@ public class SyntheticRecordSection extends Operation {
             pw.println("#upperAzimuth ");
             pw.println("##(boolean) Whether to subtract main waveforms from the reference waveforms. (false)");
             pw.println("#subtractMain ");
-            pw.println("##Plot style for main synthetic waveform, from {0:no plot, 1:red, 2:green, 3:blue}. (1)");
+            pw.println("##Plot style for main synthetic waveform, from {0:no plot, 1:red, 2:green, 3:blue, 4:gray}. (1)");
             pw.println("#mainSynStyle ");
             pw.println("##Name for main synthetic waveform. (synthetic)");
             pw.println("#mainSynName ");
-            pw.println("##Plot style for reference synthetic waveform 1, from {0:no plot, 1:red, 2:green, 3:blue}. (0)");
+            pw.println("##Plot style for reference synthetic waveform 1, from {0:no plot, 1:red, 2:green, 3:blue, 4:gray}. (0)");
             pw.println("#refSynStyle1 ");
             pw.println("##Name for reference synthetic waveform 1. (reference1)");
             pw.println("#refSynName1 ");
-            pw.println("##Plot style for reference synthetic waveform 2, from {0:no plot, 1:red, 2:green, 3:blue}. (0)");
+            pw.println("##Plot style for reference synthetic waveform 2, from {0:no plot, 1:red, 2:green, 3:blue, 4:gray}. (0)");
             pw.println("#refSynStyle2 ");
             pw.println("##Name for reference synthetic waveform 2. (reference2)");
             pw.println("#refSynName2 ");
+            pw.println("##Plot style for reference synthetic waveform 3, from {0:no plot, 1:red, 2:green, 3:blue, 4:gray}. (0)");
+            pw.println("#refSynStyle3 ");
+            pw.println("##Name for reference synthetic waveform 3. (reference3)");
+            pw.println("#refSynName3 ");
         }
         System.err.println(outPath + " is created.");
     }
@@ -241,6 +253,8 @@ public class SyntheticRecordSection extends Operation {
             refSynPath1 = property.parsePath("refSynPath1", ".", true, workPath);
         if (property.containsKey("refSynPath2"))
             refSynPath2 = property.parsePath("refSynPath2", ".", true, workPath);
+        if (property.containsKey("refSynPath3"))
+            refSynPath3 = property.parsePath("refSynPath3", ".", true, workPath);
 
         ampStyle = BasicPlotAid.AmpStyle.valueOf(property.parseString("ampStyle", "synEach"));
         ampScale = property.parseDouble("ampScale", "1.0");
@@ -273,27 +287,30 @@ public class SyntheticRecordSection extends Operation {
         mainSynName = property.parseString("mainSynName", "synthetic");
         refSynStyle1 = property.parseInt("refSynStyle1", "0");
         refSynName1 = property.parseString("refSynName1", "reference1");
-        refSynStyle2 = property.parseInt("refSynStyle2", "0");
-        refSynName2 = property.parseString("refSynName2", "reference2");
         if (refSynStyle1 != 0 && refSynPath1 == null)
             throw new IllegalArgumentException("refSynPath1 must be set when refSynStyle1 != 0");
+        refSynStyle2 = property.parseInt("refSynStyle2", "0");
+        refSynName2 = property.parseString("refSynName2", "reference2");
         if (refSynStyle2 != 0 && refSynPath2 == null)
             throw new IllegalArgumentException("refSynPath2 must be set when refSynStyle2 != 0");
+        refSynStyle3 = property.parseInt("refSynStyle3", "0");
+        refSynName3 = property.parseString("refSynName3", "reference3");
+        if (refSynStyle3 != 0 && refSynPath3 == null)
+            throw new IllegalArgumentException("refSynPath3 must be set when refSynStyle3 != 0");
     }
 
     @Override
     public void run() throws IOException {
         dateString = GadgetAid.getTemporaryString();
 
-        // read main synthetic dataset and write waveforms to be used into txt files
+        // read main synthetic dataset
         Set<EventFolder> mainEventDirs = DatasetAid.eventFolderSet(mainSynPath);
         if (!tendEvents.isEmpty())
             mainEventDirs = mainEventDirs.stream().filter(dir -> tendEvents.contains(dir.getGlobalCMTID())).collect(Collectors.toSet());
-//        SACUtil.outputSacFileTxts(mainEventDirs);
 
         Set<GlobalCMTID> events = mainEventDirs.stream().map(dir -> dir.getGlobalCMTID()).collect(Collectors.toSet());
 
-        // read reference synthetic dataset and write waveforms to be used into txt files
+        // read reference synthetic dataset
         if (refSynPath1 != null) {
             Set<EventFolder> refEventDirs1 = DatasetAid.eventFolderSet(refSynPath1);
             // check that all needed events are included
@@ -302,19 +319,24 @@ public class SyntheticRecordSection extends Operation {
                 if (!refEvents1.contains(event))
                     throw new IllegalArgumentException("Event " + event + " is not included in refSynPath1.");
             }
-            // output text file
-//            SACUtil.outputSacFileTxts(refEventDirs1);
         }
         if (refSynPath2 != null) {
-            Set<EventFolder> refEventDirs2 = DatasetAid.eventFolderSet(refSynPath1);
+            Set<EventFolder> refEventDirs2 = DatasetAid.eventFolderSet(refSynPath2);
             // check that all needed events are included
             Set<GlobalCMTID> refEvents2 = refEventDirs2.stream().map(dir -> dir.getGlobalCMTID()).collect(Collectors.toSet());
             for (GlobalCMTID event : events) {
                 if (!refEvents2.contains(event))
                     throw new IllegalArgumentException("Event " + event + " is not included in refSynPath2.");
             }
-            // output text file
-//            SACUtil.outputSacFileTxts(refEventDirs2);
+        }
+        if (refSynPath3 != null) {
+            Set<EventFolder> refEventDirs3 = DatasetAid.eventFolderSet(refSynPath3);
+            // check that all needed events are included
+            Set<GlobalCMTID> refEvents3 = refEventDirs3.stream().map(dir -> dir.getGlobalCMTID()).collect(Collectors.toSet());
+            for (GlobalCMTID event : events) {
+                if (!refEvents3.contains(event))
+                    throw new IllegalArgumentException("Event " + event + " is not included in refSynPath3.");
+            }
         }
 
         Path outPath = DatasetAid.createOutputFolder(workPath, "recordSection", folderTag, appendFolderDate, null);
@@ -509,9 +531,10 @@ public class SyntheticRecordSection extends Operation {
 
             // plot waveforms
             // Absolute paths are used here because relative paths are hard to construct when workPath != mainBasicPath.
-            if (mainSynStyle != 0)
+            if (mainSynStyle != 0) {
                 gnuplot.addLine(sacNameString + ".main.txt", synUsingString, BasicPlotAid.switchSyntheticAppearance(mainSynStyle),
                         (firstPlot ? mainSynName : ""));
+            }
             if (refSynStyle1 != 0) {
                 gnuplot.addLine(sacNameString + ".ref1.txt", synUsingString, BasicPlotAid.switchSyntheticAppearance(refSynStyle1),
                         (firstPlot ? refSynName1 : ""));
@@ -519,6 +542,10 @@ public class SyntheticRecordSection extends Operation {
             if (refSynStyle2 != 0) {
                 gnuplot.addLine(sacNameString + ".ref2.txt", synUsingString, BasicPlotAid.switchSyntheticAppearance(refSynStyle2),
                         (firstPlot ? refSynName2 : ""));
+            }
+            if (refSynStyle3 != 0) {
+                gnuplot.addLine(sacNameString + ".ref3.txt", synUsingString, BasicPlotAid.switchSyntheticAppearance(refSynStyle3),
+                        (firstPlot ? refSynName3 : ""));
             }
             firstPlot = false;
         }
@@ -544,6 +571,15 @@ public class SyntheticRecordSection extends Operation {
                 outputPath = eventPath.resolve(sacNameString + ".ref2.txt");
                 SACFileName refSACName2 = new SACFileName(refSynPath2.resolve(eventName).resolve(sacNameString));
                 sacTrace = refSACName2.read().createTrace().cutWindow(minTime, maxTime);
+                if (subtractMain) sacTrace = sacTrace.subtract(mainSacTrace);
+                sacTrace.write(outputPath);
+            }
+
+            // output ref trace 3
+            if (refSynPath3 != null) {
+                outputPath = eventPath.resolve(sacNameString + ".ref3.txt");
+                SACFileName refSACName3 = new SACFileName(refSynPath3.resolve(eventName).resolve(sacNameString));
+                sacTrace = refSACName3.read().createTrace().cutWindow(minTime, maxTime);
                 if (subtractMain) sacTrace = sacTrace.subtract(mainSacTrace);
                 sacTrace.write(outputPath);
             }

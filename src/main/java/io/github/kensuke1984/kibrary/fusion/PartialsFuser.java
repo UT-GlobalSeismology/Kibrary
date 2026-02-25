@@ -58,6 +58,10 @@ public class PartialsFuser extends Operation {
      * Path of a {@link FusionInformationFile}.
      */
     private Path fusionPath;
+    /**
+     * Whether to retain partialIDs that are not fused.
+     */
+    private boolean retainNonFusedIDs;
 
     /**
      * The design of the fusion of unknown parameters.
@@ -95,6 +99,8 @@ public class PartialsFuser extends Operation {
             pw.println("#partialPath partial");
             pw.println("##Path of a fusion information file, must be set.");
             pw.println("#fusionPath fusion.inf");
+            pw.println("##(boolean) Whether to retain partialIDs that are not fused. (true)");
+            pw.println("#retainNonFusedIDs false");
         }
         System.err.println(outPath + " is created.");
     }
@@ -111,6 +117,7 @@ public class PartialsFuser extends Operation {
 
         partialPath = property.parsePath("partialPath", null, true, workPath);
         fusionPath = property.parsePath("fusionPath", null, true, workPath);
+        retainNonFusedIDs = property.parseBoolean("retainNonFusedIDs", "true");
     }
 
     @Override
@@ -138,8 +145,14 @@ public class PartialsFuser extends Operation {
         System.err.println("\r Finished handling all parameters.");
 
         // collect fused IDs and the original IDs that are not fused
-        List<PartialID> newPartialIDs = inputPartialIDs.stream().filter(id -> !isFused(id)).collect(Collectors.toList());
-        newPartialIDs.addAll(fusedPartialIDs);
+        List<PartialID> newPartialIDs;
+        if (retainNonFusedIDs) {
+            System.err.println("Collecting fused and non-fused partials...");
+            newPartialIDs = inputPartialIDs.stream().filter(id -> !isFused(id)).collect(Collectors.toList());
+            newPartialIDs.addAll(fusedPartialIDs);
+        } else {
+            newPartialIDs = fusedPartialIDs;
+        }
 
         // prepare output folder
         Path outPath = DatasetAid.createOutputFolder(workPath, "partial", folderTag, appendFolderDate, null);

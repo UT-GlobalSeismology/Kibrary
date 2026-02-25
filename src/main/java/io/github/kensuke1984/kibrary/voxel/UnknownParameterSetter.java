@@ -164,7 +164,9 @@ public class UnknownParameterSetter {
         });
         System.err.println("\rFinished working for all " + numVoxel + " voxels.");
 
-        return parameterSet.stream().sorted(Comparator.comparing(UnknownParameter::getPosition)).collect(Collectors.toList());
+        // sort so that larger latitudes come first
+        return parameterSet.stream().sorted(Comparator.comparing(UnknownParameter::getPosition))
+                .sorted(Comparator.comparing(u -> -u.getPosition().getLatitude())).collect(Collectors.toList());
     }
 
 }

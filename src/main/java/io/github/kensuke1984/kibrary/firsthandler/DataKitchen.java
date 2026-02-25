@@ -122,7 +122,7 @@ public class DataKitchen extends Operation {
             pw.println("##Threshold to judge which stations are in the same position, non-negative [deg]. (0.01)"); // = about 1 km
             pw.println("##  If two stations are closer to each other than this threshold, one will be eliminated.");
             pw.println("#coordinateGrid ");
-            pw.println("##(double) The maximum length of output time series. (3276.8)");
+            pw.println("##(double) The maximum length of output time series [s]. (3276.8)");
             pw.println("##  This should be shorter than 20 times the earliest arrival time of the phases you wish to use.");
             pw.println("##  The acutal length will be decided so that npts is a power of 2 and does not exceed this timelength nor the SAC data length.");
             pw.println("#maxTlen ");

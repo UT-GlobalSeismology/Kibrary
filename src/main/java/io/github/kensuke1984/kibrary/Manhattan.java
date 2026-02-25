@@ -25,6 +25,10 @@ import io.github.kensuke1984.kibrary.perturbation.BlockModelMaker;
 import io.github.kensuke1984.kibrary.perturbation.CheckerboardMaker;
 import io.github.kensuke1984.kibrary.perturbation.ModelResampler;
 import io.github.kensuke1984.kibrary.perturbation.ModelSmoothener;
+import io.github.kensuke1984.kibrary.perturbation.PerturbationComparison;
+import io.github.kensuke1984.kibrary.perturbation.ScalarResampler;
+import io.github.kensuke1984.kibrary.quick.PartialsRefineOutput;
+import io.github.kensuke1984.kibrary.quick.PartialsShiftComputer;
 import io.github.kensuke1984.kibrary.selection.DataSelection;
 import io.github.kensuke1984.kibrary.selection.RaypathSelection;
 import io.github.kensuke1984.kibrary.source.SourceTimeFunctionConvolver;
@@ -66,6 +70,7 @@ import io.github.kensuke1984.kibrary.waveform.OrthogonalityTest;
 import io.github.kensuke1984.kibrary.waveform.PartialIDMerge;
 import io.github.kensuke1984.kibrary.waveform.PartialsAssembler3D;
 import io.github.kensuke1984.kibrary.waveform.PartialsBuilder1D;
+import io.github.kensuke1984.kibrary.waveform.PartialsRefiner;
 import io.github.kensuke1984.kibrary.waveform.PseudoWaveformGenerator;
 
 /**
@@ -124,8 +129,9 @@ enum Manhattan {
     ThreeDPartialDSMSetup(61, ThreeDPartialDSMSetup.class),
     PartialsBuilder1D(62, PartialsBuilder1D.class),
     PartialsAssembler3D(63, PartialsAssembler3D.class),
-    PartialIDMerge(64, PartialIDMerge.class),
-    PartialsPlotter(65, PartialsPlotter.class),
+    PartialsRefiner(64, PartialsRefiner.class),
+    PartialIDMerge(65, PartialIDMerge.class),
+    PartialsPlotter(66, PartialsPlotter.class),
     CatalogueErrorCalculator(68, CatalogueErrorCalculator.class),
     PartialsFuser(69, PartialsFuser.class),
     // Inversion 70
@@ -147,13 +153,17 @@ enum Manhattan {
     OrthogonalityTest(87, OrthogonalityTest.class),
     OrthogonalitySumUp(88, OrthogonalitySumUp.class),
     // Scalar & Sensitivity 90
+    PerturbationComparison(90, PerturbationComparison.class),
     ScalarStructurePlotter(91, ScalarStructurePlotter.class),
     ScalarMapper(92, ScalarMapper.class),
     CrossSectionCreator(93, CrossSectionCreator.class),
+    ScalarResampler(94, ScalarResampler.class),
     SensitivityKernelPlotter1D(96, SensitivityKernelPlotter1D.class),
     SensitivityKernelMapper3D(97, SensitivityKernelMapper3D.class),
     PartialsMovieMaker(99, PartialsMovieMaker.class),
     // Temporal 100
+    PartialsShiftComputer(100, PartialsShiftComputer.class),
+    PartialsRefineOutput(109, PartialsRefineOutput.class),
     ;
 
     private final Class<? extends Operation> operation;

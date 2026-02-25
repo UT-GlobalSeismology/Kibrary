@@ -96,10 +96,10 @@ public class LeastSquaresMethod extends InversionMethod {
     public void compute() {
         System.err.println("Solving by LS (least squares) method.");
 
-        RealMatrix j = ata;
-        RealVector k = atd;
         for (int i = 0; i < lambdas.length; i++) {
             double lambda = lambdas[i];
+            RealMatrix j = ata.copy();
+            RealVector k = atd.copy();
             if (0 < lambda) {
                 RealMatrix tt = t.transpose();
                 // At A + lambda Tt T
@@ -131,7 +131,11 @@ public class LeastSquaresMethod extends InversionMethod {
     }
 
     @Override
-    public RealMatrix getBaseVectors() {
+    public void outputBasisVectors(Path outPath) throws IOException {
+    }
+
+    @Override
+    public RealMatrix getBasisVectors() {
         throw new RuntimeException("No base vectors.");
     }
 

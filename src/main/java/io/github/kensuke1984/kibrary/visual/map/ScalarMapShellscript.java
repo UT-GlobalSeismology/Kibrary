@@ -105,7 +105,8 @@ public class ScalarMapShellscript {
         }
 
         // set file name root of output files
-        this.plotFileNameRoot = variable.toString().toLowerCase() + scalarType.toNaturalString() + ((tag != null) ? ("_" + tag + "_") : "");
+        this.plotFileNameRoot = (variable != null ? variable.toString().toLowerCase() : "scalar")
+                + scalarType.toNaturalString() + ((tag != null) ? ("_" + tag + "_") : "");
         // set this temporarily to display all layers (may be oveerwritten later)
         this.displayLayers = IntStream.range(0, radii.length).toArray();
         // set scalar file name
@@ -202,7 +203,7 @@ public class ScalarMapShellscript {
                 pw.println("2.75  49 121 168   3.25  49 121 168");
                 pw.println("3.25  37  91 153   3.75  37  91 153");
                 pw.println("3.75  27  65 140   4.00  27  65 140");
-                pw.println("B       153  43   7");
+                pw.println("B       127  25   5");
                 pw.println("F        27  65 140");
                 pw.println("N       255 255 255");
                 break;
@@ -225,7 +226,7 @@ public class ScalarMapShellscript {
                 pw.println("2.75  49 121 168   3.25  49 121 168");
                 pw.println("3.25  37  91 153   3.75  37  91 153");
                 pw.println("3.75  27  65 140   4.00  27  65 140");
-                pw.println("B       153  43   7");
+                pw.println("B       127  25   5");
                 pw.println("F        27  65 140");
                 pw.println("N       255 255 255");
                 break;

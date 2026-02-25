@@ -22,6 +22,7 @@ import org.apache.commons.cli.ParseException;
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.Summon;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
+import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
@@ -123,7 +124,9 @@ public final class PartialIDFile {
         Phase[] phases = phaseSet.toArray(new Phase[phaseSet.size()]);
 
         // output
-        System.err.println("Outputting in " + outPath);
+        System.err.println("Outputting "
+                + MathAid.switchSingularPlural(partialIDs.size(), "partialID", "partialIDs")
+                + " in " + outPath);
         try (WaveformDataWriter wdw = new WaveformDataWriter(outputIDPath, outputDataPath,
                 observerSet, eventSet, periodRanges, phases, voxelPositionSet)) {
             for (PartialID id : partialIDs) {

@@ -72,12 +72,20 @@ public class SourceTimeFunction {
 
     /**
      * ASYMMETRIC triangle source time function.
+     * <p>
+     * The width is determined by the left-side half duration &tau;<sub>1</sub> and right-side half duration &tau;<sub>2</sub>. <br>
+     * f(t) = 2(t + &tau;<sub>1</sub>) / &tau;<sub>1</sub>(&tau;<sub>1</sub> + &tau;<sub>2</sub>) (-&tau;<sub>1</sub> &le; t &le; 0), <br>
+     * &emsp;&emsp;  2(&tau;<sub>2</sub> - t) / &tau;<sub>2</sub>(&tau;<sub>1</sub> + &tau;<sub>2</sub>) (0 &le; t &le; &tau;<sub>2</sub>), <br>
+     * &emsp;&emsp;  0 (t &lt; -&tau;<sub>1</sub>, &tau;<sub>2</sub> &lt; t) <br>
+     * Source time function F(&omega;) = 2 / (&tau;<sub>1</sub> + &tau;<sub>2</sub>)&omega;<sup>2</sup>
+     * * ( (1 - cos&omega;&tau;<sub>1</sub>) / &tau;<sub>1</sub> + (1 - cos&omega;&tau;<sub>2</sub>) / &tau;<sub>2</sub>
+     * - i sin&omega;&tau;<sub>1</sub> / &tau;<sub>1</sub> + i sin&omega;&tau;<sub>2</sub> / &tau;<sub>2</sub> )
      *
      * @param np (int) Number of steps in frequency domain (only positive frequency part).
      * @param tlen (double) Time length of STF [s]. Its reciprocal will be the size of frequency steps.
-     * @param halfDuration1 (double) Half duration [s] of the source.
-     * @param halfDuration2 (double) Half duration [s] of the source.
-     * @return ({@link} SourceTimeFunction) Created STF.
+     * @param halfDuration1 (double) Left-side half duration [s] of the source.
+     * @param halfDuration2 (double) Right-side half duration [s] of the source.
+     * @return ({@link SourceTimeFunction}) Created STF.
      *
      * @author lina
      */
@@ -85,13 +93,13 @@ public class SourceTimeFunction {
         SourceTimeFunction sourceTimeFunction = new SourceTimeFunction(np, tlen);
         sourceTimeFunction.sourceTimeFunction = new Complex[np + 1];
         double deltaF = 1.0 / tlen;
-        double h = 2. /(halfDuration1 + halfDuration2);
+        double h = 2.0 / (halfDuration1 + halfDuration2);
         sourceTimeFunction.sourceTimeFunction[0] = Complex.ONE;
         for (int i = 1; i < np + 1; i++) {
-             double omega = i * 2. * Math.PI * deltaF;
-             sourceTimeFunction.sourceTimeFunction[i]
-                     = new Complex(1.*h/omega/omega*(1./halfDuration1 + 1./halfDuration2 - Math.cos(omega*halfDuration1)/halfDuration1 - Math.cos(omega*halfDuration2)/halfDuration2),
-                             -1.*h/omega/omega*(Math.sin(omega*halfDuration1)/halfDuration1 - Math.sin(omega*halfDuration2)/halfDuration2));
+             double omega = i * 2.0 * Math.PI * deltaF;
+             sourceTimeFunction.sourceTimeFunction[i] = new Complex(
+                     h/omega/omega*(1.0/halfDuration1 + 1.0/halfDuration2 - Math.cos(omega*halfDuration1)/halfDuration1 - Math.cos(omega*halfDuration2)/halfDuration2),
+                     -h/omega/omega*(Math.sin(omega*halfDuration1)/halfDuration1 - Math.sin(omega*halfDuration2)/halfDuration2));
         }
         return sourceTimeFunction;
     }
@@ -100,26 +108,25 @@ public class SourceTimeFunction {
      * Triangle source time function.
      * <p>
      * The width is determined by the half duration &tau;. <br>
-     * f(t) = 1/&tau;<sup>2</sup> t + 1/&tau; (-&tau; &le; t &le; 0), -1/&tau;
-     * <sup>2</sup> t + 1/&tau; (0 &le; t &le; &tau;), 0 (t &lt; -&tau;, &tau;
-     * &lt; t) <br>
-     * Source time function F(&omega;) = (2-2cos(2&pi;&omega;&tau;))
-     * /(2&pi;&omega;&tau;)<sup>2</sup>
+     * f(t) = 1/&tau;<sup>2</sup> t + 1/&tau; (-&tau; &le; t &le; 0), <br>
+     * &emsp;&emsp;  -1/&tau;<sup>2</sup> t + 1/&tau; (0 &le; t &le; &tau;), <br>
+     * &emsp;&emsp;  0 (t &lt; -&tau;, &tau; &lt; t) <br>
+     * Source time function F(f) = (2 - 2 cos(2 &pi; &tau; f)) / (2 &pi; &tau; f)<sup>2</sup>
      *
      * @param np (int) Number of steps in frequency domain (only positive frequency part).
      * @param tlen (double) Time length of STF [s]. Its reciprocal will be the size of frequency steps.
      * @param halfDuration (double) Half duration [s] of the source.
-     * @return ({@link} SourceTimeFunction) Created STF.
+     * @return ({@link SourceTimeFunction}) Created STF.
      */
     static final SourceTimeFunction triangleSourceTimeFunction(int np, double tlen, double halfDuration) {
         SourceTimeFunction sourceTimeFunction = new SourceTimeFunction(np, tlen);
         sourceTimeFunction.sourceTimeFunction = new Complex[np + 1];
         final double deltaF = 1.0 / tlen;
-        final double constant = 2 * Math.PI * deltaF * halfDuration;
+        final double constant = 2.0 * Math.PI * deltaF * halfDuration;
         sourceTimeFunction.sourceTimeFunction[0] = Complex.ONE;
         for (int i = 1; i < np + 1; i++) {
             double omegaTau = i * constant;
-            sourceTimeFunction.sourceTimeFunction[i] = new Complex((2 - 2 * Math.cos(omegaTau)) / omegaTau / omegaTau);
+            sourceTimeFunction.sourceTimeFunction[i] = new Complex((2.0 - 2.0 * Math.cos(omegaTau)) / omegaTau / omegaTau);
         }
         return sourceTimeFunction;
     }
@@ -128,20 +135,20 @@ public class SourceTimeFunction {
      * Boxcar source time function.
      * <p>
      * The width is determined by the half duration &tau;. <br>
-     * f(t) = 1/(2&times;&tau;) (-&tau; &le; t &le; &tau;), 0 (t &lt; -&tau;,
-     * &tau; &lt; t) <br>
-     * Source time function F(&omega;) = sin(2&pi;&omega;&tau;)/(2&pi;&omega;&tau;);
+     * f(t) = 1/(2&tau;) (-&tau; &le; t &le; &tau;), <br>
+     * &emsp;&emsp;  0 (t &lt; -&tau;, &tau; &lt; t) <br>
+     * Source time function F(f) = sin(2 &pi; &tau; f) / (2 &pi; &tau; f)
      *
      * @param np (int) Number of steps in frequency domain (only positive frequency part).
      * @param tlen (double) Time length of STF [s]. Its reciprocal will be the size of frequency steps.
      * @param halfDuration (double) Half duration [s] of the source.
-     * @return ({@link} SourceTimeFunction) Created STF.
+     * @return ({@link SourceTimeFunction}) Created STF.
      */
     public static final SourceTimeFunction boxcarSourceTimeFunction(int np, double tlen, double halfDuration) {
         SourceTimeFunction sourceTimeFunction = new SourceTimeFunction(np, tlen);
         sourceTimeFunction.sourceTimeFunction = new Complex[np + 1];
         final double deltaF = 1.0 / tlen;
-        final double constant = 2 * Math.PI * deltaF * halfDuration;
+        final double constant = 2.0 * Math.PI * deltaF * halfDuration;
         sourceTimeFunction.sourceTimeFunction[0] = Complex.ONE;
         for (int i = 1; i < np + 1; i++) {
             double omegaTau = i * constant;
@@ -154,25 +161,24 @@ public class SourceTimeFunction {
      * Smoothed ramp source time function.
      * <p>
      * The width is determined by the half duration &tau;. <br>
-     * f(t) = (1-tanh<sup>2</sup>(2t/&tau;))/&tau; (-&tau; &le; t &le; &tau;), 0
-     * (t &lt; -&tau;, &tau; &lt; t) <br>
-     * Source time function F(&omega;) = (&pi;<sup>2</sup>
-     * &omega;&tau;/2)/sinh(&pi;<sup>2</sup>&omega;&tau;/2)<br>
+     * f(t) = (1-tanh<sup>2</sup>(2t/&tau;))/&tau; (-&tau; &le; t &le; &tau;), <br>
+     * &emsp;&emsp;  0 (t &lt; -&tau;, &tau; &lt; t) <br>
+     * Source time function F(&omega;) = (&pi;<sup>2</sup> &tau; f / 2) / sinh(&pi;<sup>2</sup> &tau; f / 2)<br>
      *
      * @param np (int) Number of steps in frequency domain (only positive frequency part).
      * @param tlen (double) Time length of STF [s]. Its reciprocal will be the size of frequency steps.
      * @param halfDuration (double) Half duration [s] of the source.
-     * @return ({@link} SourceTimeFunction) Created STF.
+     * @return ({@link SourceTimeFunction}) Created STF.
      */
     static final SourceTimeFunction smoothedRampSourceTimeFunction(int np, double tlen, double halfDuration) {
         SourceTimeFunction sourceTimeFunction = new SourceTimeFunction(np, tlen);
         sourceTimeFunction.sourceTimeFunction = new Complex[np + 1];
         final double deltaF = 1.0 / tlen;
-        final double constant = 2 * Math.PI * deltaF * halfDuration / 4 * Math.PI;
+        final double constant = 2.0 * Math.PI * deltaF * halfDuration * Math.PI / 4.0;
         sourceTimeFunction.sourceTimeFunction[0] = Complex.ONE;
         for (int i = 1; i < np + 1; i++) {
-            double omegaTau = i * constant;
-            sourceTimeFunction.sourceTimeFunction[i] = new Complex(omegaTau / Math.sinh(omegaTau));
+            double quarterPiOmegaTau = i * constant;
+            sourceTimeFunction.sourceTimeFunction[i] = new Complex(quarterPiOmegaTau / Math.sinh(quarterPiOmegaTau));
         }
         return sourceTimeFunction;
     }

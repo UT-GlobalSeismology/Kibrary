@@ -9,10 +9,13 @@ import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.math.LinearRange;
+import io.github.kensuke1984.kibrary.math.geometry.CoordinateConverter;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
@@ -54,7 +57,7 @@ public class VoxelManualDesigner extends Operation {
     private double dLongitudeKm;
     private double dLongitudeDeg;
     private boolean setLongitudeByKm;
-    private double longitudeOffset;
+    private double baseLongitude;
 
     private double[] borderRadii;
     private double lowerRadius;
@@ -107,8 +110,8 @@ public class VoxelManualDesigner extends Operation {
             pw.println("#dLongitudeKm ");
             pw.println("##(double) Longitude spacing [deg]; (0:). (5)");
             pw.println("#dLongitudeDeg ");
-            pw.println("##(double) Offset of voxel-center longitude [deg]. (0)");
-            pw.println("#longitudeOffset ");
+            pw.println("##(double) Longitude at which to align voxel centers, when aligning [deg].");
+            pw.println("#baseLongitude ");
             pw.println("##########Parameters for the BORDER radii of voxels to create.");
             pw.println("##(double[]) Radii of layer borders, listed using spaces [km]; [0:).");
             pw.println("##  If unset, the subsequent parameters are used.");
@@ -162,7 +165,7 @@ public class VoxelManualDesigner extends Operation {
             if (dLongitudeDeg <= 0.0) throw new IllegalArgumentException("dLongitudeDeg must be positive.");
             setLongitudeByKm = false;
         }
-        longitudeOffset = property.parseDouble("longitudeOffset", "0");
+        baseLongitude = property.parseDouble("baseLongitude", "NaN");
 
         if (property.containsKey("borderRadii")) {
             borderRadii = Arrays.stream(property.parseDoubleArray("borderRadii", null))
@@ -207,8 +210,16 @@ public class VoxelManualDesigner extends Operation {
         }
 
         // output
-        Path outputPath = DatasetAid.generateOutputFilePath(workPath, "voxel", fileTag, appendFileDate, null, ".inf");
-        VoxelInformationFile.write(layerThicknesses, layerRadii, horizontalPixels, outputPath);
+        Path voxelPath = DatasetAid.generateOutputFilePath(workPath, "voxel", fileTag, appendFileDate, null, ".inf");
+        VoxelInformationFile.write(layerThicknesses, layerRadii, horizontalPixels, voxelPath);
+
+        // write coordinate converter file
+        Set<HorizontalPosition> positions = horizontalPixels.stream().map(HorizontalPixel::getPosition).collect(Collectors.toSet());
+        boolean crossDateLine = HorizontalPosition.crossesDateLine(positions);
+        CoordinateConverter converter = new CoordinateConverter(dLatitudeKm, dLatitudeDeg, setLatitudeByKm, latitudeOffset,
+                dLongitudeKm, dLongitudeDeg, setLongitudeByKm, baseLongitude, centerRadius, crossDateLine);
+        Path converterPath = DatasetAid.generateOutputFilePath(workPath, "converter", fileTag, appendFileDate, null, ".inf");
+        converter.writeToFile(converterPath);
     }
 
     private List<HorizontalPixel> designHorizontalPixels() {
@@ -220,11 +231,8 @@ public class VoxelManualDesigner extends Operation {
         int upperLatitudeIndex = getUpperIndex(upperLatitude, dLatitude, latitudeOffset);
 
         //~decide the longitude at which to align voxels
-        double baseLongitude;
-        if (setLongitudeByKm) {
-            baseLongitude = (lowerLongitude + upperLongitude) / 2 + longitudeOffset;
-        } else {
-            baseLongitude = longitudeOffset;
+        if (Double.isNaN(baseLongitude)) {
+            baseLongitude = (lowerLongitude + upperLongitude) / 2;
         }
 
         //~decide horizontal positions of voxels
@@ -252,7 +260,7 @@ public class VoxelManualDesigner extends Operation {
                 double longitude = baseLongitude + j * dLongitudeForRow;
 
                 // add horizontal pixel to list
-                horizontalPixels.add(new HorizontalPixel(new HorizontalPosition(latitude, longitude), dLatitude, dLongitudeForRow));
+                horizontalPixels.add(new HorizontalPixel(new HorizontalPosition(latitude, longitude), dLatitude, dLongitudeForRow, -i, j));
             }
 
         }

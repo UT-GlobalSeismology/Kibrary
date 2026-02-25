@@ -72,6 +72,8 @@ public enum ScalarType {
      * @return (String) Label of scale bar to write in GMT scripts.
      */
     public static String createScaleLabel(VariableType variable, ScalarType scalarType, int slashSize) {
+        if (variable == null) return "value";
+
         String paramName;
         switch (variable) {
         case RHO: paramName = "@~r@~"; break;
@@ -122,6 +124,8 @@ public enum ScalarType {
      * @return (String) Label of scale bar to write in GMT scripts.
      */
     public static String createScaleLabel_TeX(VariableType variable, ScalarType scalarType) {
+        if (variable == null) return "value";
+
         String paramName;
         switch (variable) {
         case RHO: paramName = "\\rho"; break;

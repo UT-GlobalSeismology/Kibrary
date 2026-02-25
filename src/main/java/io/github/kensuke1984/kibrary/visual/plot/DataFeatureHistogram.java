@@ -153,6 +153,10 @@ public class DataFeatureHistogram extends Operation {
      */
     private double dSNRatio;
     /**
+     * Whether to show shaded box for selected range.
+     */
+    private boolean shadeSelectedRange;
+    /**
      * Minimum correlation coefficient that is selected.
      */
     private double minSelectedCorrelation;
@@ -241,6 +245,8 @@ public class DataFeatureHistogram extends Operation {
             pw.println("##(double) Interval of S/N ratio; (0:). (0.2)");
             pw.println("#dSNRatio ");
             pw.println("##########The following are parameters that decide the range of the background shaded box.");
+            pw.println("##(boolean) Whether to show shaded box for selected range. (true)");
+            pw.println("#shadeSelectedRange false");
             pw.println("##(double) Lower end of selected range for correlation; [-1:maxSelectedCorrelation). (0)");
             pw.println("#minSelectedCorrelation ");
             pw.println("##(double) Upper end of selected range for correlation; (minSelectedCorrelation:1]. (1)");
@@ -311,6 +317,7 @@ public class DataFeatureHistogram extends Operation {
         dSNRatio = property.parseDouble("dSNRatio", "0.2");
         if (dSNRatio <= 0) throw new IllegalArgumentException("dSNRatio must be positive.");
 
+        shadeSelectedRange = property.parseBoolean("shadeSelectedRange", "true");
         minSelectedCorrelation = property.parseDouble("minSelectedCorrelation", "0");
         maxSelectedCorrelation = property.parseDouble("maxSelectedCorrelation", "1");
         LinearRange.checkValidity("Selected correlation", minSelectedCorrelation, maxSelectedCorrelation, -1.0, 1.0);
@@ -527,11 +534,11 @@ public class DataFeatureHistogram extends Operation {
 
        // plot histograms
        createPlot(corrFileNameRoot, "Correlation", dCorrelation, correlationLowerBound, correlationUpperBound,
-               dCorrelation * 5, minSelectedCorrelation, maxSelectedCorrelation, true, extraExists);
+               dCorrelation * 5, shadeSelectedRange, minSelectedCorrelation, maxSelectedCorrelation, true, extraExists);
        createPlot(varFileNameRoot, "Normalized variance", dVariance, 0, varianceUpperBound,
-               dVariance * 5, minSelectedVariance, maxSelectedVariance, false, extraExists);
+               dVariance * 5, shadeSelectedRange, minSelectedVariance, maxSelectedVariance, false, extraExists);
        createPlot(ratioFileNameRoot, "Syn/Obs amplitude ratio", dRatio, 0, ratioUpperBound,
-               dRatio * 5, minSelectedRatio, maxSelectedRatio, false, extraExists);
+               dRatio * 5, shadeSelectedRange, minSelectedRatio, maxSelectedRatio, false, extraExists);
 
        if (dataFeaturePath != null) {
            try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(snRatioPath))) {
@@ -540,12 +547,12 @@ public class DataFeatureHistogram extends Operation {
                            + " " + snRatios[i] + " " + extraSnRatios[i]);
            }
            createPlot(snRatioFileNameRoot, "Signal/Noise ratio", dSNRatio, 0, snRatioUpperBound,
-                   dSNRatio * 5, minSelectedSNRatio, snRatioUpperBound, false, extraExists);
+                   dSNRatio * 5, shadeSelectedRange, minSelectedSNRatio, snRatioUpperBound, false, extraExists);
        }
    }
 
    private void createPlot(String fileNameRoot, String xLabel, double interval, double minimum, double maximum,
-           double xtics, double minRect, double maxRect, boolean keyLeft, boolean extraExists) throws IOException {
+           double xtics, boolean shadeSelectedRange, double minRect, double maxRect, boolean keyLeft, boolean extraExists) throws IOException {
        Path scriptPath = outPath.resolve(fileNameRoot + ".plt");
 
        String mainColor;
@@ -574,7 +581,9 @@ public class DataFeatureHistogram extends Operation {
            pw.println("set style fill solid border lc rgb 'black'");
            pw.println("set sample 11");
            pw.println("set output '" + fileNameRoot + ".png'");
-           pw.println("set object 1 rect from first " + minRect + ",graph 0 to first " + maxRect + ",graph 1 behind lw 0 fillcolor rgb 'light-gray'");
+           if (shadeSelectedRange) {
+               pw.println("set object 1 rect from first " + minRect + ",graph 0 to first " + maxRect + ",graph 1 behind lw 0 fillcolor rgb 'light-gray'");
+           }
            if (extraExists) {
                // "($2+$3)" is to stack up the amounts
                pw.println("plot '" + fileNameRoot + ".txt' u ($1+" + (interval / 2) + "):($2+$3) w boxes lw 2.5 lc '"
