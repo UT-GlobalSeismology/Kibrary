@@ -74,10 +74,6 @@ public final class SPC_SAC extends Operation {
      */
     private Path outPath;
     /**
-     * Path of a data entry file.
-     */
-    private Path dataEntryPath;
-    /**
      * Components to use.
      */
     private Set<SACComponent> components;
@@ -252,9 +248,6 @@ public final class SPC_SAC extends Operation {
             throw new IllegalStateException("Number of PSV files and SH files does not match.");
         }
 
-        //select TimeWindow
-
-
         outPath = DatasetAid.createOutputFolder(workPath, "spcsac", folderTag, appendFolderDate, null);
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
@@ -315,13 +308,13 @@ public final class SPC_SAC extends Operation {
      *
      * @param primarySPC ({@link SPCFile}) First spectrum file for SAC.
      * @param secondarySPC ({@link SPCFile}) Second spectrum file for SAC. null is OK.
-     * @return ({@link SACMaker})
+     * @return ({@link SACMaker}) The created SAC maker. Returns null if STF not created.
      */
     private SACMaker createSACMaker(SPCFile primarySPC, SPCFile secondarySPC) {
         SourceTimeFunction sourceTimeFunction = stfHandler.createSourceTimeFunction(primarySPC.np(), primarySPC.tlen(),
                 new GlobalCMTID(primarySPC.getSourceID()));
 
-        if(sourceTimeFunction == null) {
+        if (sourceTimeFunction == null) {
             return null;
         }
 

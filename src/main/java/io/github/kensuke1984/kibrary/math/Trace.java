@@ -62,7 +62,6 @@ public final class Trace {
     private final int[] indicesOfPeak;
 
 
-
     /**
      * Create trace from arrays of x and y by deep copy.
      * @param x (double[]) Array for x.

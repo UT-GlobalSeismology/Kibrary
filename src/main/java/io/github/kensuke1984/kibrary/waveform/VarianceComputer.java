@@ -91,7 +91,7 @@ public class VarianceComputer {
         }
 
         List<GlobalCMTID> events = basicIDs.stream().map(id -> id.getGlobalCMTID()).distinct().sorted().collect(Collectors.toList());
-        for(GlobalCMTID event:events) {
+        for (GlobalCMTID event : events) {
             List<BasicID> basicIDsForEvent = basicIDs.stream().filter(id -> id.getGlobalCMTID().equals(event)).collect(Collectors.toList());
 
             // set DVector
@@ -106,7 +106,7 @@ public class VarianceComputer {
             // compute variance
             RealVector obs = dVectorBuilder.fullObsVecWithWeight(weighting);
             double normalizedVariance = MathAid.computeVariance(d, obs);
-            System.err.println( event + " : " + normalizedVariance + " (" + basicIDsForEvent.size() + " waveforms)");
+            System.err.println(event + " : " + normalizedVariance + " (" + basicIDsForEvent.size() + " waveforms)");
         }
         // set DVector
         System.err.println("Setting data for d vector");

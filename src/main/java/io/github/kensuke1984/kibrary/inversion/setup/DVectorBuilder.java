@@ -74,7 +74,7 @@ public final class DVectorBuilder {
         obsVecs = new RealVector[nTimeWindow];
         synVecs = new RealVector[nTimeWindow];
         startPoints = new int[nTimeWindow];
-        if(writeMessage) {
+        if (writeMessage) {
             System.err.println(" " + MathAid.switchSingularPlural(nTimeWindow, "time window is", "time windows are") + " used");
         }
         totalNpts = read();

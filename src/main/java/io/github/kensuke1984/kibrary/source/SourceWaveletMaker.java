@@ -274,22 +274,19 @@ public class SourceWaveletMaker extends Operation {
             Trace synTrace = synSac.createTrace().cutWindow(stfWindow, sacSamplingHz);
             synTrace = synTrace.integrate();
 
-            // compute signed max amplitude of synthetic (If wavelet is on negative side, this amplitude is negative.)
-            double synMin = synTrace.getMinY();
-            double synMax = synTrace.getMaxY();
-            double synAmp = (-synMin > synMax) ? synMin : synMax;
+            // normalize by area of wavelet
             double t2 = timeWindow.getStartTime() + frontShift + halfDuration;
             RealVector normalizedVector;
             if (normalizeBySyn) {
+                // compute signed area of synthetic (If wavelet is on negative side, this area is negative.)
                 Trace integrateSynTrace = synTrace.integrate();
                 double synArea = integrateSynTrace.findYAtNearestX(t2);
-//              System.out.print("SynArea is " + synArea);
-//              System.out.print(" SynAmp is " + synAmp);
-//              System.out.println(" HalfDuration is " + halfDuration);
 
                 // divide observed trace by signed area of synthetic (This should result on positive side for most cases.)
                 normalizedVector = obsTrace.multiply(1 / synArea).getYVector();
+
             } else {
+                // compute signed area of observed (If wavelet is on negative side, this area is negative.)
                 Trace integrateObsTrace = obsTrace.integrate();
                 double obsArea = integrateObsTrace.findYAtNearestX(t2);
                 if (obsArea == 0) {
@@ -321,7 +318,7 @@ public class SourceWaveletMaker extends Operation {
 
             Path eventDirectryPath = outPath.resolve(eventID + "");
 
-            // omit events with less than 5 observation reffering Yamaya et al.
+            // omit events with less than 5 observation as in Yamaya et al. (2018)
             if(num < 5) {
                 System.out.println(eventID + " has less than 5 observation");
                 return;
@@ -348,14 +345,12 @@ public class SourceWaveletMaker extends Operation {
                 e.printStackTrace();
             }
 
-            //create triangle STF
+            // create triangle STF
             double t0 = waveletTrace.getXforMaxYValue();
             int halfIndex1 = computet1(waveletTrace, t0);
             double t1 = waveletTrace.getXAt(halfIndex1);
             int halfIndex2 = computet2(waveletTrace, t0);
             double t2 = waveletTrace.getXAt(halfIndex2);
-
-            //System.out.println(t0 + " " + t1 + " " + t2);
 
             double maxtau1 = t0 - waveletTrace.getXAt(0);
             double maxtau2 = waveletTrace.getXAt(waveletTrace.getLength() - 1) - t0;
@@ -363,8 +358,6 @@ public class SourceWaveletMaker extends Operation {
             double minsum  = Double.POSITIVE_INFINITY;
             double tau1 = 0;
             double tau2 = 0;
-            //System.out.println((t0 - t1) + " " + (t2 - t0));
-            //System.out.println(maxtau1 + " " + maxtau2);
             for (double temptau1 = t0 - t1; temptau1 <= maxtau1; temptau1 += delta) {
                 for (double temptau2 = t2 - t0; temptau2 <= maxtau2; temptau2 += delta) {
                     double sum = 0;
@@ -382,15 +375,15 @@ public class SourceWaveletMaker extends Operation {
                     }
                 }
             }
-            //System.out.println(tau1 + " " +tau2);
-            //write triangle STF
+
+            // write triangle STF
             Path trianglePath = eventDirectryPath.resolve(eventID + "_triangle.txt");
             try {
                 writeTriangle(t0, tau1, tau2, maxtau2, trianglePath);
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            //write cut Trace
+            // write cut Trace
             Trace cutTrace = waveletTrace.cutWindow(t0 - tau1, t0 + tau2);
             Path cutPath = eventDirectryPath.resolve(eventID + "_cut.txt");
             try {
@@ -399,7 +392,7 @@ public class SourceWaveletMaker extends Operation {
                 e.printStackTrace();
             }
 
-            //divide by the number of time windows added to get average, and half duration to normalize the amplitude
+            // divide by the number of time windows added to get average, and half duration to normalize the amplitude
             double[] cutYArray = cutTrace.getY();
             // taper
             cutYArray = FourierTransform.taper(cutYArray, TAPER_LENGTH_PERCENT, true);
@@ -464,8 +457,8 @@ public class SourceWaveletMaker extends Operation {
                 throw new UncheckedIOException(e);
             }
 
-            double windowLength = waveletTrace.getMaxX() - waveletTrace.getMinX();
             // make graphs of stacked and triangle stf
+            double windowLength = waveletTrace.getMaxX() - waveletTrace.getMinX();
             Path stackPltPath = eventDirectryPath.resolve(eventID + ".plt");
             try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(stackPltPath))) {
                 pw.println("set term pngcairo enhanced size 1600,800 font 'Helvetica.20'");

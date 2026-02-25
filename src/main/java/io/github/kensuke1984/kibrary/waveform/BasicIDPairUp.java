@@ -48,7 +48,7 @@ public class BasicIDPairUp {
                 if (tempSynList.get(i).equals(tempSynList.get(j)))
                     throw new RuntimeException("Duplicate synthetic IDs detected");
 
-        if(writeMessage) {
+        if (writeMessage) {
             System.err.println(" Number of obs IDs before pairing with syn IDs: " + tempObsList.size());
         }
         if (tempObsList.size() != tempSynList.size())
@@ -75,7 +75,7 @@ public class BasicIDPairUp {
 
         if (resultObsList.size() != resultSynList.size())
             throw new RuntimeException("unanticipated");
-        if(writeMessage)
+        if (writeMessage)
             System.err.println(" Number of pairs created: " + resultObsList.size());
 
         obsList = Collections.unmodifiableList(resultObsList);
@@ -95,6 +95,5 @@ public class BasicIDPairUp {
     public List<BasicID> getSynList() {
         return synList;
     }
-
 
 }
