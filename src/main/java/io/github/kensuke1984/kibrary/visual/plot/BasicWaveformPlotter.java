@@ -357,7 +357,7 @@ public class BasicWaveformPlotter extends Operation {
             return;
         }
 
-        BasicIDPairUp pairer = new BasicIDPairUp(ids);
+        BasicIDPairUp pairer = new BasicIDPairUp(ids, true);
         List<BasicID> obsList = pairer.getObsList();
         List<BasicID> synList = pairer.getSynList();
 

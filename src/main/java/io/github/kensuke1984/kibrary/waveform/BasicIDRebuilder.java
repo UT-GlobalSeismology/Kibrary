@@ -159,7 +159,7 @@ public class BasicIDRebuilder extends Operation {
                 .filter(id -> components.contains(id.getSacComponent())).collect(Collectors.toList());
 
         // sort observed and synthetic
-        BasicIDPairUp pairer = new BasicIDPairUp(basicIDs);
+        BasicIDPairUp pairer = new BasicIDPairUp(basicIDs, true);
         obsIDs = pairer.getObsList();
         synIDs = pairer.getSynList();
 
