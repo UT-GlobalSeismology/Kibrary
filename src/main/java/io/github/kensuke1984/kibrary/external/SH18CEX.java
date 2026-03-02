@@ -1,7 +1,9 @@
 package io.github.kensuke1984.kibrary.external;
 
+import io.github.kensuke1984.kibrary.elastic.VariableType;
+import io.github.kensuke1984.kibrary.util.earth.DefaultStructure;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
-import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure_old;
+import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
 
 /**
  * Model SH18CEX by Nozomu Takeuchi
@@ -11,7 +13,7 @@ import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure_old;
  */
 public final class SH18CEX {
 
-    private static final PolynomialStructure_old PREM = PolynomialStructure_old.PREM;
+    private static final PolynomialStructure PREM = DefaultStructure.PREM;
     private final static double[] MODEL_NODE =
             {3480.0, 3981.0, 4431.0, 4821.0, 5161.0, 5451.0, 5701.0, 5841.0, 5971.0, 6091.0, 6211.0, 6301.0, 6346.6,
                     6368.0};
@@ -1202,7 +1204,7 @@ public final class SH18CEX {
         } catch (Exception e) {
             throw new IllegalArgumentException("radius[km] latitude[deg] longitude[deg]");
         }
-        double premVs = PREM.getVshAt(loc.getR());
+        double premVs = PREM.getAtRadius(VariableType.Vsh, loc.getR());
         double perc = getV(loc);
         double take = premVs * (1 + perc / 100);
         System.out.println(loc + " " + take + " " + perc);
@@ -1276,9 +1278,9 @@ public final class SH18CEX {
             }
 
         double r = location.getR();
-        double rho = PREM.getRhoAt(r);
-        double vs = PREM.getVshAt(r);
-        double mu = PREM.computeMu(r);
+        double rho = PREM.getAtRadius(VariableType.RHO, r);
+        double vs = PREM.getAtRadius(VariableType.Vsh, r);
+        double mu = PREM.mediumAt(r).get(VariableType.MU);
         double pert = 0;
         for (int izpar = 0; izpar < 12; izpar++)
             if ((MODEL_NODE[izpar] <= r && r < MODEL_NODE[izpar + 1]) ||

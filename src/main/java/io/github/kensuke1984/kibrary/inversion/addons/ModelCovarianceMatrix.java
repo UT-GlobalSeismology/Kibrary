@@ -15,8 +15,8 @@ import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
 import org.apache.commons.math3.util.Precision;
 
+import io.github.kensuke1984.kibrary.elastic.VariableType;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
-import io.github.kensuke1984.kibrary.util.spc.PartialType;
 import io.github.kensuke1984.kibrary.voxel.Physical3DParameter;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
 
@@ -47,16 +47,16 @@ public class ModelCovarianceMatrix {
 
         //test
         List<UnknownParameter> params = new ArrayList<>();
-        UnknownParameter p1 = new Physical3DParameter(PartialType.MU3D, new FullPosition(0, 0, 6371),  1.);
-        UnknownParameter p2 = new Physical3DParameter(PartialType.MU3D, new FullPosition(2, 0, 6371),  1.);
-        UnknownParameter p3 = new Physical3DParameter(PartialType.MU3D, new FullPosition(4, 0, 6371),  1.);
+        UnknownParameter p1 = new Physical3DParameter(VariableType.MU, new FullPosition(0, 0, 6371),  1.);
+        UnknownParameter p2 = new Physical3DParameter(VariableType.MU, new FullPosition(2, 0, 6371),  1.);
+        UnknownParameter p3 = new Physical3DParameter(VariableType.MU, new FullPosition(4, 0, 6371),  1.);
         params.add(p1);
         params.add(p2);
         params.add(p3);
 
-        UnknownParameter l1 = new Physical3DParameter(PartialType.LAMBDA3D, new FullPosition(0, 0, 6371),  1.);
-        UnknownParameter l2 = new Physical3DParameter(PartialType.LAMBDA3D, new FullPosition(2, 0, 6371),  1.);
-        UnknownParameter l3 = new Physical3DParameter(PartialType.LAMBDA3D, new FullPosition(4, 0, 6371),  1.);
+        UnknownParameter l1 = new Physical3DParameter(VariableType.LAMBDA, new FullPosition(0, 0, 6371),  1.);
+        UnknownParameter l2 = new Physical3DParameter(VariableType.LAMBDA, new FullPosition(2, 0, 6371),  1.);
+        UnknownParameter l3 = new Physical3DParameter(VariableType.LAMBDA, new FullPosition(4, 0, 6371),  1.);
         params.add(l1);
         params.add(l2);
         params.add(l3);
@@ -331,7 +331,7 @@ public class ModelCovarianceMatrix {
                         cmV = 0.;
                 }
 
-                if (!parameters.get(i).getPartialType().equals(parameters.get(j).getPartialType())) {
+                if (!parameters.get(i).getVariableType().equals(parameters.get(j).getVariableType())) {
                     cm.setEntry(i, j, 0.);
                     cm.setEntry(j, i, 0.);
                 }
@@ -570,7 +570,6 @@ public class ModelCovarianceMatrix {
             double lon = Double.parseDouble(ss[2]);
             double r = Double.parseDouble(ss[3]);
             double sensitivity = Double.parseDouble(ss[4]);
-            PartialType type = PartialType.valueOf(ss[0]);
 
             double weight = 1. / sensitivity;
             if (weight > 3)

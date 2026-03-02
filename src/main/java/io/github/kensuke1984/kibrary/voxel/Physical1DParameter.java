@@ -2,7 +2,6 @@ package io.github.kensuke1984.kibrary.voxel;
 
 import io.github.kensuke1984.kibrary.elastic.VariableType;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
-import io.github.kensuke1984.kibrary.util.spc.PartialType;
 
 /**
  * Elastic parameter in a 1-D layer.
@@ -12,7 +11,7 @@ import io.github.kensuke1984.kibrary.util.spc.PartialType;
  * This class is <b>IMMUTABLE</b>
  *
  * @author Kensuke Konishi
- * @since version 0.0.3
+ * @since a long time ago
  */
 public class Physical1DParameter implements UnknownParameter {
     private static final ParameterType PARAMETER_TYPE = ParameterType.LAYER;
@@ -23,13 +22,6 @@ public class Physical1DParameter implements UnknownParameter {
 
     public static Physical1DParameter constructFromParts(String[] parts) {
         return new Physical1DParameter(VariableType.valueOf(parts[1]), Double.parseDouble(parts[2]), Double.parseDouble(parts[3]));
-    }
-
-    @Deprecated
-    public Physical1DParameter(PartialType partialType, double layerRadius, double size) {
-        this.variableType = partialType.toVariableType();
-        this.layerRadius = layerRadius;
-        this.size = size;
     }
 
     public Physical1DParameter(VariableType variableType, double layerRadius, double size) {
@@ -67,12 +59,6 @@ public class Physical1DParameter implements UnknownParameter {
         if (variableType != other.variableType)
             return false;
         return true;
-    }
-
-    @Override
-    @Deprecated
-    public PartialType getPartialType() {
-        return PartialType.of(PARAMETER_TYPE, variableType);
     }
 
     @Override

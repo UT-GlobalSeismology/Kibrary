@@ -29,12 +29,14 @@ import org.apache.commons.io.input.CloseShieldInputStream;
 import org.apache.commons.mail.DefaultAuthenticator;
 import org.apache.commons.mail.Email;
 import org.apache.commons.mail.SimpleEmail;
+import org.apache.commons.math3.util.FastMath;
 
 import io.github.kensuke1984.kibrary.Environment;
 
 /**
  * Utilities for handling gadgets such as mail, clipboard, or Strings.
  *
+ * @author otsuru
  * @since 2021/11/21 - created when Utilities.java was split up.
  */
 public final class GadgetAid {
@@ -51,7 +53,7 @@ public final class GadgetAid {
         MessageDigest md = MessageDigest.getInstance(algorithm);
         try (DigestInputStream digestInputStream = new DigestInputStream(
                 new BufferedInputStream(Files.newInputStream(path)), md)) {
-            while (digestInputStream.read() != -1) ;
+            while (digestInputStream.read() != -1);
         }
         StringBuilder result = new StringBuilder();
         for (byte b : md.digest())
@@ -112,8 +114,8 @@ public final class GadgetAid {
 
     /**
      * Reads input from standard input.
-     * @return (String) Value read from standard input (System.in)
-     * @throws IOException if any
+     * @return (String) Value read from standard input (System.in).
+     * @throws IOException
      */
     public static String readInputLine() throws IOException {
         String s;
@@ -125,9 +127,9 @@ public final class GadgetAid {
 
     /**
      * Reads input from user. Attempt for input dialog is made first; when it fails, standard input is used.
-     * @param message (String) Message for user
-     * @param initialValue (String) Initial value to show in input field
-     * @return (String) Input from user, trimmed
+     * @param message (String) Message for user.
+     * @param initialValue (String) Initial value to show in input field.
+     * @return (String) Input from user, trimmed.
      * @throws IOException
      *
      * @author otsuru
@@ -146,8 +148,8 @@ public final class GadgetAid {
 
     /**
      * Reads input from user. Attempt for input dialog is made first; when it fails, standard input is used.
-     * @param message (String) Message for user
-     * @return (String) Input from user, trimmed
+     * @param message (String) Message for user.
+     * @return (String) Input from user, trimmed.
      * @throws IOException
      *
      * @author otsuru
@@ -168,8 +170,8 @@ public final class GadgetAid {
 
     /**
      * Print a message into both a file and the standard error.
-     * @param pw (PrintWriter)
-     * @param output (String) message to print
+     * @param pw (PrintWriter) Where to print.
+     * @param output (String) Message to print.
      *
      * @author otsuru
      * @since 2021/12/27
@@ -189,12 +191,12 @@ public final class GadgetAid {
      * is j-th degit in the i-th pattern
      */
     public static double[][] makePatterns(int num, double[] values) {
-        int patternN = (int) Math.pow(values.length, num);
+        int patternN = (int) FastMath.pow(values.length, num);
         double[][] patterns = new double[patternN][num];
         int i = 0;
         do {
             for (int j = 0; j < num; j++)
-                patterns[i][j] = values[(i / (int) Math.pow(values.length, j)) % values.length];
+                patterns[i][j] = values[(i / (int) FastMath.pow(values.length, j)) % values.length];
         } while (++i < patternN);
         return patterns;
     }
@@ -202,8 +204,8 @@ public final class GadgetAid {
     /**
      * Change the input to an intelligible expression.
      *
-     * @param nanoSeconds [ns] time
-     * @return ?d, ?h, ?min and ?s
+     * @param nanoSeconds (long) Time [ns].
+     * @return (String) "?d, ?h, ?min and ?s".
      */
     public static String toTimeString(long nanoSeconds) {
         long used = 0;
@@ -214,14 +216,13 @@ public final class GadgetAid {
         long mins = TimeUnit.NANOSECONDS.toMinutes(nanoSeconds - used);
         used += TimeUnit.MINUTES.toNanos(mins);
         double sec = (nanoSeconds - used) / 1000000000.0;
-        return (days == 0 ? "" : days + "d, ") + (hours == 0 ? "" : hours + "h, ")
-                + (mins == 0 ? "" : mins + " min and ") + sec + " s";
+        return (days == 0 ? "" : days + " d ") + (hours == 0 ? "" : hours + " h ")
+                + (mins == 0 ? "" : mins + " m ") + sec + " s";
     }
 
     /**
-     * Create a string for temporary files or w/e
-     *
-     * @return yyyyMMddHHmmss
+     * Generate date string to append to folder or file names.
+     * @return (String) yyyyMMddHHmmss.
      */
     public synchronized static String getTemporaryString() {
         try {

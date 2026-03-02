@@ -14,7 +14,7 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
 import io.github.kensuke1984.kibrary.Summon;
-import io.github.kensuke1984.kibrary.util.GadgetAid;
+import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.InformationFileReader;
 
 /**
@@ -22,7 +22,6 @@ import io.github.kensuke1984.kibrary.util.InformationFileReader;
  * <p>
  * Odd lines: (int) value of limit of interval.
  * Even lines: name of color.
- * <p>
  *
  * @author otsuru
  * @since 2022/6/24
@@ -82,11 +81,11 @@ public class ColorBinInformationFile {
     }
 
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     /**
      * Creates a template color bin information file.
-     *
-     * @param args
+     * @param args Options.
      * @throws IOException if an I/O error occurs
      */
     public static void main(String[] args) throws IOException {
@@ -108,15 +107,17 @@ public class ColorBinInformationFile {
         // input
         OptionGroup inputOption = new OptionGroup();
         inputOption.addOption(Option.builder("d").longOpt("distance")
-                .desc("Bin by epicentral distance").build());
+                .desc("Bin by epicentral distance.").build());
         inputOption.addOption(Option.builder("a").longOpt("azimuth")
-                .desc("Bin by azimuth").build());
+                .desc("Bin by azimuth.").build());
         inputOption.setRequired(true);
         options.addOptionGroup(inputOption);
 
         // output
-        options.addOption(Option.builder("o").longOpt("output").hasArg().argName("outputFile")
-                .desc("Set path of output file").build());
+        options.addOption(Option.builder("T").longOpt("tag").hasArg().argName("fileTag")
+                .desc("A tag to include in output file name.").build());
+        options.addOption(Option.builder("O").longOpt("omitDate")
+                .desc("Omit date string in output file name.").build());
 
         return options;
     }
@@ -127,26 +128,28 @@ public class ColorBinInformationFile {
      * @throws IOException
      */
     public static void run(CommandLine cmdLine) throws IOException {
+        String fileTag = cmdLine.hasOption("T") ? cmdLine.getOptionValue("T") : null;
+        boolean appendFileDate = !cmdLine.hasOption("O");
+        Path outputPath = DatasetAid.generateOutputFilePath(Paths.get(""), "colorBin", fileTag, appendFileDate, null, ".inf");
 
-        Path outputPath = cmdLine.hasOption("o") ? Paths.get(cmdLine.getOptionValue("o"))
-                : Paths.get("colorBin" + GadgetAid.getTemporaryString() + ".inf");
-
+        // decide colors
         int values[];
         String colors[];
         if (cmdLine.hasOption("d")) {
-            int values0[] = {70, 80, 90, 100};
+            int values0[] = {70, 75, 80, 85, 90, 95, 100};
             values = values0;
-            String colors0[] = {"green", "blue", "purple"};
+            String colors0[] = {"red", "orange", "green", "cyan", "blue", "purple"};
             colors = colors0;
         } else if (cmdLine.hasOption("a")) {
             int values0[] = {0, 45, 90, 135, 180, 225, 270, 315, 360};
             values = values0;
-            String colors0[] = {"darkorange", "green", "blue", "purple", "darkorange", "green", "blue", "purple"};
+            String colors0[] = {"cyan", "gold", "blue", "red", "cyan", "gold", "blue", "red"};
             colors = colors0;
         } else {
             throw new IllegalArgumentException();
         }
 
+        // output
         write(values, colors, outputPath);
     }
 }

@@ -6,16 +6,14 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
+import io.github.kensuke1984.kibrary.timewindow.TimeWindowData;
 import io.github.kensuke1984.kibrary.util.data.DataEntry;
 import io.github.kensuke1984.kibrary.util.data.DataEntryListFile;
 import io.github.kensuke1984.kibrary.util.data.Observer;
@@ -24,57 +22,102 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.sac.SACExtension;
 import io.github.kensuke1984.kibrary.util.sac.SACFileAccess;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
+import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
 
 /**
- * Utilities for handling a dataset folder that includes event folders.
+ * Utilities for handling datasets and their corresponding folders and files.
  *
+ * @author otsuru
  * @since 2021/11/21 - created when Utilities.java was split up.
  */
 public final class DatasetAid {
 
     /**
-     * @param workPath (Path) Path to create the output folder under
-     * @param nameRoot (String) First part of output folder name
+     * Create a new output folder in specified path, with specified name root, tag, and date string.
+     * Fails if a folder with the same name, including the same date string, already exists.
+     * @param workPath (Path) Path to create the output folder under.
+     * @param nameRoot (String) First part of output folder name.
      * @param tag (String) Additional comment to include in folder name. If null, this part will be excluded.
-     * @param dateStr (String) The date string part of output folder name
-     * @return (Path) Path of created output folder
+     * @param appendDate (boolean) Whether to append the date string in output folder name.
+     *    Even if this is false, the date string will be appended if a folder with same name already exists.
+     * @param inputDateString (String) The date string part of output folder name. When null, a new one will be generated.
+     * @return (Path) Path of created output folder.
      * @throws IOException
      *
      * @author otsuru
      * @since 2022/4/13
      */
-    public static Path createOutputFolder(Path workPath, String nameRoot, String tag, String dateStr) throws IOException {
-        Path outPath;
-        if (tag == null) outPath = workPath.resolve(nameRoot + dateStr);
-        else outPath = workPath.resolve(nameRoot + "_" + tag + "_" + dateStr);
+    public static Path createOutputFolder(Path workPath, String nameRoot, String tag, boolean appendDate, String inputDateString) throws IOException {
+        String dateString = (inputDateString != null) ? inputDateString : GadgetAid.getTemporaryString();
+        String nondatedName = (tag == null) ? nameRoot : nameRoot + "_" + tag;
+        String datedName = (tag == null) ? nameRoot + dateString : nameRoot + "_" + tag + "_" + dateString;
 
+        // decide which output folder name to use
+        // Even if appendDate is false, append date string if a folder with same name already exists.
+        Path outPath;
+        if (appendDate == false) {
+            outPath = workPath.resolve(nondatedName);
+            if (Files.exists(outPath)) {
+                System.err.println("! " + outPath + " exists; appending date string.");
+                outPath = workPath.resolve(datedName);
+            }
+        } else {
+            outPath = workPath.resolve(datedName);
+        }
+
+        // check that a folder with same name does not exist
+        if (Files.exists(outPath)) throw new IllegalStateException(outPath + " already exists!");
+
+        // create folder
         Files.createDirectories(outPath);
         System.err.println("Output folder is " + outPath);
         return outPath;
     }
 
     /**
-     * @param nameRoot (String) First part of output file name
+     * Generates the name of a file with specified name root, tag, and date string.
+     * Fails if a file with the same name, including the same date string, already exists.
+     * @param workPath (Path) Path to create the output file under.
+     * @param nameRoot (String) First part of output file name.
      * @param tag (String) Additional comment to include in file name. If null, this part will be excluded.
-     * @param dateStr (String) The date string part of output file name
-     * @param extension (String)
-     * @return (String) Generated name of file
+     * @param appendDate (boolean) Whether to append the date string in output file name.
+     *    Even if this is false, the date string will be appended if a file with same name already exists.
+     * @param inputDateString (String) The date string part of output file name. When null, a new one will be generated.
+     * @param extension (String) File extension.
+     * @return (Path) Generated path of file.
      *
      * @author otsuru
      * @since 2022/4/13
      */
-    public static String generateOutputFileName(String nameRoot, String tag, String dateStr, String extension) {
-        String fileName;
-        if (tag == null) fileName = nameRoot + dateStr + extension;
-        else fileName = nameRoot + "_" + tag + "_" + dateStr + extension;
-        return fileName;
+    public static Path generateOutputFilePath(Path workPath, String nameRoot, String tag, boolean appendDate, String inputDateString, String extension) {
+        String dateString = (inputDateString != null) ? inputDateString : GadgetAid.getTemporaryString();
+        String nondatedName = ((tag == null) ? nameRoot : nameRoot + "_" + tag) + extension;
+        String datedName = ((tag == null) ? nameRoot + dateString : nameRoot + "_" + tag + "_" + dateString) + extension;
+
+        // decide which output file name to use
+        // Even if appendDate is false, append date string if a file with same name already exists.
+        Path outPath;
+        if (appendDate == false) {
+            outPath = workPath.resolve(nondatedName);
+            if (Files.exists(outPath)) {
+                System.err.println("! " + outPath + " exists; appending date string.");
+                outPath = workPath.resolve(datedName);
+            }
+        } else {
+            outPath = workPath.resolve(datedName);
+        }
+
+        // check that a file with same name does not exist
+        if (Files.exists(outPath)) throw new IllegalStateException(outPath + " already exists!");
+
+        return outPath;
     }
 
     /**
-     * Collect GlobalCMTIDs of event folders that exist under a given folder.
-     * @param path {@link Path} for search of {@link GlobalCMTID}
-     * @return <b>unmodifiable</b> Set of Global CMT IDs in the path
-     * @throws IOException if an I/O error occurs
+     * Collect {@link GlobalCMTID}s of event folders that exist under a given folder.
+     * @param path (Path) Folder in which to search {@link GlobalCMTID}s.
+     * @return (Set of {@link GlobalCMTID}) IDs of event folders.
+     * @throws IOException
      */
     public static Set<GlobalCMTID> globalCMTIDSet(Path path) throws IOException {
         // CAUTION: Files.list() must be in try-with-resources.
@@ -86,10 +129,10 @@ public final class DatasetAid {
     }
 
     /**
-     * Collect EventFolders that exist under a given folder.
-     * @param path Path of a folder containing event folders.
-     * @return Set of {@link EventFolder} in the workPath
-     * @throws IOException if an I/O error occurs
+     * Collect {@link EventFolder}s that exist under a given folder.
+     * @param path (Path) Folder containing event folders.
+     * @return (Set of {@link EventFolder}) Found folders.
+     * @throws IOException
      */
     public static Set<EventFolder> eventFolderSet(Path path) throws IOException {
         // CAUTION: Files.list() must be in try-with-resources.
@@ -101,10 +144,10 @@ public final class DatasetAid {
 
     /**
      * Checks whether a given number of some object is non-zero, and displays the number.
-     * @param num (int) Number of some object
-     * @param singular (String) Singular form of name of object
-     * @param plural (String) Plural form of name of object
-     * @return  (boolean) true of the number is non-zero
+     * @param num (int) Number of some object.
+     * @param singular (String) Singular form of name of object.
+     * @param plural (String) Plural form of name of object.
+     * @return (boolean) Whether the number is non-zero.
      *
      * @author otsuru
      * @since 2021/11/25
@@ -120,12 +163,44 @@ public final class DatasetAid {
     }
 
     /**
+     * Displays the number of some object read from an input file.
+     * @param num (int) Number of some object.
+     * @param singular (String) Singular form of name of object.
+     * @param plural (String) Plural form of name of object.
+     * @param inputPath (Path) Input file.
+     *
+     * @author otsuru
+     * @since 2023/3/24
+     */
+    public static void printNumInput(int num, String singular, String plural, Path inputPath) {
+        if (num == 0) {
+            System.err.println("No " + plural + " found in " + inputPath);
+        } else {
+            System.err.println(MathAid.switchSingularPlural(num, singular + " is", plural + " are") + " found in " + inputPath);
+        }
+    }
+
+    /**
+     * Displays the number of some object that is to be written in an output file.
+     * @param num (int) Number of some object.
+     * @param singular (String) Singular form of name of object.
+     * @param plural (String) Plural form of name of object.
+     * @param outputPath (Path) Output file.
+     *
+     * @author otsuru
+     * @since 2023/3/24
+     */
+    public static void printNumOutput(int num, String singular, String plural, Path outputPath) {
+        System.err.println("Outputting " + MathAid.switchSingularPlural(num, singular, plural) + " in " + outputPath);
+    }
+
+    /**
      * Collect all SAC files inside event folders under a given folder.
      * Errors in reading each event folder is just noticed. Such event folders will be ignored.
      *
-     * @param path of a folder containing event folders which have SAC files.
-     * @return <b>Unmodifiable</b> Set of sac file names in event folders under the path
-     * @throws IOException if an I/O error occurs.
+     * @param path (Path) Folder containing event folders which have SAC files.
+     * @return (Set of {@link SACFileName}) Sac file names in event folders under the path.
+     * @throws IOException
      */
     public static Set<SACFileName> sacFileNameSet(Path path) throws IOException {
         Set<SACFileName> sacNameSet = Collections.unmodifiableSet(eventFolderSet(path).stream().flatMap(eDir -> {
@@ -139,30 +214,6 @@ public final class DatasetAid {
 
         checkNum(sacNameSet.size(), "sac file", "sac files");
         return sacNameSet;
-    }
-
-    /**
-     * Move SAC files that satisfies sacPredicate in event folders under the
-     * path
-     *
-     * @param path      working path
-     * @param predicate if true with a sacfile in event folders, the file is moved to
-     *                  the directory.
-     * @throws InterruptedException if the process takes over 30 minutes
-     * @throws IOException          if an I/O error occurs
-     */
-    public static void moveSacfile(Path path, Predicate<SACFileName> predicate)
-            throws IOException, InterruptedException {
-        String directoryName = "movedSacfiles" + GadgetAid.getTemporaryString();
-        // System.out.println(directoryName);
-        Consumer<EventFolder> moveProcess = eventDirectory -> {
-            try {
-                eventDirectory.moveSacFile(predicate, eventDirectory.toPath().resolve(directoryName));
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        };
-        ThreadAid.runEventProcess(path, moveProcess, 30, TimeUnit.MINUTES);
     }
 
     /**
@@ -189,6 +240,7 @@ public final class DatasetAid {
                 Set<Observer> observers = entryMap.get(event).stream()
                         .filter(entry -> components.contains(entry.getComponent()))
                         .map(DataEntry::getObserver).collect(Collectors.toSet());
+                observers = removeObserversWithSameName(event, observers);
                 arcMap.put(event, observers);
             }
         } else if (obsPath != null){
@@ -199,6 +251,7 @@ public final class DatasetAid {
                         .filter(name -> name.isOBS() && components.contains(name.getComponent()))
                         .map(name -> name.readHeaderWithNullOnFailure()).filter(Objects::nonNull)
                         .map(Observer::of).collect(Collectors.toSet());
+                observers = removeObserversWithSameName(eventDir.getGlobalCMTID(), observers);
                 arcMap.put(eventDir.getGlobalCMTID(), observers);
             }
         } else {
@@ -208,7 +261,32 @@ public final class DatasetAid {
     }
 
     /**
-     * An abstract class that can be used to execute tasks in filtered datasets for a set of timewindows.
+     * For a single event, there should not be multiple observers with same name and different position;
+     * so remove any duplications.
+     * @param event
+     * @param observers
+     * @return
+     *
+     * @author otsuru
+     * @since 2024/3/27
+     */
+    private static Set<Observer> removeObserversWithSameName(GlobalCMTID event, Set<Observer> observers) {
+        Set<String> observerNames = new HashSet<>();
+        Set<String> duplicateNames = new HashSet<>();
+        // For each observer, add its name to Set; if it cannot be added, that name is duplicated.
+        for (Observer observer : observers) {
+            String observerName = observer.toString();
+            if (observerNames.add(observerName) == false) {
+                System.err.println("!! Duplication of " + observerName + " in " + event + ", ignoring.");
+                duplicateNames.add(observerName);
+            }
+        }
+        // remove observers that have duplicated name
+        return observers.stream().filter(observer -> !duplicateNames.contains(observer.toString())).collect(Collectors.toSet());
+    }
+
+    /**
+     * An abstract class that can be used to execute tasks in filtered datasets for a set of time windows.
      * @author otsuru
      * @since 2022/6/20
      */
@@ -217,23 +295,26 @@ public final class DatasetAid {
         private Path obsEventPath;
         private Path synEventPath;
         private boolean convolved;
-        private Set<TimewindowData> sourceTimewindowSet;
+        private double sacSamplingHz;
+        private Set<TimeWindowData> sourceTimeWindowSet;
 
-        public FilteredDatasetWorker(GlobalCMTID eventID, Path obsPath, Path synPath, boolean convolved, Set<TimewindowData> sourceTimewindowSet) {
+        public FilteredDatasetWorker(GlobalCMTID eventID, Path obsPath, Path synPath, boolean convolved,
+                double sacSamplingHz, Set<TimeWindowData> sourceTimeWindowSet) {
             this.eventID = eventID;
             obsEventPath = obsPath.resolve(eventID.toString());
             synEventPath = synPath.resolve(eventID.toString());
             this.convolved = convolved;
-            this.sourceTimewindowSet = sourceTimewindowSet;
+            this.sacSamplingHz = sacSamplingHz;
+            this.sourceTimeWindowSet = sourceTimeWindowSet;
         }
 
         /**
-         * A class to implement the actual work that needs to be done to each timewindow
-         * @param timewindow
+         * A method to implement the actual work that needs to be done to each time window.
+         * @param timeWindow
          * @param obsSac
          * @param synSac
          */
-        public abstract void actualWork(TimewindowData timewindow, SACFileAccess obsSac, SACFileAccess synSac);
+        public abstract void actualWork(TimeWindowData timeWindow, SACFileAccess obsSac, SACFileAccess synSac);
 
         @Override
         public void run() {
@@ -247,12 +328,12 @@ public final class DatasetAid {
             }
 
             // pick out time windows of this event
-            Set<TimewindowData> timewindows = sourceTimewindowSet.stream()
+            Set<TimeWindowData> timeWindows = sourceTimeWindowSet.stream()
                     .filter(info -> info.getGlobalCMTID().equals(eventID)).collect(Collectors.toSet());
 
-            for (TimewindowData timewindow : timewindows) {
-                Observer observer = timewindow.getObserver();
-                SACComponent component = timewindow.getComponent();
+            for (TimeWindowData timeWindow : timeWindows) {
+                Observer observer = timeWindow.getObserver();
+                SACComponent component = timeWindow.getComponent();
 
                 // get observed data
                 SACExtension obsExt = SACExtension.valueOfObserved(component);
@@ -273,8 +354,8 @@ public final class DatasetAid {
                 }
 
                 // get synthetic data
-                SACExtension synExt = convolved ? SACExtension.valueOfConvolutedSynthetic(component)
-                        : SACExtension.valueOfSynthetic(component);
+                SACExtension synExt = convolved ? SACExtension.valueOfConvolutedSynthetic(component) :
+                        SACExtension.valueOfSynthetic(component);
                 SACFileName synName = new SACFileName(synEventPath.resolve(SACFileName.generate(observer, eventID, synExt)));
                 if (!synName.exists()) {
                     System.err.println();
@@ -291,10 +372,26 @@ public final class DatasetAid {
                     continue;
                 }
 
-                actualWork(timewindow, obsSac, synSac);
+                // check delta
+                double delta = MathAid.roundForPrecision(1.0 / sacSamplingHz);
+                if (delta != obsSac.getValue(SACHeaderEnum.DELTA) || delta != synSac.getValue(SACHeaderEnum.DELTA)) {
+                    System.err.println();
+                    System.err.println("!! Deltas are invalid, skipping: " + timeWindow);
+                    System.err.println("   Obs " + obsSac.getValue(SACHeaderEnum.DELTA)
+                            + " , Syn " + synSac.getValue(SACHeaderEnum.DELTA) + " ; must be " + delta);
+                    continue;
+                }
+
+                actualWork(timeWindow, obsSac, synSac);
             }
 
+            finalWork();
             System.err.print(".");
         }
+
+        /**
+         * A method to implement some final work that needs to be done, if any.
+         */
+        public void finalWork() {}
     }
 }

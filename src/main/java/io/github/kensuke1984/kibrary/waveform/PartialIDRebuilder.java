@@ -17,10 +17,9 @@ import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.elastic.VariableType;
 import io.github.kensuke1984.kibrary.math.Trace;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
+import io.github.kensuke1984.kibrary.timewindow.TimeWindowData;
+import io.github.kensuke1984.kibrary.timewindow.TimeWindowDataFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
-import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.data.DataEntry;
 import io.github.kensuke1984.kibrary.util.data.DataEntryListFile;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
@@ -49,6 +48,10 @@ public class PartialIDRebuilder extends Operation {
          * A tag to include in output folder name. When this is empty, no tag is used.
          */
         private String folderTag;
+        /**
+         * Whether to append date string at end of output folder name.
+         */
+        private boolean appendFolderDate;
         /**
          * components to be used
          */
@@ -81,15 +84,17 @@ public class PartialIDRebuilder extends Operation {
 
         private List<PartialID> partialIDs;
 
-    public static void writeDefaultPropertiesFile() throws IOException {
-        Class<?> thisClass = new Object(){}.getClass().getEnclosingClass();
-        Path outPath = Property.generatePath(thisClass);
+    public static void writeDefaultPropertiesFile(String tag) throws IOException {
+        String className = new Object(){}.getClass().getEnclosingClass().getSimpleName();
+        Path outPath = DatasetAid.generateOutputFilePath(Paths.get(""), className, tag, true, null, ".properties");
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
-            pw.println("manhattan " + thisClass.getSimpleName());
+            pw.println("manhattan " + className);
             pw.println("##Path of a work folder (.)");
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this unset.");
             pw.println("#folderTag ");
+            pw.println("##(boolean) Whether to append date string at end of output folder name. (true)");
+            pw.println("#appendFolderDate false");
             pw.println("##SacComponents to be used, listed using spaces (Z R T)");
             pw.println("#components ");
             pw.println("##Path of a partial waveform folder, must be set.");
@@ -116,6 +121,7 @@ public class PartialIDRebuilder extends Operation {
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
         if (property.containsKey("folderTag")) folderTag = property.parseStringSingle("folderTag", null);
+        appendFolderDate = property.parseBoolean("appendFolderDate", "true");
         components = Arrays.stream(property.parseStringArray("components", "Z R T"))
                 .map(SACComponent::valueOf).collect(Collectors.toSet());
         partialPath = property.parsePath("partialPath", null, true, workPath);
@@ -160,7 +166,7 @@ public class PartialIDRebuilder extends Operation {
         if (partialIDs.size() == 0) return;
 
         // prepare output folder
-        Path outPath = DatasetAid.createOutputFolder(workPath, "rebuilt", folderTag, GadgetAid.getTemporaryString());
+        Path outPath = DatasetAid.createOutputFolder(workPath, "rebuilt", folderTag, appendFolderDate, null);
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         // output
@@ -203,9 +209,9 @@ public class PartialIDRebuilder extends Operation {
         List<PartialID> cutPartialIDs = new ArrayList<>();
 
         //read timewindow file and select based on component and entries
-        Set<TimewindowData> timewindowSet = TimewindowDataFile.readAndSelect(timewindowPath, dataEntryPath, components);
+        Set<TimeWindowData> timewindowSet = TimeWindowDataFile.readAndSelect(timewindowPath, dataEntryPath, components);
 
-        for (TimewindowData timewindow : timewindowSet) {
+        for (TimeWindowData timewindow : timewindowSet) {
             // select corresponding partialIDs with timewindow
             List<PartialID> correspondingIDs = partialIDs.stream().filter(id ->
                 timewindow.getGlobalCMTID().equals(id.getGlobalCMTID()) && timewindow.getObserver().equals(id.getObserver()) &&

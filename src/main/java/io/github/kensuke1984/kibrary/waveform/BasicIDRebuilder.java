@@ -21,10 +21,9 @@ import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.math.Trace;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
+import io.github.kensuke1984.kibrary.timewindow.TimeWindowData;
+import io.github.kensuke1984.kibrary.timewindow.TimeWindowDataFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
-import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.data.DataEntry;
 import io.github.kensuke1984.kibrary.util.data.DataEntryListFile;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
@@ -37,7 +36,7 @@ import io.github.kensuke1984.kibrary.util.sac.WaveformType;
  * as well as for preparation of bootstrap or subsampling tests.
  * <p>
  * To select BasicIDs of certain raypaths, supply with a {@link DataEntryListFile} including a list of raypaths to be selected.
- * Timewindows may be also selected by the phases that they must include.
+ * Time windows may be also selected by the phases that they must include.
  * Each waveform can be re-cut depending on the input wimewindow file.
  *
  * @author otsuru
@@ -47,7 +46,7 @@ public class BasicIDRebuilder extends Operation {
 
     private final Property property;
     /**
-     * Path of the work folder
+     * Path of the work folder.
      */
     private Path workPath;
     /**
@@ -55,12 +54,16 @@ public class BasicIDRebuilder extends Operation {
      */
     private String folderTag;
     /**
-     * components to be included in the dataset
+     * Whether to append date string at end of output folder name.
+     */
+    private boolean appendFolderDate;
+    /**
+     * Components to use.
      */
     private Set<SACComponent> components;
 
     /**
-     * path of basic waveform folder
+     * Path of basic waveform folder.
      */
     private Path basicPath;
     /**
@@ -68,67 +71,68 @@ public class BasicIDRebuilder extends Operation {
      */
     private Path timewindowPath;
     /**
-     * Path of a data entry file for selection
+     * Path of a data entry file for selection.
      */
     private Path dataEntryPath;
 
     /**
-     * Phases that must be included in timewindows to be selected
+     * Phases that must be included in time windows to be selected.
      */
     private String[] requiredPhases;
     /**
-     * Whether to choose BasicIDs with duplication
-     */
-    private boolean bootstrap;
-    /**
-     * How many of the BasicIDs to sample [%] (100% is the total number after selection)
+     * How much of the data to sample [%]. (100% is the total number after the other selections.)
      */
     private double subsamplingPercent;
     /**
-     * Whether susmapling event, if not, subsampling records
+     * Whether to choose by events instead of basic IDs.
      */
-    private boolean samplingEvent;
+    private boolean selectByEvents;
+    /**
+     * Whether to choose with duplication.
+     */
+    private boolean duplication;
 
     private List<BasicID> obsIDs;
     private List<BasicID> synIDs;
 
-
     /**
-     * @param args  none to create a property file <br>
-     *              [property file] to run
-     * @throws IOException if any
+     * @param args (String[]) Arguments: none to create a property file, path of property file to run it.
+     * @throws IOException
      */
     public static void main(String[] args) throws IOException {
-        if (args.length == 0) writeDefaultPropertiesFile();
+        if (args.length == 0) writeDefaultPropertiesFile(null);
         else Operation.mainFromSubclass(args);
     }
 
-    public static void writeDefaultPropertiesFile() throws IOException {
-        Class<?> thisClass = new Object(){}.getClass().getEnclosingClass();
-        Path outPath = Property.generatePath(thisClass);
+    public static void writeDefaultPropertiesFile(String tag) throws IOException {
+        String className = new Object(){}.getClass().getEnclosingClass().getSimpleName();
+        Path outPath = DatasetAid.generateOutputFilePath(Paths.get(""), className, tag, true, null, ".properties");
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
-            pw.println("manhattan " + thisClass.getSimpleName());
-            pw.println("##Path of a work folder (.)");
+            pw.println("manhattan " + className);
+            pw.println("##Path of work folder. (.)");
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this unset.");
             pw.println("#folderTag ");
-            pw.println("##SacComponents to be used, listed using spaces (Z R T)");
+            pw.println("##(boolean) Whether to append date string at end of output folder name. (true)");
+            pw.println("#appendFolderDate false");
+            pw.println("##SacComponents to be used, listed using spaces. (Z R T)");
             pw.println("#components ");
-            pw.println("##Path of a basic waveform folder, must be set");
+            pw.println("##Path of a basic waveform folder, must be set.");
             pw.println("#basicPath actual");
             pw.println("##Path of a timewindow file, if you want to re-cut waveforms");
             pw.println("#timewindowPath ");
-            pw.println("##Path of a data entry list file, if you want to select raypaths");
+            pw.println("##Path of a data entry list file, if you want to select raypaths.");
             pw.println("#dataEntryPath selectedEntry.lst");
-            pw.println("##Phases to be included in timewindows to use, listed using spaces. To use all phases, leave this unset.");
+            pw.println("##Phases to be included in time windows to use, listed using spaces. To use all phases, leave this unset.");
             pw.println("#requiredPhases ");
-            pw.println("##(boolean) Perform a bootstrap test (false)");
-            pw.println("#bootstrap ");
-            pw.println("##(double) Percent of basic IDs to use in subsampling test (100)");
-            pw.println("## Here, 100% is the number of basic IDs after selection.");
+            pw.println("##########Settings for subsampling test.");
+            pw.println("##(double) Percent to use in subsampling test. (100)");
+            pw.println("##  Here, 100% is the number after the above selections.");
             pw.println("#subsamplingPercent ");
-            pw.println("##(boolen) Subsampling events, if false, subsampling records (false)");
-            pw.println("#samplingEvent true");
+            pw.println("##(boolean) Whether to choose by events instead of basic IDs. (false)");
+            pw.println("#selectByEvents ");
+            pw.println("##(boolean) Whether to choose with duplication (for bootstrap test). (false)");
+            pw.println("#duplication ");
         }
         System.err.println(outPath + " is created.");
     }
@@ -141,6 +145,7 @@ public class BasicIDRebuilder extends Operation {
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
         if (property.containsKey("folderTag")) folderTag = property.parseStringSingle("folderTag", null);
+        appendFolderDate = property.parseBoolean("appendFolderDate", "true");
         components = Arrays.stream(property.parseStringArray("components", "Z R T"))
                 .map(SACComponent::valueOf).collect(Collectors.toSet());
 
@@ -155,12 +160,11 @@ public class BasicIDRebuilder extends Operation {
         if (property.containsKey("requiredPhases"))
             requiredPhases = property.parseStringArray("requiredPhases", null);
 
-        bootstrap = property.parseBoolean("bootstrap", "false");
         subsamplingPercent = property.parseDouble("subsamplingPercent", "100");
         if (subsamplingPercent < 0)
             throw new IllegalArgumentException("subsamplingPercent must be positive.");
-        samplingEvent = property.parseBoolean("samplingEvent", "false");
-
+        selectByEvents = property.parseBoolean("selectByEvents", "false");
+        duplication = property.parseBoolean("duplication", "false");
     }
 
     @Override
@@ -169,7 +173,7 @@ public class BasicIDRebuilder extends Operation {
                 .filter(id -> components.contains(id.getSacComponent())).collect(Collectors.toList());
 
         // sort observed and synthetic
-        BasicIDPairUp pairer = new BasicIDPairUp(basicIDs);
+        BasicIDPairUp pairer = new BasicIDPairUp(basicIDs, true);
         obsIDs = pairer.getObsList();
         synIDs = pairer.getSynList();
 
@@ -182,25 +186,14 @@ public class BasicIDRebuilder extends Operation {
         // cut waveforms based on timewindow file
         if (timewindowPath != null) {
             cutWindow();
-        }
-
         // select required number of basicIDs
-        if (samplingEvent) {
-            if (bootstrap) {
-                resampleEvent(subsamplingPercent, true);
-            } else if (!Precision.equals(subsamplingPercent, 100)) {
-                resampleEvent(subsamplingPercent, false);
+        if (!Precision.equals(subsamplingPercent, 100) || duplication) {
+            if (selectByEvents) {
+                resampleIDsByEvents(subsamplingPercent, duplication);
+            } else {
+                resampleIDs(subsamplingPercent, duplication);
             }
-            if (obsIDs.size() == 0) return;
-        } else {
-            if (bootstrap) {
-                resample(subsamplingPercent, true);
-            } else if (!Precision.equals(subsamplingPercent, 100)) {
-                resample(subsamplingPercent, false);
-            }
-            if (obsIDs.size() == 0) return;
         }
-
 
         // collect all selected basicIDs
         List<BasicID> finalList = new ArrayList<>();
@@ -208,12 +201,11 @@ public class BasicIDRebuilder extends Operation {
         finalList.addAll(synIDs);
 
         // prepare output folder
-        Path outPath = DatasetAid.createOutputFolder(workPath, "rebuilt", folderTag, GadgetAid.getTemporaryString());
+        Path outPath = DatasetAid.createOutputFolder(workPath, "rebuilt", folderTag, appendFolderDate, null);
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         // output
-        BasicIDFile.write(finalList, outPath);
-
+        BasicIDFile.write(finalList, outPath);}
     }
 
     private void selectByCriteria() throws IOException {
@@ -263,9 +255,9 @@ public class BasicIDRebuilder extends Operation {
         List<BasicID> cutSynIDs = new ArrayList<>();
 
         //read timewindow file and select based on component and entries
-        Set<TimewindowData> timewindowSet = TimewindowDataFile.readAndSelect(timewindowPath, dataEntryPath, components);
+        Set<TimeWindowData> timewindowSet = TimeWindowDataFile.readAndSelect(timewindowPath, dataEntryPath, components);
 
-        for (TimewindowData timewindow : timewindowSet) {
+        for (TimeWindowData timewindow : timewindowSet) {
             // select corresponding basicIDs with timewindow
             List<BasicID> correspondingObsIDs = obsIDs.stream().filter(id ->
                 timewindow.getGlobalCMTID().equals(id.getGlobalCMTID()) && timewindow.getObserver().equals(id.getObserver()) &&
@@ -300,7 +292,34 @@ public class BasicIDRebuilder extends Operation {
         synIDs = cutSynIDs;
     }
 
-    private void resample(double percent, boolean duplication) {
+    private void resampleIDsByEvents(double percent, boolean duplication) {
+        List<GlobalCMTID> events = obsIDs.stream().map(BasicID::getGlobalCMTID).distinct().sorted().collect(Collectors.toList());
+        int numToSample = (int) (events.size() * percent / 100);
+        List<GlobalCMTID> selectedEvents = new ArrayList<>();
+
+        if (duplication) {
+            System.err.println("Selecting " + numToSample + " events from " + events.size() + " events with duplication.");
+            Random random = new Random();
+            int[] shuffledIndices = random.ints(numToSample, 0, events.size()).toArray();
+            for (int i = 0; i < numToSample; i++) {
+//                System.err.println(shuffledIndices[i]);
+                selectedEvents.add(events.get(shuffledIndices[i]));
+            }
+        } else {
+            System.err.println("Selecting " + numToSample + " of " + events.size() + " events without duplication.");
+            List<Integer> shuffledIndices = IntStream.range(0, events.size()).boxed().collect(Collectors.toList());
+            Collections.shuffle(shuffledIndices);
+            for (int i = 0; i < numToSample; i++) {
+                selectedEvents.add(events.get(shuffledIndices.get(i)));
+            }
+        }
+
+        // extract IDs of selected events
+        obsIDs = obsIDs.stream().filter(id -> selectedEvents.contains(id.getGlobalCMTID())).collect(Collectors.toList());
+        synIDs = synIDs.stream().filter(id -> selectedEvents.contains(id.getGlobalCMTID())).collect(Collectors.toList());
+    }
+
+    private void resampleIDs(double percent, boolean duplication) {
         int numToSample = (int) (obsIDs.size() * percent / 100);
         List<BasicID> selectedObsIDs = new ArrayList<>();
         List<BasicID> selectedSynIDs = new ArrayList<>();
@@ -310,7 +329,7 @@ public class BasicIDRebuilder extends Operation {
             Random random = new Random();
             int[] shuffledIndices = random.ints(numToSample, 0, obsIDs.size()).toArray();
             for (int i = 0; i < numToSample; i++) {
-                System.err.println(shuffledIndices[i]);
+//                System.err.println(shuffledIndices[i]);
                 selectedObsIDs.add(obsIDs.get(shuffledIndices[i]));
                 selectedSynIDs.add(synIDs.get(shuffledIndices[i]));
             }
@@ -323,50 +342,6 @@ public class BasicIDRebuilder extends Operation {
                 selectedSynIDs.add(synIDs.get(shuffledIndices.get(i)));
             }
         }
-
-        // replace list by selected ones
-        obsIDs = selectedObsIDs;
-        synIDs = selectedSynIDs;
-    }
-
-    private void resampleEvent(double percent, boolean duplication) {
-        int numToSample = (int) (obsIDs.size() * percent / 100);
-        int selectedNum = 0;
-        List<GlobalCMTID> eventList = obsIDs.stream().map(BasicID::getGlobalCMTID).distinct().collect(Collectors.toList());
-        List<BasicID> selectedObsIDs = new ArrayList<>();
-        List<BasicID> selectedSynIDs = new ArrayList<>();
-
-        if (duplication) {
-            System.err.println("Subsampling events with duplication.");
-            Random random = new Random();
-            int[] shuffledIndices = random.ints(numToSample, 0, eventList.size()).toArray();
-            int i = 0;
-            while (selectedNum < numToSample) {
-                System.err.println(shuffledIndices[i]);
-                GlobalCMTID selectedEvent = eventList.get(shuffledIndices[i]);
-                List<BasicID> eventObsIDs = obsIDs.stream().filter(id -> id.getGlobalCMTID().equals(selectedEvent)).collect(Collectors.toList());
-                List<BasicID> eventSynIDs = synIDs.stream().filter(id -> id.getGlobalCMTID().equals(selectedEvent)).collect(Collectors.toList());
-                selectedObsIDs.addAll(eventObsIDs);
-                selectedSynIDs.addAll(eventSynIDs);
-                selectedNum += eventObsIDs.size();
-                i++;
-            }
-        } else {
-            System.err.println("Subsampling events without duplication.");
-            List<Integer> shuffledIndices = IntStream.range(0, eventList.size()).boxed().collect(Collectors.toList());
-            Collections.shuffle(shuffledIndices);
-            int i = 0;
-            while (selectedNum < numToSample) {
-                GlobalCMTID selectedEvent = eventList.get(shuffledIndices.get(i));
-                List<BasicID> eventObsIDs = obsIDs.stream().filter(id -> id.getGlobalCMTID().equals(selectedEvent)).collect(Collectors.toList());
-                List<BasicID> eventSynIDs = synIDs.stream().filter(id -> id.getGlobalCMTID().equals(selectedEvent)).collect(Collectors.toList());
-                selectedObsIDs.addAll(eventObsIDs);
-                selectedSynIDs.addAll(eventSynIDs);
-                selectedNum += eventObsIDs.size();
-                i++;
-            }
-        }
-        System.err.println("Selected " + selectedNum + " pairs of basic IDs.");
 
         // replace list by selected ones
         obsIDs = selectedObsIDs;

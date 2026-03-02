@@ -1,6 +1,7 @@
 package io.github.kensuke1984.kibrary.util.globalcmt;
 
 import java.io.IOException;
+import java.time.format.DateTimeFormatter;
 import java.util.regex.Pattern;
 
 import org.apache.commons.cli.CommandLine;
@@ -20,26 +21,26 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  * When a set of GlobalCMTIDs is sorted, they will be in dictionary order, not order of event time.
  *
  * @author Kensuke Konishi
- * @since version 0.1.1.2
- * @see <a href=http://www.globalcmt.org/> Global CMT project official page</a>
+ * @since a long time ago
+ * @see <a href=http://www.globalcmt.org/>Global CMT project official page</a>
  */
 public final class GlobalCMTID implements Comparable<GlobalCMTID> {
 
     /**
-     * recent Harvard ID yyyymmddhhmm[A-Za-z] 2004-
+     * Recent Harvard ID, used 2004-. yyyymmddhhmm[A-Za-z]
      */
     public static final Pattern RECENT_GLOBALCMTID_PATTERN = Pattern.compile("[0-9]{12}[A-Za-z]");
     /**
-     * previous Harvard ID mmddyy[A-Za-z] 1976-2004
+     * Previous Harvard ID, used 1976-2004. mmddyy[A-Za-z]
      */
     public static final Pattern PREVIOUS_GLOBALCMTID_PATTERN = Pattern.compile("[0-9]{6}[A-Za-z]");
 
     /**
-     * maximum length to allow for an event ID
+     * Maximum length to allow for an event ID.
      */
     public static final int MAX_LENGTH = 15;
     /**
-     * maximum length of ID
+     * Maximum length of ID.
      */
     private static final int LENGTH = 13;
 
@@ -147,12 +148,13 @@ public final class GlobalCMTID implements Comparable<GlobalCMTID> {
         return ndk;
     }
 
-    /*-------------------------------------------------------*/
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     /**
      * Displays information of input event IDs.
      * Results are written in the standard output.
-     * @param args [option]
+     * @param args Options.
      * @throws IOException if any
      */
     public static void main(String[] args) throws IOException {
@@ -171,8 +173,8 @@ public final class GlobalCMTID implements Comparable<GlobalCMTID> {
     public static Options defineOptions() {
         Options options = Summon.defaultOptions();
 
-        options.addOption(Option.builder("i").longOpt("id").hasArg().argName("id").required()
-                .desc("Global CMT IDs, listed using commas").build());
+        options.addOption(Option.builder("i").longOpt("ids").hasArg().argName("ids").required()
+                .desc("Global CMT IDs, listed using commas.").build());
         return options;
     }
 
@@ -184,6 +186,8 @@ public final class GlobalCMTID implements Comparable<GlobalCMTID> {
     public static void run(CommandLine cmdLine) throws IOException {
         String[] idStrings = cmdLine.getOptionValue("i").split(",");
         for (String idString : idStrings) {
+            System.out.println();
+
             if (!isGlobalCMTID(idString)) {
                 System.err.println(idString + " does not exist.");
                 continue;
@@ -192,10 +196,15 @@ public final class GlobalCMTID implements Comparable<GlobalCMTID> {
             GlobalCMTID id = new GlobalCMTID(idString);
             GlobalCMTAccess event = id.getEventData();
 
-            System.out.println("ID: " + id + " Mw: " + event.getCmt().getMw());
-            System.out.println("Centroid Time: " + event.getCMTTime());
-            System.out.println("Centroid location (latitude longitude radius): " + event.getCmtPosition());
+            System.out.println("ID: " + id);
+            System.out.println("Centroid time: " + event.getCMTTime().format(DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss.SS")));
+            System.out.println("Centroid position (lat lon rad dep): " + event.getCmtPosition() + " " + event.getCmtPosition().getDepth());
+            System.out.println("    " + event.getGeographicalLocationName());
+            System.out.println("Mw: " + event.getCmt().getMw());
+            System.out.println(event.getCmt().toString());
+            System.out.println("STF type & half duration: " + event.getSTFType() + " " + event.getHalfDuration());
         }
+        System.out.println();
     }
 
 }

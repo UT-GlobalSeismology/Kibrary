@@ -60,7 +60,7 @@ public class SectionBelowCMB {
 
         // network code should correspond to longitude
         Set<SACFileName> sacfilenames = eventDir.sacFileSet().stream()
-                .filter(sac -> sac.getNetworkCode().equals(longitudeStr)).collect(Collectors.toSet());
+                .filter(sac -> sac.getObserverID().split("_")[1].equals(longitudeStr)).collect(Collectors.toSet());
         System.err.println(sacfilenames.size() + " sac files found.");
 
         Path sectionEventPath = Paths.get("section").resolve(eventDir.getName());
@@ -82,7 +82,7 @@ public class SectionBelowCMB {
         for (SACFileName name : sacfilenames) {
 
             // station code should correspond to depth
-            double depth = Double.parseDouble(name.getStationCode());
+            double depth = Double.parseDouble(name.getObserverID().split("_")[0]);
 
             SACFileAccess synSac;
             try {

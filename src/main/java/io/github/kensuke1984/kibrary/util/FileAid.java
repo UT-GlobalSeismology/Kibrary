@@ -28,6 +28,7 @@ import org.apache.commons.io.IOUtils;
 /**
  * Utilities to handle files.
  *
+ * @author otsuru
  * @since 2021/11/21 - created when Utilities.java was split up.
  */
 public final class FileAid {
@@ -36,8 +37,8 @@ public final class FileAid {
     /**
      * Given a Path, this method extracts the root of the name of the file.
      * The path of parent folders and the extension of the file is removed.
-     * @param filePath (Path) The file to extract name root
-     * @return (String) File name root
+     * @param filePath (Path) The file to extract name root.
+     * @return (String) File name root.
      *
      * @author otsuru
      * @since 2023/1/16
@@ -45,6 +46,21 @@ public final class FileAid {
     public static String extractNameRoot(Path filePath) {
         String fileName = filePath.getFileName().toString();
         return fileName.substring(0, fileName.lastIndexOf('.'));
+    }
+
+    /**
+     * Given a Path, this method extracts the extension of the file.
+     * The path of parent folders and the root of the file name is removed.
+     * @param filePath (Path) The file to extract extension.
+     * @return (String) File extension (including period). Returns "" when extension does not exist.
+     *
+     * @author otsuru
+     * @since 2025/7/24
+     */
+    public static String extractExtension(Path filePath) {
+        String fileName = filePath.getFileName().toString();
+        if (!fileName.contains(".")) return "";
+        return fileName.substring(fileName.lastIndexOf('.'));
     }
 
     /**
@@ -113,9 +129,9 @@ public final class FileAid {
      * @throws IOException if any
      */
     public static Path download(URL url) throws IOException {
-        ReadableByteChannel rbc = Channels.newChannel(url.openStream());
         Path out = Files.createTempFile("dl", "tmp");
-        try (FileOutputStream fos = new FileOutputStream(out.toFile()); FileChannel fc = fos.getChannel()) {
+        try (ReadableByteChannel rbc = Channels.newChannel(url.openStream());
+                FileOutputStream fos = new FileOutputStream(out.toFile()); FileChannel fc = fos.getChannel()) {
             fc.transferFrom(rbc, 0, Long.MAX_VALUE);
         }
         return out;
@@ -143,8 +159,8 @@ public final class FileAid {
             frame.setLocationRelativeTo(null);
             frame.setVisible(true);
         }
-        try (FileOutputStream fos = new FileOutputStream(outPath.toFile());
-             BufferedInputStream bufferedInputStream = new BufferedInputStream(url.openStream())) {
+        try (BufferedInputStream bufferedInputStream = new BufferedInputStream(url.openStream());
+                FileOutputStream fos = new FileOutputStream(outPath.toFile())) {
             byte[] buf = new byte[8192];
             int x = 0;
             int downloaded = 0;

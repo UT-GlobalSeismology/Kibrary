@@ -4,6 +4,7 @@ import java.util.Arrays;
 
 import io.github.kensuke1984.kibrary.correction.FujiStaticCorrection;
 import io.github.kensuke1984.kibrary.correction.StaticCorrectionForger;
+import io.github.kensuke1984.kibrary.correction.StaticCorrectionMerge;
 import io.github.kensuke1984.kibrary.dsmsetup.OneDPartialDSMSetup;
 import io.github.kensuke1984.kibrary.dsmsetup.SyntheticDSMSetup;
 import io.github.kensuke1984.kibrary.dsmsetup.ThreeDPartialDSMSetup;
@@ -15,18 +16,28 @@ import io.github.kensuke1984.kibrary.firsthandler.DataKitchen;
 import io.github.kensuke1984.kibrary.fusion.AdaptiveGridDesigner;
 import io.github.kensuke1984.kibrary.fusion.CoarseGridDesigner;
 import io.github.kensuke1984.kibrary.fusion.PartialsFuser;
+import io.github.kensuke1984.kibrary.inversion.GeometryWeighter;
 import io.github.kensuke1984.kibrary.inversion.LetMeInvert;
 import io.github.kensuke1984.kibrary.inversion.setup.InversionArranger;
 import io.github.kensuke1984.kibrary.inversion.solve.InversionSolver;
+import io.github.kensuke1984.kibrary.inversion.solve.InversionSumSolver;
 import io.github.kensuke1984.kibrary.perturbation.BlockModelMaker;
 import io.github.kensuke1984.kibrary.perturbation.CheckerboardMaker;
+import io.github.kensuke1984.kibrary.perturbation.ModelResampler;
 import io.github.kensuke1984.kibrary.perturbation.ModelSmoothener;
+import io.github.kensuke1984.kibrary.perturbation.PerturbationComparison;
+import io.github.kensuke1984.kibrary.perturbation.ScalarResampler;
+import io.github.kensuke1984.kibrary.quick.PartialsRefineOutput;
+import io.github.kensuke1984.kibrary.quick.PartialsShiftComputer;
 import io.github.kensuke1984.kibrary.selection.DataSelection;
 import io.github.kensuke1984.kibrary.selection.RaypathSelection;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowMaker;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowMerge;
+import io.github.kensuke1984.kibrary.source.SourceTimeFunctionConvolver;
+import io.github.kensuke1984.kibrary.source.SourceWaveletMaker;
+import io.github.kensuke1984.kibrary.timewindow.TimeWindowMaker;
+import io.github.kensuke1984.kibrary.timewindow.TimeWindowMerge;
 import io.github.kensuke1984.kibrary.util.DatasetMerge;
 import io.github.kensuke1984.kibrary.util.data.VirtualDatasetMaker;
+import io.github.kensuke1984.kibrary.util.earth.ModelStructureConverter;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructurePerturber;
 import io.github.kensuke1984.kibrary.util.globalcmt.VirtualEventRegistration;
 import io.github.kensuke1984.kibrary.util.spc.SPC_SAC;
@@ -35,26 +46,32 @@ import io.github.kensuke1984.kibrary.visual.map.GreatArcMapper;
 import io.github.kensuke1984.kibrary.visual.map.ModelMapper;
 import io.github.kensuke1984.kibrary.visual.map.ModelSetMapper;
 import io.github.kensuke1984.kibrary.visual.map.PartialsMovieMaker;
-import io.github.kensuke1984.kibrary.visual.map.PerturbationMapper;
 import io.github.kensuke1984.kibrary.visual.map.RaypathMapper;
-import io.github.kensuke1984.kibrary.visual.map.SensitivityKernelMapper;
+import io.github.kensuke1984.kibrary.visual.map.ScalarMapper;
+import io.github.kensuke1984.kibrary.visual.map.SensitivityKernelMapper3D;
 import io.github.kensuke1984.kibrary.visual.plot.BasicBinnedStackCreator;
 import io.github.kensuke1984.kibrary.visual.plot.BasicRecordSectionCreator;
 import io.github.kensuke1984.kibrary.visual.plot.BasicWaveformPlotter;
 import io.github.kensuke1984.kibrary.visual.plot.CatalogueErrorCalculator;
 import io.github.kensuke1984.kibrary.visual.plot.DataFeatureHistogram;
-import io.github.kensuke1984.kibrary.visual.plot.PartialWaveformPlotter;
+import io.github.kensuke1984.kibrary.visual.plot.ModelStructurePlotter;
+import io.github.kensuke1984.kibrary.visual.plot.PartialsPlotter;
 import io.github.kensuke1984.kibrary.visual.plot.PolynomialStructurePlotter;
-import io.github.kensuke1984.kibrary.voxel.VoxelFileMaker;
-import io.github.kensuke1984.kibrary.voxel.VoxelLayoutDesigner;
+import io.github.kensuke1984.kibrary.visual.plot.ScalarStructurePlotter;
+import io.github.kensuke1984.kibrary.visual.plot.SensitivityKernelPlotter1D;
+import io.github.kensuke1984.kibrary.visual.plot.SyntheticRecordSection;
+import io.github.kensuke1984.kibrary.voxel.VoxelAutoDesigner;
+import io.github.kensuke1984.kibrary.voxel.VoxelManualDesigner;
 import io.github.kensuke1984.kibrary.waveform.ActualWaveformCompiler;
 import io.github.kensuke1984.kibrary.waveform.BasicIDMerge;
 import io.github.kensuke1984.kibrary.waveform.BasicIDRebuilder;
+import io.github.kensuke1984.kibrary.waveform.OrthogonalitySumUp;
 import io.github.kensuke1984.kibrary.waveform.OrthogonalityTest;
 import io.github.kensuke1984.kibrary.waveform.PartialIDMerge;
 import io.github.kensuke1984.kibrary.waveform.PartialIDRebuilder;
-import io.github.kensuke1984.kibrary.waveform.PartialWaveformAssembler1D;
-import io.github.kensuke1984.kibrary.waveform.PartialWaveformAssembler3D;
+import io.github.kensuke1984.kibrary.waveform.PartialsAssembler3D;
+import io.github.kensuke1984.kibrary.waveform.PartialsBuilder1D;
+import io.github.kensuke1984.kibrary.waveform.PartialsRefiner;
 import io.github.kensuke1984.kibrary.waveform.PseudoWaveformGenerator;
 
 /**
@@ -62,7 +79,7 @@ import io.github.kensuke1984.kibrary.waveform.PseudoWaveformGenerator;
  * <p>
  * The value name set to this enum must be the same as its corresponding class name.
  *
- * @author otsuru
+ * @author Kensuke Konishi
  * @since a long time ago
  * @version 2022/1/7 Recreated based on the original Manhattan.
  */
@@ -72,25 +89,29 @@ enum Manhattan {
     DatasetMerge(1, DatasetMerge.class),
     PolynomialStructurePerturber(2, PolynomialStructurePerturber.class),
     PolynomialStructurePlotter(3, PolynomialStructurePlotter.class),
-    GreatArcMapper(5, GreatArcMapper.class),
-    RaypathMapper(6, RaypathMapper.class),
+    GreatArcMapper(4, GreatArcMapper.class),
+    RaypathMapper(5, RaypathMapper.class),
+    RaypathSelection(6, RaypathSelection.class),
     // Data download 10
-    DataRequestor(13, DataRequestor.class),
-    DataLobby(14, DataLobby.class),
-    DataKitchen(15, DataKitchen.class),
-    NetworkLookup(18, NetworkLookup.class),
+    DataLobby(10, DataLobby.class),
+    DataRequestor(11, DataRequestor.class),
+    DataKitchen(12, DataKitchen.class),
+    NetworkLookup(19, NetworkLookup.class),
     // Synthetic  20
     SyntheticDSMSetup(20, SyntheticDSMSetup.class),
     SPC_SAC(21, SPC_SAC.class),
+    SourceTimeFunctionConvolver(22, SourceTimeFunctionConvolver.class),
+    SyntheticRecordSection(23, SyntheticRecordSection.class),
     VirtualDatasetMaker(25, VirtualDatasetMaker.class),
     // Filtered 30
     FilterDivider(30, FilterDivider.class),
-    TimewindowMaker(31, TimewindowMaker.class),
+    TimeWindowMaker(31, TimeWindowMaker.class),
     FujiStaticCorrection(32, FujiStaticCorrection.class),
     DataSelection(33, DataSelection.class),
-    RaypathSelection(34, RaypathSelection.class),
-    TimewindowMerge(37, TimewindowMerge.class),
-    StaticCorrectionForger(38, StaticCorrectionForger.class),
+    SourceWaveletMaker(34, SourceWaveletMaker.class),
+    TimeWindowMerge(37, TimeWindowMerge.class),
+    StaticCorrectionMerge(38, StaticCorrectionMerge.class),
+    StaticCorrectionForger(39, StaticCorrectionForger.class),
     // Compiled 40
     ActualWaveformCompiler(40, ActualWaveformCompiler.class),
     BasicIDMerge(41, BasicIDMerge.class),
@@ -99,77 +120,93 @@ enum Manhattan {
     BasicBinnedStackCreator(44, BasicBinnedStackCreator.class),
     DataFeatureHistogram(48, DataFeatureHistogram.class),
     // Voxel 50
-    VoxelLayoutDesigner(50, VoxelLayoutDesigner.class),
-    VoxelFileMaker(51,VoxelFileMaker.class),
+    VoxelAutoDesigner(50, VoxelAutoDesigner.class),
+    VoxelManualDesigner(51,VoxelManualDesigner.class),
     CoarseGridDesigner(52, CoarseGridDesigner.class),
     AdaptiveGridDesigner(53, AdaptiveGridDesigner.class),
+    GeometryWeighter(58, GeometryWeighter.class),
     // Partial 60
-    ThreeDPartialDSMSetup(60, ThreeDPartialDSMSetup.class),
-    PartialWaveformAssembler3D(61, PartialWaveformAssembler3D.class),
-    PartialIDMerge(62, PartialIDMerge.class),
-    SensitivityKernelMapper(63, SensitivityKernelMapper.class),
-    PartialWaveformPlotter(64, PartialWaveformPlotter.class),
-    OneDPartialDSMSetup(65, OneDPartialDSMSetup.class),
-    PartialWaveformAssembler1D(66, PartialWaveformAssembler1D.class),
-    PartialsFuser(67, PartialsFuser.class),
+    OneDPartialDSMSetup(60, OneDPartialDSMSetup.class),
+    ThreeDPartialDSMSetup(61, ThreeDPartialDSMSetup.class),
+    PartialsBuilder1D(62, PartialsBuilder1D.class),
+    PartialsAssembler3D(63, PartialsAssembler3D.class),
+    PartialsRefiner(64, PartialsRefiner.class),
+    PartialIDMerge(65, PartialIDMerge.class),
+    PartialsPlotter(66, PartialsPlotter.class),
     CatalogueErrorCalculator(68, CatalogueErrorCalculator.class),
-    PartialsMovieMaker(69, PartialsMovieMaker.class),
+    PartialsFuser(69, PartialsFuser.class),
     PartialIDRebuilder(610, PartialIDRebuilder.class),
     // Inversion 70
     LetMeInvert(70, LetMeInvert.class),
     InversionArranger(71, InversionArranger.class),
     InversionSolver(72, InversionSolver.class),
-    ModelSetMapper(74, ModelSetMapper.class),
-    ModelMapper(75, ModelMapper.class),
-    PerturbationMapper(76, PerturbationMapper.class),
-    CrossSectionCreator(77, CrossSectionCreator.class),
+    InversionSumSolver(73, InversionSumSolver.class),
+    ModelStructurePlotter(74, ModelStructurePlotter.class),
+    ModelSetMapper(75, ModelSetMapper.class),
+    ModelMapper(76, ModelMapper.class),
+    ModelResampler(78, ModelResampler.class),
+    ModelStructureConverter(79, ModelStructureConverter.class),
     // Tests 80
-    BlockModelMaker(80, BlockModelMaker.class),
-    CheckerboardMaker(81, CheckerboardMaker.class),
+    CheckerboardMaker(80, CheckerboardMaker.class),
+    BlockModelMaker(81, BlockModelMaker.class),
     ModelSmoothener(84, ModelSmoothener.class),
     PseudoWaveformGenerator(85, PseudoWaveformGenerator.class),
     BasicIDRebuilder(86, BasicIDRebuilder.class),
-    OrthogonalityTest(88, OrthogonalityTest.class),
+    OrthogonalityTest(87, OrthogonalityTest.class),
+    OrthogonalitySumUp(88, OrthogonalitySumUp.class),
+    // Scalar & Sensitivity 90
+    PerturbationComparison(90, PerturbationComparison.class),
+    ScalarStructurePlotter(91, ScalarStructurePlotter.class),
+    ScalarMapper(92, ScalarMapper.class),
+    CrossSectionCreator(93, CrossSectionCreator.class),
+    ScalarResampler(94, ScalarResampler.class),
+    SensitivityKernelPlotter1D(96, SensitivityKernelPlotter1D.class),
+    SensitivityKernelMapper3D(97, SensitivityKernelMapper3D.class),
+    PartialsMovieMaker(99, PartialsMovieMaker.class),
     // Temporal 100
+    PartialsShiftComputer(100, PartialsShiftComputer.class),
+    PartialsRefineOutput(109, PartialsRefineOutput.class),
     ;
 
-    private Class<? extends Operation> c;
-    private int value;
+    private final Class<? extends Operation> operation;
+    private final int number;
 
-    Manhattan(int n, Class<? extends Operation> c) {
-        value = n;
-        this.c = c;
+    private Manhattan(int number, Class<? extends Operation> operation) {
+        this.number = number;
+        this.operation = operation;
     }
 
     static void printList() {
-        Arrays.stream(values()).sorted().forEach(m -> System.out.println(m.value + "-" + m.c.getSimpleName()));
+        Arrays.stream(values()).sorted().forEach(m -> System.out.println(m.number + "-" + m.operation.getSimpleName()));
     }
 
     static String numRange() {
         Manhattan[] all = values();
-        int min = Arrays.stream(all).mapToInt(m -> m.value).min().getAsInt();
-        int max = Arrays.stream(all).mapToInt(m -> m.value).max().getAsInt();
+        int min = Arrays.stream(all).mapToInt(m -> m.number).min().getAsInt();
+        int max = Arrays.stream(all).mapToInt(m -> m.number).max().getAsInt();
         return min + "-" + max;
     }
 
     /**
-     * Returns a Manhattan given its corresponding number.
-     * Note that {@link #valueOf(String)}, which returns a Manhattan given a String of its name,
+     * Returns a {@link Manhattan} given its corresponding number.
+     * Note that {@link #valueOf(String)}, which returns a {@link Manhattan} given a String of its name,
      * is already defined automatically.
      *
-     * @param n (int)
-     * @return
+     * @param number (int) The value to get a {@link Manhattan} for.
+     * @return ({@link Manhattan}) The {@link Manhattan} corresponding to the value.
      */
-    static Manhattan valueOf(int n) {
-        return Arrays.stream(values()).filter(m -> m.value == n).findAny().get();
+    static Manhattan ofNumber(int number) {
+        return Arrays.stream(values()).filter(m -> m.number == number).findAny().get();
     }
 
     Class<? extends Operation> getOperation() {
-        return c;
+        return operation;
     }
 
-    void writeDefaultPropertiesFile() throws ReflectiveOperationException {
-        c.getMethod("writeDefaultPropertiesFile", (Class<?>[]) null).invoke(null, (Object[]) null);
+    void writeDefaultPropertiesFile(String tag) throws ReflectiveOperationException {
+        operation.getMethod("writeDefaultPropertiesFile", String.class).invoke(null, tag);
+        // Return this to the following when no parameters are needed:
+        //operation.getMethod("writeDefaultPropertiesFile", (Class<?>[]) null).invoke(null, (Object[]) null);
     }
 
 }
