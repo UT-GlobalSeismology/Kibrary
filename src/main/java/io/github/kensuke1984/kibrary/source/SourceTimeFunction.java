@@ -92,9 +92,10 @@ public class SourceTimeFunction {
         sourceTimeFunction.sourceTimeFunction = new Complex[np + 1];
         final double deltaF = 1.0 / tlen;
         final double constant = 2 * Math.PI * deltaF * halfDuration;
-        for (int i = 1; i < np + 1; i++) {
+        //sourceTimeFunction.sourceTimeFunction[0] = Complex.ONE;
+        for (int i = 0; i < np + 1; i++) {
             // TODO check the correctness
-            double omegaTau = (i + 1) * constant;
+            double omegaTau = i * constant;
             double coef1 = 0.5 * Math.exp( -1.0 * Math.pow(omegaTau + Math.PI, 2.0) / 72.0);
             double coef2 = 0.5 * Math.exp( -1.0 * Math.pow(omegaTau - Math.PI, 2.0) / 72.0);
             sourceTimeFunction.sourceTimeFunction[i] =
@@ -342,13 +343,13 @@ public class SourceTimeFunction {
         options.addOptionGroup(inputOption);
 
         options.addOption(Option.builder("f").longOpt("function").hasArg().argName("functionType")
-                .desc("Type of source time function, from {1:boxcar, 2:triangle, 4:auto}. (4)").build());
+                .desc("Type of source time function, from {1:boxcar, 2:triangle, 4:auto, 5: gaussian}. (4)").build());
         options.addOption(Option.builder("n").longOpt("np").hasArg().argName("np")
                 .desc("Number of steps in frequency domain (counting only positive frequency part). (512)").build());
         options.addOption(Option.builder("t").longOpt("tlen").hasArg().argName("tlen")
                 .desc("Time length of whole STF waveform [s]. Its reciprocal will be the size of frequency steps. (3276.8)").build());
-        options.addOption(Option.builder("u").longOpt("upperTime").hasArgs().argName("upper time")
-                .desc("Upper time to show the source time functions (30)").build());
+        options.addOption(Option.builder("s").longOpt("samplingHz").hasArgs().argName("samplingHz")
+                .desc("Sampling Hz of STF waveform. If this option is set, the STF waveform is output in the time domain.").build());
 
         // output
         options.addOption(Option.builder("T").longOpt("tag").hasArg().argName("fileTag")
@@ -382,19 +383,26 @@ public class SourceTimeFunction {
         } else if (cmdLine.hasOption("h")) {
             double halfDuration = Double.parseDouble(cmdLine.getOptionValue("h"));
             Path outputPath = DatasetAid.generateOutputFilePath(Paths.get(""), "testSTF", fileTag, appendFileDate, null, ".stf");
+            SourceTimeFunction stf;
             switch (type) {
             case BOXCAR:
-                boxcarSourceTimeFunction(np, tlen, halfDuration).write(outputPath);
+                stf = boxcarSourceTimeFunction(np, tlen, halfDuration);
                 break;
             case TRIANGLE:
-                triangleSourceTimeFunction(np, tlen, halfDuration).write(outputPath);
+                stf = triangleSourceTimeFunction(np, tlen, halfDuration);
+                break;
             case GAUSSIAN:
-                gaussianSourceTimeFunction(np, tlen, halfDuration).write(outputPath);
+                stf = gaussianSourceTimeFunction(np, tlen, halfDuration);
                 break;
             default:
                 throw new IllegalArgumentException("STF type " + type + " not allowed.");
             }
+            if (cmdLine.hasOption("s")) {
+                double samplingHz = Double.parseDouble(cmdLine.getOptionValue("s"));
+                stf.getSourceTimeFunctionInTimeDomain(samplingHz).write(outputPath);
+            } else {
+                stf.write(outputPath);
+            }
         }
     }
-
 }
