@@ -1,13 +1,18 @@
 package io.github.kensuke1984.anisotime;
 
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import org.apache.commons.math3.util.Precision;
 
 import io.github.kensuke1984.kibrary.util.GadgetAid;
-
-import java.io.Serializable;
-import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Phase name. This class is <b>immutable</b>.
@@ -858,6 +863,15 @@ public class Phase implements Serializable {
         return true;
     }
 
+    public static Phase[] phaseArrayOf(String phaseNames) {
+        String[] phaseNameArray = phaseNames.split(",");
+        Phase[] phaseArray = new Phase[phaseNameArray.length];
+        for (int i = 0; i < phaseNameArray.length; i++) {
+            phaseArray[i] = Phase.create(phaseNameArray[i]);
+        }
+        return phaseArray;
+    }
+
     @Override
     public int hashCode() {
         int prime = 31;
@@ -907,10 +921,10 @@ public class Phase implements Serializable {
     String getDISPLAY_NAME() {
         return DISPLAY_NAME;
     }
-    
-	public String getEXPANDED_NAME() {
-		return EXPANDED_NAME;
-	}
+
+    public String getEXPANDED_NAME() {
+        return EXPANDED_NAME;
+    }
 
     @Override
     public String toString() {

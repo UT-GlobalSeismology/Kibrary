@@ -18,8 +18,9 @@ import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.elastic.VariableType;
 import io.github.kensuke1984.kibrary.perturbation.PerturbationModel;
+import io.github.kensuke1984.kibrary.perturbation.ScalarType;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
-import io.github.kensuke1984.kibrary.util.GadgetAid;
+import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.voxel.KnownParameter;
 import io.github.kensuke1984.kibrary.voxel.KnownParameterFile;
 
@@ -75,25 +76,24 @@ public class ModelStructureConverter extends Operation {
     private boolean tieInUpperEnd;
 
     /**
-     * @param args  none to create a property file <br>
-     *              [property file] to run
-     * @throws IOException if any
+     * @param args (String[]) Arguments: none to create a property file, path of property file to run it.
+     * @throws IOException
      */
     public static void main(String[] args) throws IOException {
-        if (args.length == 0) writeDefaultPropertiesFile();
+        if (args.length == 0) writeDefaultPropertiesFile(null);
         else Operation.mainFromSubclass(args);
     }
 
-    public static void writeDefaultPropertiesFile() throws IOException {
-        Class<?> thisClass = new Object(){}.getClass().getEnclosingClass();
-        Path outPath = Property.generatePath(thisClass);
+    public static void writeDefaultPropertiesFile(String tag) throws IOException {
+        String className = new Object(){}.getClass().getEnclosingClass().getSimpleName();
+        Path outPath = DatasetAid.generateOutputFilePath(Paths.get(""), className, tag, true, null, ".properties");
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
-            pw.println("manhattan " + thisClass.getSimpleName());
+            pw.println("manhattan " + className);
             pw.println("##Path of work folder. (.)");
             pw.println("#workPath ");
             pw.println("##(String) The first part of the name of output structure file. (PREMp)");
             pw.println("#nameRoot ");
-            pw.println("##(String) A tag to include in output file names. If no tag is needed, set this blank.");
+            pw.println("##(String) A tag to include in output file names. If no tag is needed, leave this unset.");
             pw.println("#fileTag ");
             pw.println("##(boolean) Whether to append date string at end of output file names. (true)");
             pw.println("#appendFileDate false");
@@ -151,7 +151,7 @@ public class ModelStructureConverter extends Operation {
        PolynomialStructure perturbedStructure = convertModel(initialStructure, radii, model);
 
        // output structure
-       Path outputPath = DatasetAid.generateOutputFilePath(workPath, nameRoot, fileTag, appendFileDate, GadgetAid.getTemporaryString(), ".structure");
+       Path outputPath = DatasetAid.generateOutputFilePath(workPath, nameRoot, fileTag, appendFileDate, null, ".structure");
        PolynomialStructureFile.write(perturbedStructure, outputPath);
    }
 
@@ -187,7 +187,7 @@ public class ModelStructureConverter extends Operation {
        double planetRadius = originalStructure.planetRadius();
 
        for (VariableType variable : variableTypes) {
-           Map<FullPosition, Double> discreteMap = model.getAbsoluteForType(variable);
+           Map<FullPosition, Double> discreteMap = model.getValueMap(variable, ScalarType.ABSOLUTE);
 
            // for each layer
            // i=0: bottommost(below definedRadii[0])
@@ -235,7 +235,7 @@ public class ModelStructureConverter extends Operation {
                // intercept
                double b = (x1 * y0 - x0 * y1) / (x1 - x0);
                // function form
-               double[] coeffs = {b, a};
+               double[] coeffs = {MathAid.roundForPrecision(b), MathAid.roundForPrecision(a)};
                PolynomialFunction lineFunction = new PolynomialFunction(coeffs);
 
                // overwrite structure information for all zones within this depth range

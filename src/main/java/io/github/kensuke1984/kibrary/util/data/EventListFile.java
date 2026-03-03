@@ -20,12 +20,11 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
 import io.github.kensuke1984.kibrary.Summon;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
+import io.github.kensuke1984.kibrary.timewindow.TimeWindowData;
+import io.github.kensuke1984.kibrary.timewindow.TimeWindowDataFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.InformationFileReader;
-import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.waveform.BasicID;
 import io.github.kensuke1984.kibrary.waveform.BasicIDFile;
@@ -38,6 +37,7 @@ import io.github.kensuke1984.kibrary.waveform.BasicIDFile;
  * Only the globalCMTID is the part used to convey data;
  * the rest of the information is just for the users to see.
  *
+ * @author ?
  * @since a long time ago
  * @version 2022/4/22 Renamed from statistics.EventInformationFile to util.data.EventListFile.
  */
@@ -52,9 +52,7 @@ public class EventListFile {
      * @throws IOException if an I/O error occurs
      */
     public static void write(Set<GlobalCMTID> eventSet, Path outputPath, OpenOption... options) throws IOException {
-        System.err.println("Outputting "
-                + MathAid.switchSingularPlural(eventSet.size(), "event", "events")
-                + " in " + outputPath);
+        DatasetAid.printNumOutput(eventSet.size(), "event", "events", outputPath);
 
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath, options))) {
             pw.println("# GCMTID latitude longitude radius depth");
@@ -73,9 +71,7 @@ public class EventListFile {
      * @throws IOException if an I/O error occurs
      */
     public static void writeFullInfo(Set<GlobalCMTID> eventSet, Path outputPath, OpenOption... options) throws IOException {
-        System.err.println("Outputting "
-                + MathAid.switchSingularPlural(eventSet.size(), "event", "events")
-                + " in " + outputPath);
+        DatasetAid.printNumOutput(eventSet.size(), "event", "events", outputPath);
 
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath, options))) {
             pw.println("# GCMTID date time latitude longitude radius depth Mw HalfDuration");
@@ -108,7 +104,7 @@ public class EventListFile {
                 throw new RuntimeException("There is duplication of " + event + " in " + inputPath + ".");
         }
 
-        DatasetAid.checkNum(eventSet.size(), "event", "events");
+        DatasetAid.printNumInput(eventSet.size(), "event", "events", inputPath);
         return Collections.unmodifiableSet(eventSet);
     }
 
@@ -119,7 +115,7 @@ public class EventListFile {
      * Reads event information from an input source
      * and creates an event list file under the working folder.
      * The input source may be SAC files in event directories under a dataset folder,
-     * a timewindow file, or a basic ID file.
+     * a time window file, or a basic ID file.
      * @param args Options.
      * @throws IOException if an I/O error occurs
      */
@@ -142,24 +138,24 @@ public class EventListFile {
         // input
         OptionGroup inputOption = new OptionGroup();
         inputOption.addOption(Option.builder("d").longOpt("dataset").hasArg().argName("datasetFolder")
-                .desc("Use dataset folder containing event folders as input").build());
+                .desc("Use dataset folder containing event folders as input.").build());
         inputOption.addOption(Option.builder("e").longOpt("entry").hasArg().argName("dataEntryFile")
-                .desc("Use data entry file as input").build());
-        inputOption.addOption(Option.builder("t").longOpt("timewindow").hasArg().argName("timewindowFile")
-                .desc("Use timewindow file as input").build());
+                .desc("Use data entry file as input.").build());
+        inputOption.addOption(Option.builder("t").longOpt("timeWindow").hasArg().argName("timeWindowFile")
+                .desc("Use time window file as input.").build());
         inputOption.addOption(Option.builder("b").longOpt("basic").hasArg().argName("basicFolder")
-                .desc("Use basic waveform folder as input").build());
+                .desc("Use basic waveform folder as input.").build());
         options.addOptionGroup(inputOption);
 
         // option
         options.addOption(Option.builder("f").longOpt("full")
-                .desc("Whether to write full information of events in output file.").build());
+                .desc("Write full information of events in output file.").build());
 
         // output
         options.addOption(Option.builder("T").longOpt("tag").hasArg().argName("fileTag")
                 .desc("A tag to include in output file name.").build());
         options.addOption(Option.builder("O").longOpt("omitDate")
-                .desc("Whether to omit date string in output file name.").build());
+                .desc("Omit date string in output file name.").build());
 
         return options;
     }
@@ -172,7 +168,7 @@ public class EventListFile {
     public static void run(CommandLine cmdLine) throws IOException {
         String fileTag = cmdLine.hasOption("T") ? cmdLine.getOptionValue("T") : null;
         boolean appendFileDate = !cmdLine.hasOption("O");
-        Path outputPath = DatasetAid.generateOutputFilePath(Paths.get(""), "event", fileTag, appendFileDate, GadgetAid.getTemporaryString(), ".lst");
+        Path outputPath = DatasetAid.generateOutputFilePath(Paths.get(""), "event", fileTag, appendFileDate, null, ".lst");
 
         Set<GlobalCMTID> eventSet;
         if (cmdLine.hasOption("d")) {
@@ -181,8 +177,8 @@ public class EventListFile {
             Set<DataEntry> entries = DataEntryListFile.readAsSet(Paths.get(cmdLine.getOptionValue("e")));
             eventSet = entries.stream().map(DataEntry::getEvent).collect(Collectors.toSet());
         } else if (cmdLine.hasOption("t")) {
-            Set<TimewindowData> timewindows =  TimewindowDataFile.read(Paths.get(cmdLine.getOptionValue("t")));
-            eventSet = timewindows.stream().map(TimewindowData::getGlobalCMTID).collect(Collectors.toSet());
+            Set<TimeWindowData> timeWindows =  TimeWindowDataFile.read(Paths.get(cmdLine.getOptionValue("t")));
+            eventSet = timeWindows.stream().map(TimeWindowData::getGlobalCMTID).collect(Collectors.toSet());
         } else if (cmdLine.hasOption("b")) {
             List<BasicID> basicIDs =  BasicIDFile.read(Paths.get(cmdLine.getOptionValue("b")), false);
             eventSet = basicIDs.stream().map(BasicID::getGlobalCMTID).collect(Collectors.toSet());

@@ -14,20 +14,24 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.commons.math3.linear.RealVector;
 
+import edu.sc.seis.TauP.Arrival;
 import edu.sc.seis.TauP.TauModelException;
 import edu.sc.seis.TauP.TauP_Time;
+import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
+import io.github.kensuke1984.kibrary.Test_temp;
 import io.github.kensuke1984.kibrary.correction.StaticCorrectionData;
 import io.github.kensuke1984.kibrary.correction.StaticCorrectionDataFile;
 import io.github.kensuke1984.kibrary.math.LinearRange;
 import io.github.kensuke1984.kibrary.math.Trace;
-import io.github.kensuke1984.kibrary.timewindow.Timewindow;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
+import io.github.kensuke1984.kibrary.timewindow.TimeWindow;
+import io.github.kensuke1984.kibrary.timewindow.TimeWindowData;
+import io.github.kensuke1984.kibrary.timewindow.TimeWindowDataFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.MathAid;
@@ -41,30 +45,35 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  * Operation that selects satisfactory observed and synthetic data
  * based on amplitude ratio, correlation, and/or variance.
  * <p>
- * Timewindows in the input {@link TimewindowDataFile} that satisfy the following criteria will be worked for:
+ * Time windows in the input {@link TimeWindowDataFile} that satisfy the following criteria will be worked for:
  * <ul>
  * <li> the component is included in the components specified in the property file </li>
  * <li> observed waveform data exists for the (event, observer, component)-pair </li>
  * <li> synthetic waveform data exists for the (event, observer, component)-pair </li>
  * </ul>
  * Both observed and synthetic data must be in event folders under obsDir and synDir (they can be the same folder).
- * Resulting data selection entries will be created for each timewindow,
+ * Resulting data selection entries will be created for each time window,
  * thus specified by a (event, observer, component, timeframe)-pair.
  * <p>
- * When a {@link StaticCorrectionDataFile} is given as input, time shifts will be applied to each timewindow.
+ * When a {@link StaticCorrectionDataFile} is given as input, time shifts will be applied to each time window.
  * <p>
- * Selected timewindows will be written in binary format in "selectedTimewindow*.dat".
- * See {@link TimewindowDataFile}.
+ * Selected time windows will be written in binary format in "selectedTimeWindow*.dat".
+ * See {@link TimeWindowDataFile}.
  * <p>
  * Information of data features used in data selection will be written in ascii format in "dataFeature*.lst".
  * See {@link DataFeatureListFile}.
  * <p>
- * Timewindows with no phases will be written in standard output.
+ * Time windows with no phases will be written in standard output.
  *
  * @author Kensuke Konishi
- * @since version 0.1.2.1
+ * @since a long time ago
  */
 public class DataSelection extends Operation {
+    private static final Set<Phase> PSV_PHASES = Arrays.stream("p P Pdiff".split("\\s+")).map(Phase::create).collect(Collectors.toSet());
+    private static final Set<Phase> SH_PHASES = Arrays.stream("s S Sdiff".split("\\s+")).map(Phase::create).collect(Collectors.toSet());
+    private static final String[] PHASE_NAMES = Stream.concat(PSV_PHASES.stream(), SH_PHASES.stream()).map(Phase::toString).toArray(String[]::new);
+    private static final double NOISE_WINDOW_OFFSET = 20;
+    private static final double NOISE_WINDOW_LENGTH = 50;
 
     private final Property property;
     /**
@@ -80,22 +89,14 @@ public class DataSelection extends Operation {
      */
     private boolean appendFileDate;
     /**
-     * Path of the output information file.
-     */
-    private Path outputFeaturePath;
-    /**
-     * Path of the output timewindow file.
-     */
-    private Path outputSelectedPath;
-    /**
      * Components to use.
      */
     private Set<SACComponent> components;
-    /**
-     * Sampling Hz [Hz] in sac files.
-     */
-    private double sacSamplingHz;
 
+    /**
+     * Path of the input time window file.
+     */
+    private Path timeWindowPath;
     /**
      * Folder containing observed data.
      */
@@ -105,20 +106,26 @@ public class DataSelection extends Operation {
      */
     private Path synPath;
     /**
-     * コンボリューションされている波形かそうでないか （両方は無理）
+     * Whether the synthetics have already been convolved.
      */
     private boolean convolved;
     /**
-     * Path of the input timewindow file.
+     * Sampling frequency of input SAC files [Hz].
      */
-    private Path timewindowPath;
+    private double sacSamplingHz;
+    /**
+     * Path of static correction file.
+     */
     private Path staticCorrectionPath;
+    /**
+     * Name of structure to compute travel times.
+     */
+    private String structureName;
 
     /**
      * Maximum of static correction shift.
      */
-    private double maxStaticShift;
-
+    private double upperStaticShift;
     /**
      * Correlation coefficient range.
      */
@@ -132,32 +139,39 @@ public class DataSelection extends Operation {
      */
     private LinearRange ratioRange;
     /**
-     * Threshold of S/N ratio that is to be selected.
+     * Threshold of Sobs/Nobs norm ratio that is to be selected.
      */
-    private double minSNratio;
+    private double lowerSNRatio;
+    /**
+     * Threshold of Sobs/Nobs ratio that is to be selected.
+     */
+    private double lowerObsSNRatio;
+    /**
+     * Threshold of Ssyn/Nobs ratio that is to be selected.
+     */
+    private double lowerSynSNRatio;
     private boolean requirePhase;
     private boolean excludeSurfaceWave;
 
-    private Set<TimewindowData> sourceTimewindowSet;
+    private Set<TimeWindowData> sourceTimeWindowSet;
     private Set<StaticCorrectionData> staticCorrectionSet;
-    private Set<DataFeature> dataFeatureSet;
-    private Set<TimewindowData> goodTimewindowSet;
+    private Set<DataFeature> dataFeatureSet = Collections.synchronizedSet(new HashSet<>());
+    private Set<TimeWindowData> goodTimeWindowSet = Collections.synchronizedSet(new HashSet<>());
 
     /**
-     * @param args  none to create a property file <br>
-     *              [property file] to run
-     * @throws IOException if any
+     * @param args (String[]) Arguments: none to create a property file, path of property file to run it.
+     * @throws IOException
      */
     public static void main(String[] args) throws IOException {
-        if (args.length == 0) writeDefaultPropertiesFile();
+        if (args.length == 0) writeDefaultPropertiesFile(null);
         else Operation.mainFromSubclass(args);
     }
 
-    public static void writeDefaultPropertiesFile() throws IOException {
-        Class<?> thisClass = new Object(){}.getClass().getEnclosingClass();
-        Path outPath = Property.generatePath(thisClass);
+    public static void writeDefaultPropertiesFile(String tag) throws IOException {
+        String className = new Object(){}.getClass().getEnclosingClass().getSimpleName();
+        Path outPath = DatasetAid.generateOutputFilePath(Paths.get(""), className, tag, true, null, ".properties");
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
-            pw.println("manhattan " + thisClass.getSimpleName());
+            pw.println("manhattan " + className);
             pw.println("##Path of work folder. (.)");
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output file names. If no tag is needed, leave this unset.");
@@ -166,35 +180,41 @@ public class DataSelection extends Operation {
             pw.println("#appendFileDate false");
             pw.println("##Sac components to be used, listed using spaces. (Z R T)");
             pw.println("#components ");
-            pw.println("##(double) SAC sampling frequency [Hz]. (20)");
-            pw.println("#sacSamplingHz cant change now");
+            pw.println("##Path of a time window file, must be set.");
+            pw.println("#timeWindowPath timeWindow.dat");
             pw.println("##Path of a root folder containing observed dataset. (.)");
             pw.println("#obsPath ");
             pw.println("##Path of a root folder containing synthetic dataset. (.)");
             pw.println("#synPath ");
             pw.println("##(boolean) Whether the synthetics have already been convolved. (true)");
             pw.println("#convolved ");
-            pw.println("##Path of a timewindow file, must be set.");
-            pw.println("#timewindowPath timewindow.dat");
+            pw.println("##(double) Sampling frequency of input SAC files [Hz]. (20)");
+            pw.println("#sacSamplingHz ");
             pw.println("##Path of a static correction file, if static correction time-shift shall be applied.");
             pw.println("#staticCorrectionPath staticCorrection.dat");
+            pw.println("##(String) Name of structure to compute travel times using TauP. (prem)");
+            pw.println("#structureName ");
             pw.println("##(double) Threshold of static correction time shift [s]. (10.)");
-            pw.println("#maxStaticShift ");
+            pw.println("#upperStaticShift ");
             pw.println("##(double) Lower threshold of correlation, inclusive; [-1:maxCorrelation). (0)");
-            pw.println("#minCorrelation ");
+            pw.println("#lowerCorrelation ");
             pw.println("##(double) Upper threshold of correlation, exclusive; (minCorrelation:1]. (1)");
-            pw.println("#maxCorrelation ");
+            pw.println("#upperCorrelation ");
             pw.println("##(double) Lower threshold of normalized variance, inclusive; [0:maxVariance). (0)");
-            pw.println("#minVariance ");
+            pw.println("#lowerVariance ");
             pw.println("##(double) Upper threshold of normalized variance, exclusive; (minVariance:). (2)");
-            pw.println("#maxVariance ");
+            pw.println("#upperVariance 2.5");
             pw.println("##(double) Lower threshold of amplitude ratio, inclusive; [0:maxRatio). (0.5)");
-            pw.println("#minRatio ");
+            pw.println("#lowerRatio ");
             pw.println("##(double) Upper threshold of amplitude ratio, exclusive; (minRatio:). (2)");
-            pw.println("#maxRatio ");
-            pw.println("##(double) Threshold of S/N ratio (lower limit), inclusive; [0:). (0)");
-            pw.println("#minSNratio ");
-            pw.println("##(boolean) Whether to require phases to be included in timewindow. (true)");
+            pw.println("#upperRatio ");
+            pw.println("##(double) Threshold of Sobs/Nobs norm ratio (lower limit), inclusive; [0:). (0)");
+            pw.println("#lowerSNRatio ");
+            pw.println("##(double) Threshold of Sobs/Nobs ratio (lower limit), inclusive; [0:). (0)");
+            pw.println("#lowerObsSNRatio 1.2");
+            pw.println("##(double) Threshold of Ssyn/Nobs ratio (lower limit), inclusive; [0:). (0)");
+            pw.println("#lowerSynSNRatio 1.4");
+            pw.println("##(boolean) Whether to require phases to be included in time window. (true)");
             pw.println("#requirePhase ");
             pw.println("##(boolean) Whether to exclude surface wave. (false)");
             pw.println("#excludeSurfaceWave ");
@@ -213,55 +233,57 @@ public class DataSelection extends Operation {
         appendFileDate = property.parseBoolean("appendFileDate", "true");
         components = Arrays.stream(property.parseStringArray("components", "Z R T"))
                 .map(SACComponent::valueOf).collect(Collectors.toSet());
-        sacSamplingHz = 20; // TODO property.parseDouble("sacSamplingHz", "20");
 
+        timeWindowPath = Test_temp.getTimeWindowPath_temp(property, workPath);  //TODO delete (This is here for backward compatibility.)
+//      timeWindowPath = property.parsePath("timeWindowPath", null, true, workPath);
         obsPath = property.parsePath("obsPath", ".", true, workPath);
         synPath = property.parsePath("synPath", ".", true, workPath);
         convolved = property.parseBoolean("convolved", "true");
-        timewindowPath = property.parsePath("timewindowPath", null, true, workPath);
+        sacSamplingHz = property.parseDouble("sacSamplingHz", "20");
         if (property.containsKey("staticCorrectionPath")) {
             staticCorrectionPath = property.parsePath("staticCorrectionPath", null, true, workPath);
         }
+        structureName = property.parseString("structureName", "prem").toLowerCase();
 
-        maxStaticShift = property.parseDouble("maxStaticShift", "10.");
-        if (maxStaticShift < 0)
-            throw new IllegalArgumentException("Static shift threshold " + maxStaticShift + " is invalid, must be >= 0.");
-        double minCorrelation = property.parseDouble("minCorrelation", "0");
-        double maxCorrelation = property.parseDouble("maxCorrelation", "1");
-        correlationRange = new LinearRange("Correlation", minCorrelation, maxCorrelation, -1.0, 1.0);
-        double minVariance = property.parseDouble("minVariance", "0");
-        double maxVariance = property.parseDouble("maxVariance", "2");
-        varianceRange = new LinearRange("Variance", minVariance, maxVariance, 0.0);
-        double minRatio = property.parseDouble("minRatio", "0.5");
-        double maxRatio = property.parseDouble("maxRatio", "2");
-        ratioRange = new LinearRange("Ratio", minRatio, maxRatio, 0.0);
-        minSNratio = property.parseDouble("minSNratio", "0");
-        if (minSNratio < 0)
-            throw new IllegalArgumentException("S/N ratio threshold " + minSNratio + " is invalid, must be >= 0.");
+        upperStaticShift = property.parseDouble("upperStaticShift", "10.");
+        if (upperStaticShift < 0)
+            throw new IllegalArgumentException("Static shift threshold " + upperStaticShift + " is invalid, must be >= 0.");
+        double lowerCorrelation = property.parseDouble("lowerCorrelation", "0");
+        double upperCorrelation = property.parseDouble("upperCorrelation", "1");
+        correlationRange = new LinearRange("Correlation", lowerCorrelation, upperCorrelation, -1.0, 1.0);
+        double lowerVariance = property.parseDouble("lowerVariance", "0");
+        double upperVariance = property.parseDouble("upperVariance", "2");
+        varianceRange = new LinearRange("Variance", lowerVariance, upperVariance, 0.0);
+        double lowerRatio = property.parseDouble("lowerRatio", "0.5");
+        double upperRatio = property.parseDouble("upperRatio", "2");
+        ratioRange = new LinearRange("Ratio", lowerRatio, upperRatio, 0.0);
+        lowerSNRatio = property.parseDouble("lowerSNRatio", "0");
+        if (lowerSNRatio < 0)
+            throw new IllegalArgumentException("Sobs/Nobs norm ratio threshold " + lowerSNRatio + " is invalid, must be >= 0.");
+        lowerObsSNRatio = property.parseDouble("lowerObsSNRatio", "0");
+        if (lowerObsSNRatio < 0)
+            throw new IllegalArgumentException("Sobs/Nobs ratio threshold " + lowerObsSNRatio + " is invalid, must be >= 0.");
+        lowerSynSNRatio = property.parseDouble("lowerSynSNRatio", "0");
+        if (lowerSynSNRatio < 0)
+            throw new IllegalArgumentException("Ssyn/Nobs ratio threshold " + lowerSynSNRatio + " is invalid, must be >= 0.");
         requirePhase = property.parseBoolean("requirePhase", "true");
         excludeSurfaceWave = property.parseBoolean("excludeSurfaceWave", "false");
-
-        String dateStr = GadgetAid.getTemporaryString();
-        outputFeaturePath = DatasetAid.generateOutputFilePath(workPath, "dataFeature", fileTag, appendFileDate, dateStr, ".lst");
-        outputSelectedPath = DatasetAid.generateOutputFilePath(workPath, "selectedTimewindow", fileTag, appendFileDate, dateStr, ".dat");
-        dataFeatureSet = Collections.synchronizedSet(new HashSet<>());
-        goodTimewindowSet = Collections.synchronizedSet(new HashSet<>());
     }
 
     @Override
     public void run() throws IOException {
-        // gather all timewindows to be processed
-        sourceTimewindowSet = TimewindowDataFile.read(timewindowPath)
+        // gather all time windows to be processed
+        sourceTimeWindowSet = TimeWindowDataFile.read(timeWindowPath)
                 .stream().filter(window -> components.contains(window.getComponent())).collect(Collectors.toSet());
-        // collect all events that exist in the timewindow set
-        Set<GlobalCMTID> eventSet = sourceTimewindowSet.stream().map(TimewindowData::getGlobalCMTID)
-                .collect(Collectors.toSet());
+        // collect all events that exist in the time window set
+        Set<GlobalCMTID> eventSet = sourceTimeWindowSet.stream().map(TimeWindowData::getGlobalCMTID).collect(Collectors.toSet());
 
         // read static corrections
-        staticCorrectionSet = (staticCorrectionPath == null ? Collections.emptySet()
-                : StaticCorrectionDataFile.read(staticCorrectionPath));
+        staticCorrectionSet = (staticCorrectionPath == null ? Collections.emptySet() :
+                StaticCorrectionDataFile.read(staticCorrectionPath));
 
         ExecutorService es = ThreadAid.createFixedThreadPool();
+        System.err.println("Working for " + eventSet.size() + " events.");
         // for each event, execute run() of class Worker, which is defined at the bottom of this java file
         eventSet.stream().map(Worker::new).forEach(es::execute);
         es.shutdown();
@@ -271,77 +293,73 @@ public class DataSelection extends Operation {
         // this println() is for starting new line after writing "."s
         System.err.println();
 
-        System.err.println(MathAid.switchSingularPlural(goodTimewindowSet.size(), "timewindow is", "timewindows are") + " selected.");
-        if (goodTimewindowSet.size() > 0) TimewindowDataFile.write(goodTimewindowSet, outputSelectedPath);
+        System.err.println(MathAid.switchSingularPlural(goodTimeWindowSet.size(), "time window is", "time windows are") + " selected.");
+
+        // output
+        String dateString = GadgetAid.getTemporaryString();
+        Path outputFeaturePath = DatasetAid.generateOutputFilePath(workPath, "dataFeature", fileTag, appendFileDate, dateString, ".lst");
+        Path outputSelectedPath = DatasetAid.generateOutputFilePath(workPath, "selectedTimeWindow", fileTag, appendFileDate, dateString, ".dat");
+        if (goodTimeWindowSet.size() > 0) TimeWindowDataFile.write(goodTimeWindowSet, outputSelectedPath);
         if (dataFeatureSet.size() > 0) DataFeatureListFile.write(dataFeatureSet, outputFeaturePath);
     }
 
     /**
-     * @param sac        {@link SACFileAccess} to cut
-     * @param timeWindow time window
-     * @return new Trace for the timewindow [tStart:tEnd]
+     * @param sac ({@link SACFileAccess}) SAC file to cut out from.
+     * @param timeWindow ({@link TimeWindow}) Time window to cut out.
+     * @return ({@link Trace}) Waveform cut out for the time window.
      */
-    private RealVector cutSAC(SACFileAccess sac, Timewindow timewindow) {
+    private RealVector cutSAC(SACFileAccess sac, TimeWindow timeWindow) {
         Trace trace = sac.createTrace();
-        return trace.cutWindow(timewindow, sacSamplingHz).getYVector();
-    }
-
-    private StaticCorrectionData getStaticCorrection(TimewindowData window) {
-        List<StaticCorrectionData> corrs = staticCorrectionSet.stream().filter(s -> s.isForTimewindow(window)).collect(Collectors.toList());
-        if (corrs.size() > 1) {
-            throw new RuntimeException("Found more than 1 static correction for window " + window);
-        } else if (corrs.size() == 0) {
-            return null;
-        } else {
-            return corrs.get(0);
-        }
+        return trace.cutWindow(timeWindow, sacSamplingHz).getYVector();
     }
 
     private boolean check(DataFeature feature) throws IOException {
+        double correlation = feature.getCorrelation();
+        double variance = feature.getVariance();
         double posSideRatio = feature.getNegSideRatio();
         double negSideRatio = feature.getPosSideRatio();
         double absRatio = feature.getAbsRatio();
-        double correlation = feature.getCorrelation();
-        double variance = feature.getVariance();
         double snRatio = feature.getSNRatio();
+        double obsSNRatio = feature.getObsSNRatio();
+        double synSNRatio = feature.getSynSNRatio();
 
-        boolean isok = ratioRange.check(posSideRatio) && ratioRange.check(negSideRatio) && ratioRange.check(absRatio) &&
-                correlationRange.check(correlation) && varianceRange.check(variance) && (minSNratio <= snRatio);
+        boolean isok = correlationRange.check(correlation) && varianceRange.check(variance) &&
+                ratioRange.check(posSideRatio) && ratioRange.check(negSideRatio) && ratioRange.check(absRatio) &&
+                (lowerSNRatio <= snRatio) && (lowerObsSNRatio <= obsSNRatio) && (lowerSynSNRatio <= synSNRatio);
         return isok;
     }
 
     /**
-     * @param sac
-     * @param component
-     * @return
+     * @param sac ({@link SACFileAccess}) SAC file.
+     * @param component ({@link SACComponent}) Component.
+     * @param timeTool (TauP_Time) TauP tool instance for this event.
+     * @return (double) Norm of vector of noise per second.
+     *
      * @author anselme
      */
-    private double noisePerSecond(SACFileAccess sac, SACComponent component) {
-        double len = 50;
-        double distance = sac.getValue(SACHeaderEnum.GCARC);
-        double depth = sac.getValue(SACHeaderEnum.EVDP);
+    private double noisePerSecond(SACFileAccess sac, SACComponent component, TauP_Time timeTool, boolean forMax) {
         double firstArrivalTime = 0;
         try {
-            TauP_Time timeTool = new TauP_Time("prem");
+            double distance = sac.getValue(SACHeaderEnum.GCARC);
+            timeTool.calculate(distance);
+            List<Arrival> arrivals = timeTool.getArrivals();
             switch (component) {
             case T:
-                timeTool.parsePhaseList("S, Sdiff, s");
-                timeTool.setSourceDepth(depth);
-                timeTool.calculate(distance);
-                if (timeTool.getNumArrivals() == 0)
+                List<Arrival> shArrivals = arrivals.stream()
+                        .filter(arrival -> SH_PHASES.contains(Phase.create(arrival.getPhase().getName()))).collect(Collectors.toList());
+                if (shArrivals.size() == 0)
                     throw new IllegalArgumentException("No arrivals for " + sac.getObserver() + " " + sac.getGlobalCMTID()
-                            + " " + String.format("(%.2f deg, %.2f km)", distance, depth));
-                firstArrivalTime = timeTool.getArrival(0).getTime();
+                            + " (" + distance + " deg)");
+                firstArrivalTime = shArrivals.get(0).getTime();
                 break;
             case Z:
             case R:
-                timeTool.parsePhaseList("P, Pdiff, p");
-                timeTool.setSourceDepth(depth);
-                timeTool.calculate(distance);
-                if (timeTool.getNumArrivals() == 0)
+                List<Arrival> psvArrivals = arrivals.stream()
+                        .filter(arrival -> PSV_PHASES.contains(Phase.create(arrival.getPhase().getName()))).collect(Collectors.toList());
+                if (psvArrivals.size() == 0)
                     throw new IllegalArgumentException("No arrivals for " + sac.getObserver() + " " + sac.getGlobalCMTID()
-                            + " " + String.format("(%.2f deg, %.2f km)", distance, depth));
-                firstArrivalTime = timeTool.getArrival(0).getTime();
+                            + " (" + distance + " deg)");
+                firstArrivalTime = psvArrivals.get(0).getTime();
                 break;
             default:
                 break;
@@ -349,108 +367,114 @@ public class DataSelection extends Operation {
         } catch (TauModelException e) {
             e.printStackTrace();
         }
-
-        return sac.createTrace().cutWindow(firstArrivalTime - 20 - len, firstArrivalTime - 20).getYVector().getNorm() / len;
+        if (forMax) {
+            return sac.createTrace().cutWindow(firstArrivalTime - NOISE_WINDOW_OFFSET - NOISE_WINDOW_LENGTH, firstArrivalTime - NOISE_WINDOW_OFFSET)
+                    .getYVector().getLInfNorm();
+        } else {
+            return sac.createTrace().cutWindow(firstArrivalTime - NOISE_WINDOW_OFFSET - NOISE_WINDOW_LENGTH, firstArrivalTime - NOISE_WINDOW_OFFSET)
+                    .getYVector().getNorm() / NOISE_WINDOW_LENGTH;
+        }
     }
 
     private class Worker extends DatasetAid.FilteredDatasetWorker {
+        private TauP_Time timeTool;
 
         private Worker(GlobalCMTID eventID) {
-            super(eventID, obsPath, synPath, convolved, sourceTimewindowSet);
+            super(eventID, obsPath, synPath, convolved, sacSamplingHz, sourceTimeWindowSet);
+
+            try {
+                timeTool = new TauP_Time(structureName);
+                timeTool.setPhaseNames(PHASE_NAMES);
+                timeTool.setSourceDepth(eventID.getEventData().getCmtPosition().getDepth());
+            } catch (TauModelException e) {
+                throw new IllegalStateException(e);
+            }
         }
 
         @Override
-        public void actualWork(TimewindowData timewindow, SACFileAccess obsSac, SACFileAccess synSac) {
+        public void actualWork(TimeWindowData timeWindow, SACFileAccess obsSac, SACFileAccess synSac) {
+            SACComponent component = timeWindow.getComponent();
+
+            // check SAC file end time
+            if (timeWindow.getEndTime() > obsSac.getValue(SACHeaderEnum.E)
+                    || timeWindow.getEndTime() > synSac.getValue(SACHeaderEnum.E)) {
+                System.err.println();
+                System.err.println("!! End of time window too late, skipping: " + timeWindow);
+                return;
+            }
+
+            // check phase
+            if (requirePhase && timeWindow.getPhases().length == 0) {
+                System.err.println();
+                System.err.println("!! No phase, skipping: " + timeWindow);
+                return;
+            }
+
             try {
-                SACComponent component = timewindow.getComponent();
-
-                // check delta
-                double delta = 1 / sacSamplingHz;
-                if (delta != obsSac.getValue(SACHeaderEnum.DELTA) || delta != synSac.getValue(SACHeaderEnum.DELTA)) {
-                    System.err.println();
-                    System.err.println("!! Deltas are invalid, skipping: " + timewindow);
-                    System.err.println("   Obs " + obsSac.getValue(SACHeaderEnum.DELTA)
-                            + " , Syn " + synSac.getValue(SACHeaderEnum.DELTA) + " ; must be " + delta);
-                    return;
-                }
-
-                // check SAC file end time
-                if (timewindow.getEndTime() > obsSac.getValue(SACHeaderEnum.E)
-                        || timewindow.getEndTime() > synSac.getValue(SACHeaderEnum.E)) {
-                    System.err.println();
-                    System.err.println("!! End time of timewindow too late, skipping: " + timewindow);
-                    return;
-                }
-
-                // check phase
-                if (requirePhase && timewindow.getPhases().length == 0) {
-                    System.err.println();
-                    System.err.println("!! No phase, skipping: " + timewindow);
-                    return;
-                }
-
                 // remove surface wave from window
                 if (excludeSurfaceWave) {
                     Trace synTrace = synSac.createTrace();
                     SurfaceWaveDetector detector = new SurfaceWaveDetector(synTrace, 20.);
-                    Timewindow surfacewaveWindow = detector.getSurfaceWaveWindow();
+                    TimeWindow surfaceWaveWindow = detector.getSurfaceWaveWindow();
 
-                    if (surfacewaveWindow != null) {
-                        double endTime = timewindow.getEndTime();
-                        double startTime = timewindow.getStartTime();
-                        if (startTime >= surfacewaveWindow.getStartTime() && endTime <= surfacewaveWindow.getEndTime())
+                    if (surfaceWaveWindow != null) {
+                        double endTime = timeWindow.getEndTime();
+                        double startTime = timeWindow.getStartTime();
+                        if (startTime >= surfaceWaveWindow.getStartTime() && endTime <= surfaceWaveWindow.getEndTime())
                             return;
-                        if (endTime > surfacewaveWindow.getStartTime() && startTime < surfacewaveWindow.getStartTime())
-                            endTime = surfacewaveWindow.getStartTime();
-                        if (startTime < surfacewaveWindow.getEndTime() && endTime > surfacewaveWindow.getEndTime())
-                            startTime = surfacewaveWindow.getEndTime();
+                        if (endTime > surfaceWaveWindow.getStartTime() && startTime < surfaceWaveWindow.getStartTime())
+                            endTime = surfaceWaveWindow.getStartTime();
+                        if (startTime < surfaceWaveWindow.getEndTime() && endTime > surfaceWaveWindow.getEndTime())
+                            startTime = surfaceWaveWindow.getEndTime();
 
-                        timewindow = new TimewindowData(startTime
-                                , endTime, timewindow.getObserver(), timewindow.getGlobalCMTID()
-                                , timewindow.getComponent(), timewindow.getPhases());
+                        timeWindow = new TimeWindowData(startTime, endTime, timeWindow.getObserver(),
+                                timeWindow.getGlobalCMTID(), timeWindow.getComponent(), timeWindow.getPhases());
                     }
                 }
 
                 // apply static correction
                 double shift = 0.;
                 if (!staticCorrectionSet.isEmpty()) {
-                    StaticCorrectionData correction = getStaticCorrection(timewindow);
+                    StaticCorrectionData correction = StaticCorrectionData.findForTimeWindow(staticCorrectionSet, timeWindow);
                     if (correction == null) {
                         System.err.println();
-                        System.err.println("!! No static correction data, skipping: " + timewindow);
+                        System.err.println("!! No static correction data, skipping: " + timeWindow);
                         return;
                     }
                     shift = correction.getTimeshift();
-                    if (Math.abs(shift) > maxStaticShift) {
+                    if (Math.abs(shift) > upperStaticShift) {
                         System.err.println();
-                        System.err.println("!! Time shift too large, skipping: " + timewindow);
+                        System.err.println("!! Time shift too large, skipping: " + timeWindow);
                         return;
                     }
                 }
-                TimewindowData shiftedWindow = new TimewindowData(timewindow.getStartTime() - shift
-                        , timewindow.getEndTime() - shift, timewindow.getObserver()
-                        , timewindow.getGlobalCMTID(), timewindow.getComponent(), timewindow.getPhases());
 
                 // cut out waveforms
-                RealVector synU = cutSAC(synSac, timewindow);
-                RealVector obsU = cutSAC(obsSac, shiftedWindow);
+                RealVector synU = cutSAC(synSac, timeWindow);
+                RealVector obsU = cutSAC(obsSac, timeWindow.shift(-shift));
 
                 // signal-to-noise ratio
-                double noise = noisePerSecond(obsSac, component);
-                double signal = obsU.getNorm() / (timewindow.getEndTime() - timewindow.getStartTime());
-                double snRatio = signal / noise;
+                double noiseNorm = noisePerSecond(obsSac, component, timeTool, false);
+                double obsSignal = obsU.getNorm() / (timeWindow.getEndTime() - timeWindow.getStartTime());
+                double snRatio = obsSignal / noiseNorm;
+
+                double noiseMax = noisePerSecond(obsSac, component, timeTool, true);
+                double obsMax = obsU.getLInfNorm();
+                double obsSNRatio = obsMax / noiseMax;
+                double synMax = synU.getLInfNorm();
+                double synSNRatio = synMax / noiseMax;
 
                 // select by features
-                DataFeature feature = DataFeature.create(timewindow, obsU, synU, snRatio, false);
+                DataFeature feature = DataFeature.create(timeWindow, obsU, synU, snRatio, obsSNRatio, synSNRatio, false);
                 if (check(feature)) {
                     feature.setSelected(true);
-                    goodTimewindowSet.add(timewindow);
+                    goodTimeWindowSet.add(timeWindow);
                 }
                 dataFeatureSet.add(feature);
 
             } catch (Exception e) {
                 System.err.println();
-                System.err.println("!! Skipping because an error occurs: " + timewindow);
+                System.err.println("!! Skipping because an error occurs: " + timeWindow);
                 e.printStackTrace();
             }
         }

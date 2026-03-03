@@ -18,7 +18,7 @@ import org.apache.commons.cli.Options;
  * About Kibrary.
  *
  * @author Kensuke Konishi
- * @version {@value VERSION}
+ * @since a long time ago
  * @see <a href=https://github.com/kensuke1984/Kibrary>GitHub</a>
  * @see <a href=https://kensuke1984.github.io/Kibrary>Javadoc</a>
  */

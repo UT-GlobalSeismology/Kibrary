@@ -17,13 +17,8 @@ import io.github.kensuke1984.kibrary.inversion.WeightingHandler;
 import io.github.kensuke1984.kibrary.math.MatrixFile;
 import io.github.kensuke1984.kibrary.math.VectorFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
-import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameterFile;
-import io.github.kensuke1984.kibrary.waveform.BasicID;
-import io.github.kensuke1984.kibrary.waveform.BasicIDFile;
-import io.github.kensuke1984.kibrary.waveform.PartialID;
-import io.github.kensuke1984.kibrary.waveform.PartialIDFile;
 
 /**
  * Operation for for assembling A<sup>T</sup>A and A<sup>T</sup>d.
@@ -46,10 +41,6 @@ public class InversionArranger extends Operation {
      * Whether to append date string at end of output folder name.
      */
     private boolean appendFolderDate;
-    /**
-     * Path of the output folder.
-     */
-    private Path outPath;
 
     /**
      * Basic waveform folder.
@@ -65,22 +56,29 @@ public class InversionArranger extends Operation {
     private Path unknownParameterPath;
 
     private Path weightingPropertiesPath;
+    /**
+     * Path of AtA file, if reusing.
+     */
+    private Path reuseAtaPath;
+    /**
+     * Fill 0 to empty partial waveforms or not.
+     */
+    private boolean fillEmptyPartial;
 
     /**
-     * @param args  none to create a property file <br>
-     *              [property file] to run
-     * @throws IOException if any
+     * @param args (String[]) Arguments: none to create a property file, path of property file to run it.
+     * @throws IOException
      */
     public static void main(String[] args) throws IOException {
-        if (args.length == 0) writeDefaultPropertiesFile();
+        if (args.length == 0) writeDefaultPropertiesFile(null);
         else Operation.mainFromSubclass(args);
     }
 
-    public static void writeDefaultPropertiesFile() throws IOException {
-        Class<?> thisClass = new Object(){}.getClass().getEnclosingClass();
-        Path outPath = Property.generatePath(thisClass);
+    public static void writeDefaultPropertiesFile(String tag) throws IOException {
+        String className = new Object(){}.getClass().getEnclosingClass().getSimpleName();
+        Path outPath = DatasetAid.generateOutputFilePath(Paths.get(""), className, tag, true, null, ".properties");
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
-            pw.println("manhattan " + thisClass.getSimpleName());
+            pw.println("manhattan " + className);
             pw.println("##Path of work folder. (.)");
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this unset.");
@@ -95,6 +93,11 @@ public class InversionArranger extends Operation {
             pw.println("#unknownParameterPath unknowns.lst");
             pw.println("##Path of a weighting properties file, must be set.");
             pw.println("#weightingPropertiesPath weighting.properties");
+            pw.println("##When reusing an AtA file, set its path.");
+            pw.println("##  When setting this, make sure all factors of AtA are the same, especially amplitude weighting!!");
+            pw.println("#reuseAtaPath ata.lst");
+            pw.println("##(boolean) Fill 0 to empty partial waveforms. (false)");
+            pw.println("#fillEmptyPartial ");
         }
         System.err.println(outPath + " is created.");
     }
@@ -112,35 +115,44 @@ public class InversionArranger extends Operation {
         basicPath = property.parsePath("basicPath", null, true, workPath);
         partialPath = property.parsePath("partialPath", null, true, workPath);
         unknownParameterPath = property.parsePath("unknownParameterPath", null, true, workPath);
-
         weightingPropertiesPath = property.parsePath("weightingPropertiesPath", null, true, workPath);
+        if (property.containsKey("reuseAtaPath")) reuseAtaPath = property.parsePath("reuseAtaPath", null, true, workPath);
+        fillEmptyPartial = property.parseBoolean("fillEmptyPartial", "false");
     }
 
     @Override
     public void run() throws IOException {
 
         // read input
-        List<BasicID> basicIDs = BasicIDFile.read(basicPath, true);
-        List<PartialID> partialIDs = PartialIDFile.read(partialPath, true);
-        List<UnknownParameter> unknowns = UnknownParameterFile.read(unknownParameterPath);
         WeightingHandler weightingHandler = new WeightingHandler(weightingPropertiesPath);
+        List<UnknownParameter> unknowns = UnknownParameterFile.read(unknownParameterPath);
+        // read AtA if reusing
+        RealMatrix ata = null;
+        if (reuseAtaPath != null) {
+            ata = MatrixFile.read(reuseAtaPath);
+            if (ata.getColumnDimension() != ata.getRowDimension())
+                throw new IllegalStateException("Input AtA matrix is not square.");
+            if (ata.getColumnDimension() != unknowns.size())
+                throw new IllegalStateException("Dimensions of input AtA file and unknown parameter file do not match.");
+        }
 
         // assemble matrices
-        MatrixAssembly assembler = new MatrixAssembly(basicIDs, partialIDs, unknowns, weightingHandler);
-        RealMatrix ata = assembler.getAta();
+        MatrixAssembly assembler = new MatrixAssembly(basicPath, partialPath, unknowns, weightingHandler, fillEmptyPartial);
+        if (reuseAtaPath == null) ata = assembler.getAta();
         RealVector atd = assembler.getAtd();
-        int dLength = assembler.getD().getDimension();
+        double numIndependent = assembler.getNumIndependent();
         double dNorm = assembler.getD().getNorm();
         double obsNorm = assembler.getObs().getNorm();
+        System.err.println("Normalized variance of input waveforms is " + assembler.getNormalizedVariance());
 
         // prepare output folder
-        outPath = DatasetAid.createOutputFolder(workPath, "inversion", folderTag, appendFolderDate, GadgetAid.getTemporaryString());
+        Path outPath = DatasetAid.createOutputFolder(workPath, "inversion", folderTag, appendFolderDate, null);
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         // output
         MatrixFile.write(ata, outPath.resolve("ata.lst"));
         VectorFile.write(atd, outPath.resolve("atd.lst"));
-        MatrixAssembly.writeDInfo(dLength, dNorm, obsNorm, outPath.resolve("dInfo.inf"));
+        MatrixAssembly.writeDInfo(numIndependent, dNorm, obsNorm, outPath.resolve("dInfo.inf"));
         UnknownParameterFile.write(unknowns, outPath.resolve("unknowns.lst"));
     }
 

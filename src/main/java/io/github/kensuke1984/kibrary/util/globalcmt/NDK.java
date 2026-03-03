@@ -62,7 +62,7 @@ import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
  * ============================================================================
  *
  * @author Kensuke Konishi
- * @since version 0.0.6.5
+ * @since a long time ago
  * @see <a href=http://www.ldeo.columbia.edu/~gcmt/projects/CMT/catalog/allorder.ndk_explained>official guide</a>
  */
 public final class NDK implements GlobalCMTAccess {

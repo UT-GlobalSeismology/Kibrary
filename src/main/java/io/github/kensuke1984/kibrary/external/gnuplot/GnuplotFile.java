@@ -137,6 +137,7 @@ public class GnuplotFile {
             } else {
                 terminalSize = "size " + sizeX + "," + sizeY;
             }
+            pw.println("set encoding utf8");
             pw.println("set term " + terminal + " " + terminalSize + " font \"" + fontName + "," + fontSizeDefault + "\"");
             pw.println("set out \"" + output + "\"");
 
@@ -148,6 +149,7 @@ public class GnuplotFile {
 
             if (!keySettings.isEmpty()) {
                 pw.println("set key " + keySettings);
+                pw.println("#unset key");
             } else {
                 pw.println("unset key");
             }

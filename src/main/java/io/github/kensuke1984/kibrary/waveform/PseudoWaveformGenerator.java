@@ -21,7 +21,6 @@ import io.github.kensuke1984.kibrary.inversion.setup.DVectorBuilder;
 import io.github.kensuke1984.kibrary.inversion.setup.MatrixAssembly;
 import io.github.kensuke1984.kibrary.math.ParallelizedMatrix;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
-import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.voxel.KnownParameter;
 import io.github.kensuke1984.kibrary.voxel.KnownParameterFile;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
@@ -36,7 +35,7 @@ import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
  * White noise can be added to the waveform.
  *
  * @author Kensuke Konishi
- * @since version 0.2.2
+ * @since a long time ago
  * @version 2022/2/23 Moved & renamed from inversion.CheckerBoardTest to waveform.PseudoWaveformGenerator
  */
 public class PseudoWaveformGenerator extends Operation {
@@ -84,20 +83,19 @@ public class PseudoWaveformGenerator extends Operation {
     private boolean fillEmptyPartial;
 
     /**
-     * @param args  none to create a property file <br>
-     *              [property file] to run
-     * @throws IOException if any
+     * @param args (String[]) Arguments: none to create a property file, path of property file to run it.
+     * @throws IOException
      */
     public static void main(String[] args) throws IOException {
-        if (args.length == 0) writeDefaultPropertiesFile();
+        if (args.length == 0) writeDefaultPropertiesFile(null);
         else Operation.mainFromSubclass(args);
     }
 
-    public static void writeDefaultPropertiesFile() throws IOException {
-        Class<?> thisClass = new Object(){}.getClass().getEnclosingClass();
-        Path outPath = Property.generatePath(thisClass);
+    public static void writeDefaultPropertiesFile(String tag) throws IOException {
+        String className = new Object(){}.getClass().getEnclosingClass().getSimpleName();
+        Path outPath = DatasetAid.generateOutputFilePath(Paths.get(""), className, tag, true, null, ".properties");
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
-            pw.println("manhattan " + thisClass.getSimpleName());
+            pw.println("manhattan " + className);
             pw.println("##Path of work folder. (.)");
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this unset.");
@@ -150,11 +148,9 @@ public class PseudoWaveformGenerator extends Operation {
         // read input
         List<KnownParameter> knowns = KnownParameterFile.read(modelPath);
         List<UnknownParameter> params = KnownParameter.extractParameterList(knowns);
-        List<BasicID> basicIDs = BasicIDFile.read(basicPath, true);
-        List<PartialID> partialIDs = PartialIDFile.read(partialPath, true);
 
         // assemble matrices (they should not be weighted)
-        MatrixAssembly assembler = new MatrixAssembly(basicIDs, partialIDs, params, WeightingHandler.IDENTITY, fillEmptyPartial);
+        MatrixAssembly assembler = new MatrixAssembly(basicPath, partialPath, params, WeightingHandler.IDENTITY, fillEmptyPartial);
         ParallelizedMatrix a = assembler.getA();
         RealVector m = new ArrayRealVector(KnownParameter.extractValueArray(knowns), false);
 
@@ -167,7 +163,7 @@ public class PseudoWaveformGenerator extends Operation {
         if (noise) pseudoWaveform = pseudoWaveform.add(createRandomNoise(dVectorBuilder));
 
         // prepare output folder
-        outPath = DatasetAid.createOutputFolder(workPath, "pseudo", folderTag, appendFolderDate, GadgetAid.getTemporaryString());
+        outPath = DatasetAid.createOutputFolder(workPath, "pseudo", folderTag, appendFolderDate, null);
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         // output

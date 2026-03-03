@@ -8,8 +8,8 @@ import org.apache.commons.math3.util.Precision;
 
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.math.Trace;
-import io.github.kensuke1984.kibrary.timewindow.Timewindow;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
+import io.github.kensuke1984.kibrary.timewindow.TimeWindow;
+import io.github.kensuke1984.kibrary.timewindow.TimeWindowData;
 import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.data.DataEntry;
 import io.github.kensuke1984.kibrary.util.data.Observer;
@@ -20,33 +20,28 @@ import io.github.kensuke1984.kibrary.util.sac.WaveformType;
 
 /**
  * <p>
- * ID and waveform data for a pair of event and observer of observed and synthetic waveforms.
- * </p>
- * This class is <b>IMMUTABLE</b> <br>
+ * ID and waveform data of observed and synthetic waveforms for a pair of event and observer.
  * <p>
- * Double values will be rounded off to 3rd decimal places. <br>
- * (Those are stored as Float in the file)<br>
+ * This class is <b>IMMUTABLE</b>.
  * <p>
  * Contents of information for one ID:
  * <ul>
- * <li> Whether it is observed(true) or synthetic(false) </li>
- * <li> Name of station </li>
- * <li> Name of network </li>
- * <li> Horizontal position of observer (latitude longitude) </li>
- * <li> Global CMT ID </li>
- * <li> Component (ZRT) </li>
- * <li> Period minimum and maximum </li>
- * <li> Start time </li>
- * <li> Number of points </li>
- * <li> Sampling Hz </li>
- * <li> If it is either convolved or observed, true </li>
- * <li> Position of a waveform for the ID </li>
+ * <li> waveform type (observed or synthetic) </li>
+ * <li> observer </li>
+ * <li> global CMT ID </li>
+ * <li> component (Z, R, or T) </li>
+ * <li> minimum and maximum period </li>
+ * <li> start time </li>
+ * <li> number of points </li>
+ * <li> sampling Hz </li>
+ * <li> whether waveform is either convolved or observed </li>
+ * <li> phases contained in time window </li>
  * </ul>
  * <p>
  * Caution: A BasicID instance may or may not hold waveform data, dependeing on whether it has already been set.
  *
- * @since a long time ago
  * @author Kensuke Konishi
+ * @since a long time ago
  */
 public class BasicID {
 
@@ -55,6 +50,10 @@ public class BasicID {
      * Period value should be around 5~200, so a value around 0.1 for epsilon should be enough.
      */
     public static final double PERIOD_EPSILON = 0.1;
+    /**
+     * The number of decimal places to round off the values.
+     */
+    private static final int DECIMALS = 3;
 
     protected final WaveformType type;
     protected final double samplingHz;
@@ -65,16 +64,19 @@ public class BasicID {
     protected final SACComponent component;
     protected final Phase[] phases;
     /**
-     * [s] if the data has not been applied a filter, 0
+     * Minimum period [s]. If the data has not been applied a filter, 0.
      */
     protected final double minPeriod;
     /**
-     * [s] if the data has not been applied a filter, {@link Double#POSITIVE_INFINITY}
+     * Maximum period [s]. If the data has not been applied a filter, {@link Double#POSITIVE_INFINITY}.
      */
     protected final double maxPeriod;
+    /**
+     * Whether the waveform is either convolved or observed.
+     */
     protected final boolean convolved;
     /**
-     * waveform
+     * Waveform data.
      */
     private final double[] data;
 
@@ -83,28 +85,28 @@ public class BasicID {
      * @param samplingHz   [Hz] Sampling Hz.
      * @param startTime    [s] start time of the time window.
      * @param npts         Number of data points
-     * @param observer      Information of observer.
-     * @param eventID  Event ID for the data.
+     * @param observer     Information of observer.
+     * @param eventID      Event ID for the data.
      * @param sacComponent Component of the data.
-     * @param minPeriod    [s] minimum period of the applied filter if none, 0
-     * @param maxPeriod    [s] minimum period of the applied filter if none, {@link Double#POSITIVE_INFINITY}
-     * @param phases       Array of phases
-     * @param convolved    If the data is convolved.
-     * @param waveformData the waveform data for this ID.
+     * @param minPeriod    [s] Minimum period of the applied filter. If none, 0.
+     * @param maxPeriod    [s] Minimum period of the applied filter. If none, {@link Double#POSITIVE_INFINITY}.
+     * @param phases       Array of phases.
+     * @param convolved    Whether the waveform is either convolved or observed.
+     * @param waveformData The waveform data for this ID.
      */
     public BasicID(WaveformType waveFormType, double samplingHz, double startTime, int npts, Observer observer,
             GlobalCMTID eventID, SACComponent sacComponent, double minPeriod, double maxPeriod, Phase[] phases,
             boolean convolved, double... waveformData) {
         this.type = waveFormType;
-        this.samplingHz = Precision.round(samplingHz, 3);
-        this.startTime = Precision.round(startTime, Timewindow.PRECISION);
+        this.samplingHz = Precision.round(samplingHz, DECIMALS);
+        this.startTime = Precision.round(startTime, TimeWindow.DECIMALS);
         this.npts = npts;
         this.observer = observer;
         this.eventID = eventID;
         this.component = sacComponent;
         this.phases = phases;
-        this.minPeriod = Precision.round(minPeriod, 3);
-        this.maxPeriod = Precision.round(maxPeriod, 3);
+        this.minPeriod = Precision.round(minPeriod, DECIMALS);
+        this.maxPeriod = Precision.round(maxPeriod, DECIMALS);
         this.convolved = convolved;
         if (waveformData.length != 0 && waveformData.length != npts)
             throw new IllegalArgumentException("Input waveform data length is invalid");
@@ -112,10 +114,10 @@ public class BasicID {
     }
 
      /**
-     * A new BasicID with the input data will be returned.
+     * Create new ID with the provided waveform data.
      *
-     * @param data Waveform data to be replaced
-     * @return BasicID with the input data
+     * @param data (double[]) Waveform data to be set.
+     * @return ({@link BasicID}) ID with the given waveform data.
      */
     public BasicID withData(double[] data) {
         return new BasicID(type, samplingHz, startTime, npts, observer, eventID, component, minPeriod,
@@ -123,13 +125,13 @@ public class BasicID {
     }
 
     /**
-     * Extract all timewindows from a set of input timewindows
-     * that have the same (event, observer, component) and overlap with the timewindow of this basicID.
-     * @param timewindowSet (Set of {@link TimewindowData}) Input timewindow set to search from
-     * @return (Set of {@link TimewindowData}) All timewindows that overlap with this
+     * Extract all time windows from a set of input time windows
+     * that have the same (event, observer, component) and overlap with the time window of this basicID.
+     * @param timeWindowSet (Set of {@link TimeWindowData}) Input time window set to search from.
+     * @return (Set of {@link TimeWindowData}) All time windows that overlap with this.
      */
-    public Set<TimewindowData> findAllOverlappingWindows(Set<TimewindowData> timewindowSet) {
-        Set<TimewindowData> overlappingWindows = timewindowSet.stream()
+    public Set<TimeWindowData> findAllOverlappingWindows(Set<TimeWindowData> timeWindowSet) {
+        Set<TimeWindowData> overlappingWindows = timeWindowSet.stream()
                 .filter(window -> window.getGlobalCMTID().equals(eventID)
                         && window.getObserver().equals(observer)
                         && window.getComponent().equals(component)
@@ -146,14 +148,14 @@ public class BasicID {
      * and startTime difference is within the maximum time shift.
      * This method ignores whether the input IDs are observed or synthetic. It also ignores the Phases.
      *
-     * @param id0 {@link BasicID}
-     * @param id1 {@link BasicID}
-     * @return if the IDs are same
+     * @param id0 ({@link BasicID})
+     * @param id1 ({@link BasicID})
+     * @return (boolean) Whether the IDs are pairs.
      */
     public static boolean isPair(BasicID id0, BasicID id1) {
         boolean res = id0.getGlobalCMTID().equals(id1.getGlobalCMTID()) && id0.getObserver().equals(id1.getObserver())
                 && id0.getSacComponent() == id1.getSacComponent() && id0.getNpts() == id1.getNpts()
-                && Precision.equals(id0.getStartTime(), id1.getStartTime(), TimewindowData.TIME_SHIFT_MAX)
+                && Precision.equals(id0.getStartTime(), id1.getStartTime(), TimeWindowData.TIME_SHIFT_MAX)
                 && id0.getSamplingHz() == id1.getSamplingHz()
                 && Precision.equals(id0.getMaxPeriod(), id1.getMaxPeriod(), PERIOD_EPSILON)
                 && Precision.equals(id0.getMinPeriod(), id1.getMinPeriod(), PERIOD_EPSILON);
@@ -229,28 +231,28 @@ public class BasicID {
     }
 
     /**
-     * @return [s]
+     * @return (double) Start time [s].
      */
     public double getStartTime() {
         return startTime;
     }
 
     /**
-     * @return [s]
+     * @return (double) End time [s].
      */
     public double computeEndTime() {
         return startTime + (npts - 1) / samplingHz;
     }
 
     /**
-     * @return Number of data points
+     * @return (int) Number of data points.
      */
     public int getNpts() {
         return npts;
     }
 
     /**
-     * @return Sampling Hz [hz]
+     * @return (double) Sampling Hz [Hz].
      */
     public double getSamplingHz() {
         return samplingHz;
@@ -265,7 +267,7 @@ public class BasicID {
     }
 
     /**
-     * @return If this ID is convolved
+     * @return (boolean) Whether this ID is either convolved or observed.
      */
     public boolean isConvolved() {
         return convolved;
@@ -276,14 +278,14 @@ public class BasicID {
     }
 
     /**
-     * @return Arrays of waveform data
+     * @return (double[]) Waveform data.
      */
     public double[] getData() {
         return data.clone();
     }
 
     /**
-     * @return Trace of the waveform for this ID.
+     * @return ({@link Trace}) Waveform data.
      */
     public Trace toTrace() {
         double[] x = new double[data.length];
@@ -292,7 +294,7 @@ public class BasicID {
     }
 
     /**
-     * @return
+     * @return ({@link DataEntry}) Data entry for this ID.
      * @since 2022/12/13
      * @author otsuru
      */
@@ -309,12 +311,22 @@ public class BasicID {
         return new RecordEntry(eventID, observer, component, phases);
     }
 
+
+    /**
+     * @return ({@link TimeWindow}) Time window for this ID.
+     * @since 2025/2/23
+     * @author otsuru
+     */
+    public TimeWindow toTimeWindow() {
+        return new TimeWindow(startTime, computeEndTime());
+    }
+
     @Override
     public String toString() {
         String basicString = observer.toPaddedInfoString() + " " + eventID.toPaddedString() + " " + component + " " + type + " "
-                + MathAid.padToString(startTime, Timewindow.TYPICAL_MAX_INTEGER_DIGITS, Timewindow.PRECISION, false) + " "
+                + MathAid.padToString(startTime, TimeWindow.TYPICAL_MAX_INTEGER_DIGITS, TimeWindow.DECIMALS, false) + " "
                 + npts + " " + samplingHz + " " + minPeriod + " " + maxPeriod + " "
-                + TimewindowData.phasesAsString(phases) + " " + convolved;
+                + TimeWindowData.phasesAsString(phases) + " " + convolved;
         return basicString;
     }
 

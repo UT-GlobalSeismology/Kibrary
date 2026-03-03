@@ -13,15 +13,22 @@ import io.github.kensuke1984.kibrary.waveform.WaveformDataWriter;
  * CAUTION: values must be in -128~127 (range of byte)!! (The value is written into files as byte; see {@link WaveformDataWriter}.)
  *
  * @author Kensuke Konishi
- * @version 0.0.4
+ * @since a long time ago
  */
 public enum SACComponent {
     Z(1), R(2), T(3);
 
-    private int value;
+    private final int number;
 
-    SACComponent(int i) {
-        value = i;
+    private SACComponent(int number) {
+        this.number = number;
+    }
+
+    /**
+     * @return 1(Z), 2(R), 3(T)
+     */
+    public int getNumber() {
+        return number;
     }
 
     /**
@@ -29,7 +36,7 @@ public enum SACComponent {
      * @return Z(1) R(2) T(3)
      * @throws IllegalArgumentException if the input n is not 1,2,3
      */
-    public static SACComponent getComponent(int n) {
+    public static SACComponent ofNumber(int n) {
         switch (n) {
             case 1:
                 return Z;
@@ -40,13 +47,6 @@ public enum SACComponent {
             default:
                 throw new IllegalArgumentException("Invalid component! Components are Z(1) R(2) T(3)");
         }
-    }
-
-    /**
-     * @return 1(Z), 2(R), 3(T)
-     */
-    public int valueOf() {
-        return value;
     }
 
     /**

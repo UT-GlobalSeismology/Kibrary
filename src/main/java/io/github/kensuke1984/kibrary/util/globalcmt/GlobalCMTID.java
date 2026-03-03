@@ -1,6 +1,7 @@
 package io.github.kensuke1984.kibrary.util.globalcmt;
 
 import java.io.IOException;
+import java.time.format.DateTimeFormatter;
 import java.util.regex.Pattern;
 
 import org.apache.commons.cli.CommandLine;
@@ -20,7 +21,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  * When a set of GlobalCMTIDs is sorted, they will be in dictionary order, not order of event time.
  *
  * @author Kensuke Konishi
- * @since version 0.1.1.2
+ * @since a long time ago
  * @see <a href=http://www.globalcmt.org/>Global CMT project official page</a>
  */
 public final class GlobalCMTID implements Comparable<GlobalCMTID> {
@@ -185,6 +186,8 @@ public final class GlobalCMTID implements Comparable<GlobalCMTID> {
     public static void run(CommandLine cmdLine) throws IOException {
         String[] idStrings = cmdLine.getOptionValue("i").split(",");
         for (String idString : idStrings) {
+            System.out.println();
+
             if (!isGlobalCMTID(idString)) {
                 System.err.println(idString + " does not exist.");
                 continue;
@@ -193,10 +196,15 @@ public final class GlobalCMTID implements Comparable<GlobalCMTID> {
             GlobalCMTID id = new GlobalCMTID(idString);
             GlobalCMTAccess event = id.getEventData();
 
-            System.out.println("ID: " + id + "   Mw: " + event.getCmt().getMw());
-            System.out.println("Centroid time: " + event.getCMTTime());
-            System.out.println("Centroid position (latitude longitude radius): " + event.getCmtPosition());
+            System.out.println("ID: " + id);
+            System.out.println("Centroid time: " + event.getCMTTime().format(DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss.SS")));
+            System.out.println("Centroid position (lat lon rad dep): " + event.getCmtPosition() + " " + event.getCmtPosition().getDepth());
+            System.out.println("    " + event.getGeographicalLocationName());
+            System.out.println("Mw: " + event.getCmt().getMw());
+            System.out.println(event.getCmt().toString());
+            System.out.println("STF type & half duration: " + event.getSTFType() + " " + event.getHalfDuration());
         }
+        System.out.println();
     }
 
 }

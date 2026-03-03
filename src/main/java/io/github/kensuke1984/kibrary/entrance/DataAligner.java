@@ -16,6 +16,7 @@ import org.apache.commons.cli.ParseException;
 import io.github.kensuke1984.kibrary.Summon;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.EventFolder;
+import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.ThreadAid;
 
 /**
@@ -42,8 +43,8 @@ import io.github.kensuke1984.kibrary.util.ThreadAid;
  * but before configuring (= the parallelized part).
  * </ul>
  *
- * @since 2021/11/17
  * @author otsuru
+ * @since 2021/11/17
  */
 public class DataAligner {
 
@@ -82,17 +83,16 @@ public class DataAligner {
         OptionGroup inputOption = new OptionGroup();
         inputOption.setRequired(true);
         inputOption.addOption(Option.builder("m").longOpt("mseed").hasArg().argName("datacenter")
-                .desc("Operate for mseed files, and download from the specified datacenter, chosen from {IRIS, ORFEUS}.")
-                .build());
+                .desc("Operate for mseed files, and download from the specified datacenter, chosen from {IRIS, ORFEUS}.").build());
         inputOption.addOption(Option.builder("s").longOpt("seed")
                 .desc("Operate for seed files.").build());
         options.addOptionGroup(inputOption);
 
         // option
         options.addOption(Option.builder("d").longOpt("fromDownload")
-                .desc("Whether to redo from stationXML downloads for all unconfigured SACs, without opening mseed. Only for mseed mode.").build());
+                .desc("Redo from stationXML downloads for all unconfigured SACs, without opening mseed. Only for mseed mode.").build());
         options.addOption(Option.builder("c").longOpt("fromConfigure")
-                .desc("Whether to redo from SAC configuration, without opening seed/mseed or downloading stationXMLs.").build());
+                .desc("Redo from SAC configuration, without opening seed/mseed or downloading stationXMLs.").build());
 
         return options;
     }
@@ -184,7 +184,7 @@ public class DataAligner {
         es.shutdown();
         System.err.println("Straightening SAC files ...");
         while (!es.isTerminated()) {
-            System.err.print("\r " + Math.ceil(100.0 * processedFolders.get() / eventDirs.size()) + "% of events done");
+            System.err.print("\r " + MathAid.ceil(100.0 * processedFolders.get() / eventDirs.size()) + "% of events done");
             ThreadAid.sleep(100);
         }
         System.err.println("\r Finished handling all events.");

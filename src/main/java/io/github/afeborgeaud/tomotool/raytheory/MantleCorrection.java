@@ -17,15 +17,15 @@ import io.github.afeborgeaud.tomotool.topoModel.Seismic3Dmodel;
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.correction.StaticCorrectionData;
 import io.github.kensuke1984.kibrary.correction.StaticCorrectionDataFile;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
+import io.github.kensuke1984.kibrary.timewindow.TimeWindowData;
+import io.github.kensuke1984.kibrary.timewindow.TimeWindowDataFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 
 /**
  *
  * Compute manntle correction value (Ventosa & Romanowicz, 2015) at each raypath (event & observer pair).
- * Raypath informations are referred from {@link TimewindowData}.
+ * Raypath informations are referred from {@link TimeWindowData}.
  * Seismic 3D models which are referred to compute mantle corrections are {@link SEMUCBWM1}, {@link LLNLG3DJPS}, {@link S20RTS}.
  * Phase should be ScS (relative differential traveltime between S and ScS) or PcP (relative differential traveltime between P and PcP).
  * <p>
@@ -54,7 +54,7 @@ public class MantleCorrection {
     /**
      * Timewindow data
      */
-    private Set<TimewindowData> timewindows;
+    private Set<TimeWindowData> timewindows;
     /**
      * seismic 3D model
      * Should be selected from {@link SEMUCBWM1}, {@link LLNLG3DJPS}, {@link S20RTS}.
@@ -120,7 +120,7 @@ public class MantleCorrection {
     }
 
     private void set() throws IOException {
-        timewindows = TimewindowDataFile.read(inputPath);
+        timewindows = TimeWindowDataFile.read(inputPath);
 
         //set 3D seismic model
         switch (threeDmodel) {
@@ -162,7 +162,7 @@ public class MantleCorrection {
         if (timewindows == null || timewindows.isEmpty()) {
             throw new RuntimeException("Error: timewindow file is null or empty");
         } else {
-            for (TimewindowData window : timewindows) {
+            for (TimeWindowData window : timewindows) {
                 Compute(window);
             }
         }
@@ -183,14 +183,15 @@ public class MantleCorrection {
      * Set path to output file and bounce point file
      */
     private void setOutput() {
+        String dateString = GadgetAid.getTemporaryString();
         switch (phaseName) {
         case "ScS":
-            bouncepointPath = DatasetAid.generateOutputFilePath(Paths.get(""), "bouncepoint_ScS", threeDmodel, true, GadgetAid.getTemporaryString(), ".lst");
-            outPath = DatasetAid.generateOutputFilePath(Paths.get(""), "mantleCorrection_S-ScS", threeDmodel, true, GadgetAid.getTemporaryString(), ".dat");
+            bouncepointPath = DatasetAid.generateOutputFilePath(Paths.get(""), "bouncepoint_ScS", threeDmodel, true, dateString, ".lst");
+            outPath = DatasetAid.generateOutputFilePath(Paths.get(""), "mantleCorrection_S-ScS", threeDmodel, true, dateString, ".dat");
             break;
         case "PcP":
-            bouncepointPath = DatasetAid.generateOutputFilePath(Paths.get(""), "bouncepoint_PcP", threeDmodel, true, GadgetAid.getTemporaryString(), ".lst");
-            outPath = DatasetAid.generateOutputFilePath(Paths.get(""), "mantleCorrection_P-PcP", threeDmodel, true, GadgetAid.getTemporaryString(), ".dat");
+            bouncepointPath = DatasetAid.generateOutputFilePath(Paths.get(""), "bouncepoint_PcP", threeDmodel, true, dateString, ".lst");
+            outPath = DatasetAid.generateOutputFilePath(Paths.get(""), "mantleCorrection_P-PcP", threeDmodel, true, dateString, ".dat");
             break;
         default:
             throw new RuntimeException("Error: phase " + phaseName + " not implemented yet");
@@ -202,7 +203,7 @@ public class MantleCorrection {
      * @param window
      * @throws IOException
      */
-    public void Compute(TimewindowData window) throws IOException {
+    public void Compute(TimeWindowData window) throws IOException {
         List<RaypathInformation> raypathInformations = new ArrayList<>();
         raypathInformations.add(new RaypathInformation(window.getObserver(), window.getGlobalCMTID()));
 

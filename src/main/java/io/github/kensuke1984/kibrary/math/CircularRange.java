@@ -1,5 +1,7 @@
 package io.github.kensuke1984.kibrary.math;
 
+import io.github.kensuke1984.kibrary.util.MathAid;
+
 /**
  * A range of angles on a circle [deg].
  * Comparisons are done after normalizing all angle values into range [0:360).
@@ -28,8 +30,8 @@ public class CircularRange {
      */
     public CircularRange(String valueName, double lowerLimit, double upperLimit) {
         // convert all angles to range [0:360)
-        this.lowerLimit = lowerLimit - Math.floor(lowerLimit / 360) * 360;
-        this.upperLimit = upperLimit - Math.floor(upperLimit / 360) * 360;
+        this.lowerLimit = lowerLimit - MathAid.floor(lowerLimit / 360) * 360;
+        this.upperLimit = upperLimit - MathAid.floor(upperLimit / 360) * 360;
     }
 
     /**
@@ -46,8 +48,8 @@ public class CircularRange {
         if (lowerLimit < minimum || maximum < lowerLimit || upperLimit < minimum || maximum < upperLimit)
             throw new IllegalArgumentException(valueName + " range [" + lowerLimit + ":" + upperLimit + ") is invalid.");
         // convert all angles to range [0:360)
-        this.lowerLimit = lowerLimit - Math.floor(lowerLimit / 360) * 360;
-        this.upperLimit = upperLimit - Math.floor(upperLimit / 360) * 360;
+        this.lowerLimit = lowerLimit - MathAid.floor(lowerLimit / 360) * 360;
+        this.upperLimit = upperLimit - MathAid.floor(upperLimit / 360) * 360;
     }
 
     /**
@@ -59,7 +61,7 @@ public class CircularRange {
      */
     public boolean check(double checkValue) {
         // convert angle to range [0:360)
-        double convertedValue = checkValue - Math.floor(checkValue / 360) * 360;
+        double convertedValue = checkValue - MathAid.floor(checkValue / 360) * 360;
 
         if (upperLimit <= lowerLimit) {
             // Accept values in [0:upperValue),[lowerValue:360].

@@ -3,7 +3,7 @@ package io.github.kensuke1984.kibrary.util.data;
 import java.util.Arrays;
 
 import io.github.kensuke1984.anisotime.Phase;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
+import io.github.kensuke1984.kibrary.timewindow.TimeWindowData;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 
@@ -56,7 +56,7 @@ public class RecordEntry extends DataEntry {
         if (deCompare != 0)
             return deCompare;
         RecordEntry ot = (RecordEntry) o;
-        int phCompare = TimewindowData.phasesAsString(phases).compareTo(TimewindowData.phasesAsString(ot.phases));
+        int phCompare = TimeWindowData.phasesAsString(phases).compareTo(TimeWindowData.phasesAsString(ot.phases));
         return phCompare;
     }
 
@@ -66,7 +66,11 @@ public class RecordEntry extends DataEntry {
 
     @Override
     public String toString() {
-        return super.toString() + " " + TimewindowData.phasesAsString(phases);
+        return super.toString() + " " + TimeWindowData.phasesAsString(phases);
+    }
+
+    public RecordEntry withComponent(SACComponent component) {
+        return new RecordEntry(super.getEvent(), super.getObserver(), component, phases);
     }
 
 }

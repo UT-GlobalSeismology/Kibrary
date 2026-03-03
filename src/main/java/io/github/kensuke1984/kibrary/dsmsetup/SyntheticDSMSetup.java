@@ -44,6 +44,7 @@ import io.github.kensuke1984.kibrary.util.spc.SPCMode;
  * </ul>
  * Then, the DSM input files will be created for the (event, observer) pairs that have been chosen.
  *
+ * @author ?
  * @since a long time ago
  * @version 2021/11/2 renamed from SyntheticDSMInformationFileMaker
  */
@@ -63,7 +64,7 @@ public class SyntheticDSMSetup extends Operation {
      */
     private boolean appendFolderDate;
     /**
-     * Name root of input file for DSM (header_[sh,psv].inf).
+     * Name root of input file for DSM (header_[SH,PSV].inf).
      */
     private String header;
     /**
@@ -89,11 +90,11 @@ public class SyntheticDSMSetup extends Operation {
     private String structureName;
 
     /**
-     * Time length [s], must be a power of 2 divided by 10. (2<sup>n</sup>/10)
+     * Time length [s], must be (a power of 2)/samplingHz.
      */
     private double tlen;
     /**
-     * Number of steps in frequency domain, must be a power of 2.
+     * Number of steps in frequency domain, should not exceed tlen*samplingHz/2.
      */
     private int np;
     /**
@@ -102,27 +103,26 @@ public class SyntheticDSMSetup extends Operation {
     private boolean mpi;
 
     /**
-     * @param args  none to create a property file <br>
-     *              [property file] to run
-     * @throws IOException if any
+     * @param args (String[]) Arguments: none to create a property file, path of property file to run it.
+     * @throws IOException
      */
     public static void main(String[] args) throws IOException {
-        if (args.length == 0) writeDefaultPropertiesFile();
+        if (args.length == 0) writeDefaultPropertiesFile(null);
         else Operation.mainFromSubclass(args);
     }
 
-    public static void writeDefaultPropertiesFile() throws IOException {
-        Class<?> thisClass = new Object(){}.getClass().getEnclosingClass();
-        Path outPath = Property.generatePath(thisClass);
+    public static void writeDefaultPropertiesFile(String tag) throws IOException {
+        String className = new Object(){}.getClass().getEnclosingClass().getSimpleName();
+        Path outPath = DatasetAid.generateOutputFilePath(Paths.get(""), className, tag, true, null, ".properties");
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
-            pw.println("manhattan " + thisClass.getSimpleName());
+            pw.println("manhattan " + className);
             pw.println("##Path of work folder. (.)");
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this unset.");
             pw.println("#folderTag ");
             pw.println("##(boolean) Whether to append date string at end of output folder name. (true)");
             pw.println("#appendFolderDate false");
-            pw.println("##(String) Header for names of output files (as in header_[sh,psv].inf). (PREM)");
+            pw.println("##(String) Header for names of output files (as in header_[SH,PSV].inf). (PREM)");
             pw.println("#header ");
             pw.println("##SacComponents to be used, listed using spaces. (Z R T)");
             pw.println("#components ");
@@ -130,13 +130,13 @@ public class SyntheticDSMSetup extends Operation {
             pw.println("#dataEntryPath dataEntry.lst");
             pw.println("##Path of a root folder containing observed dataset. (.)");
             pw.println("#obsPath ");
-            pw.println("##Path of a structure file you want to use. If this is unset, the following structureName will be referenced.");
+            pw.println("##Path of structure file to use. If this is unset, the following structureName will be referenced.");
             pw.println("#structurePath ");
-            pw.println("##Name of a structure model you want to use. (PREM)");
+            pw.println("##Name of structure model to use. (PREM)");
             pw.println("#structureName ");
-            pw.println("##Time length to be computed, must be a power of 2 over 10. (3276.8)");
+            pw.println("##Time length to compute [s], must be (a power of 2)/(desired sampling frequency). (3276.8)");
             pw.println("#tlen ");
-            pw.println("##Number of points to be computed in frequency domain, must be a power of 2. (512)");
+            pw.println("##(int) Number of points to compute in frequency domain, should not exceed tlen*(desired sampling frequency)/2. (512)");
             pw.println("#np ");
             pw.println("##(boolean) Whether to use MPI in the subsequent DSM computations. (true)");
             pw.println("#mpi false");
@@ -175,7 +175,7 @@ public class SyntheticDSMSetup extends Operation {
 
     @Override
     public void run() throws IOException {
-        String dateStr = GadgetAid.getTemporaryString();
+        String dateString = GadgetAid.getTemporaryString();
 
         // create set of events and observers to set up DSM for
         Map<GlobalCMTID, Set<Observer>> arcMap = DatasetAid.setupArcMapFromFileOrFolder(dataEntryPath, obsPath, components);
@@ -184,7 +184,7 @@ public class SyntheticDSMSetup extends Operation {
         // set structure
         PolynomialStructure structure = PolynomialStructure.setupFromFileOrName(structurePath, structureName);
 
-        Path outPath = DatasetAid.createOutputFolder(workPath, "synthetic", folderTag, appendFolderDate, dateStr);
+        Path outPath = DatasetAid.createOutputFolder(workPath, "synthetic", folderTag, appendFolderDate, dateString);
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         // output information files in each event folder
@@ -201,9 +201,9 @@ public class SyntheticDSMSetup extends Operation {
                     continue;
 
                 // in the same event folder, observers with the same name should have same position
-                int numberOfObserver = (int) observers.stream().map(Observer::toString).count();
+                int numberOfObserver = (int) observers.stream().map(Observer::toString).distinct().count();
                 if (numberOfObserver != observers.size())
-                    System.err.println("!Caution there are observers with the same name and different position for " + event);
+                    System.err.println("! Caution: There are observers with the same name and different position for " + event);
 
                 SyntheticDSMInputFile info = new SyntheticDSMInputFile(structure, event.getEventData(), observers, header, tlen, np);
                 Path outEventPath = outPath.resolve(event.toString());
@@ -222,8 +222,8 @@ public class SyntheticDSMSetup extends Operation {
         String listFileName = "sourceList.txt";
         Files.write(outPath.resolve(listFileName), sourceTreeSet);
         DSMShellscript shell = new DSMShellscript(mpi, arcMap.size(), header);
-        Path outSHPath = DatasetAid.generateOutputFilePath(outPath, "runDSM_SH", null, false, dateStr, ".sh");
-        Path outPSVPath = DatasetAid.generateOutputFilePath(outPath, "runDSM_PSV", null, false, dateStr, ".sh");
+        Path outSHPath = DatasetAid.generateOutputFilePath(outPath, "runDSM_SH", null, false, dateString, ".sh");
+        Path outPSVPath = DatasetAid.generateOutputFilePath(outPath, "runDSM_PSV", null, false, dateString, ".sh");
         shell.write(DSMShellscript.DSMType.SYNTHETIC, SPCMode.SH, listFileName, outSHPath);
         shell.write(DSMShellscript.DSMType.SYNTHETIC, SPCMode.PSV, listFileName, outPSVPath);
         System.err.println("After this finishes, please enter " + outPath + "/ and run "

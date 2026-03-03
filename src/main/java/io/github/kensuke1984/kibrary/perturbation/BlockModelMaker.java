@@ -14,14 +14,14 @@ import java.util.stream.Collectors;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.elastic.VariableType;
+import io.github.kensuke1984.kibrary.math.CircularRange;
+import io.github.kensuke1984.kibrary.math.LinearRange;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
-import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.earth.Earth;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
-import io.github.kensuke1984.kibrary.util.spc.PartialType;
 import io.github.kensuke1984.kibrary.voxel.HorizontalPixel;
 import io.github.kensuke1984.kibrary.voxel.KnownParameter;
 import io.github.kensuke1984.kibrary.voxel.KnownParameterFile;
@@ -78,20 +78,19 @@ public class BlockModelMaker extends Operation {
     private List<Box> boxes = new ArrayList<>();
 
     /**
-     * @param args  none to create a property file <br>
-     *              [property file] to run
-     * @throws IOException if any
+     * @param args (String[]) Arguments: none to create a property file, path of property file to run it.
+     * @throws IOException
      */
     public static void main(String[] args) throws IOException {
-        if (args.length == 0) writeDefaultPropertiesFile();
+        if (args.length == 0) writeDefaultPropertiesFile(null);
         else Operation.mainFromSubclass(args);
     }
 
-    public static void writeDefaultPropertiesFile() throws IOException {
-        Class<?> thisClass = new Object(){}.getClass().getEnclosingClass();
-        Path outPath = Property.generatePath(thisClass);
+    public static void writeDefaultPropertiesFile(String tag) throws IOException {
+        String className = new Object(){}.getClass().getEnclosingClass().getSimpleName();
+        Path outPath = DatasetAid.generateOutputFilePath(Paths.get(""), className, tag, true, null, ".properties");
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
-            pw.println("manhattan " + thisClass.getSimpleName());
+            pw.println("manhattan " + className);
             pw.println("##Path of work folder. (.)");
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this unset.");
@@ -109,10 +108,10 @@ public class BlockModelMaker extends Operation {
             pw.println("##Variable types to set in model, listed using spaces. (MU)");
             pw.println("#outputVariableTypes ");
             pw.println("##########From here on, set percentages of perturbations and the borders of boxes to place them.");
-            pw.println("########## Percentages of perturbations must be listed using spaces in the order of variableTypes.");
-            pw.println("########## Defaults of borders are -90, 90, -180, 180, 0, and Double.MAX_VALUE, respectively.");
-            pw.println("########## A box is recongized if the percentage values are properly set.");
-            pw.println("########## Up to " + MAX_BOX + " boxes can be managed. Any box may be left blank.");
+            pw.println("##########  Percentages of perturbations must be listed using spaces in the order of variableTypes.");
+            pw.println("##########  Defaults of borders are -90, 90, -180, 180, 0, and Double.MAX_VALUE, respectively.");
+            pw.println("##########  A box is recongized if the percentage values are properly set.");
+            pw.println("##########  Up to " + MAX_BOX + " boxes can be managed. Any box may be left blank.");
             for (int i = 1; i <= MAX_BOX; i++) {
                 pw.println("##" + MathAid.ordinalNumber(i) + " box.");
                 pw.println("#percents" + i + " ");
@@ -196,7 +195,7 @@ public class BlockModelMaker extends Operation {
                 PerturbationVoxel voxel = new PerturbationVoxel(position, volume, initialStructure);
                 for (int k = 0; k < perturbVariableTypes.size(); k++) {
                     double percent = findPercentage(position, k);
-                    voxel.setPercent(perturbVariableTypes.get(k), percent);
+                    voxel.setValue(perturbVariableTypes.get(k), ScalarType.PERCENT, percent);
                     // rho must be set to default if it is not in variableTypes  TODO: should this be done to other variables?
                     voxel.setDefaultIfUndefined(VariableType.RHO);
                 }
@@ -204,13 +203,13 @@ public class BlockModelMaker extends Operation {
             }
         }
 
-        Path outPath = DatasetAid.createOutputFolder(workPath, "block", folderTag, appendFolderDate, GadgetAid.getTemporaryString());
+        Path outPath = DatasetAid.createOutputFolder(workPath, "block", folderTag, appendFolderDate, null);
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         System.err.println("Outputting perturbation list files.");
         for (VariableType perturbVariableType : perturbVariableTypes) {
-            Path paramPath = outPath.resolve(perturbVariableType.toString().toLowerCase() + "Percent.lst");
-            PerturbationListFile.writePercentForType(perturbVariableType, model, paramPath);
+            Path paramPath = outPath.resolve(ScalarListFile.generateFileName(perturbVariableType, ScalarType.PERCENT));
+            ScalarListFile.write(model, perturbVariableType, ScalarType.PERCENT, paramPath);;
         }
 
         // set known parameters
@@ -219,7 +218,7 @@ public class BlockModelMaker extends Operation {
         for (VariableType outputVariableType : outputVariableTypes) {
             for (PerturbationVoxel voxel : model.getVoxels()) {
                 UnknownParameter unknown = new Physical3DParameter(outputVariableType, voxel.getPosition(), voxel.getVolume());
-                KnownParameter known = new KnownParameter(unknown, voxel.getDelta(outputVariableType));
+                KnownParameter known = new KnownParameter(unknown, voxel.getValue(outputVariableType, ScalarType.DELTA));
                 knowns.add(known);
             }
         }
@@ -231,31 +230,24 @@ public class BlockModelMaker extends Operation {
     private double findPercentage(FullPosition position, int variableNum) {
         for (int i = boxes.size() - 1; i >= 0; i--) {
             Box box = boxes.get(i);
-            if (position.isInRange(box.lowerLatitude, box.upperLatitude, box.lowerLongitude, box.upperLongitude,
-                    box.lowerRadius, box.upperRadius))
+            if (position.isInRange(box.latitudeRange, box.longitudeRange, box.radiusRange))
                 return box.percents[variableNum];
         }
-        return 0;
+        return 0.0;
     }
 
     private class Box {
         private double[] percents;
-        private double lowerLatitude;
-        private double upperLatitude;
-        private double lowerLongitude;
-        private double upperLongitude;
-        private double lowerRadius;
-        private double upperRadius;
+        private LinearRange latitudeRange;
+        private CircularRange longitudeRange;
+        private LinearRange radiusRange;
 
         private Box(double percents[], double lowerLatitude, double upperLatitude, double lowerLongitude, double upperLongitude,
                 double lowerRadius, double upperRadius) {
             this.percents = percents;
-            this.lowerLatitude = lowerLatitude;
-            this.upperLatitude = upperLatitude;
-            this.lowerLongitude = lowerLongitude;
-            this.upperLongitude = upperLongitude;
-            this.lowerRadius = lowerRadius;
-            this.upperRadius = upperRadius;
+            this.latitudeRange = new LinearRange("Latitude", lowerLatitude, upperLatitude, -90.0, 90.0);
+            this.longitudeRange = new CircularRange("Longitude", lowerLongitude, upperLongitude);
+            this.radiusRange = new LinearRange("Radius", lowerRadius, upperRadius, 0.0);
         }
 
     }

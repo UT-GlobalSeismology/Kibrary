@@ -27,6 +27,7 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTSearch;
  * A gmail account is needed. The address must be set in the .property file in KIBRARY_HOME.
  *
  * @author Kensuke Konishi
+ * @since a long time ago
  */
 public class DataRequestor extends Operation {
 
@@ -75,23 +76,22 @@ public class DataRequestor extends Operation {
     private boolean send;
 
     private Set<GlobalCMTID> requestedEvents;
-    private String dateStr = GadgetAid.getTemporaryString();
+    private String dateString = GadgetAid.getTemporaryString();
 
     /**
-     * @param args  none to create a property file <br>
-     *              [property file] to run
-     * @throws IOException if any
+     * @param args (String[]) Arguments: none to create a property file, path of property file to run it.
+     * @throws IOException
      */
     public static void main(String[] args) throws IOException {
-        if (args.length == 0) writeDefaultPropertiesFile();
+        if (args.length == 0) writeDefaultPropertiesFile(null);
         else Operation.mainFromSubclass(args);
     }
 
-    public static void writeDefaultPropertiesFile() throws IOException {
-        Class<?> thisClass = new Object(){}.getClass().getEnclosingClass();
-        Path outPath = Property.generatePath(thisClass);
+    public static void writeDefaultPropertiesFile(String tag) throws IOException {
+        String className = new Object(){}.getClass().getEnclosingClass().getSimpleName();
+        Path outPath = DatasetAid.generateOutputFilePath(Paths.get(""), className, tag, true, null, ".properties");
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
-            pw.println("manhattan " + thisClass.getSimpleName());
+            pw.println("manhattan " + className);
             pw.println("##Path of work folder. (.)");
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this unset.");
@@ -177,9 +177,9 @@ public class DataRequestor extends Operation {
         if (!DatasetAid.checkNum(requestedEvents.size(), "event", "events")) {
             return;
         }
-        System.out.println("Label contains \"" + dateStr + "\"");
+        System.out.println("Label contains \"" + dateString + "\"");
 
-        outPath = DatasetAid.createOutputFolder(workPath, "request", folderTag, appendFolderDate, dateStr);
+        outPath = DatasetAid.createOutputFolder(workPath, "request", folderTag, appendFolderDate, dateString);
 
         requestedEvents.forEach(event -> output(createBreakFastMail(event)));
 
@@ -226,7 +226,7 @@ public class DataRequestor extends Operation {
     public BreakFastMail createBreakFastMail(GlobalCMTID event) {
         Channel[] channels = Channel.listChannels(networks, event, ChronoUnit.MINUTES, headAdjustment, ChronoUnit.MINUTES,
                 footAdjustment);
-        return new BreakFastMail(event + "." + dateStr, channels);
+        return new BreakFastMail(event + "." + dateString, channels);
     }
 
     private Set<GlobalCMTID> listEvents() {

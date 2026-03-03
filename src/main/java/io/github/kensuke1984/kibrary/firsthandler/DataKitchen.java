@@ -17,7 +17,7 @@ import io.github.kensuke1984.kibrary.math.CircularRange;
 import io.github.kensuke1984.kibrary.math.LinearRange;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.EventFolder;
-import io.github.kensuke1984.kibrary.util.GadgetAid;
+import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.ThreadAid;
 
 /**
@@ -34,11 +34,8 @@ import io.github.kensuke1984.kibrary.util.ThreadAid;
  * See also {@link EventProcessor}.
  * <p>
  *
- * TODO NPTSで合わないものを捨てる？
- *
  * @author otsuru
- * @since 2021/09/14
- * This class is a modification of FirstHandler, which was the Java version of First handler ported from the perl software.
+ * @since 2021/09/14 Created as a modification of FirstHandler, which was the Java version of First handler ported from the perl software.
  */
 public class DataKitchen extends Operation {
 
@@ -55,16 +52,15 @@ public class DataKitchen extends Operation {
      * Whether to append date string at end of output folder name.
      */
     private boolean appendFolderDate;
-    /**
-     * Path of the output folder.
-     */
-    private Path outPath;
 
+    /**
+     * The root folder containing event folders which have downloaded SAC files to be processed.
+     */
+    private Path lobbyPath;
     /**
      * Which catalog to use. {0: CMT, 1: PDE}
      */
     private int catalog;
-    private double samplingHz;
 
     private LinearRange distanceRange;
     private LinearRange latitudeRange;
@@ -79,35 +75,38 @@ public class DataKitchen extends Operation {
      */
     private double maxTlen;
     /**
+     * Sampling frequency [Hz] of SAC files to produce.
+     */
+    private double samplingHz;
+    /**
      * Whether to remove intermediate files.
      */
     private boolean removeIntermediateFile;
 
     /**
-     * @param args  none to create a property file <br>
-     *              [property file] to run
-     * @throws IOException if any
+     * @param args (String[]) Arguments: none to create a property file, path of property file to run it.
+     * @throws IOException
      */
     public static void main(String[] args) throws IOException {
-        if (args.length == 0) writeDefaultPropertiesFile();
+        if (args.length == 0) writeDefaultPropertiesFile(null);
         else Operation.mainFromSubclass(args);
     }
 
-    public static void writeDefaultPropertiesFile() throws IOException {
-        Class<?> thisClass = new Object(){}.getClass().getEnclosingClass();
-        Path outPath = Property.generatePath(thisClass);
+    public static void writeDefaultPropertiesFile(String tag) throws IOException {
+        String className = new Object(){}.getClass().getEnclosingClass().getSimpleName();
+        Path outPath = DatasetAid.generateOutputFilePath(Paths.get(""), className, tag, true, null, ".properties");
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
-            pw.println("manhattan " + thisClass.getSimpleName());
+            pw.println("manhattan " + className);
             pw.println("##Path of a work folder (.)");
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this unset.");
             pw.println("#folderTag ");
             pw.println("##(boolean) Whether to append date string at end of output folder name. (true)");
             pw.println("#appendFolderDate false");
-            pw.println("##The name of catalog to use from {cmt, pde}. (cmt)");
+            pw.println("##Path of a root folder containing input dataset. (.)");
+            pw.println("#lobbyPath ");
+            pw.println("##The catalog to use, from {cmt, pde}. (cmt)");
             pw.println("#catalog  CANT CHANGE NOW"); // TODO
-            pw.println("##(double) Sampling frequency [Hz]. can not be changed now. (20)");
-            pw.println("#samplingHz CANT CHANGE NOW");
             pw.println("##Lower limit of epicentral distance range [deg], inclusive; [0:upperDistance). (0)");
             pw.println("#lowerDistance 70");
             pw.println("##Upper limit of epicentral distance range [deg], exclusive; (lowerDistance:180]. (180)");
@@ -123,10 +122,12 @@ public class DataKitchen extends Operation {
             pw.println("##Threshold to judge which stations are in the same position, non-negative [deg]. (0.01)"); // = about 1 km
             pw.println("##  If two stations are closer to each other than this threshold, one will be eliminated.");
             pw.println("#coordinateGrid ");
-            pw.println("##(double) The maximum length of output time series. (3276.8)");
+            pw.println("##(double) The maximum length of output time series [s]. (3276.8)");
             pw.println("##  This should be shorter than 20 times the earliest arrival time of the phases you wish to use.");
             pw.println("##  The acutal length will be decided so that npts is a power of 2 and does not exceed this timelength nor the SAC data length.");
             pw.println("#maxTlen ");
+            pw.println("##(double) Sampling frequency [Hz]. Its reciprocal must be a terminating decimal. (20)");
+            pw.println("#samplingHz ");
             pw.println("##(boolean) Whether to remove intermediate files. (true)");
             pw.println("#removeIntermediateFile ");
         }
@@ -143,6 +144,7 @@ public class DataKitchen extends Operation {
         if (property.containsKey("folderTag")) folderTag = property.parseStringSingle("folderTag", null);
         appendFolderDate = property.parseBoolean("appendFolderDate", "true");
 
+        lobbyPath = property.parsePath("lobbyPath", ".", true, workPath);
         switch (property.parseString("catalog", "cmt")) { // TODO
             case "cmt":
             case "CMT":
@@ -155,7 +157,6 @@ public class DataKitchen extends Operation {
             default:
                 throw new IllegalArgumentException("Invalid catalog name.");
         }
-        samplingHz = property.parseDouble("samplingHz", "20"); // TODO
 
         double lowerDistance = property.parseDouble("lowerDistance", "0");
         double upperDistance = property.parseDouble("upperDistance", "180");
@@ -174,17 +175,20 @@ public class DataKitchen extends Operation {
             throw new IllegalArgumentException("coordinateGrid must be non-negative.");
 
         maxTlen = property.parseDouble("maxTlen", "3276.8");
+        samplingHz = property.parseDouble("samplingHz", "20");
+        if (!MathAid.isTerminatingDecimal(1.0 / samplingHz))
+            throw new IllegalArgumentException("Reciprocal of samplingHz must be a terminating decimal.");
         removeIntermediateFile = property.parseBoolean("removeIntermediateFile", "true");
     }
 
     @Override
     public void run() throws IOException {
-        Set<EventFolder> eventDirs = DatasetAid.eventFolderSet(workPath);
+        Set<EventFolder> eventDirs = DatasetAid.eventFolderSet(lobbyPath);
         if (!DatasetAid.checkNum(eventDirs.size(), "event", "events")) {
             return;
         }
 
-        outPath = DatasetAid.createOutputFolder(workPath, "processed", folderTag, appendFolderDate, GadgetAid.getTemporaryString());
+        Path outPath = DatasetAid.createOutputFolder(workPath, "processed", folderTag, appendFolderDate, null);
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         // create processors for each event
@@ -204,7 +208,7 @@ public class DataKitchen extends Operation {
         }).filter(Objects::nonNull).collect(Collectors.toSet());
 
         // set parameters
-        eps.forEach(p -> p.setParameters(distanceRange, latitudeRange, longitudeRange, coordinateGrid, maxTlen, removeIntermediateFile));
+        eps.forEach(p -> p.setParameters(distanceRange, latitudeRange, longitudeRange, coordinateGrid, maxTlen, samplingHz, removeIntermediateFile));
 
         ExecutorService es = ThreadAid.createFixedThreadPool();
         eps.forEach(es::execute);

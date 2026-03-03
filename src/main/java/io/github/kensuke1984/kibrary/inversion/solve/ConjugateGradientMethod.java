@@ -1,9 +1,15 @@
 package io.github.kensuke1984.kibrary.inversion.solve;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+
 import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.MatrixUtils;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
+
+import io.github.kensuke1984.kibrary.math.MatrixFile;
 
 /**
  * Conjugate gradient method.
@@ -11,7 +17,7 @@ import org.apache.commons.math3.linear.RealVector;
  * See Appendix 3 of Kawai et al. (2014) for further information.
  *
  * @author Kensuke Konishi
- * @since version 0.0.3.2
+ * @since a long time ago
  * @see <a href=https://ja.wikipedia.org/wiki/%E5%85%B1%E5%BD%B9%E5%8B%BE%E9%85%8D%E6%B3%95>Japanese wiki</a>,
  * <a href=https://en.wikipedia.org/wiki/Conjugate_gradient_method>English wiki</a>
  */
@@ -49,13 +55,13 @@ public class ConjugateGradientMethod extends InversionMethod {
     public ConjugateGradientMethod(RealMatrix ata, RealVector atd, RealVector m0) {
         this.ata = ata;
         this.atd = atd;
-        int column = ata.getColumnDimension();
+        int dimension = ata.getColumnDimension();
         // when initial vector is not set, set it as zero-vector
-        this.m0 = (m0 != null) ? m0 : new ArrayRealVector(column);
+        this.m0 = (m0 != null) ? m0 : new ArrayRealVector(dimension);
         // set up matrices
-        p = MatrixUtils.createRealMatrix(column, column);
-        answer = MatrixUtils.createRealMatrix(column, column);
-        alpha = new ArrayRealVector(column);
+        p = MatrixUtils.createRealMatrix(dimension, dimension);
+        answer = MatrixUtils.createRealMatrix(dimension, dimension);
+        alpha = new ArrayRealVector(dimension);
     }
 
     /**
@@ -68,30 +74,36 @@ public class ConjugateGradientMethod extends InversionMethod {
 
         // r_0 = Atd - AtA m_0
         RealVector r = atd.subtract(ata.operate(m0));
+        double rrNew = r.dotProduct(r);
+        double rrOld = rrNew;
         // p_0 = r_0
-        p.setColumnVector(0, r);
+        RealVector p_i = r;
+        p.setColumnVector(0, p_i);
 
         // remember AtA p
-        RealVector atap = ata.operate(p.getColumnVector(0));
-        // alpha = r p / p AtA p
-        alpha.setEntry(0, p.getColumnVector(0).dotProduct(r) / p.getColumnVector(0).dotProduct(atap));
+        RealVector atap = ata.operate(p_i);
+        // alpha = r r / p AtA p
+        alpha.setEntry(0, rrNew / p_i.dotProduct(atap));
         // m_1 = m_0 + alpha p
-        answer.setColumnVector(0, p.getColumnVector(0).mapMultiply(alpha.getEntry(0)).add(m0));
+        answer.setColumnVector(0, p_i.mapMultiply(alpha.getEntry(0)).add(m0));
 
         for (int i = 1; i < ata.getColumnDimension(); i++) {
             // r_{k+1} = r_k - alpha AtA p
             r = r.subtract(atap.mapMultiply(alpha.getEntry(i - 1)));
-            // beta = - r AtA p / p AtA p
-            double b = - r.dotProduct(atap) / p.getColumnVector(i - 1).dotProduct(atap);
+            // beta = r_{k+1} r_{k+1} / r_k r_k
+            rrNew = r.dotProduct(r);
+            double b = rrNew / rrOld;
+            rrOld = rrNew;
             // p_{k+1} = r + beta p
-            p.setColumnVector(i, r.add(p.getColumnVector(i - 1).mapMultiply(b)));
+            p_i = r.add(p.getColumnVector(i - 1).mapMultiply(b));
+            p.setColumnVector(i, p_i);
 
             // remember new AtA p
-            atap = ata.operate(p.getColumnVector(i));
-            // alpha = r p / p AtA p
-            alpha.setEntry(i, p.getColumnVector(i).dotProduct(r) / p.getColumnVector(i).dotProduct(atap));
+            atap = ata.operate(p_i);
+            // alpha = r r / p AtA p
+            alpha.setEntry(i, rrNew / p_i.dotProduct(atap));
             // m_{k+1} = m_k + alpha p
-            answer.setColumnVector(i, p.getColumnVector(i).mapMultiply(alpha.getEntry(i)).add(answer.getColumnVector(i - 1)));
+            answer.setColumnVector(i, p_i.mapMultiply(alpha.getEntry(i)).add(answer.getColumnVector(i - 1)));
         }
     }
 
@@ -99,6 +111,9 @@ public class ConjugateGradientMethod extends InversionMethod {
      * Cov(<b>m</b><sub>j</sub>) = &sigma;<sub>D</sub><sup>2</sup> &Sigma;<sub>i=1</sub><sup>j</sup>
      *  (<b>p</b><sub>i</sub> <b>p</b><sub>i</sub><sup>T</sup>)
      *  / (<b>p</b><sub>i</sub><sup>T</sup> A<sup>T</sup>A <b>p</b><sub>i</sub>) . <br>
+     *  (Truncation of &sigma;<sub>d</sub><sup>2</sup> P L<sup>-1</sup> P<sup>T</sup> .)
+     *
+     * <p>
      * See eq. (A33) of Kawai et al. (2014).
      */
     @Override
@@ -115,8 +130,36 @@ public class ConjugateGradientMethod extends InversionMethod {
         return covariance;
     }
 
+    public static void computeResolutionMatrix(Path inversionPath, Path resultPath, int nBasis, Path outputPath) throws IOException {
+        RealMatrix ata = MatrixFile.read(inversionPath.resolve("ata.lst"));
+        RealMatrix p = MatrixFile.read(resultPath.resolve("pMatrix.lst"));
+
+        int dimension = ata.getColumnDimension();
+        if (p.getColumnDimension() != dimension) throw new IllegalStateException("Size of AtA and P do not match.");
+
+        // compute PLP
+        RealMatrix plp = MatrixUtils.createRealMatrix(dimension, dimension);
+        for (int j = 0; j < nBasis; j++) {
+            RealVector pjVec = p.getColumnVector(j);
+            double paap = pjVec.dotProduct(ata.operate(pjVec));
+            RealMatrix pjMat = p.getColumnMatrix(j);
+            plp = plp.add(pjMat.multiply(pjMat.transpose()).scalarMultiply(1/paap));
+        }
+
+        // compute resolution matrix and output
+        RealMatrix resMatrix = plp.multiply(ata);
+        MatrixFile.write(resMatrix, outputPath);
+    }
+
     @Override
-    public RealMatrix getBaseVectors() {
+    public void outputBasisVectors(Path outPath) throws IOException {
+        Files.createDirectories(outPath);
+        System.err.println("Outputting base vectors in " + outPath);
+        MatrixFile.write(p, outPath.resolve("pMatrix.lst"));
+    }
+
+    @Override
+    public RealMatrix getBasisVectors() {
         return p;
     }
 

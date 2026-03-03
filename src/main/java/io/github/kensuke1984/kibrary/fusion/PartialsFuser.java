@@ -19,7 +19,7 @@ import org.apache.commons.math3.linear.RealVector;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
-import io.github.kensuke1984.kibrary.util.GadgetAid;
+import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.ThreadAid;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
 import io.github.kensuke1984.kibrary.waveform.BasicID;
@@ -58,6 +58,10 @@ public class PartialsFuser extends Operation {
      * Path of a {@link FusionInformationFile}.
      */
     private Path fusionPath;
+    /**
+     * Whether to retain partialIDs that are not fused.
+     */
+    private boolean retainNonFusedIDs;
 
     /**
      * The design of the fusion of unknown parameters.
@@ -72,20 +76,19 @@ public class PartialsFuser extends Operation {
     private AtomicInteger nProcessedParam = new AtomicInteger();
 
     /**
-     * @param args  none to create a property file <br>
-     *              [property file] to run
-     * @throws IOException if any
+     * @param args (String[]) Arguments: none to create a property file, path of property file to run it.
+     * @throws IOException
      */
     public static void main(String[] args) throws IOException {
-        if (args.length == 0) writeDefaultPropertiesFile();
+        if (args.length == 0) writeDefaultPropertiesFile(null);
         else Operation.mainFromSubclass(args);
     }
 
-    public static void writeDefaultPropertiesFile() throws IOException {
-        Class<?> thisClass = new Object(){}.getClass().getEnclosingClass();
-        Path outPath = Property.generatePath(thisClass);
+    public static void writeDefaultPropertiesFile(String tag) throws IOException {
+        String className = new Object(){}.getClass().getEnclosingClass().getSimpleName();
+        Path outPath = DatasetAid.generateOutputFilePath(Paths.get(""), className, tag, true, null, ".properties");
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
-            pw.println("manhattan " + thisClass.getSimpleName());
+            pw.println("manhattan " + className);
             pw.println("##Path of work folder. (.)");
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this unset.");
@@ -96,6 +99,8 @@ public class PartialsFuser extends Operation {
             pw.println("#partialPath partial");
             pw.println("##Path of a fusion information file, must be set.");
             pw.println("#fusionPath fusion.inf");
+            pw.println("##(boolean) Whether to retain partialIDs that are not fused. (true)");
+            pw.println("#retainNonFusedIDs false");
         }
         System.err.println(outPath + " is created.");
     }
@@ -112,6 +117,7 @@ public class PartialsFuser extends Operation {
 
         partialPath = property.parsePath("partialPath", null, true, workPath);
         fusionPath = property.parsePath("fusionPath", null, true, workPath);
+        retainNonFusedIDs = property.parseBoolean("retainNonFusedIDs", "true");
     }
 
     @Override
@@ -133,17 +139,23 @@ public class PartialsFuser extends Operation {
         es.shutdown();
         System.err.println("Fusing parameters ...");
         while (!es.isTerminated()) {
-            System.err.print("\r " + Math.ceil(100.0 * nProcessedParam.get() / nTotalParam) + "% of parameters done");
+            System.err.print("\r " + MathAid.ceil(100.0 * nProcessedParam.get() / nTotalParam) + "% of parameters done");
             ThreadAid.sleep(100);
         }
         System.err.println("\r Finished handling all parameters.");
 
         // collect fused IDs and the original IDs that are not fused
-        List<PartialID> newPartialIDs = inputPartialIDs.stream().filter(id -> !isFused(id)).collect(Collectors.toList());
-        newPartialIDs.addAll(fusedPartialIDs);
+        List<PartialID> newPartialIDs;
+        if (retainNonFusedIDs) {
+            System.err.println("Collecting fused and non-fused partials...");
+            newPartialIDs = inputPartialIDs.stream().filter(id -> !isFused(id)).collect(Collectors.toList());
+            newPartialIDs.addAll(fusedPartialIDs);
+        } else {
+            newPartialIDs = fusedPartialIDs;
+        }
 
         // prepare output folder
-        Path outPath = DatasetAid.createOutputFolder(workPath, "partial", folderTag, appendFolderDate, GadgetAid.getTemporaryString());
+        Path outPath = DatasetAid.createOutputFolder(workPath, "partial", folderTag, appendFolderDate, null);
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         // output

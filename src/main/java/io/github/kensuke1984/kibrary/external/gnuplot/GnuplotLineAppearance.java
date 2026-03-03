@@ -21,7 +21,7 @@ public class GnuplotLineAppearance {
     /**
      * line width
      */
-    private int linewidth = 1;
+    private double linewidth = 1;
 
 
     /**
@@ -34,39 +34,39 @@ public class GnuplotLineAppearance {
     public GnuplotLineAppearance() {
     }
 
-    public GnuplotLineAppearance(int dashtype, GnuplotColorName linecolor, int linewidth) {
+    public GnuplotLineAppearance(int dashtype, GnuplotColorName linecolor, double linewidth) {
         this.dashtype = dashtype;
         this.linecolor = linecolor;
         this.linewidth = linewidth;
     }
 
-
     public int getDashtype() {
         return dashtype;
     }
 
-    public void setDashtype(int dashtype) {
-        this.dashtype = dashtype;
+    public GnuplotLineAppearance withDashtype(int dashtype) {
+        return new GnuplotLineAppearance(dashtype, linecolor, linewidth);
     }
 
     public GnuplotColorName getLinecolor() {
         return linecolor;
     }
 
-    public void setLinecolor(GnuplotColorName linecolor) {
-        this.linecolor = linecolor;
+    public GnuplotLineAppearance withLinecolor(GnuplotColorName linecolor) {
+        return new GnuplotLineAppearance(dashtype, linecolor, linewidth);
     }
 
-    public int getLinewidth() {
+    public double getLinewidth() {
         return linewidth;
     }
 
-    public void setLinewidth(int linewidth) {
-        this.linewidth = linewidth;
+    public GnuplotLineAppearance withLinewidth(double linewidth) {
+        return new GnuplotLineAppearance(dashtype, linecolor, linewidth);
     }
 
     @Override
     public String toString() {
         return "dt " + dashtype + " lc rgb \"" + linecolor.nameColorName() + "\" lw " + linewidth;
     }
+
 }

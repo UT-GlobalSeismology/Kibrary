@@ -11,7 +11,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.apache.commons.math3.linear.RealMatrix;
-import org.apache.commons.math3.util.FastMath;
 
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
@@ -23,10 +22,6 @@ import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameterFile;
-import io.github.kensuke1984.kibrary.waveform.BasicID;
-import io.github.kensuke1984.kibrary.waveform.BasicIDFile;
-import io.github.kensuke1984.kibrary.waveform.PartialID;
-import io.github.kensuke1984.kibrary.waveform.PartialIDFile;
 
 /**
  * Computes correlation between partial waveforms of each unknown parameter,
@@ -53,10 +48,6 @@ public class AdaptiveGridDesigner extends Operation {
      * Whether to append date string at end of output folder name.
      */
     private boolean appendFolderDate;
-    /**
-     * Path of the output folder.
-     */
-    private Path outPath;
 
     /**
      * Path of ata file.
@@ -86,20 +77,19 @@ public class AdaptiveGridDesigner extends Operation {
     private double minDiagonalAmplitude;
 
     /**
-     * @param args  none to create a property file <br>
-     *              [property file] to run
-     * @throws IOException if any
+     * @param args (String[]) Arguments: none to create a property file, path of property file to run it.
+     * @throws IOException
      */
     public static void main(String[] args) throws IOException {
-        if (args.length == 0) writeDefaultPropertiesFile();
+        if (args.length == 0) writeDefaultPropertiesFile(null);
         else Operation.mainFromSubclass(args);
     }
 
-    public static void writeDefaultPropertiesFile() throws IOException {
-        Class<?> thisClass = new Object(){}.getClass().getEnclosingClass();
-        Path outPath = Property.generatePath(thisClass);
+    public static void writeDefaultPropertiesFile(String tag) throws IOException {
+        String className = new Object(){}.getClass().getEnclosingClass().getSimpleName();
+        Path outPath = DatasetAid.generateOutputFilePath(Paths.get(""), className, tag, true, null, ".properties");
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
-            pw.println("manhattan " + thisClass.getSimpleName());
+            pw.println("manhattan " + className);
             pw.println("##Path of work folder. (.)");
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this unset.");
@@ -160,7 +150,6 @@ public class AdaptiveGridDesigner extends Operation {
 
     @Override
     public void run() throws IOException {
-        String dateStr = GadgetAid.getTemporaryString();
 
         // read input and construct AtA
         List<UnknownParameter> parameterList = UnknownParameterFile.read(unknownParameterPath);
@@ -171,17 +160,15 @@ public class AdaptiveGridDesigner extends Operation {
                 throw new IllegalArgumentException("AtA size does not match number of parameters.");
         } else {
             // read input
-            List<BasicID> basicIDs = BasicIDFile.read(basicPath, true);
-            List<PartialID> partialIDs = PartialIDFile.read(partialPath, true);
             WeightingHandler weightingHandler = new WeightingHandler(weightingPropertiesPath);
 
             // assemble matrices
-            MatrixAssembly assembler = new MatrixAssembly(basicIDs, partialIDs, parameterList, weightingHandler, false);
+            MatrixAssembly assembler = new MatrixAssembly(basicPath, partialPath, parameterList, weightingHandler, false);
             ata = assembler.getAta();
         }
 
         // prepare output folder
-        outPath = DatasetAid.createOutputFolder(workPath, "adaptiveGrid", folderTag, appendFolderDate, dateStr);
+        Path outPath = DatasetAid.createOutputFolder(workPath, "adaptiveGrid", folderTag, appendFolderDate, null);
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         // output unknown parameter with large diagonal component and correlation
@@ -199,8 +186,8 @@ public class AdaptiveGridDesigner extends Operation {
                     if (!parameterList.get(i).getVariableType().equals(parameterList.get(j).getVariableType()))
                         continue;
 
-                    double coeff = ata.getEntry(i, j) / FastMath.sqrt(ata.getEntry(i, i) * ata.getEntry(j, j));
-                    double ampRatio = FastMath.sqrt(ata.getEntry(i, i) / ata.getEntry(j, j));
+                    double coeff = ata.getEntry(i, j) / Math.sqrt(ata.getEntry(i, i) * ata.getEntry(j, j));
+                    double ampRatio = Math.sqrt(ata.getEntry(i, i) / ata.getEntry(j, j));
                     if (ata.getEntry(i, i) > minDiagonalAmplitude && coeff > minCorrelation && ampRatio > minAmpRatio && ampRatio < 1 / minAmpRatio) {
                         GadgetAid.dualPrintln(pw, i + " " + j + " " + ata.getEntry(i, i) + " " + ata.getEntry(i, j) + " " + coeff);
                         GadgetAid.dualPrintln(pw, " - " + parameterList.get(i));

@@ -58,9 +58,9 @@ public final class GlobalCMTCatalogUpdate {
         Options options = Summon.defaultOptions();
 
         options.addOption(Option.builder("v").longOpt("version").hasArg().argName("mmmYY").required()
-                .desc("month and year the version of the catalog is up to, "
-                        + "where mmm is the first three letters of the name of the month (lower case), "
-                        + "and YY is the lower two digits of the year.").build());
+                .desc("The month and year the version of the catalog is up to, "
+                        + "with mmm as the first three letters of the name of the month (lower case), "
+                        + "and YY as the lower two digits of the year.").build());
         return options;
     }
 

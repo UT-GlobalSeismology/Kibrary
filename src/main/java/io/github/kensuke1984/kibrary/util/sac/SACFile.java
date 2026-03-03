@@ -14,7 +14,7 @@ import io.github.kensuke1984.kibrary.filter.LowPassFilter;
  * This class is <b>immutable</b>
  *
  * @author Kensuke Konishi
- * @since version 1.0.0.1
+ * @since a long time ago
  * @see <a href=http://ds.iris.edu/ds/nodes/dmc/forms/sac/>SAC</a>
  */
 class SACFile extends SACHeader implements SACFileAccess {
@@ -66,6 +66,28 @@ class SACFile extends SACHeader implements SACFileAccess {
         return sd;
     }
 
+    @Override
+    public SACFile cut(int finalNpts) {
+        int npts = getInt(SACHeaderEnum.NPTS);
+        if (finalNpts > npts) throw new IllegalArgumentException("Input npts " + npts + " is longer than current npts: " + npts);
+        else if (finalNpts == npts) return this;
+
+        // compute final E value
+        double delta = getValue(SACHeaderEnum.DELTA);
+        double e = getValue(SACHeaderEnum.E);
+        double finalE = e - (npts - finalNpts) * delta;
+
+        // cut waveform
+        double[] finalWaveData = createTrace().subTrace(0, finalNpts).getY();
+
+        // write over
+        SACFile sf = clone();
+        sf = sf.withInt(SACHeaderEnum.NPTS, finalNpts);
+        sf = sf.withValue(SACHeaderEnum.E, finalE);
+        sf.waveData = finalWaveData;
+        return sf;
+    }
+
     /**
      * Sacの波形部分を読み込む read sacdata from this.sacFile
      */
@@ -83,7 +105,6 @@ class SACFile extends SACHeader implements SACFileAccess {
 
     @Override
     public SACFile setSACData(double[] sacData) {
-        // setInt(SacHeaderEnum.NPTS, npts);
         int npts = getInt(SACHeaderEnum.NPTS);
         if (npts != sacData.length)
             throw new IllegalStateException("input npts is invalid. SAC npts" + npts + " input npts:" + npts);

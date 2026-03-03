@@ -12,6 +12,7 @@ import org.apache.commons.math3.util.Precision;
 
 import io.github.kensuke1984.kibrary.elastic.ElasticMedium;
 import io.github.kensuke1984.kibrary.elastic.VariableType;
+import io.github.kensuke1984.kibrary.util.MathAid;
 
 /**
  * 1D structure of a planet.
@@ -34,7 +35,7 @@ import io.github.kensuke1984.kibrary.elastic.VariableType;
  * isShallower layer, i.e., the layer which has the radius as rmin.
  *
  * @author Kensuke Konishi, anselme
- * @since version 0.2.10
+ * @since a long time ago
  * @version 2022/2/10 moved from package dsmsetup into util.earth
  * @version 2022/6/15 recreated this file to make this class actually immutable
  */
@@ -225,7 +226,6 @@ public final class PolynomialStructure {
         this.qMu = qMu.clone();
         this.qKappa = qKappa.clone();
         this.isDefault = isDefault;
-
     }
 
     /**
@@ -290,6 +290,87 @@ public final class PolynomialStructure {
     }
 
     /**
+     * Set function of a certain parameter to an arbitrary layer.
+     * This returns a new instance; the original instance is unchanged.
+     *
+     * @param r1 (double) Lower radius of layer to set.
+     * @param r2 (double) Upper radius of layer to set.
+     * @param variable (VariableType) The parameter to set.
+     * @param function (PolynomialFunction) Function to set.
+     * @return ({@link PolynomialStructure}) A new structure with function set.
+     *
+     * @author otsuru
+     * @since 2025/2/2
+     */
+    public PolynomialStructure withFunction(double r1, double r2, VariableType variable, PolynomialFunction function) {
+        // look up whether r1 and r2 are existing boundaries or not
+        boolean foundR1 = false;
+        boolean foundR2 = false;
+        for (double r : rMin) {
+            if (Precision.equals(r1, r, R_EPSILON)) foundR1 = true;
+            if (Precision.equals(r2, r, R_EPSILON)) foundR2 = true;
+        }
+
+        // add r1 and r2 as boundaries if they were not already
+        PolynomialStructure originalStructure = this;
+        if (!foundR1) originalStructure = originalStructure.withBoundaries(r1);
+        if (!foundR2) originalStructure = originalStructure.withBoundaries(r2);
+
+        // get values of structureNew
+        int nZoneNew = originalStructure.getNZone();
+        int nCoreZoneNew = originalStructure.getNCoreZone();
+        double[] rMinNew = originalStructure.getRmin();
+        double[] rMaxNew = originalStructure.getRmax();
+        PolynomialFunction[] rhoNew = originalStructure.getRho();
+        PolynomialFunction[] vpvNew = originalStructure.getVpv();
+        PolynomialFunction[] vphNew = originalStructure.getVph();
+        PolynomialFunction[] vsvNew = originalStructure.getVsv();
+        PolynomialFunction[] vshNew = originalStructure.getVsh();
+        PolynomialFunction[] etaNew = originalStructure.getEta();
+        double[] qMuNew = originalStructure.getQMu();
+        double[] qKappaNew = originalStructure.getQKappa();
+
+        // multiply the functions of the corresponding zones
+        int iZoneR1 = originalStructure.zoneOf(r1);
+        int iZoneR2 = originalStructure.zoneOf(r2);
+        for (int iZone = iZoneR1; iZone < iZoneR2; iZone++) {
+            switch(variable) {
+            case RHO:
+                rhoNew[iZone] = function;
+                break;
+            case Vp:
+                vpvNew[iZone] = function;
+                vphNew[iZone] = function;
+                break;
+            case Vpv:
+                vpvNew[iZone] = function;
+                break;
+            case Vph:
+                vphNew[iZone] = function;
+                break;
+            case Vs:
+                vsvNew[iZone] = function;
+                vshNew[iZone] = function;
+                break;
+            case Vsv:
+                vsvNew[iZone] = function;
+                break;
+            case Vsh:
+                vshNew[iZone] = function;
+                break;
+            case ETA:
+                etaNew[iZone] = function;
+                break;
+            default:
+                throw new IllegalArgumentException("Illegal variable type: " + variable);
+            }
+        }
+
+        return new PolynomialStructure(nZoneNew, nCoreZoneNew, rMinNew, rMaxNew,
+                rhoNew, vpvNew, vphNew, vsvNew, vshNew, etaNew, qMuNew, qKappaNew);
+    }
+
+    /**
      * Add perturbation of a certain parameter to an arbitrary layer.
      * This returns a new instance; the original instance is unchanged.
      *
@@ -331,9 +412,8 @@ public final class PolynomialStructure {
         double[] qMuNew = originalStructure.getQMu();
         double[] qKappaNew = originalStructure.getQKappa();
 
-        // create a constant function
-        double coefficient = 1.0 + percent / 100.0;
-        PolynomialFunction p0 = new PolynomialFunction(new double[] {coefficient});
+        // decide factor
+        double factor = 1.0 + percent / 100.0;
 
         // multiply the functions of the corresponding zones
         int iZoneR1 = originalStructure.zoneOf(r1);
@@ -341,36 +421,36 @@ public final class PolynomialStructure {
         for (int iZone = iZoneR1; iZone < iZoneR2; iZone++) {
             switch(variable) {
             case RHO:
-                rhoNew[iZone] = rhoNew[iZone].multiply(p0);
+                rhoNew[iZone] = multiplyCoefficient(rhoNew[iZone], factor);
                 break;
             case Vp:
-                vpvNew[iZone] = vpvNew[iZone].multiply(p0);
-                vphNew[iZone] = vphNew[iZone].multiply(p0);
+                vpvNew[iZone] = multiplyCoefficient(vpvNew[iZone], factor);
+                vphNew[iZone] = multiplyCoefficient(vphNew[iZone], factor);
                 break;
             case Vpv:
-                vpvNew[iZone] = vpvNew[iZone].multiply(p0);
+                vpvNew[iZone] = multiplyCoefficient(vpvNew[iZone], factor);
                 break;
             case Vph:
-                vphNew[iZone] = vphNew[iZone].multiply(p0);
+                vphNew[iZone] = multiplyCoefficient(vphNew[iZone], factor);
                 break;
             case Vs:
-                vsvNew[iZone] = vsvNew[iZone].multiply(p0);
-                vshNew[iZone] = vshNew[iZone].multiply(p0);
+                vsvNew[iZone] = multiplyCoefficient(vsvNew[iZone], factor);
+                vshNew[iZone] = multiplyCoefficient(vshNew[iZone], factor);
                 break;
             case Vsv:
-                vsvNew[iZone] = vsvNew[iZone].multiply(p0);
+                vsvNew[iZone] = multiplyCoefficient(vsvNew[iZone], factor);
                 break;
             case Vsh:
-                vshNew[iZone] = vshNew[iZone].multiply(p0);
+                vshNew[iZone] = multiplyCoefficient(vshNew[iZone], factor);
                 break;
             case ETA:
-                etaNew[iZone] = etaNew[iZone].multiply(p0);
+                etaNew[iZone] = multiplyCoefficient(etaNew[iZone], factor);
                 break;
             case Qmu:
-                qMuNew[iZone] = qMuNew[iZone] * coefficient;
+                qMuNew[iZone] = qMuNew[iZone] * factor;
                 break;
             case Qkappa:
-                qKappaNew[iZone] = qKappaNew[iZone] * coefficient;
+                qKappaNew[iZone] = qKappaNew[iZone] * factor;
                 break;
             default:
                 throw new IllegalArgumentException("Illegal variable type: " + variable);
@@ -379,6 +459,11 @@ public final class PolynomialStructure {
 
         return new PolynomialStructure(nZoneNew, nCoreZoneNew, rMinNew, rMaxNew,
                 rhoNew, vpvNew, vphNew, vsvNew, vshNew, etaNew, qMuNew, qKappaNew);
+    }
+
+    private PolynomialFunction multiplyCoefficient(PolynomialFunction function, double factor) {
+        double[] coefficients = Arrays.stream(function.getCoefficients()).map(r -> MathAid.roundForPrecision(r * factor)).toArray();
+        return new PolynomialFunction(coefficients);
     }
 
     /**
@@ -400,7 +485,7 @@ public final class PolynomialStructure {
      * @param r (double) Radius [km].
      * @return (double) A value x to the input r for polynomial functions.
      */
-    private double xFor(double r) {
+    double xFor(double r) {
         return r / planetRadius();
     }
 
@@ -431,34 +516,47 @@ public final class PolynomialStructure {
 
     /**
      * Get value of a specified parameter at a given radius.
-     * @param variable (VariableType) the type of variable to obtain. Only RHO, Vpv, Vph, Vsv, Vsh, ETA, Qmu, Qkappa are allowed.
-     * @param r (double) radius [km]
-     * @return (double) value of the parameter at the given radius
+     * @param variable (VariableType) The type of variable to obtain. Only RHO, Vpv, Vph, Vsv, Vsh, ETA, Qmu, Qkappa are allowed.
+     * @param r (double) Radius [km].
+     * @return (double) Value of the parameter at the given radius.
      *
      * @author otsuru
      * @since 2022/4/11
      */
     public double getAtRadius(VariableType variable, double r) {
         switch(variable) {
-        case RHO:
-            return rho[zoneOf(r)].value(xFor(r));
-        case Vpv:
-            return vpv[zoneOf(r)].value(xFor(r));
-        case Vph:
-            return vph[zoneOf(r)].value(xFor(r));
-        case Vsv:
-            return vsv[zoneOf(r)].value(xFor(r));
-        case Vsh:
-            return vsh[zoneOf(r)].value(xFor(r));
-        case ETA:
-            return eta[zoneOf(r)].value(xFor(r));
-        case Qmu:
-            return qMu[zoneOf(r)];
-        case Qkappa:
-            return qKappa[zoneOf(r)];
-        default:
-//            return getMediumAt(r).get(type);
-            throw new IllegalArgumentException("Illegal parameter type");
+        case RHO: return rho[zoneOf(r)].value(xFor(r));
+        case Vpv: return vpv[zoneOf(r)].value(xFor(r));
+        case Vph: return vph[zoneOf(r)].value(xFor(r));
+        case Vsv: return vsv[zoneOf(r)].value(xFor(r));
+        case Vsh: return vsh[zoneOf(r)].value(xFor(r));
+        case ETA: return eta[zoneOf(r)].value(xFor(r));
+        case Qmu: return qMu[zoneOf(r)];
+        case Qkappa: return qKappa[zoneOf(r)];
+        default: throw new IllegalArgumentException("Illegal parameter type: " + variable);
+        }
+    }
+
+    /**
+     * Get derivative value of a specified parameter at a given radius.
+     * @param variable (VariableType) The type of variable to obtain for. Only RHO, Vpv, Vph, Vsv, Vsh, ETA, Qmu, Qkappa are allowed.
+     * @param r (double) Radius [km].
+     * @return (double) Derivative value of the parameter at the given radius.
+     *
+     * @author otsuru
+     * @since 2025/2/2
+     */
+    public double getDerivativeAtRadius(VariableType variable, double r) {
+        switch(variable) {
+        case RHO: return rho[zoneOf(r)].polynomialDerivative().value(xFor(r));
+        case Vpv: return vpv[zoneOf(r)].polynomialDerivative().value(xFor(r));
+        case Vph: return vph[zoneOf(r)].polynomialDerivative().value(xFor(r));
+        case Vsv: return vsv[zoneOf(r)].polynomialDerivative().value(xFor(r));
+        case Vsh: return vsh[zoneOf(r)].polynomialDerivative().value(xFor(r));
+        case ETA: return eta[zoneOf(r)].polynomialDerivative().value(xFor(r));
+        case Qmu: return 0.0;
+        case Qkappa: return 0.0;
+        default: throw new IllegalArgumentException("Illegal parameter type: " + variable);
         }
     }
 
@@ -470,11 +568,11 @@ public final class PolynomialStructure {
         String[] outString = new String[6 * (nZone) + 7];
         outString[0] = String.valueOf(nZone) + " nzone";
         outString[1] = "c  - Radius (km) -    --- Density (g/cm^3) ---";
-        outString[2] = "c                     ---   Vpv     (km/s) ---";
-        outString[3] = "c                     ---   Vph     (km/s) ---";
-        outString[4] = "c                     ---   Vsv     (km/s) ---";
-        outString[5] = "c                     ---   Vsh     (km/s) ---";
-        outString[6] = "c                     ---   eta     (ND  ) ---             - Qmu -  - Qkappa -";
+        outString[2] = "c                     ---   Vpv    (km/s)  ---";
+        outString[3] = "c                     ---   Vph    (km/s)  ---";
+        outString[4] = "c                     ---   Vsv    (km/s)  ---";
+        outString[5] = "c                     ---   Vsh    (km/s)  ---";
+        outString[6] = "c                     ---   eta     (ND)   ---             - Qmu -  - Qkappa -";
         for (int i = 0; i < nZone; i++) {
             outString[6 * i + 7] = rMin[i] + " " + rMax[i] + " " + stringFor(rho[i]);
             outString[6 * i + 8] = "          " + stringFor(vpv[i]);

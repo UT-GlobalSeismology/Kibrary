@@ -12,6 +12,7 @@ import org.apache.commons.math3.linear.MatrixUtils;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
 
+import io.github.kensuke1984.kibrary.math.MatrixFile;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
 
 /**
@@ -38,7 +39,7 @@ import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
  * See Fuji et al. (2010) for further explanations.
  *
  * @author Kensuke Konishi
- * @version 0.0.7.4
+ * @since a long time ago
  * @see <a href=https://ja.wikipedia.org/wiki/%E7%89%B9%E7%95%B0%E5%80%A4%E5%88%86%E8%A7%A3>Japanese wiki</a>,
  * <a href=https://en.wikipedia.org/wiki/Singular_value_decomposition>English wiki</a>
  */
@@ -54,9 +55,9 @@ public class SingularValueDecomposition extends InversionMethod {
     public SingularValueDecomposition(RealMatrix ata, RealVector atd) {
         this.ata = ata;
         this.atd = atd;
-        int column = ata.getColumnDimension();
-        // set up matrices
-        answer = MatrixUtils.createRealMatrix(column, column);
+        // set up answer matrix
+        int dimension = ata.getColumnDimension();
+        answer = MatrixUtils.createRealMatrix(dimension, dimension);
     }
 
     @Override
@@ -87,6 +88,13 @@ public class SingularValueDecomposition extends InversionMethod {
         }
     }
 
+    /**
+     * Cov(<b>m</b><sub>j</sub>) = &sigma;<sub>D</sub><sup>2</sup> &Sigma;<sub>i=1</sub><sup>j</sup>
+     *  (1 / &sigma;<sub>i</sub><sup>2</sup>) <b>v</b><sub>i</sub> <b>v</b><sub>i</sub><sup>T</sup> . <br>
+     *  (Truncation of &sigma;<sub>d</sub><sup>2</sup> V (&Lambda;<sup>T</sup>&Lambda;)<sup>-1</sup> V<sup>T</sup> .)
+     * <p>
+     * See eq. (A20) of Kawai et al. (2014) or Fuji et al. (2010) for explanations.
+     */
     @Override
     public void outputAnswers(List<UnknownParameter> unknowns, Path outPath) throws IOException {
         super.outputAnswers(unknowns, outPath);
@@ -117,8 +125,37 @@ public class SingularValueDecomposition extends InversionMethod {
         return covarianceMatrix;
     }
 
+    public static void computeResolutionMatrix(Path inversionPath, Path resultPath, int nBasis, Path outputPath) throws IOException {
+        RealMatrix v = MatrixFile.read(resultPath.resolve("vMatrix.lst"));
+        int dimension = v.getColumnDimension();
+
+        RealMatrix resMatrix = MatrixUtils.createRealMatrix(dimension, dimension);
+
+        for (int j = 0; j < nBasis; j++) {
+            RealMatrix vjMat = v.getColumnMatrix(j);
+            resMatrix = resMatrix.add(vjMat.multiply(vjMat.transpose()));
+        }
+
+        MatrixFile.write(resMatrix, outputPath);
+    }
+
     @Override
-    public RealMatrix getBaseVectors() {
+    public void outputBasisVectors(Path outPath) throws IOException {
+        Files.createDirectories(outPath);
+        System.err.println("Outputting base vectors in " + outPath);
+
+        // output V
+        MatrixFile.write(eigenDecomposition.getV(), outPath.resolve("vMatrix.lst"));
+
+        // output eigenvalues of AtA
+        Path outputPath = outPath.resolve("eigenvaluesOfAta.txt");
+        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath))) {
+            for (double sigma2 : eigenDecomposition.getRealEigenvalues()) pw.println(sigma2);
+        }
+    }
+
+    @Override
+    public RealMatrix getBasisVectors() {
         return eigenDecomposition.getV();
     }
 

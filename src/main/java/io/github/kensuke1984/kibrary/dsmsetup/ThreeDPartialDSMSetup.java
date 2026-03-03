@@ -53,10 +53,9 @@ import io.github.kensuke1984.kibrary.voxel.VoxelInformationFile;
  * <p>
  * By reusing the output folder, computation for events and observers that have already been computed for can be skipped.
  * When doing so, all computation settings (besides events and observers) should be kept the same.
- * TODO check that the voxel sets are same
  *
  * @author Kensuke Konishi
- * @since version 0.2.2.1
+ * @since a long time ago
  * @version 2021/12/24 renamed from InformationFileMaker to ThreeDPartialDSMSetup
  */
 public class ThreeDPartialDSMSetup extends Operation {
@@ -91,7 +90,7 @@ public class ThreeDPartialDSMSetup extends Operation {
      */
     private Path outPath;
     /**
-     * Name root of input file for DSM (header_[sh,psv].inf).
+     * Name root of input file for DSM (header_[SH,PSV].inf).
      */
     private String header;
 
@@ -114,11 +113,11 @@ public class ThreeDPartialDSMSetup extends Operation {
     private String structureName;
 
     /**
-     * Time length [s], must be a power of 2 divided by 10. (2<sup>n</sup>/10)
+     * Time length [s], must be (a power of 2)/samplingHz.
      */
     private double tlen;
     /**
-     * Number of steps in frequency domain, must be a power of 2.
+     * Number of steps in frequency domain, should not exceed tlen*samplingHz/2.
      */
     private int np;
     /**
@@ -135,8 +134,7 @@ public class ThreeDPartialDSMSetup extends Operation {
     private double dtheta;
 
     /**
-     * Locations of perturbation points.
-     *
+     * Horizontal positions of center points of voxels.
      */
     private HorizontalPosition[] voxelPositions;
     /**
@@ -144,23 +142,22 @@ public class ThreeDPartialDSMSetup extends Operation {
      */
     private double[] voxelRadii;
 
-    private String dateStr;
+    private String dateString;
 
     /**
-     * @param args  none to create a property file <br>
-     *              [property file] to run
-     * @throws IOException if any
+     * @param args (String[]) Arguments: none to create a property file, path of property file to run it.
+     * @throws IOException
      */
     public static void main(String[] args) throws IOException {
-        if (args.length == 0) writeDefaultPropertiesFile();
+        if (args.length == 0) writeDefaultPropertiesFile(null);
         else Operation.mainFromSubclass(args);
     }
 
-    public static void writeDefaultPropertiesFile() throws IOException {
-        Class<?> thisClass = new Object(){}.getClass().getEnclosingClass();
-        Path outPath = Property.generatePath(thisClass);
+    public static void writeDefaultPropertiesFile(String tag) throws IOException {
+        String className = new Object(){}.getClass().getEnclosingClass().getSimpleName();
+        Path outPath = DatasetAid.generateOutputFilePath(Paths.get(""), className, tag, true, null, ".properties");
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
-            pw.println("manhattan " + thisClass.getSimpleName());
+            pw.println("manhattan " + className);
             pw.println("##Path of work folder. (.)");
             pw.println("#workPath ");
             pw.println("##To reuse FP & BP pools that have already been created, set the folder containing them.");
@@ -173,7 +170,7 @@ public class ThreeDPartialDSMSetup extends Operation {
             pw.println("#fileTag ");
             pw.println("##(boolean) Whether to append date string at end of output file names. (true)");
             pw.println("#appendFileDate false");
-            pw.println("##(String) Header for names of output files (as in header_[sh,psv].inf). (PREM)");
+            pw.println("##(String) Header for names of output files (as in header_[SH,PSV].inf). (PREM)");
             pw.println("#header ");
             pw.println("##Path of an event list file, must be set.");
             pw.println("#eventPath event.lst");
@@ -181,13 +178,13 @@ public class ThreeDPartialDSMSetup extends Operation {
             pw.println("#observerPath observer.lst");
             pw.println("##Path of a voxel information file for perturbation points, must be set.");
             pw.println("#voxelPath voxel.inf");
-            pw.println("##Path of a structure file you want to use. If this is unset, the following structureName will be referenced.");
+            pw.println("##Path of structure file to use. If this is unset, the following structureName will be referenced.");
             pw.println("#structurePath ");
-            pw.println("##Name of a structure model you want to use. (PREM)");
+            pw.println("##Name of structure model to use. (PREM)");
             pw.println("#structureName ");
-            pw.println("##Time length to be computed, must be a power of 2 over 10. (3276.8)");
+            pw.println("##Time length to compute [s], must be (a power of 2)/(desired sampling frequency). (3276.8)");
             pw.println("#tlen ");
-            pw.println("##Number of points to be computed in frequency domain, must be a power of 2. (512)");
+            pw.println("##(int) Number of points to compute in frequency domain, should not exceed tlen*(desired sampling frequency)/2. (512)");
             pw.println("#np ");
             pw.println("##(boolean) Whether to use MPI in the subsequent DSM computations. (true)");
             pw.println("#mpi false");
@@ -239,11 +236,36 @@ public class ThreeDPartialDSMSetup extends Operation {
             thetamax = tmpthetainfo[1];
             dtheta = tmpthetainfo[2];
         }
+
+        // check that settings match with reusePath
+        if (reusePath != null) checkReusePath();
+    }
+
+    private void checkReusePath() throws IOException {
+        Path lastPropertyPath = reusePath.resolve("_" + this.getClass().getSimpleName() + ".properties");
+        Property lastProperty = new Property();
+        lastProperty.readFrom(lastPropertyPath);
+
+        if (!voxelPath.equals(lastProperty.parsePath("voxelPath", null, true, workPath)))
+            throw new IllegalStateException("voxelPath does not match with reused folder.");
+        if (structurePath != null) {
+            if (!lastProperty.containsKey("structurePath") || !structurePath.equals(lastProperty.parsePath("structurePath", null, true, workPath)))
+                throw new IllegalStateException("structurePath does not match with reused folder.");
+        } else {
+            if (!lastProperty.containsKey("structureName") || !structureName.equals(lastProperty.parseString("structureName", null)))
+                throw new IllegalStateException("structureName does not match with reused folder.");
+        }
+        if (tlen != lastProperty.parseDouble("tlen", null)) {
+            throw new IllegalStateException("tlen does not match with reused folder.");
+        }
+        if (np != lastProperty.parseInt("np", null)) {
+            throw new IllegalStateException("np does not match with reused folder.");
+        }
     }
 
     @Override
     public void run() throws IOException {
-        dateStr = GadgetAid.getTemporaryString();
+        dateString = GadgetAid.getTemporaryString();
 
         // read voxel information
         VoxelInformationFile vif = new VoxelInformationFile(voxelPath);
@@ -265,7 +287,7 @@ public class ThreeDPartialDSMSetup extends Operation {
             outPath = reusePath;
             System.err.println("Reusing " + reusePath);
         } else {
-            outPath = DatasetAid.createOutputFolder(workPath, "threeDPartial", folderTag, appendFolderDate, dateStr);
+            outPath = DatasetAid.createOutputFolder(workPath, "threeDPartial", folderTag, appendFolderDate, dateString);
             property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
             FileUtils.copyFileToDirectory(voxelPath.toFile(), outPath.toFile(), false);
             createPointInformationFile();
@@ -346,12 +368,13 @@ public class ThreeDPartialDSMSetup extends Operation {
             System.err.println(" " + MathAid.switchSingularPlural(nSkipped, "source was", "sources were")
                     + " skipped; directory already exists.");
         System.err.println(" " + MathAid.switchSingularPlural(nCreated, "source", "sources") + " created in " + fpPoolPath);
+        if (nCreated == 0) return;
 
         // output list and shellscripts for execution of shfp and psvfp
-        Path fpListPath = DatasetAid.generateOutputFilePath(outPath, "fpList", fileTag, appendFileDate, dateStr, ".txt");
+        Path fpListPath = DatasetAid.generateOutputFilePath(outPath, "fpList", fileTag, appendFileDate, dateString, ".txt");
         Files.write(fpListPath, fpSourceTreeSet);
-        Path outSHPath = DatasetAid.generateOutputFilePath(outPath, "runFP_SH", fileTag, appendFileDate, dateStr, ".sh");
-        Path outPSVPath = DatasetAid.generateOutputFilePath(outPath, "runFP_PSV", fileTag, appendFileDate, dateStr, ".sh");
+        Path outSHPath = DatasetAid.generateOutputFilePath(outPath, "runFP_SH", fileTag, appendFileDate, dateString, ".sh");
+        Path outPSVPath = DatasetAid.generateOutputFilePath(outPath, "runFP_PSV", fileTag, appendFileDate, dateString, ".sh");
         DSMShellscript shellFP = new DSMShellscript(mpi, nCreated, header);
         shellFP.write(DSMShellscript.DSMType.FP, SPCMode.SH, fpListPath.getFileName().toString(), outSHPath);
         shellFP.write(DSMShellscript.DSMType.FP, SPCMode.PSV, fpListPath.getFileName().toString(), outPSVPath);
@@ -394,6 +417,7 @@ public class ThreeDPartialDSMSetup extends Operation {
             System.err.println(" " + MathAid.switchSingularPlural(nSkipped, "source was", "sources were")
                     + " skipped; directory already exists.");
         System.err.println(" " + MathAid.switchSingularPlural(nCreated, "source", "sources") + " created in " + bpPoolPath);
+        if (nCreated == 0) return;
 
         if (catalogMode) {
             BPInputFile bp = new BPInputFile(header, structure, tlen, np, voxelRadii, voxelPositions);
@@ -403,10 +427,10 @@ public class ThreeDPartialDSMSetup extends Operation {
         }
 
         // output list and shellscripts for execution of shbp and psvbp
-        Path bpListPath = DatasetAid.generateOutputFilePath(outPath, "bpList", fileTag, appendFileDate, dateStr, ".txt");
+        Path bpListPath = DatasetAid.generateOutputFilePath(outPath, "bpList", fileTag, appendFileDate, dateString, ".txt");
         Files.write(bpListPath, bpSourceTreeSet);
-        Path outSHPath = DatasetAid.generateOutputFilePath(outPath, "runBP_SH", fileTag, appendFileDate, dateStr, ".sh");
-        Path outPSVPath = DatasetAid.generateOutputFilePath(outPath, "runBP_PSV", fileTag, appendFileDate, dateStr, ".sh");
+        Path outSHPath = DatasetAid.generateOutputFilePath(outPath, "runBP_SH", fileTag, appendFileDate, dateString, ".sh");
+        Path outPSVPath = DatasetAid.generateOutputFilePath(outPath, "runBP_PSV", fileTag, appendFileDate, dateString, ".sh");
         DSMShellscript shellBP = new DSMShellscript(mpi, nCreated, header);
         shellBP.write(DSMShellscript.DSMType.BP, SPCMode.SH, bpListPath.getFileName().toString(), outSHPath);
         shellBP.write(DSMShellscript.DSMType.BP, SPCMode.PSV, bpListPath.getFileName().toString(), outPSVPath);

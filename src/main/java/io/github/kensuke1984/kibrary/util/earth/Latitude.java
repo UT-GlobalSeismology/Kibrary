@@ -12,13 +12,14 @@ import io.github.kensuke1984.kibrary.util.MathAid;
  * This class is <b>IMMUTABLE</b>.
  *
  * @author Kensuke Konishi
+ * @since a long time ago
  */
-final class Latitude implements Comparable<Latitude> {
+public final class Latitude implements Comparable<Latitude> {
 
     /**
      * The number of decimal places to round off the latitude value.
      */
-    static final int DECIMALS = 4;
+    public static final int DECIMALS = 4;
 
     /**
      * Geographic latitude [deg]. [-90:90]
@@ -44,9 +45,8 @@ final class Latitude implements Comparable<Latitude> {
                         Thread.currentThread().getStackTrace()[1].getMethodName());
 
         double geocentric = 0.5 * Math.PI - theta;
-        return FastMath.toDegrees(Earth.toGeographicLatitude(geocentric));
+        return Math.toDegrees(Earth.geocentricToGeographic(geocentric));
     }
-
 
     /**
      * Construct from geographic latitude. The input must be within [-90:90].
@@ -57,7 +57,7 @@ final class Latitude implements Comparable<Latitude> {
                 "The input latitude: " + geographicLatitude + " is invalid (must be in [-90:90]).");
 
         this.geographicLatitude = Precision.round(geographicLatitude, DECIMALS);
-        geocentricLatitudeRad = Earth.toGeocentricLatitude(FastMath.toRadians(this.geographicLatitude));
+        geocentricLatitudeRad = Earth.geographicToGeocentric(Math.toRadians(this.geographicLatitude));
         theta = 0.5 * Math.PI - geocentricLatitudeRad;
     }
 
@@ -90,7 +90,7 @@ final class Latitude implements Comparable<Latitude> {
         if (getClass() != obj.getClass()) return false;
         Latitude other = (Latitude) obj;
 
-        return Precision.equals(geographicLatitude, other.geographicLatitude,  Math.pow(10, -DECIMALS)/2);
+        return Precision.equals(geographicLatitude, other.geographicLatitude, FastMath.pow(10, -DECIMALS)/2);
     }
 
     @Override
@@ -142,13 +142,13 @@ final class Latitude implements Comparable<Latitude> {
      * 1 letter ("P" for positive or "M" for negative) followed by 2 + {@value #DECIMALS} digits.
      * @return (String) Code for this latitude.
      */
-    public String toCode() {
+    String toCode() {
         String sign;
         if (geographicLatitude >= 0) sign = "P";
         else sign = "M";
 
         double absolute = Math.abs(geographicLatitude);
-        int number = (int) Math.round(absolute * Math.pow(10, DECIMALS));
+        int number = (int) Math.round(absolute * FastMath.pow(10, DECIMALS));
 
         return sign + MathAid.padToString(number, 2 + DECIMALS, true);
     }

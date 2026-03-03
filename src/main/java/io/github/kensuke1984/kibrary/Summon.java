@@ -41,7 +41,7 @@ public final class Summon {
             // when args exists, args[0] is the name of Brooklyn
             try {
                 if (StringUtils.isNumeric(args[0])) {
-                    brooklyn = Brooklyn.valueOf(Integer.parseInt(args[0]));
+                    brooklyn = Brooklyn.ofNumber(Integer.parseInt(args[0]));
                 } else {
                     brooklyn = Brooklyn.valueOf(args[0]);
                 }
@@ -57,7 +57,7 @@ public final class Summon {
             System.out.print("Which one do you want to summon? [" + Brooklyn.numRange() + "] : ");
             String valInput = GadgetAid.readInputLine();
             if (valInput.isEmpty()) return;
-            brooklyn = Brooklyn.valueOf(Integer.parseInt(valInput));
+            brooklyn = Brooklyn.ofNumber(Integer.parseInt(valInput));
         }
 
         //~get arguments~//

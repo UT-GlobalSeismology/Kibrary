@@ -32,7 +32,6 @@ import io.github.kensuke1984.kibrary.Summon;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.FileAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
-import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
@@ -40,7 +39,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 
 
 /**
- * Information file containing static corrections for each timewindow. See {@link StaticCorrectionData}. Binary-format.
+ * Information file containing static corrections for each time window. See {@link StaticCorrectionData}. Binary-format.
  *
  * <p>
  * The file consists of 5 sections:
@@ -66,14 +65,14 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
  *
  * <p>
  * Observers that satisfy {@link Observer#equals(Object)} are considered to be same observers,
- * and one position (latitude, longitude) is chosen to be output in the timewindow file.
+ * and one position (latitude, longitude) is chosen to be output in the time window file.
  *
  * <p>
  * When the main method of this class is executed,
  * the input binary-format file is output in ascii format in the standard output.
  *
  * @author Kensuke Konishi
- * @since version 0.2.2
+ * @since a long time ago
  */
 public final class StaticCorrectionDataFile {
     private StaticCorrectionDataFile() {}
@@ -93,9 +92,7 @@ public final class StaticCorrectionDataFile {
      */
     public static void write(Set<StaticCorrectionData> correctionSet, Path outputPath, OpenOption... options)
             throws IOException {
-        System.err.println("Outputting "
-            + MathAid.switchSingularPlural(correctionSet.size(), "static correction", "static corrections")
-            + " in " + outputPath);
+        DatasetAid.printNumOutput(correctionSet.size(), "static correction", "static corrections", outputPath);
 
         Observer[] observers = correctionSet.stream().map(StaticCorrectionData::getObserver).distinct().sorted()
                 .toArray(Observer[]::new);
@@ -142,7 +139,7 @@ public final class StaticCorrectionDataFile {
                     else
                         dos.writeShort(-1);
                 }
-                dos.writeByte(correction.getComponent().valueOf());
+                dos.writeByte(correction.getComponent().getNumber());
                 dos.writeFloat((float) correction.getSynStartTime());
                 dos.writeFloat((float) correction.getTimeshift());
                 dos.writeFloat((float) correction.getAmplitudeRatio());
@@ -196,7 +193,7 @@ public final class StaticCorrectionDataFile {
 
             Set<StaticCorrectionData> staticCorrectionSet = Arrays.stream(bytes).parallel()
                     .map(b -> createCorrection(b, observers, events, phases)).collect(Collectors.toSet());
-            DatasetAid.checkNum(staticCorrectionSet.size(), "static correction", "static corrections");
+            DatasetAid.printNumInput(staticCorrectionSet.size(), "static correction", "static corrections", inputPath);
             return Collections.unmodifiableSet(staticCorrectionSet);
         }
     }
@@ -219,7 +216,7 @@ public final class StaticCorrectionDataFile {
         }
         Phase[] usablephases = new Phase[tmpset.size()];
         usablephases = tmpset.toArray(usablephases);
-        SACComponent comp = SACComponent.getComponent(bb.get());
+        SACComponent comp = SACComponent.ofNumber(bb.get());
         double start = bb.getFloat();
         double timeshift = bb.getFloat();
         double amplitude = bb.getFloat();
@@ -251,12 +248,12 @@ public final class StaticCorrectionDataFile {
         Options options = Summon.defaultOptions();
         // input
         options.addOption(Option.builder("c").longOpt("correction").hasArg().argName("staticCorrectionFile")
-                .desc("Set input static correction file").build());
+                .desc("Path of static correction file.").build());
         // output
         options.addOption(Option.builder("n").longOpt("number")
-                .desc("Just count number without creating output files").build());
+                .desc("Just count number without creating output files.").build());
         options.addOption(Option.builder("o").longOpt("output").hasArg().argName("outputFile")
-                .desc("Specify path of output file. When not set, output is same as input with extension changed to '.txt'.").build());
+                .desc("Path of output file. When not set, output is same as input with extension changed to '.txt'.").build());
         return options;
     }
 

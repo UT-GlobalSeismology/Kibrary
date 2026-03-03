@@ -19,12 +19,12 @@ import org.apache.commons.math3.util.Precision;
 
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
+import io.github.kensuke1984.kibrary.Test_temp;
 import io.github.kensuke1984.kibrary.math.Trace;
-import io.github.kensuke1984.kibrary.timewindow.Timewindow;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
+import io.github.kensuke1984.kibrary.timewindow.TimeWindow;
+import io.github.kensuke1984.kibrary.timewindow.TimeWindowData;
+import io.github.kensuke1984.kibrary.timewindow.TimeWindowDataFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
-import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.ThreadAid;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
@@ -35,18 +35,19 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
 /**
  * Operation that computes values of Static correction after Fuji <i>et al</i>., (2010).
  * <p>
- * Timewindows in the input {@link TimewindowDataFile} that satisfy the following criteria will be worked for:
+ * Time windows in the input {@link TimeWindowDataFile} that satisfy the following criteria will be worked for:
  * <ul>
  * <li> the component is included in the components specified in the property file </li>
  * <li> observed waveform data exists for the (event, observer, component)-pair </li>
  * <li> synthetic waveform data exists for the (event, observer, component)-pair </li>
  * </ul>
  * Both observed and synthetic data must be in event folders under obsDir and synDir (they can be the same folder).
- * Resulting static correction entries will be created for each timewindow,
+ * Resulting static correction entries will be created for each time window,
  * thus specified by a (event, observer, component, timeframe)-pair.
  * <p>
- * The time shift value <i>t</i> for the ray path is for the observed timewindow
- * (i.e. synthetic window [t1, t2], observed [t1-t, t2-t]).
+ * The time shift value <i>t</i> indicates how much time the observed waveform should be shifted in the positive direction,
+ * which means how much time the observed time window should be shifted in the negative direction.
+ * So, use synthetic time window [t1 : t2] and observed time window [t1-t : t2-t].
  * <p>
  * The time shift values are computed as follows:
  * <blockquote>ワーキングディレクトリ以下のイベントたちの中にいく<br>
@@ -62,7 +63,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  * See {@link StaticCorrectionDataFile}.
  *
  * @author Kensuke Konishi
- * @since version 0.2.2
+ * @since a long time ago
  */
 public class FujiStaticCorrection extends Operation {
 
@@ -80,22 +81,14 @@ public class FujiStaticCorrection extends Operation {
      */
     private boolean appendFileDate;
     /**
-     * Path of the output file.
-     */
-    private Path outputPath;
-    /**
      * Components to use.
      */
     private Set<SACComponent> components;
-    /**
-     * Sampling Hz [Hz] in sac files.
-     */
-    private double sacSamplingHz;
 
     /**
-     * The timewindow data file to work for.
+     * The time window data file to work for.
      */
-    private Path timewindowPath;
+    private Path timeWindowPath;
     /**
      * Folder containing observed data.
      */
@@ -104,11 +97,15 @@ public class FujiStaticCorrection extends Operation {
      * Folder containing synthetic data.
      */
     private Path synPath;
-
     /**
-     * コンボリューションされている波形かそうでないか （両方は無理）
+     * Whether the synthetics have already been convolved.
      */
     private boolean convolved;
+    /**
+     * Sampling frequency of input SAC files [Hz].
+     */
+    private double sacSamplingHz;
+
     /**
      * シグナルとみなすかどうかの最大振幅から見ての比率
      */
@@ -117,26 +114,25 @@ public class FujiStaticCorrection extends Operation {
      * Range for search [s]. ±searchRange
      */
     private double searchRange;
-    private boolean mediantime;
+    private boolean medianTime;
 
-    private Set<TimewindowData> sourceTimewindowSet;
-    private Set<StaticCorrectionData> staticCorrectionSet;
+    private Set<TimeWindowData> sourceTimeWindowSet;
+    private Set<StaticCorrectionData> staticCorrectionSet = Collections.synchronizedSet(new HashSet<>());
 
     /**
-     * @param args  none to create a property file <br>
-     *              [property file] to run
-     * @throws IOException if any
+     * @param args (String[]) Arguments: none to create a property file, path of property file to run it.
+     * @throws IOException
      */
     public static void main(String[] args) throws IOException {
-        if (args.length == 0) writeDefaultPropertiesFile();
+        if (args.length == 0) writeDefaultPropertiesFile(null);
         else Operation.mainFromSubclass(args);
     }
 
-    public static void writeDefaultPropertiesFile() throws IOException {
-        Class<?> thisClass = new Object(){}.getClass().getEnclosingClass();
-        Path outPath = Property.generatePath(thisClass);
+    public static void writeDefaultPropertiesFile(String tag) throws IOException {
+        String className = new Object(){}.getClass().getEnclosingClass().getSimpleName();
+        Path outPath = DatasetAid.generateOutputFilePath(Paths.get(""), className, tag, true, null, ".properties");
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
-            pw.println("manhattan " + thisClass.getSimpleName());
+            pw.println("manhattan " + className);
             pw.println("##Path of work folder. (.)");
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output file names. If no tag is needed, leave this unset.");
@@ -145,22 +141,22 @@ public class FujiStaticCorrection extends Operation {
             pw.println("#appendFileDate false");
             pw.println("##SacComponents to be used, listed using spaces. (Z R T)");
             pw.println("#components ");
-            pw.println("##(double) SAC sampling frequency [Hz]. (20)");
-            pw.println("#sacSamplingHz cant change now");
-            pw.println("##Path of a timewindow file, must be set.");
-            pw.println("#timewindowPath timewindow.dat");
+            pw.println("##Path of a time window file, must be set.");
+            pw.println("#timeWindowPath timeWindow.dat");
             pw.println("##Path of a root directory containing observed dataset. (.)");
             pw.println("#obsPath ");
             pw.println("##Path of a root directory containing synthetic dataset. (.)");
             pw.println("#synPath ");
             pw.println("##(boolean) Whether the synthetics have already been convolved. (true)");
             pw.println("#convolved ");
+            pw.println("##(double) Sampling frequency of input SAC files [Hz]. (20)");
+            pw.println("#sacSamplingHz ");
             pw.println("##(double) Threshold for peak finder. (0.2)");
             pw.println("#threshold ");
-            pw.println("##(double) searchRange [s]. (10)");
+            pw.println("##(double) Search range [s]. (10)");
             pw.println("#searchRange ");
-            pw.println("##(boolean) Use median time. (false)");
-            pw.println("#mediantime ");
+            pw.println("##(boolean) Whether to use median time. (false)");
+            pw.println("#medianTime ");
         }
         System.err.println(outPath + " is created.");
     }
@@ -176,32 +172,29 @@ public class FujiStaticCorrection extends Operation {
         appendFileDate = property.parseBoolean("appendFileDate", "true");
         components = Arrays.stream(property.parseStringArray("components", "Z R T"))
                 .map(SACComponent::valueOf).collect(Collectors.toSet());
-        sacSamplingHz = 20; // TODO property.parseDouble("sacSamplingHz", "20");
 
-        timewindowPath = property.parsePath("timewindowPath", null, true, workPath);
+        timeWindowPath = Test_temp.getTimeWindowPath_temp(property, workPath);  //TODO delete (This is here for backward compatibility.)
+//        timeWindowPath = property.parsePath("timeWindowPath", null, true, workPath);
         obsPath = property.parsePath("obsPath", ".", true, workPath);
         synPath = property.parsePath("synPath", ".", true, workPath);
         convolved = property.parseBoolean("convolved", "true");
+        sacSamplingHz = property.parseDouble("sacSamplingHz", "20");
 
         threshold = property.parseDouble("threshold", "0.2");
         searchRange = property.parseDouble("searchRange", "10");
-        mediantime = property.parseBoolean("mediantime", "false");
-
-        String dateStr = GadgetAid.getTemporaryString();
-        outputPath = DatasetAid.generateOutputFilePath(workPath, "staticCorrection", fileTag, appendFileDate, dateStr, ".dat");
-        staticCorrectionSet = Collections.synchronizedSet(new HashSet<>());
+        medianTime = property.parseBoolean("medianTime", "false");
     }
 
     @Override
     public void run() throws IOException {
-        // gather all timewindows to be processed
-        sourceTimewindowSet = TimewindowDataFile.read(timewindowPath)
+        // gather all time windows to be processed
+        sourceTimeWindowSet = TimeWindowDataFile.read(timeWindowPath)
                 .stream().filter(window -> components.contains(window.getComponent())).collect(Collectors.toSet());
-        // collect all events that exist in the timewindow set
-        Set<GlobalCMTID> eventSet = sourceTimewindowSet.stream().map(TimewindowData::getGlobalCMTID)
-                .collect(Collectors.toSet());
+        // collect all events that exist in the time window set
+        Set<GlobalCMTID> eventSet = sourceTimeWindowSet.stream().map(TimeWindowData::getGlobalCMTID).collect(Collectors.toSet());
 
         ExecutorService es = ThreadAid.createFixedThreadPool();
+        System.err.println("Working for " + eventSet.size() + " events.");
         // for each event, execute run() of class Worker, which is defined at the bottom of this java file
         eventSet.stream().map(Worker::new).forEach(es::execute);
         es.shutdown();
@@ -211,6 +204,7 @@ public class FujiStaticCorrection extends Operation {
         // this println() is for starting new line after writing "."s
         System.err.println();
 
+        Path outputPath = DatasetAid.generateOutputFilePath(workPath, "staticCorrection", fileTag, appendFileDate, null, ".dat");
         StaticCorrectionDataFile.write(staticCorrectionSet, outputPath);
     }
 
@@ -266,19 +260,19 @@ public class FujiStaticCorrection extends Operation {
      * @param window time window
      * @return ratio of maximum values
      */
-    private double computeMaxRatio(SACFileAccess obsSac, SACFileAccess synSac, double shift, Timewindow window) {
+    private double computeMaxRatio(SACFileAccess obsSac, SACFileAccess synSac, double shift, TimeWindow window) {
         double delta = 1 / sacSamplingHz;
 
         double startSec = window.getStartTime();
         double endSec = window.getEndTime();
 
-        // create synthetic timewindow
+        // create synthetic time window
         double[] syn = cutSac(synSac, startSec, endSec);
         // which point gives the maximum value
         int maxPoint = getMaxPoint(syn);
         double maxSyn = syn[maxPoint];
 
-        // create observed timewindow
+        // create observed time window
         double[] obs = cutSac(obsSac, startSec - shift + maxPoint * delta - searchRange,
                 startSec - shift + maxPoint * delta + searchRange);
         double maxObs = maxSyn < 0 ? Arrays.stream(obs).min().getAsDouble() : Arrays.stream(obs).max().getAsDouble();
@@ -286,20 +280,21 @@ public class FujiStaticCorrection extends Operation {
         return maxObs / maxSyn;
     }
 
-    private double computeP2PRatio(SACFileAccess obsSac, SACFileAccess synSac, double shift, Timewindow window) {
-        double delta = 1 / sacSamplingHz;
-
-        double startSec = window.getStartTime();
-        double endSec = window.getEndTime();
-
-        // create synthetic timewindow
-        Trace synTrace = synSac.createTrace().cutWindow(startSec, endSec);
-        // which point gives the maximum value
+    /**
+     * Compute obs/syn ratio of peak-to-peak amplitude.
+     * @param obsSac
+     * @param synSac
+     * @param shift
+     * @param window
+     * @return
+     */
+    private double computeP2PRatio(SACFileAccess obsSac, SACFileAccess synSac, double shift, TimeWindow window) {
+        // peak-to-peak amplitude of synthetic time window
+        Trace synTrace = synSac.createTrace().cutWindow(window, sacSamplingHz);
         double synP2P = synTrace.getMaxY() - synTrace.getMinY();
-        int maxPoint = synTrace.getIndexOfPeak()[0];
 
-        // create observed timewindow
-        Trace obsTrace = obsSac.createTrace().cutWindow(startSec - shift, endSec - shift);
+        // peak-to-peak amplitude of observed time window
+        Trace obsTrace = obsSac.createTrace().cutWindow(window.shift(-shift), sacSamplingHz);
         double obsP2P = obsTrace.getMaxY() - obsTrace.getMinY();
 
         return obsP2P / synP2P;
@@ -313,13 +308,13 @@ public class FujiStaticCorrection extends Operation {
      * @param window time window
      * @return value for time shift
      */
-    private double computeTimeshiftForBestCorrelation(SACFileAccess obsSac, SACFileAccess synSac, Timewindow window) {
+    private double computeTimeshiftForBestCorrelation(SACFileAccess obsSac, SACFileAccess synSac, TimeWindow window) {
         double delta = 1 / sacSamplingHz;
 
         double startSec = window.getStartTime();
         double endSec = window.getEndTime();
 
-        // create synthetic timewindow
+        // create synthetic time window
         double[] syn = cutSac(synSac, startSec, endSec);
 
         // which point gives the maximum value
@@ -329,16 +324,16 @@ public class FujiStaticCorrection extends Operation {
         int endPoint = getEndPoint(syn, maxPoint);
         double endtime = startSec + endPoint * synSac.getValue(SACHeaderEnum.DELTA);
 
-        if (mediantime) {
+        if (medianTime) {
             double medianTime = startSec + (endPoint + maxPoint) / 2. * synSac.getValue(SACHeaderEnum.DELTA);
             endtime = medianTime;
             startSec = endtime - 15;
         }
 
-        // recreate synthetic timewindow
+        // recreate synthetic time window
         syn = cutSac(synSac, startSec, endtime);
 
-        // create observed timewindow
+        // create observed time window
         double obsStartSec = startSec - searchRange;
         double obsEndSec = endtime + searchRange;
         double[] obs = cutSac(obsSac, obsStartSec, obsEndSec);
@@ -348,13 +343,13 @@ public class FujiStaticCorrection extends Operation {
         return Precision.round(timeshift, 2);
     }
 
-    private double computeTimeshiftForBestCorrelation_peak(SACFileAccess obsSac, SACFileAccess synSac, Timewindow window) {
+    private double computeTimeshiftForBestCorrelation_peak(SACFileAccess obsSac, SACFileAccess synSac, TimeWindow window) {
         double delta = 1 / sacSamplingHz;
 
         double startSec = window.getStartTime();
         double endSec = window.getEndTime();
 
-        // create synthetic timewindow
+        // create synthetic time window
         double[] syn = cutSac(synSac, startSec, endSec);
 
         // which point gives the maximum value
@@ -362,10 +357,10 @@ public class FujiStaticCorrection extends Operation {
 
         double endtime = startSec + maxPoint * synSac.getValue(SACHeaderEnum.DELTA);
 
-        // recreate synthetic timewindow
+        // recreate synthetic time window
         syn = cutSac(synSac, startSec, endtime);
 
-        // create observed timewindow
+        // create observed time window
         double obsStartSec = startSec - searchRange;
         double obsEndSec = endtime + searchRange;
         double[] obs = cutSac(obsSac, obsStartSec, obsEndSec);
@@ -439,45 +434,35 @@ public class FujiStaticCorrection extends Operation {
     private class Worker extends DatasetAid.FilteredDatasetWorker {
 
         private Worker(GlobalCMTID eventID) {
-            super(eventID, obsPath, synPath, convolved, sourceTimewindowSet);
+            super(eventID, obsPath, synPath, convolved, sacSamplingHz, sourceTimeWindowSet);
         }
 
         @Override
-        public void actualWork(TimewindowData timewindow, SACFileAccess obsSac, SACFileAccess synSac) {
-            Observer observer = timewindow.getObserver();
-            SACComponent component = timewindow.getComponent();
-
-            // check delta
-            double delta = 1 / sacSamplingHz;
-            if (delta != obsSac.getValue(SACHeaderEnum.DELTA) || delta != synSac.getValue(SACHeaderEnum.DELTA)) {
-                System.err.println();
-                System.err.println("!! Deltas are invalid, skipping: " + timewindow);
-                System.err.println("   Obs " + obsSac.getValue(SACHeaderEnum.DELTA)
-                        + " , Syn " + synSac.getValue(SACHeaderEnum.DELTA) + " ; must be " + delta);
-                return;
-            }
+        public void actualWork(TimeWindowData timeWindow, SACFileAccess obsSac, SACFileAccess synSac) {
+            Observer observer = timeWindow.getObserver();
+            SACComponent component = timeWindow.getComponent();
 
             // check SAC file end time
-            if (timewindow.getEndTime() > obsSac.getValue(SACHeaderEnum.E) - searchRange
-                    || timewindow.getEndTime() > synSac.getValue(SACHeaderEnum.E) - searchRange) {
+            if (timeWindow.getEndTime() > obsSac.getValue(SACHeaderEnum.E) - searchRange
+                    || timeWindow.getEndTime() > synSac.getValue(SACHeaderEnum.E) - searchRange) {
                 System.err.println();
-                System.err.println("!! End time of timewindow too late, skipping: " + timewindow);
+                System.err.println("!! End of time window too late, skipping: " + timeWindow);
                 return;
             }
 
             // compute correction
             try {
                 double shift = 0;
-                if (!mediantime) shift = computeTimeshiftForBestCorrelation(obsSac, synSac, timewindow);
-                else shift = computeTimeshiftForBestCorrelation_peak(obsSac, synSac, timewindow);
-//                  double ratio = computeMaxRatio(obsSac, synSac, shift, window);
-                double ratio = computeP2PRatio(obsSac, synSac, 0., timewindow);
+                if (!medianTime) shift = computeTimeshiftForBestCorrelation(obsSac, synSac, timeWindow);
+                else shift = computeTimeshiftForBestCorrelation_peak(obsSac, synSac, timeWindow);
+//                double ratio = computeMaxRatio(obsSac, synSac, shift, time window);
+                double ratio = computeP2PRatio(obsSac, synSac, 0.0, timeWindow);
                 StaticCorrectionData correction = new StaticCorrectionData(observer, eventID, component,
-                        timewindow.getStartTime(), shift, ratio, timewindow.getPhases());
+                        timeWindow.getStartTime(), shift, ratio, timeWindow.getPhases());
                 staticCorrectionSet.add(correction);
             } catch (Exception e) {
                 System.err.println();
-                System.err.println("!! Skipping because an error occurs: " + timewindow);
+                System.err.println("!! Skipping because an error occurs: " + timeWindow);
                 e.printStackTrace();
             }
         }

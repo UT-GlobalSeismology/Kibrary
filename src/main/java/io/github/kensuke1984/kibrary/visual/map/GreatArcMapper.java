@@ -6,11 +6,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.util.HashSet;
+import java.util.Set;
 
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
-import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 
 /**
@@ -67,23 +68,22 @@ public class GreatArcMapper extends Operation {
     private String mapRegion;
 
     /**
-     * @param args  none to create a property file <br>
-     *              [property file] to run
-     * @throws IOException if any
+     * @param args (String[]) Arguments: none to create a property file, path of property file to run it.
+     * @throws IOException
      */
     public static void main(String[] args) throws IOException {
-        if (args.length == 0) writeDefaultPropertiesFile();
+        if (args.length == 0) writeDefaultPropertiesFile(null);
         else Operation.mainFromSubclass(args);
     }
 
-    public static void writeDefaultPropertiesFile() throws IOException {
-        Class<?> thisClass = new Object(){}.getClass().getEnclosingClass();
-        Path outPath = Property.generatePath(thisClass);
+    public static void writeDefaultPropertiesFile(String tag) throws IOException {
+        String className = new Object(){}.getClass().getEnclosingClass().getSimpleName();
+        Path outPath = DatasetAid.generateOutputFilePath(Paths.get(""), className, tag, true, null, ".properties");
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
-            pw.println("manhattan " + thisClass.getSimpleName());
+            pw.println("manhattan " + className);
             pw.println("##Path of work folder. (.)");
             pw.println("#workPath ");
-            pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this blank.");
+            pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this unset.");
             pw.println("#folderTag ");
             pw.println("##(boolean) Whether to append date string at end of output folder name. (true)");
             pw.println("#appendFolderDate false");
@@ -103,7 +103,7 @@ public class GreatArcMapper extends Operation {
             pw.println("##(double) Distance along arc after position 1. (0)");
             pw.println("#afterPos1Deg ");
             pw.println("##########Settings for mapping");
-            pw.println("##To specify the map region, set it in the form lonMin/lonMax/latMin/latMax, range lon:[-180,180] lat:[-90,90].");
+            pw.println("##To specify the map region, set it in the form lonMin/lonMax/latMin/latMax.");
             pw.println("#mapRegion -180/180/-90/90");
         }
         System.err.println(outPath + " is created.");
@@ -148,7 +148,7 @@ public class GreatArcMapper extends Operation {
             endPosition = pos0.pointAlongAzimuth(pos0.computeAzimuthDeg(pos1), afterPosDeg);
         }
 
-        Path outPath = DatasetAid.createOutputFolder(workPath, "greatArc", folderTag, appendFolderDate, GadgetAid.getTemporaryString());
+        Path outPath = DatasetAid.createOutputFolder(workPath, "greatArc", folderTag, appendFolderDate, null);
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         outputGMT(startPosition, endPosition, outPath.resolve("arcMap.sh"));
@@ -157,38 +157,37 @@ public class GreatArcMapper extends Operation {
     }
 
     private void outputGMT(HorizontalPosition startPosition, HorizontalPosition endPosition, Path outputPath) throws IOException {
+        String regionString = decideMapRegion(startPosition, endPosition);
+        String tickString = ScalarMapShellscript.decideTickSpacing(regionString);
+
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath))) {
             pw.println("#!/bin/sh");
             pw.println("");
-            pw.println("outputps=\"arcMap.eps\"");
-            pw.println("");
-            pw.println("# GMT options");
+            pw.println("#------- GMT options");
             pw.println("gmt set COLOR_MODEL RGB");
-            pw.println("gmt set PS_MEDIA 1100x1100");
+            pw.println("gmt set PS_MEDIA 1500x1500");
             pw.println("gmt set PS_PAGE_ORIENTATION landscape");
             pw.println("gmt set MAP_DEFAULT_PEN black");
             pw.println("gmt set MAP_TITLE_OFFSET 1p");
-            pw.println("gmt set FONT 10p");
+            pw.println("gmt set FONT 25");
             pw.println("");
-            pw.println("# map parameters");
-            pw.println("R='-R" + decideMapRegion(startPosition, endPosition) + "'");
+            pw.println("#------- Map parameters");
+            pw.println("R='-R" + regionString + "'");
             pw.println("J='-JQ20'");
-            pw.println("B='-Ba30 -BWeSn'");
+            pw.println("B='-B" + tickString + " -BWeSn'");
             pw.println("");
-            pw.println("gmt pscoast -Ggray -Wthinnest,gray20 $B $J $R -P -K > $outputps");
+            pw.println("#------- Begin main plot");
+            pw.println("gmt begin arcMap eps,pdf,png");
+            pw.println("gmt pscoast -Ggray -Wthinnest,gray20 $B $J $R");
             pw.println("");
             pw.println("#------- Great arc");
-            pw.println("gmt psxy -: $J $R -O -K -Wfat,magenta << END >> $outputps");
+            pw.println("gmt psxy -: -Wfat,magenta << END");
             pw.println(startPosition.toString());
             pw.println(endPosition.toString());
             pw.println("END");
             pw.println("");
             pw.println("#------- Finalize");
-            pw.println("gmt pstext -N -F+jLM+f30p,Helvetica,black -J -R -O << END >> $outputps");
-            pw.println("END");
-            pw.println("");
-            pw.println("gmt psconvert $outputps -A -Tf -Qg4 -E100");
-            pw.println("gmt psconvert $outputps -A -Tg -Qg4 -E500");
+            pw.println("gmt end");
             pw.println("");
             pw.println("#-------- Clear");
             pw.println("rm -rf cp.cpt gmt.conf gmt.history");
@@ -200,18 +199,16 @@ public class GreatArcMapper extends Operation {
         if (mapRegion != null) {
             return mapRegion;
         } else {
-            double latMin = (startPosition.getLatitude() < endPosition.getLatitude()) ? startPosition.getLatitude() : endPosition.getLatitude();
-            double latMax = (startPosition.getLatitude() > endPosition.getLatitude()) ? startPosition.getLatitude() : endPosition.getLatitude();
-            double lonMin = (startPosition.getLongitude() < endPosition.getLongitude()) ? startPosition.getLongitude() : endPosition.getLongitude();
-            double lonMax = (startPosition.getLongitude() > endPosition.getLongitude()) ? startPosition.getLongitude() : endPosition.getLongitude();
-
-            // expand the region a bit more
-            latMin = Math.floor(latMin / INTERVAL) * INTERVAL - MAP_RIM;
-            latMax = Math.ceil(latMax / INTERVAL) * INTERVAL + MAP_RIM;
-            lonMin = Math.floor(lonMin / INTERVAL) * INTERVAL - MAP_RIM;
-            lonMax = Math.ceil(lonMax / INTERVAL) * INTERVAL + MAP_RIM;
-
-            return (int) lonMin + "/" + (int) lonMax + "/" + (int) latMin + "/" + (int) latMax;
+            double distance = startPosition.computeEpicentralDistanceDeg(endPosition);
+            double azimuth = startPosition.computeAzimuthDeg(endPosition);
+            // create set of points at 10 deg intervals
+            Set<HorizontalPosition> positions = new HashSet<>();
+            positions.add(startPosition);
+            positions.add(endPosition);
+            for (int i = 10; i < distance; i += 10) {
+                positions.add(startPosition.pointAlongAzimuth(azimuth, i));
+            }
+            return ScalarMapShellscript.decideMapRegion(positions);
         }
     }
 }

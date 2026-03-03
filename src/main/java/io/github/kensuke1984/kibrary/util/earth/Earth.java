@@ -1,10 +1,9 @@
 package io.github.kensuke1984.kibrary.util.earth;
 
-import java.util.Arrays;
-
 import org.apache.commons.math3.util.FastMath;
 import org.apache.commons.math3.util.Precision;
 
+import io.github.kensuke1984.kibrary.math.LinearRange;
 import io.github.kensuke1984.kibrary.math.geometry.Ellipse;
 import io.github.kensuke1984.kibrary.util.MathAid;
 
@@ -12,6 +11,7 @@ import io.github.kensuke1984.kibrary.util.MathAid;
  * Earth utility.
  *
  * @author Kensuke Konishi
+ * @since a long time ago
  */
 public final class Earth {
     private Earth() {}
@@ -19,91 +19,101 @@ public final class Earth {
     /**
      * Earth radius [km].
      */
-    public final static double EARTH_RADIUS = 6371;
+    public final static double EARTH_RADIUS = 6371.0;
     /**
-     * Equatorial radius [km].
+     * Equatorial radius [km]. a
      */
     public final static double EQUATORIAL_RADIUS = 6378.137;
     /**
-     * Polar radius [km].
+     * (1st) Flattening. f = 1 - b/a
      */
-    public final static double POLAR_RADIUS = 6356.752314140356;
+    public final static double FLATTENING = 1.0 / 298.257223563;
     /**
-     * (1st) eccentricity
+     * Polar radius [km]. b
      */
-    public final static double E = 0.08181919104281514;
+    public final static double POLAR_RADIUS = (1.0 - FLATTENING) * EQUATORIAL_RADIUS;  // 6356.752314140356;
     /**
-     * flattening
+     * (1st) Eccentricity. e = sqrt(1 - b^2/a^2) = sqrt(f(2-f))
      */
-    public final static double FLATTENING = 1 / 298.257223563;
+    public final static double E = Math.sqrt(FLATTENING * (2.0 - FLATTENING));  // 0.08181919104281514;
     /**
-     * tire profile
+     * 3rd flattening. n = f/(2-f)
      */
-    public final static double N = 0.0016792443125758178;
+    public final static double N = FLATTENING / (2.0 - FLATTENING);  // 0.0016792443125758178;
 
     /**
-     * Compute a distance along a meridian between the equator and an input latitude.
-     *
+     * Transform a geographic latitude to geocentric latitude.
+     * @param geographicLatitude (double) Geographic latitude [rad]. [-&pi;/2:&pi;/2]
+     * @return (double) Geocentric latitude [rad]. [-&pi;/2:&pi;/2]
+     */
+    static double geographicToGeocentric(double geographicLatitude) {
+        if (0.5 * Math.PI < Math.abs(geographicLatitude))
+            throw new IllegalArgumentException("Geographic latitude must be in [-pi/2:pi/2]: " + geographicLatitude);
+        return Math.atan(Math.tan(geographicLatitude) * (1.0 - E * E));
+    }
+
+    /**
+     * Transform a geographic latitude to reduced latitude.
+     * @param geographicLatitude (double) Geographic latitude [rad]. [-&pi;/2:&pi;/2]
+     * @return (double) Reduced latitude [rad]. [-&pi;/2:&pi;/2]
+     */
+    static double geographicToReduced(double geographicLatitude) {
+        if (0.5 * Math.PI < Math.abs(geographicLatitude))
+            throw new IllegalArgumentException("Geographic latitude must be in [-pi/2:pi/2]: " + geographicLatitude);
+        return Math.atan(Math.tan(geographicLatitude) * Math.sqrt(1.0 - E * E));
+    }
+
+    /**
+     * Transform a geocentric latitude to geographic latitude.
+     * @param geocentricLatitude (double) Geocentric latitude [rad]. [-&pi;/2:&pi;/2]
+     * @return (double) Geographic latitude [rad]. [-&pi;/2:&pi;/2]
+     */
+    static double geocentricToGeographic(double geocentricLatitude) {
+        if (0.5 * Math.PI < Math.abs(geocentricLatitude))
+            throw new IllegalArgumentException("Geocentric latitude must be in [-pi/2:pi/2]: " + geocentricLatitude);
+        return Math.atan(Math.tan(geocentricLatitude) / (1 - E * E));
+    }
+
+    /**
+     * Compute the radius of a position on the surface considering ellipse.
+     * @param position ({@link HorizontalPosition}) Horizontal position to compute for.
+     * @return (double) Radius of the position considering ellipse [km].
+     */
+    public static double computeRadiusOnSurface(HorizontalPosition position) {
+        double psi = position.getGeocentricLatitudeRad();
+        // r^2 [(cos(psi)/a)^2 + (sin(psi)/b)^2] = 1
+        return 1 / Math.sqrt(Math.cos(psi) * Math.cos(psi) / EQUATORIAL_RADIUS / EQUATORIAL_RADIUS
+                + Math.sin(psi) * Math.sin(psi) / POLAR_RADIUS / POLAR_RADIUS);
+    }
+
+    /**
+     * Compute distance between points on the same meridian with specified lower and upper latitudes, considering ellipse.
+     * @param lowerLatitude (double) Lower geographic latitude [deg]. [-90:upperLatitude)
+     * @param upperLatitude (double) Upper geographic latitude [deg]. (lowerLatitude:90]
+     * @return (double) Length of meridional part on the surface [km].
+     */
+    public static double computeMeridianLength(double lowerLatitude, double upperLatitude) {
+        LinearRange.checkValidity("Latitude", lowerLatitude, upperLatitude, -90.0, 90.0);
+
+        if (0.0 <= lowerLatitude) return computeMeridianLength(upperLatitude) - computeMeridianLength(lowerLatitude);
+        else if (upperLatitude < 0.0) return computeMeridianLength(lowerLatitude) - computeMeridianLength(upperLatitude);
+        else return computeMeridianLength(lowerLatitude) + computeMeridianLength(upperLatitude);
+    }
+
+    /**
+     * Compute a distance along a meridian between the equator and an input latitude, considering ellipse.
      * @param latitude (double) Geographic latitude [deg]. [-90:90]
      * @return (double) Distance along the meridian between the equator and latitude [km].
      */
-    private static double getMeridionalParts(double latitude) {
+    private static double computeMeridianLength(double latitude) {
         if (latitude < -90.0 || 90.0 < latitude)
             throw new IllegalArgumentException("Input latitude: " + latitude + " is invalid.");
         return getSUMforMeridionalParts(latitude) * EQUATORIAL_RADIUS;
     }
 
     /**
-     * Compute length between points on lower and upper latitudes in the same meridian.
-     * @param lowerLatitude (double) Lower geographic latitude [deg]. [-90:upperLatitude]
-     * @param upperLatitude (double) Upper geographic latitude [deg]. [lowerLatitude:90]
-     * @return (double) Length of meridional part on the surface [km].
-     */
-    public static double getMeridionalParts(double lowerLatitude, double upperLatitude) {
-        if (lowerLatitude < -90.0 || lowerLatitude > upperLatitude || 90.0 < upperLatitude)
-            throw new IllegalArgumentException(
-                "Input latitudes lower, upper: " + lowerLatitude + ", " + upperLatitude + " are invalid.");
-
-        if (0.0 <= lowerLatitude) return getMeridionalParts(upperLatitude) - getMeridionalParts(lowerLatitude);
-        else if (upperLatitude < 0.0) return getMeridionalParts(lowerLatitude) - getMeridionalParts(upperLatitude);
-        else return getMeridionalParts(lowerLatitude) + getMeridionalParts(upperLatitude);
-    }
-
-    /**
-     * Compute the radius of a position on the surface after oval consideration
-     *
-     * @param position {@link HorizontalPosition} of a target point
-     * @return [km] revised radius of the position after oval consideration
-     */
-    public static double getR(HorizontalPosition position) {
-        double theta = position.getGeocentricLatitude();
-        double r = 1 / (FastMath.cos(theta) * FastMath.cos(theta) / EQUATORIAL_RADIUS / EQUATORIAL_RADIUS +
-                FastMath.sin(theta) * FastMath.sin(theta) / POLAR_RADIUS / POLAR_RADIUS);
-        return FastMath.sqrt(r);
-    }
-
-    /**
-     * Compute a length of major axis of similar oval, on which the location
-     * exists, to the Earth
-     *
-     * @param position {@link FullPosition} of a target point
-     * @return [km] length of a major axis of the oval, similar to Earth, where the location exists.
-     */
-    public static double getExtendedShaft(FullPosition position) {
-        if (position.getR() == 0) {
-            System.err.println("Position has no radius information, the extended shaft for the surface is returned.");
-            return EQUATORIAL_RADIUS;
-        }
-        double r2 = position.getR() * position.getR();
-        double theta = position.getGeocentricLatitude();
-        return FastMath.sqrt(r2 * FastMath.cos(theta) * FastMath.cos(theta) +
-                r2 * FastMath.sin(theta) * FastMath.sin(theta) / (1 - E * E));
-    }
-
-    /**
      * 第三扁平率を用いて子午線弧の近似値を求める際のべき級数の和（長軸によらない部分）
      * ある長軸aにおける弧の長さを求めるには aをかけなければならない
-     *
      * @param latitude [-90:90] geographical latitude
      * @return 長軸１ｋｍの時の 赤道から入力された緯度までの子午線弧の長さ
      */
@@ -115,139 +125,80 @@ public final class Earth {
         double n2 = N * N;
         double n3 = N * n2;
         double n4 = n2 * n2;
-        double phi = FastMath.toRadians(latitude);
+        double phi = Math.toRadians(latitude);
         if (phi < 0) phi *= -1;
 
         s += (1 + n2 / 4 + n4 / 64) * phi;
-        s += -1.5 * (N - n3 / 8) * FastMath.sin(phi * 2);
-        s += 15 / 16.0 * (n2 - n4 / 4) * FastMath.sin(4 * phi);
-        s += -35 / 48.0 * n3 * FastMath.sin(6 * phi);
-        s += 315 / 512.0 * n4 * FastMath.sin(8 * phi);
+        s += -1.5 * (N - n3 / 8) * Math.sin(phi * 2);
+        s += 15 / 16.0 * (n2 - n4 / 4) * Math.sin(4 * phi);
+        s += -35 / 48.0 * n3 * Math.sin(6 * phi);
+        s += 315 / 512.0 * n4 * Math.sin(8 * phi);
         s /= 1 + N;
         return s;
     }
 
     /**
-     * Transform a geographic latitude to geocentric.
-     *
-     * @param geographicLatitude [rad] geographic latitude [-&pi;/2:&pi;/2]
-     * @return [rad] geocentric latitude [-&pi;/2:&pi;/2]
+     * Compute the length of semi-major axis of ellipse, similar to the Earth, on which the position exists.
+     * @param position ({@link FullPosition}) Position to compute for.
+     * @return (double) Length of semi-major axis [km] of ellipse, similar to Earth, on which the position exists.
      */
-    static double toGeocentricLatitude(double geographicLatitude) {
-        if (0.5 * Math.PI < Math.abs(geographicLatitude))
-            throw new IllegalArgumentException("geographical latitude: " + geographicLatitude + " must be [-pi/2:pi/2].");
-        double ratio = POLAR_RADIUS / EQUATORIAL_RADIUS;
-        return FastMath.atan(ratio * ratio * FastMath.tan(geographicLatitude));
+    public static double computeSemiMajorAxis(FullPosition position) {
+        if (position.getR() == 0) {
+            System.err.println("Position has no radius information; the semi-major axis for the surface is returned.");
+            return EQUATORIAL_RADIUS;
+        }
+        double r2 = position.getR() * position.getR();
+        double psi = position.getGeocentricLatitudeRad();
+        // sqrt( x^2 + y^2/(b/a)^2 ) = a
+        return Math.sqrt(r2 * Math.cos(psi) * Math.cos(psi) + r2 * Math.sin(psi) * Math.sin(psi) / (1 - E * E));
     }
 
     /**
-     * Transform a geocentric latitude to geographic.
-     *
-     * @param geocentricLatitude [rad] geocentric latitude
-     * @return [rad] geographic latitude
-     */
-    static double toGeographicLatitude(double geocentricLatitude) {
-        double ratio = EQUATORIAL_RADIUS / POLAR_RADIUS;
-        return FastMath.atan(ratio * ratio * FastMath.tan(geocentricLatitude));
-    }
-
-    /**
-     * Compute volume within an input range.
-     * There is no limit on the longitude because the borders of voxels may surpass -180 or 360,
-     * and even then, there shouldn't be much of a problem.
-     *
-     * @param startA         [km] start of major axis [0:endA)
-     * @param endA           [km] end of major axis (startA:)
-     * @param startLatitude  [deg] [-90:endLatitude)
-     * @param endLatitude    [deg] (startLatitude:90]
-     * @param startLongitude [deg]
-     * @param endLongitude   [deg]
-     * @return 長軸startAからendAまでの楕円弧 緯度 経度 に囲まれた領域の体積
-     */
-    public static double computeVolume(double startA, double endA, double startLatitude, double endLatitude,
-                                   double startLongitude, double endLongitude) {
-        // radius
-        if (endA <= startA || startA < 0)
-            throw new IllegalArgumentException("startA: " + startA + " must be in [0:endA). endA: " + endA + " must be in (startA:)");
-
-        // latitude
-        if (startLatitude < -90 || startLatitude >= endLatitude || 90 < endLatitude) throw new IllegalArgumentException(
-                "startLatitude: " + startLatitude + " must be in [-90:endLatitude). endLatitude: " + endLatitude +
-                        " must be in (startLatitude:90].");
-
-        // Longitudes are not required to be in [-180,360) here
-        //   because we will not be able to compute for voxels near the edges of the valid longitude range.
-        //   (ex. a 5-deg wide voxel at -180 deg)
-
-        // double dr =1;
-        double dr = (endA - startA) * 0.01;
-        double dLatitude = (endLatitude - startLatitude) * 0.01;
-        int nr = (int) ((endA - startA) / dr) + 1;
-        double[] rs = new double[nr];
-        Arrays.setAll(rs, i -> startA + i * dr);
-        if (startA == 0) rs[0] = 1e-8; // TODO どうするか
-        rs[nr - 1] = endA;
-
-        int nLatitude = (int) ((endLatitude - startLatitude) / dLatitude) + 1;
-        double[] latitudes = new double[nLatitude];
-        Arrays.setAll(latitudes, i -> startLatitude + i * dLatitude);
-        latitudes[nLatitude - 1] = endLatitude;
-
-        double v = 0;
-        double dPhi = FastMath.toRadians(endLongitude - startLongitude);
-        for (int ir = 0; ir < nr - 1; ir++)
-            for (int iLatitude = 0; iLatitude < nLatitude - 1; iLatitude++)
-                v += rs[ir] * Math.cos(toGeocentricLatitude(FastMath.toRadians(latitudes[iLatitude]))) * dPhi *
-                        (getCrossSection(rs[ir], rs[ir + 1], latitudes[iLatitude], latitudes[iLatitude + 1]));
-        return v;
-    }
-
-    /**
-     * Compute volume within an input range.
-     * Note that, for instance, the range is [point-0.5*dX : point+0.5*dX]
-     *
-     * @param point      center location
-     * @param dr         [km] radius
-     * @param dLatitude  [deg] in geographical latitude
-     * @param dLongitude [deg]
-     * @return volume [km<sup>3</sup>]
+     * Compute volume within an input radius, latitude, and longitude range.
+     * Note that, for instance, the range is [point-0.5*dX : point+0.5*dX].
+     * @param point ({@link FullPosition}) Center position.
+     * @param dr (double) Radius range [km].
+     * @param dLatitude (double) Latitude range [deg] in geographical latitude.
+     * @param dLongitude (double) Longitude range [deg].
+     * @return (double) Volume [km<sup>3</sup>].
      */
     public static double computeVolume(FullPosition point, double dr, double dLatitude, double dLongitude) {
+        // compute semi-major axis (= radius on expanded sphere)
         double r = point.getR();
-        if (r <= 0) throw new IllegalArgumentException("location has an invalid R: " + r);
-
+        if (r <= 0) throw new IllegalArgumentException("Radius must be positive: " + r);
+        double startA = computeSemiMajorAxis(point.toFullPosition(r - 0.5 * dr));
+        double endA = computeSemiMajorAxis(point.toFullPosition(r + 0.5 * dr));
+        // compute theta (= colatitude for reduced latitude)
         double latitude = point.getLatitude();
-        double longitude = point.getLongitude();
-        double startA = getExtendedShaft(point.toFullPosition(r - 0.5 * dr));
-        double endA = getExtendedShaft(point.toFullPosition(r + 0.5 * dr));
-        return computeVolume(startA, endA, latitude - 0.5 * dLatitude, latitude + 0.5 * dLatitude,
-                longitude - 0.5 * dLongitude, longitude + 0.5 * dLongitude);
+        double startTheta = 0.5 * Math.PI - geographicToReduced(Math.toRadians(latitude + 0.5 * dLatitude));
+        double endTheta = 0.5 * Math.PI - geographicToReduced(Math.toRadians(latitude - 0.5 * dLatitude));
+        // volume of expanded sphere
+        double volume = (FastMath.pow(endA, 3) - FastMath.pow(startA, 3)) * (Math.cos(startTheta) - Math.cos(endTheta))
+                * Math.toRadians(dLongitude) / 3.0;
+        return volume * (1 - FLATTENING);
     }
 
     /**
-     * @param startA        geographic latitude [0:endA)
-     * @param endA          geographic latitude (startA:)
-     * @param startLatitude [-90:endLatitude]
-     * @param endLatitude   [startLatitude:90]
-     * @return 長径がstartAからendAまでの楕円上のstartLatitudeからendLatitudeまでの断面積
+     * @param startA (double) Lower major axis [km]. [0:endA)
+     * @param endA (double) Upper major axis [km]. (startA:)
+     * @param startLatitude (double) Lower geographic latitude [deg]. [-90:endLatitude)
+     * @param endLatitude (double) Upper geographic latitude [deg]. (startLatitude:90]
+     * @return (double) Area of cross section inside specified major axis and latitude range.
      */
-    public static double getCrossSection(double startA, double endA, double startLatitude, double endLatitude) {
-        if (endA < startA || startA < 0)
-            throw new IllegalArgumentException("endA: " + endA + " must be bigger than startA: " + startA);
-        if (endLatitude < startLatitude || startLatitude < -90 || 90 < endLatitude) throw new IllegalArgumentException(
-                "startLatitude: " + startLatitude + " must be in [-90:endLatitude]. endLatitude: " + endLatitude +
-                        " must be in [startLatitude:90].");
+    public static double computeCrossSection(double startA, double endA, double startLatitude, double endLatitude) {
+        LinearRange.checkValidity("Major axis", startA, endA, 0.0);
+        LinearRange.checkValidity("Latitude", startLatitude, endLatitude, -90.0, 90.0);
 
         Ellipse el0 = new Ellipse(startA, startA - startA * FLATTENING);
         Ellipse el1 = new Ellipse(endA, endA - endA * FLATTENING);
-        double theta0 = toGeocentricLatitude(FastMath.toRadians(startLatitude));
-        double theta1 = toGeocentricLatitude(FastMath.toRadians(endLatitude));
-        if (theta0 < 0) {
-            theta0 += Math.PI;
-            theta1 += Math.PI;
+        double startPsi = geographicToGeocentric(Math.toRadians(startLatitude));
+        double endPsi = geographicToGeocentric(Math.toRadians(endLatitude));
+        if (startPsi < 0) {
+            startPsi += Math.PI;
+            endPsi += Math.PI;
         }
-        double s0 = el0.getS(theta0, theta1);
-        double s1 = el1.getS(theta0, theta1);
+        double s0 = el0.computeEllipticalSectorArea(startPsi, endPsi);
+        double s1 = el1.computeEllipticalSectorArea(startPsi, endPsi);
         return s1 - s0;
     }
 
@@ -260,8 +211,8 @@ public final class Earth {
      */
     public static double computeGeographicalDistanceRad(HorizontalPosition pos1, HorizontalPosition pos2) {
         // convert to colatitude [rad]
-        double theta1 = FastMath.toRadians(90.0 - pos1.getLatitude());
-        double theta2 = FastMath.toRadians(90.0 - pos2.getLatitude());
+        double theta1 = Math.toRadians(90.0 - pos1.getLatitude());
+        double theta2 = Math.toRadians(90.0 - pos2.getLatitude());
         double deltaPhi = pos1.getPhi() - pos2.getPhi();
         return computeDistance(theta1, theta2, deltaPhi);
     }
@@ -280,8 +231,8 @@ public final class Earth {
     }
 
     private static double computeDistance(double theta1, double theta2, double deltaPhi) {
-        double cosAlpha = FastMath.sin(theta1) * FastMath.sin(theta2) * FastMath.cos(deltaPhi)
-                + FastMath.cos(theta1) * FastMath.cos(theta2);
+        double cosAlpha = Math.sin(theta1) * Math.sin(theta2) * Math.cos(deltaPhi)
+                + Math.cos(theta1) * Math.cos(theta2);
         if (1.0 < cosAlpha) cosAlpha = 1.0;
         else if (cosAlpha < -1.0) cosAlpha = -1.0;
         return FastMath.acos(cosAlpha);
@@ -296,8 +247,8 @@ public final class Earth {
      */
     public static double computeGeographicalAzimuthRad(HorizontalPosition sourcePos, HorizontalPosition receiverPos) {
         // convert to colatitude [rad]
-        double thetaS = FastMath.toRadians(90.0 - sourcePos.getLatitude());
-        double thetaR = FastMath.toRadians(90.0 - receiverPos.getLatitude());
+        double thetaS = Math.toRadians(90.0 - sourcePos.getLatitude());
+        double thetaR = Math.toRadians(90.0 - receiverPos.getLatitude());
         double deltaPhi = -sourcePos.getPhi() + receiverPos.getPhi();
         return computeAzimuth(thetaS, thetaR, deltaPhi);
     }
@@ -316,18 +267,18 @@ public final class Earth {
     }
 
     private static double computeAzimuth(double thetaS, double thetaR, double deltaPhi) {
-        double sinDistance = FastMath.sin(computeDistance(thetaS, thetaR, deltaPhi));
+        double sinDistance = Math.sin(computeDistance(thetaS, thetaR, deltaPhi));
 
         if (Precision.equals(sinDistance, 0.0, MathAid.PRECISION_EPSILON)) {
             // Set azimuth as 0 when source and receiver are at same position or at antipodes.
             return 0.0;
 
         } else {
-            double cos = (FastMath.cos(thetaR) * FastMath.sin(thetaS)
-                    - FastMath.sin(thetaR) * FastMath.cos(thetaS) * FastMath.cos(deltaPhi)) / sinDistance;
+            double cos = (Math.cos(thetaR) * Math.sin(thetaS)
+                    - Math.sin(thetaR) * Math.cos(thetaS) * Math.cos(deltaPhi)) / sinDistance;
             if (1.0 < cos) cos = 1.0;
             else if (cos < -1.0) cos = -1.0;
-            double sin = FastMath.sin(thetaR) * FastMath.sin(deltaPhi) / sinDistance;
+            double sin = Math.sin(thetaR) * Math.sin(deltaPhi) / sinDistance;
             double az = FastMath.acos(cos);
             return 0.0 <= sin ? az : -az + 2.0 * Math.PI;
         }
@@ -341,6 +292,18 @@ public final class Earth {
      */
     public static double computeBackAzimuthRad(HorizontalPosition sourcePos, HorizontalPosition receiverPos) {
         return computeAzimuthRad(receiverPos, sourcePos);
+    }
+
+    /**
+     * Compute mid-point between two points.
+     * @param pos0 ({@link HorizontalPosition}) First position.
+     * @param pos1 ({@link HorizontalPosition}) Second position.
+     * @return ({@link HorizontalPosition}) Mid-point position.
+     */
+    public static HorizontalPosition computeMidpoint(HorizontalPosition pos0, HorizontalPosition pos1) {
+        double distanceDeg = pos0.computeEpicentralDistanceDeg(pos1);
+        double azimuthDeg = pos0.computeAzimuthDeg(pos1);
+        return pos0.pointAlongAzimuth(azimuthDeg, distanceDeg / 2.0);
     }
 
 }

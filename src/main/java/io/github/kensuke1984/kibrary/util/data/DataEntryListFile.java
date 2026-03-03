@@ -23,8 +23,8 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
 import io.github.kensuke1984.kibrary.Summon;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
+import io.github.kensuke1984.kibrary.timewindow.TimeWindowData;
+import io.github.kensuke1984.kibrary.timewindow.TimeWindowDataFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.InformationFileReader;
@@ -57,9 +57,7 @@ public class DataEntryListFile {
     }
 
     public static void writeFromSet(Set<DataEntry> entrySet, Path outputPath, OpenOption... options) throws IOException {
-        System.err.println("Outputting "
-                + MathAid.switchSingularPlural(entrySet.size(), "data entry", "data entries")
-                + " in " + outputPath);
+        DatasetAid.printNumOutput(entrySet.size(), "data entry", "data entries", outputPath);
 
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath, options))) {
             pw.println("# globalCMTID station network latitude longitude component");
@@ -96,7 +94,7 @@ public class DataEntryListFile {
                 throw new RuntimeException("There is duplication of " + entry + " in " + inputPath + ".");
         }
 
-        DatasetAid.checkNum(entrySet.size(), "data entry", "data entries");
+        DatasetAid.printNumInput(entrySet.size(), "data entry", "data entries", inputPath);
         return Collections.unmodifiableSet(entrySet);
     }
 
@@ -107,7 +105,7 @@ public class DataEntryListFile {
      * Reads dataset information from an input source
      * and creates a data entry list file under the working folder.
      * The input source may be SAC files in event directories under a dataset folder,
-     * a timewindow file, or a basic waveform folder.
+     * a time window file, or a basic waveform folder.
      * @param args Options.
      * @throws IOException if an I/O error occurs
      */
@@ -135,8 +133,8 @@ public class DataEntryListFile {
         OptionGroup inputOption = new OptionGroup();
         inputOption.addOption(Option.builder("d").longOpt("dataset").hasArg().argName("datasetFolder")
                 .desc("Use dataset folder containing event folders as input.").build());
-        inputOption.addOption(Option.builder("t").longOpt("timewindow").hasArg().argName("timewindowFile")
-                .desc("Use timewindow file as input.").build());
+        inputOption.addOption(Option.builder("t").longOpt("timeWindow").hasArg().argName("timeWindowFile")
+                .desc("Use time window file as input.").build());
         inputOption.addOption(Option.builder("b").longOpt("basic").hasArg().argName("basicFolder")
                 .desc("Use basic waveform folder as input.").build());
         inputOption.addOption(Option.builder("e").longOpt("entry").hasArg().argName("dataEntryFile")
@@ -144,12 +142,14 @@ public class DataEntryListFile {
         options.addOptionGroup(inputOption);
 
         // output
+        options.addOption(Option.builder("n").longOpt("number")
+                .desc("Just count number without creating output files.").build());
         options.addOption(Option.builder("x").longOpt("convert").hasArg().argName("components")
                 .desc("To convert entries to certain components, list them using commas.").build());
         options.addOption(Option.builder("T").longOpt("tag").hasArg().argName("fileTag")
                 .desc("A tag to include in output file name.").build());
         options.addOption(Option.builder("O").longOpt("omitDate")
-                .desc("Whether to omit date string in output file name.").build());
+                .desc("Omit date string in output file name.").build());
 
         return options;
     }
@@ -165,16 +165,16 @@ public class DataEntryListFile {
                 : SACComponent.componentSetOf("ZRT");
         String fileTag = cmdLine.hasOption("T") ? cmdLine.getOptionValue("T") : null;
         boolean appendFileDate = !cmdLine.hasOption("O");
-        Path outputPath = DatasetAid.generateOutputFilePath(Paths.get(""), "dataEntry", fileTag, appendFileDate, GadgetAid.getTemporaryString(), ".lst");
+        Path outputPath = DatasetAid.generateOutputFilePath(Paths.get(""), "dataEntry", fileTag, appendFileDate, null, ".lst");
 
         // read input
         Set<DataEntry> entrySet;
         if (cmdLine.hasOption("d")) {
             entrySet = collectFromDataset(Paths.get(cmdLine.getOptionValue("d")), components);
         } else if (cmdLine.hasOption("t")) {
-            Set<TimewindowData> timewindows = TimewindowDataFile.read(Paths.get(cmdLine.getOptionValue("t")));
-            entrySet = timewindows.stream().filter(timewindow -> components.contains(timewindow.getComponent()))
-                    .map(timewindow -> new DataEntry(timewindow.getGlobalCMTID(), timewindow.getObserver(), timewindow.getComponent()))
+            Set<TimeWindowData> timeWindows = TimeWindowDataFile.read(Paths.get(cmdLine.getOptionValue("t")));
+            entrySet = timeWindows.stream().filter(timeWindow -> components.contains(timeWindow.getComponent()))
+                    .map(timeWindow -> new DataEntry(timeWindow.getGlobalCMTID(), timeWindow.getObserver(), timeWindow.getComponent()))
                     .collect(Collectors.toSet());
         } else if (cmdLine.hasOption("b")) {
             List<BasicID> basicIDs = BasicIDFile.read(Paths.get(cmdLine.getOptionValue("b")), false);
@@ -195,10 +195,9 @@ public class DataEntryListFile {
             entrySet = collectFromDataset(inPath, components);
         }
 
-        if (entrySet.size() == 0) {
-            System.err.println("No data entries created.");
-            return;
-        }
+        System.err.println(MathAid.switchSingularPlural(entrySet.size(), "data entry", "data entries") + " created.");
+        if (entrySet.size() == 0) return;
+        if (cmdLine.hasOption("n")) return;
 
         // convert components
         if (cmdLine.hasOption("x")) {
@@ -217,9 +216,9 @@ public class DataEntryListFile {
 
     private static Set<DataEntry> collectFromDataset(Path datasetPath, Set<SACComponent> components) throws IOException {
         Set<SACFileName> sacNameSet = DatasetAid.sacFileNameSet(datasetPath);
-        return sacNameSet.stream().filter(sacname -> components.contains(sacname.getComponent()))
-                .map(sacname -> sacname.readHeaderWithNullOnFailure()).filter(Objects::nonNull)
-                .map(header -> new DataEntry(header.getGlobalCMTID(), header.getObserver(), header.getComponent()))
+        return sacNameSet.parallelStream().filter(sacName -> components.contains(sacName.getComponent()))
+                .map(sacName -> sacName.readHeaderWithNullOnFailure()).filter(Objects::nonNull)
+                .map(header -> header.toDataEntry())
                 .collect(Collectors.toSet());
     }
 

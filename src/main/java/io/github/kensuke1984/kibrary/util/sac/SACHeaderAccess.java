@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 
+import io.github.kensuke1984.kibrary.util.data.DataEntry;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
@@ -15,7 +16,7 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
  * <A href=https://ds.iris.edu/files/sac-manual/manual/file_format.html>here</a>
  *
  * @author Kensuke Konishi
- * @since version 0.0.2
+ * @since a long time ago
  * @see <a href=http://ds.iris.edu/ds/nodes/dmc/forms/sac/>SAC</a>
  */
 public interface SACHeaderAccess {
@@ -88,13 +89,13 @@ public interface SACHeaderAccess {
         switch (getSACString(SACHeaderEnum.KCMPNM)) {
             case "Z":
             case "BHZ": //TODO erase: this is set here because DataKitchen hadn't placed "vertical" in Sac headers before.
-            case "vertical": //TODO erase: old format
+            case "vertical": //TODO erase: old format. This is here for backward compatibility.
                 return SACComponent.Z;
             case "R":
-            case "radial": //TODO erase: old format
+            case "radial": //TODO erase: old format. This is here for backward compatibility.
                 return SACComponent.R;
             case "T":
-            case "trnsvers": //TODO erase: old format
+            case "trnsvers": //TODO erase: old format. This is here for backward compatibility.
                 return SACComponent.T;
             default:
                 throw new RuntimeException("KCMPNM is invalid; must be Z, R, or T.");
@@ -108,6 +109,14 @@ public interface SACHeaderAccess {
      */
     default GlobalCMTID getGlobalCMTID() {
         return new GlobalCMTID(getSACString(SACHeaderEnum.KEVNM));
+    }
+
+    /**
+     * Get {@link DataEntry} instance for this SAC header.
+     * @return ({@link DataEntry}) Entry for this SAC header.
+     */
+    default DataEntry toDataEntry() {
+        return new DataEntry(getGlobalCMTID(), getObserver(), getComponent());
     }
 
     /**

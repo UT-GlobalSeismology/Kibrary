@@ -11,11 +11,17 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.apache.commons.math3.util.Precision;
+
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
+import io.github.kensuke1984.kibrary.math.LinearRange;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
-import io.github.kensuke1984.kibrary.util.GadgetAid;
+import io.github.kensuke1984.kibrary.util.MathAid;
+import io.github.kensuke1984.kibrary.util.earth.Earth;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
+import io.github.kensuke1984.kibrary.util.earth.Latitude;
+import io.github.kensuke1984.kibrary.util.earth.Longitude;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 
@@ -54,18 +60,35 @@ public class VirtualDatasetMaker extends Operation {
      */
     private Set<GlobalCMTID> tendEvents = new HashSet<>();
 
-    private int lowerLatitude;
-    private int upperLatitude;
-    private int lowerLongitude;
-    private int upperLongitude;
-    private int dLatitudeDeg;
-    private int dLongitudeDeg;
+    private double lowerLatitude;
+    private double upperLatitude;
+    private double lowerLongitude;
+    private double upperLongitude;
 
-    public static void writeDefaultPropertiesFile() throws IOException {
-        Class<?> thisClass = new Object(){}.getClass().getEnclosingClass();
-        Path outPath = Property.generatePath(thisClass);
+    private double dLatitudeKm;
+    private double dLatitudeDeg;
+    private boolean setLatitudeByKm;
+    private double latitudeOffset;
+
+    private double dLongitudeKm;
+    private double dLongitudeDeg;
+    private boolean setLongitudeByKm;
+    private double longitudeOffset;
+
+    /**
+     * @param args (String[]) Arguments: none to create a property file, path of property file to run it.
+     * @throws IOException
+     */
+    public static void main(String[] args) throws IOException {
+        if (args.length == 0) writeDefaultPropertiesFile(null);
+        else Operation.mainFromSubclass(args);
+    }
+
+    public static void writeDefaultPropertiesFile(String tag) throws IOException {
+        String className = new Object(){}.getClass().getEnclosingClass().getSimpleName();
+        Path outPath = DatasetAid.generateOutputFilePath(Paths.get(""), className, tag, true, null, ".properties");
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
-            pw.println("manhattan " + thisClass.getSimpleName());
+            pw.println("manhattan " + className);
             pw.println("##Path of work folder. (.)");
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output file names. If no tag is needed, leave this unset.");
@@ -77,18 +100,28 @@ public class VirtualDatasetMaker extends Operation {
             pw.println("##GlobalCMTIDs of events to work for, listed using spaces. (000000A)");
             pw.println("#tendEvents ");
             pw.println("##########The following parameters are for the virtual observers to create.");
-            pw.println("##(int) Lower limit of latitude [deg]; [-90:upperLatitude). (0)");
+            pw.println("##(double) Lower limit of latitude [deg], inclusive; [-90:upperLatitude). (-90)");
             pw.println("#lowerLatitude ");
-            pw.println("##(int) Upper limit of latitude [deg]; (lowerLatitude:90]. (0)");
+            pw.println("##(double) Upper limit of latitude [deg], inclusive; (lowerLatitude:90]. (90)");
             pw.println("#upperLatitude ");
-            pw.println("##(int) Lower limit of longitude [deg]; [-180:upperLongitude). (10)");
+            pw.println("##(double) Lower limit of longitude [deg], inclusive; [-180:upperLongitude). (-180)");
             pw.println("#lowerLongitude ");
-            pw.println("##(int) Upper limit of longitude [deg]; (lowerLongitude:360]. (170)");
+            pw.println("##(double) Upper limit of longitude [deg], inclusive; (lowerLongitude:360]. (180)");
             pw.println("#upperLongitude ");
-            pw.println("##(int) Latitude spacing [deg], (0:). (5)");
+            pw.println("##(double) Latitude spacing [km]; (0:). If unset, the following dLatitudeDeg will be used.");
+            pw.println("##  Earth radius will be used to convert this to degrees.");
+            pw.println("#dLatitudeKm ");
+            pw.println("##(double) Latitude spacing [deg]; (0:). (5)");
             pw.println("#dLatitudeDeg ");
-            pw.println("##(int) Longitude spacing [deg], (0:). (5)");
+            pw.println("##(double) Offset of latitude [deg]; [0:). (0)");
+            pw.println("#latitudeOffset ");
+            pw.println("##(double) Longitude spacing [km]; (0:). If unset, the following dLongitudeDeg will be used.");
+            pw.println("##  Earth radius will be used to convert this to degrees at each latitude.");
+            pw.println("#dLongitudeKm ");
+            pw.println("##(double) Longitude spacing [deg]; (0:). (5)");
             pw.println("#dLongitudeDeg ");
+            pw.println("##(double) Offset of longitude [deg]. (0)");
+            pw.println("#longitudeOffset ");
         }
         System.err.println(outPath + " is created.");
     }
@@ -111,33 +144,80 @@ public class VirtualDatasetMaker extends Operation {
             if (!event.exists()) throw new IllegalArgumentException(event + " does not exist in catalog.");
         }
 
-        lowerLatitude = property.parseInt("lowerLatitude", "0");
-        upperLatitude = property.parseInt("upperLatitude", "0");
-        if (lowerLatitude < -90 || lowerLatitude > upperLatitude || 90 < upperLatitude)
-            throw new IllegalArgumentException("Latitude range " + lowerLatitude + " , " + upperLatitude + " is invalid.");
+        lowerLatitude = property.parseDouble("lowerLatitude", "-90");
+        upperLatitude = property.parseDouble("upperLatitude", "90");
+        LinearRange.checkValidity("Latitude", lowerLatitude, upperLatitude, -90.0, 90.0);
 
-        lowerLongitude = property.parseInt("lowerLongitude", "10");
-        upperLongitude = property.parseInt("upperLongitude", "170");
-        if (lowerLongitude < -180 || lowerLongitude > upperLongitude || 360 < upperLongitude)
-            throw new IllegalArgumentException("Longitude range " + lowerLongitude + " , " + upperLongitude + " is invalid.");
+        lowerLongitude = property.parseDouble("lowerLongitude", "-180");
+        upperLongitude = property.parseDouble("upperLongitude", "180");
+        LinearRange.checkValidity("Longitude", lowerLongitude, upperLongitude, -180.0, 360.0);
 
-        dLatitudeDeg = property.parseInt("dLatitudeDeg", "5");
-        if (dLatitudeDeg <= 0)
-            throw new IllegalArgumentException("dLatitudeDeg must be positive");
-        dLongitudeDeg = property.parseInt("dLongitudeDeg", "5");
-        if (dLongitudeDeg <= 0)
-            throw new IllegalArgumentException("dLongitudeDeg must be positive");
+        if (property.containsKey("dLatitudeKm")) {
+            dLatitudeKm = property.parseDouble("dLatitudeKm", null);
+            if (dLatitudeKm <= 0.0) throw new IllegalArgumentException("dLatitudeKm must be positive.");
+            setLatitudeByKm = true;
+        } else {
+            dLatitudeDeg = property.parseDouble("dLatitudeDeg", "5");
+            if (dLatitudeDeg <= 0.0) throw new IllegalArgumentException("dLatitudeDeg must be positive.");
+            setLatitudeByKm = false;
+        }
+        latitudeOffset = property.parseDouble("latitudeOffset", "0");
+        if (latitudeOffset < 0.0) throw new IllegalArgumentException("latitudeOffset must be non-negative.");
+
+        if (property.containsKey("dLongitudeKm")) {
+            dLongitudeKm = property.parseDouble("dLongitudeKm", null);
+            if (dLongitudeKm <= 0.0) throw new IllegalArgumentException("dLongitudeKm must be positive.");
+            setLongitudeByKm = true;
+        } else {
+            dLongitudeDeg = property.parseDouble("dLongitudeDeg", "5");
+            if (dLongitudeDeg <= 0.0) throw new IllegalArgumentException("dLongitudeDeg must be positive.");
+            setLongitudeByKm = false;
+        }
+        longitudeOffset = property.parseDouble("longitudeOffset", "0");
     }
 
     @Override
     public void run() throws IOException {
 
-        // synthetic observer set
+        // when using dLatitudeKm, set dLatitude in degrees using the (roughly) median radius of target region
+        double dLatitude = setLatitudeByKm ? Math.toDegrees(dLatitudeKm / Earth.EARTH_RADIUS) : dLatitudeDeg;
+
+        int lowerLatitudeIndex = getLowerIndex(lowerLatitude, dLatitude, latitudeOffset);
+        int upperLatitudeIndex = getUpperIndex(upperLatitude, dLatitude, latitudeOffset);
+
+        //~decide the longitude at which to align voxels
+        double baseLongitude;
+        if (setLongitudeByKm) {
+            baseLongitude = (lowerLongitude + upperLongitude) / 2 + longitudeOffset;
+        } else {
+            baseLongitude = longitudeOffset;
+        }
+
+        //~decide horizontal positions of voxels
         Set<Observer> synObserverSet = new HashSet<>();
-        for (int latitude = lowerLatitude; latitude <= upperLatitude; latitude += dLatitudeDeg) {
-            String networkName = valueToString(latitude);
-            for (int longitude = lowerLongitude; longitude <= upperLongitude; longitude += dLongitudeDeg) {
-                String stationName = valueToString(longitude);
+        for (int i = lowerLatitudeIndex; i <= upperLatitudeIndex; i++) {
+            // compute center latitude of the voxel row
+            double latitude = i * dLatitude + latitudeOffset;
+            String networkName = latitudeToString(latitude);
+
+            // decide longitude interval for current latitude
+            double dLongitudeForRow;
+            if (setLongitudeByKm) {
+                // Voxel points will be aligned on latitude lines so that their spacing (at the median radius) is dLongitudeKm.
+                double smallCircleRadius = Earth.EARTH_RADIUS * Math.cos(Math.toRadians(latitude));
+                dLongitudeForRow = Math.toDegrees(dLongitudeKm / smallCircleRadius);
+            } else {
+                // All longitudes will be set on (n * dLongitudeDeg + longitudeOffset).
+                dLongitudeForRow = dLongitudeDeg;
+            }
+
+            // voxel longitudes are set so that all voxel-centers are included in range
+            int lowerLongitudeIndex = getLowerIndex(lowerLongitude, dLongitudeForRow, baseLongitude);
+            int upperLongitudeIndex = getUpperIndex(upperLongitude, dLongitudeForRow, baseLongitude);
+            for (int j = lowerLongitudeIndex; j <= upperLongitudeIndex; j++) {
+                // compute center longitude of the voxel
+                double longitude = baseLongitude + j * dLongitudeForRow;
+                String stationName = longitudeToString(longitude);
                 Observer observer = new Observer(stationName, networkName, new HorizontalPosition(latitude, longitude));
                 synObserverSet.add(observer);
             }
@@ -154,14 +234,42 @@ public class VirtualDatasetMaker extends Operation {
         }
 
         // output
-        Path outputPath = DatasetAid.generateOutputFilePath(workPath, "dataEntry", fileTag, appendFileDate, GadgetAid.getTemporaryString(), ".lst");
+        Path outputPath = DatasetAid.generateOutputFilePath(workPath, "dataEntry", fileTag, appendFileDate, null, ".lst");
         DataEntryListFile.writeFromSet(entrySet, outputPath);
     }
 
-    private String valueToString(int value) {
-        String signString = (value >= 0) ? "P" : "N";
-        String numberString = String.format("%03d", Math.abs(value));
-        return signString + numberString;
+    private String latitudeToString(double value) {
+        if (Precision.equals(value, Math.round(value), HorizontalPosition.LATITUDE_EPSILON)) {
+            int integer = (int) Math.round(value);
+            String signString = (integer >= 0) ? "P" : "N";
+            String numberString = String.format("%02d", Math.abs(integer));
+            return signString + numberString;
+        } else {
+            int integer = (int) Math.round(value * Math.pow(10, Latitude.DECIMALS));
+            String signString = (integer >= 0) ? "P" : "N";
+            String numberString = String.format("%06d", Math.abs(integer));
+            return signString + numberString;
+        }
+    }
+    private String longitudeToString(double value) {
+        if (Precision.equals(value, Math.round(value), HorizontalPosition.LONGITUDE_EPSILON)) {
+            int integer = (int) Math.round(value);
+            String signString = (integer >= 0) ? "P" : "N";
+            String numberString = String.format("%03d", Math.abs(integer));
+            return signString + numberString;
+        } else {
+            int integer = (int) Math.round(value * Math.pow(10, Longitude.DECIMALS));
+            String signString = (integer >= 0) ? "P" : "N";
+            String numberString = String.format("%07d", Math.abs(integer));
+            return signString + numberString;
+        }
+    }
+
+    private static int getLowerIndex(double lowerValue, double interval, double offset) {
+        return (int) MathAid.ceil((lowerValue - offset) / interval);
+    }
+    private static int getUpperIndex(double upperValue, double interval, double offset) {
+        return (int) MathAid.floor((upperValue - offset) / interval);
     }
 
 }

@@ -25,8 +25,8 @@ import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.external.TauPPierceWrapper;
 import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotFile;
 import io.github.kensuke1984.kibrary.inversion.EntryWeightListFile;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
+import io.github.kensuke1984.kibrary.timewindow.TimeWindowData;
+import io.github.kensuke1984.kibrary.timewindow.TimeWindowDataFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.FileAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
@@ -38,6 +38,15 @@ import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 
+/**
+ * Creates histogram of records in a dataset by epicentral distance and azimuth.
+ * {@link TimeWindowDataFile} or {@link DataEntryListFile} are used as input.
+ * <p>
+ * Weights for each bin are calculated using least dumped square. The weights will be exported in {@link EntryWeightListFile}.
+ *
+ * @author rei
+ * @since 2025/10/16
+ */
 public class GeographicalFeatureHistogram extends Operation {
 
      private final Property property;
@@ -130,15 +139,15 @@ public class GeographicalFeatureHistogram extends Operation {
      * @throws IOException if any
      */
     public static void main(String[] args) throws IOException {
-        if (args.length == 0) writeDefaultPropertiesFile();
+        if (args.length == 0) writeDefaultPropertiesFile(null);
         else Operation.mainFromSubclass(args);
     }
 
-    public static void writeDefaultPropertiesFile() throws IOException {
-        Class<?> thisClass = new Object(){}.getClass().getEnclosingClass();
-        Path outPath = Property.generatePath(thisClass);
+    public static void writeDefaultPropertiesFile(String tag) throws IOException {
+        String className = new Object(){}.getClass().getEnclosingClass().getSimpleName();
+        Path outPath = DatasetAid.generateOutputFilePath(Paths.get(""), className, tag, true, null, ".properties");
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
-            pw.println("manhattan " + thisClass.getSimpleName());
+            pw.println("manhattan " + className);
             pw.println("##Path of work folder. (.)");
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this unset.");
@@ -223,8 +232,8 @@ public class GeographicalFeatureHistogram extends Operation {
 
        entryList = new ArrayList<>();
        if (timewindowPath != null) {
-           Set<TimewindowData> windows = TimewindowDataFile.read(timewindowPath);
-           for (TimewindowData window : windows) {
+           Set<TimeWindowData> windows = TimeWindowDataFile.read(timewindowPath);
+           for (TimeWindowData window : windows) {
                entryList.add(new RecordEntry(window.getGlobalCMTID(), window.getObserver(), window.getComponent(), window.getPhases()));
            }
        } else {

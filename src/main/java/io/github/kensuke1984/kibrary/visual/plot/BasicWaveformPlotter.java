@@ -19,10 +19,15 @@ import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotColorName;
 import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotFile;
+import io.github.kensuke1984.kibrary.math.CircularRange;
+import io.github.kensuke1984.kibrary.math.LinearRange;
+import io.github.kensuke1984.kibrary.selection.DataFeature;
+import io.github.kensuke1984.kibrary.selection.DataFeatureListFile;
 import io.github.kensuke1984.kibrary.timewindow.TravelTimeInformation;
 import io.github.kensuke1984.kibrary.timewindow.TravelTimeInformationFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
+import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.waveform.BasicID;
@@ -34,8 +39,10 @@ import io.github.kensuke1984.kibrary.waveform.BasicIDPairUp;
  * For each event, a pdf file with waveforms for all observers will be created.
  * In each plot, the original observed waveform, the shifted observed waveform,
  * the synthetic waveform, and the residual waveform can be plotted.
- * Vertical lines of travel times can be displayed if a {@link TravelTimeInformationFile} is set as input.
  * Additional basic waveform folders can be given when plotting multiple synthetic seismograms.
+ * <p>
+ * Vertical lines of travel times can be displayed if a {@link TravelTimeInformationFile} is set as input.
+ * Waveform statistics can be displayed if a {@link DataFeatureListFile} is set as input. {@link DataFeature}s with overlapping time windows are used.
  * <p>
  * Text files of waveform data will be created in event folders under their corresponding basic waveform folders.
  * Output pdf files and their corresponding plt files will be created in event directories under workPath.
@@ -84,6 +91,10 @@ public class BasicWaveformPlotter extends Operation {
      * Path of a travel time information file.
      */
     private Path travelTimePath;
+    /**
+     * Path of a data feature list file.
+     */
+    private Path dataFeaturePath;
 
     /**
      * Events to work for. If this is empty, work for all events in workPath.
@@ -97,6 +108,13 @@ public class BasicWaveformPlotter extends Operation {
      * The time length to plot.
      */
     private double timeLength;
+    /**
+     * How much to scale up the residual waveform.
+     */
+    private double residualScale;
+
+    private LinearRange distanceRange;
+    private CircularRange azimuthRange;
 
     private int unshiftedObsStyle;
     private String unshiftedObsName;
@@ -115,22 +133,25 @@ public class BasicWaveformPlotter extends Operation {
      * Set of information of travel times.
      */
     private Set<TravelTimeInformation> travelTimeInfoSet;
+    /**
+     * Set of data features.
+     */
+    private Set<DataFeature> dataFeatureSet;
 
     /**
-     * @param args  none to create a property file <br>
-     *              [property file] to run
-     * @throws IOException if any
+     * @param args (String[]) Arguments: none to create a property file, path of property file to run it.
+     * @throws IOException
      */
     public static void main(String[] args) throws IOException {
-        if (args.length == 0) writeDefaultPropertiesFile();
+        if (args.length == 0) writeDefaultPropertiesFile(null);
         else Operation.mainFromSubclass(args);
     }
 
-    public static void writeDefaultPropertiesFile() throws IOException {
-        Class<?> thisClass = new Object(){}.getClass().getEnclosingClass();
-        Path outPath = Property.generatePath(thisClass);
+    public static void writeDefaultPropertiesFile(String tag) throws IOException {
+        String className = new Object(){}.getClass().getEnclosingClass().getSimpleName();
+        Path outPath = DatasetAid.generateOutputFilePath(Paths.get(""), className, tag, true, null, ".properties");
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
-            pw.println("manhattan " + thisClass.getSimpleName());
+            pw.println("manhattan " + className);
             pw.println("##Path of work folder. (.)");
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output file names. If no tag is needed, set this unset.");
@@ -145,12 +166,24 @@ public class BasicWaveformPlotter extends Operation {
             pw.println("#refBasicPath2 ");
             pw.println("##Path of a travel time information file, if plotting travel times.");
             pw.println("#travelTimePath travelTime.inf");
+            pw.println("##Path of a data feature list file, if displaying data statistics.");
+            pw.println("#dataFeaturePath dataFeature.lst");
             pw.println("##GlobalCMTIDs of events to work for, listed using spaces. To use all events, leave this unset.");
             pw.println("#tendEvents ");
             pw.println("##(boolean) Whether to export individual files for each component. (true)");
             pw.println("#splitComponents ");
             pw.println("##(double) Time length of each plot [s]. (150)");
             pw.println("#timeLength ");
+            pw.println("##(double) How much to scale up the residual waveform. (1)");
+            pw.println("#residualScale ");
+            pw.println("##(double) Lower limit of range of epicentral distance to be used [deg], inclusive; [0:upperDistance). (0)");
+            pw.println("#lowerDistance ");
+            pw.println("##(double) Upper limit of range of epicentral distance to be used [deg], exclusive; (lowerDistance:180]. (180)");
+            pw.println("#upperDistance ");
+            pw.println("##(double) Lower limit of range of azimuth to be used [deg], inclusive; [-180:360]. (0)");
+            pw.println("#lowerAzimuth ");
+            pw.println("##(double) Upper limit of range of azimuth to be used [deg], exclusive; [-180:360]. (360)");
+            pw.println("#upperAzimuth ");
             pw.println("##Plot style for unshifted observed waveform, from {0:no plot, 1:gray, 2:black}. (1)");
             pw.println("#unshiftedObsStyle 0");
             pw.println("##Name for unshifted observed waveform. (unshifted)");
@@ -197,6 +230,8 @@ public class BasicWaveformPlotter extends Operation {
             refBasicPath2 = property.parsePath("refBasicPath2", ".", true, workPath);
         if (property.containsKey("travelTimePath"))
             travelTimePath = property.parsePath("travelTimePath", null, true, workPath);
+        if (property.containsKey("dataFeaturePath"))
+            dataFeaturePath = property.parsePath("dataFeaturePath", null, true, workPath);
 
         if (property.containsKey("tendEvents")) {
             tendEvents = Arrays.stream(property.parseStringArray("tendEvents", null)).map(GlobalCMTID::new)
@@ -204,6 +239,15 @@ public class BasicWaveformPlotter extends Operation {
         }
         splitComponents = property.parseBoolean("splitComponents", "true");
         timeLength = property.parseDouble("timeLength", "150");
+        residualScale = property.parseDouble("residualScale", "1");
+
+        double lowerDistance = property.parseDouble("lowerDistance", "0");
+        double upperDistance = property.parseDouble("upperDistance", "180");
+        distanceRange = new LinearRange("Distance", lowerDistance, upperDistance, 0.0, 180.0);
+
+        double lowerAzimuth = property.parseDouble("lowerAzimuth", "0");
+        double upperAzimuth = property.parseDouble("upperAzimuth", "360");
+        azimuthRange = new CircularRange("Azimuth", lowerAzimuth, upperAzimuth, -180.0, 360.0);
 
         unshiftedObsStyle = property.parseInt("unshiftedObsStyle", "1");
         unshiftedObsName = property.parseString("unshiftedObsName", "unshifted");
@@ -223,73 +267,84 @@ public class BasicWaveformPlotter extends Operation {
             throw new IllegalArgumentException("refBasicPath2 must be set when refSynStyle2 != 0");
     }
 
-   @Override
-   public void run() throws IOException {
-       String dateStr = GadgetAid.getTemporaryString();
+    @Override
+    public void run() throws IOException {
+        String dateString = GadgetAid.getTemporaryString();
 
-       // read main basic waveform folders and write waveforms to be used into txt files
-       List<BasicID> mainBasicIDs = BasicIDFile.read(mainBasicPath, true).stream()
-               .filter(id -> components.contains(id.getSacComponent())).collect(Collectors.toList());
-       if (!tendEvents.isEmpty()) {
-           mainBasicIDs = mainBasicIDs.stream().filter(id -> tendEvents.contains(id.getGlobalCMTID())).collect(Collectors.toList());
-       }
-       BasicIDFile.outputWaveformTxts(mainBasicIDs, mainBasicPath);
+        // read main basic waveform folders and write waveforms to be used into txt files
+        List<BasicID> mainBasicIDs = BasicIDFile.read(mainBasicPath, true).stream()
+                .filter(id -> components.contains(id.getSacComponent())).collect(Collectors.toList());
+        if (!tendEvents.isEmpty()) {
+            mainBasicIDs = mainBasicIDs.stream().filter(id -> tendEvents.contains(id.getGlobalCMTID())).collect(Collectors.toList());
+        }
+        BasicIDFile.outputWaveformTxts(mainBasicIDs, mainBasicPath);
 
-       // collect events included in mainBasicIDs
-       Set<GlobalCMTID> events = mainBasicIDs.stream().map(id -> id.getGlobalCMTID()).distinct().collect(Collectors.toSet());
-       if (!DatasetAid.checkNum(events.size(), "event", "events")) {
-           return;
-       }
+        // collect events included in mainBasicIDs
+        Set<GlobalCMTID> events = mainBasicIDs.stream().map(id -> id.getGlobalCMTID()).distinct().collect(Collectors.toSet());
+        if (!DatasetAid.checkNum(events.size(), "event", "events")) {
+            return;
+        }
 
-       // read reference basic waveform folders and write waveforms to be used into txt files
-       List<BasicID> refBasicIDs1 = null;
-       if (refBasicPath1 != null) {
-           refBasicIDs1 = BasicIDFile.read(refBasicPath1, true).stream()
-                   .filter(id -> components.contains(id.getSacComponent()) && events.contains(id.getGlobalCMTID()))
-                   .collect(Collectors.toList());
-           BasicIDFile.outputWaveformTxts(refBasicIDs1, refBasicPath1);
-       }
-       List<BasicID> refBasicIDs2 = null;
-       if (refBasicPath2 != null) {
-           refBasicIDs2 = BasicIDFile.read(refBasicPath2, true).stream()
-                   .filter(id -> components.contains(id.getSacComponent()) && events.contains(id.getGlobalCMTID()))
-                   .collect(Collectors.toList());
-           BasicIDFile.outputWaveformTxts(refBasicIDs2, refBasicPath2);
-       }
+        // read reference basic waveform folders and write waveforms to be used into txt files
+        List<BasicID> refBasicIDs1 = null;
+        if (refBasicPath1 != null) {
+            refBasicIDs1 = BasicIDFile.read(refBasicPath1, true).stream()
+                    .filter(id -> components.contains(id.getSacComponent()) && events.contains(id.getGlobalCMTID()))
+                    .collect(Collectors.toList());
+            BasicIDFile.outputWaveformTxts(refBasicIDs1, refBasicPath1);
+        }
+        List<BasicID> refBasicIDs2 = null;
+        if (refBasicPath2 != null) {
+            refBasicIDs2 = BasicIDFile.read(refBasicPath2, true).stream()
+                    .filter(id -> components.contains(id.getSacComponent()) && events.contains(id.getGlobalCMTID()))
+                    .collect(Collectors.toList());
+            BasicIDFile.outputWaveformTxts(refBasicIDs2, refBasicPath2);
+        }
 
-       // read travel time information
-       if (travelTimePath != null) {
-           travelTimeInfoSet = TravelTimeInformationFile.read(travelTimePath);
-       }
+        // read travel time information
+        if (travelTimePath != null) {
+            travelTimeInfoSet = TravelTimeInformationFile.read(travelTimePath);
+        }
 
-       for (GlobalCMTID event : events) {
+        // read data feature file
+        if (dataFeaturePath != null) {
+            dataFeatureSet = DataFeatureListFile.read(dataFeaturePath).stream()
+                    .filter(feature -> components.contains(feature.getTimeWindow().getComponent()))
+                    .collect(Collectors.toSet());
+        }
 
-           // create plots under workPath
-           Path eventPath = workPath.resolve(event.toString());
-           Files.createDirectories(eventPath);
-           if (splitComponents) {
-               for (SACComponent component : components) {
-                   List<BasicID> useIds = mainBasicIDs.stream()
-                           .filter(id -> id.getSacComponent().equals(component) && id.getGlobalCMTID().equals(event))
-                           .sorted(Comparator.comparing(BasicID::getObserver))
-                           .collect(Collectors.toList());
+        for (GlobalCMTID event : events) {
 
-                   // Here, generateOutputFilePath() is used in an irregular way, adding the component along with the file extension.
-                   Path plotPath = DatasetAid.generateOutputFilePath(eventPath, "plot", fileTag, true, dateStr, "_" + component.toString() + ".plt");
-                   createPlot(eventPath, plotPath, useIds);
-               }
-           } else {
-               List<BasicID> useIds = mainBasicIDs.stream()
-                       .filter(id -> id.getGlobalCMTID().equals(event))
-                       .sorted(Comparator.comparing(BasicID::getObserver).thenComparing(BasicID::getSacComponent))
-                       .collect(Collectors.toList());
+            // create plots under workPath
+            Path eventPath = workPath.resolve(event.toString());
+            Files.createDirectories(eventPath);
+            if (splitComponents) {
+                for (SACComponent component : components) {
+                    List<BasicID> useIds = mainBasicIDs.stream()
+                            .filter(id -> id.getSacComponent().equals(component) && id.getGlobalCMTID().equals(event))
+                            .filter(id -> distanceRange.check(id.toDataEntry().computeEpicentralDistanceDeg()))
+                            .filter(id -> azimuthRange.check(id.toDataEntry().computeAzimuthDeg()))
+                            .sorted(Comparator.comparing(BasicID::getObserver))
+                            .collect(Collectors.toList());
 
-               Path plotPath = DatasetAid.generateOutputFilePath(eventPath, "plot", fileTag, true, dateStr, ".plt");
-               createPlot(eventPath, plotPath, useIds);
-           }
+                    // Here, generateOutputFilePath() is used in an irregular way, adding the component along with the file extension.
+                    Path plotPath = DatasetAid.generateOutputFilePath(eventPath, "plot", fileTag, true, dateString, "_" + component.toString() + ".plt");
+                    createPlot(eventPath, plotPath, useIds);
+                }
+            } else {
+                List<BasicID> useIds = mainBasicIDs.stream()
+                        .filter(id -> id.getGlobalCMTID().equals(event))
+                        .filter(id -> distanceRange.check(id.toDataEntry().computeEpicentralDistanceDeg()))
+                        .filter(id -> azimuthRange.check(id.toDataEntry().computeAzimuthDeg()))
+                        .sorted(Comparator.comparing(BasicID::getObserver).thenComparing(BasicID::getSacComponent))
+                        .collect(Collectors.toList());
 
-       }
-   }
+                Path plotPath = DatasetAid.generateOutputFilePath(eventPath, "plot", fileTag, true, dateString, ".plt");
+                createPlot(eventPath, plotPath, useIds);
+            }
+
+        }
+    }
 
     /**
      * @param eventPath (Path) Path of event folder.
@@ -302,7 +357,7 @@ public class BasicWaveformPlotter extends Operation {
             return;
         }
 
-        BasicIDPairUp pairer = new BasicIDPairUp(ids);
+        BasicIDPairUp pairer = new BasicIDPairUp(ids, true);
         List<BasicID> obsList = pairer.getObsList();
         List<BasicID> synList = pairer.getSynList();
 
@@ -321,9 +376,11 @@ public class BasicWaveformPlotter extends Operation {
             // set xrange
             gnuplot.setXrange(synID.getStartTime() - FRONT_MARGIN, synID.getStartTime() - FRONT_MARGIN + timeLength);
 
-            // display data of timewindow
+            // display data of time window
             gnuplot.addLabel(obsID.getObserver().toPaddedInfoString() + " " + obsID.getSacComponent().toString(), "graph", 0.01, 0.95);
             gnuplot.addLabel(obsID.getGlobalCMTID().toString(), "graph", 0.01, 0.85);
+            gnuplot.addLabel("dist: " + MathAid.roundToString(obsID.toDataEntry().computeEpicentralDistanceDeg(), 2)
+                + ", az: " + MathAid.roundToString(obsID.toDataEntry().computeAzimuthDeg(), 2), "graph", 0.01, 0.10);
 
             // plot waveforms
             // Absolute paths are used here because relative paths are hard to construct when workPath != mainBasicPath.
@@ -337,7 +394,8 @@ public class BasicWaveformPlotter extends Operation {
             if (mainSynStyle != 0)
                 gnuplot.addLine(mainFilePath.toString(), 3, 4, BasicPlotAid.switchSyntheticAppearance(mainSynStyle), mainSynName);
             if (residualStyle != 0)
-                gnuplot.addLine(mainFilePath.toString(), "3:($2-$4)", BasicPlotAid.switchResidualAppearance(residualStyle), residualName);
+                gnuplot.addLine(mainFilePath.toString(), "3:(($2-$4)*" + residualScale + ")",
+                        BasicPlotAid.switchResidualAppearance(residualStyle), residualName + " * " + residualScale);
             if (refSynStyle1 != 0) {
                 Path refFilePath1 = refBasicPath1.toAbsolutePath().resolve(eventName).resolve(txtFileName);
                 gnuplot.addLine(refFilePath1.toString(), 3, 4, BasicPlotAid.switchSyntheticAppearance(refSynStyle1), refSynName1);
@@ -363,6 +421,24 @@ public class BasicWaveformPlotter extends Operation {
                                 gnuplot.addLabel(entry.getKey().toString(), "first", entry.getValue(), "graph", 0.95, GnuplotColorName.violet);
                             }
                         });
+            }
+
+            // add data feature statistics
+            if (dataFeatureSet != null) {
+                List<DataFeature> features = dataFeatureSet.stream()
+                        .filter(feature -> feature.getTimeWindow().toDataEntry().equals(synID.toDataEntry())
+                                && feature.getTimeWindow().overlaps(synID.toTimeWindow()))
+                        .collect(Collectors.toList());
+                if (features.size() != 1) throw new IllegalStateException("0 or more than 1 data features for " + synID);
+                DataFeature feature = features.get(0);
+
+                gnuplot.addLabel("Variance: " + feature.getVariance(), "graph", 0.78, 0.90);
+                gnuplot.addLabel("Correlation: " + feature.getCorrelation(), "graph", 0.78, 0.80);
+                gnuplot.addLabel("Amp. ratio: " + feature.getAbsRatio(), "graph", 0.78, 0.70);
+                gnuplot.addLabel("S/N: " + feature.getSNRatio(), "graph", 0.78, 0.40);
+                gnuplot.addLabel("obsS/N: " + feature.getObsSNRatio(), "graph", 0.78, 0.30);
+                gnuplot.addLabel("synS/N: " + feature.getSynSNRatio(), "graph", 0.78, 0.20);
+                gnuplot.addLabel(feature.isSelected() ? "O" : "X", "graph", 0.78, 0.10);
             }
 
             // this is not done for the last obsID because we don't want an extra blank page to be created

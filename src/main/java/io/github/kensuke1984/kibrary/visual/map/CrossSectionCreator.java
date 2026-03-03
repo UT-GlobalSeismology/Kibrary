@@ -12,14 +12,13 @@ import java.util.Set;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.elastic.VariableType;
-import io.github.kensuke1984.kibrary.perturbation.PerturbationListFile;
+import io.github.kensuke1984.kibrary.perturbation.ScalarListFile;
+import io.github.kensuke1984.kibrary.perturbation.ScalarType;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
-import io.github.kensuke1984.kibrary.util.FileAid;
-import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 
 /**
- * Operation that creates a cross section from a {@link PerturbationListFile}.
+ * Operation that creates a cross section from a {@link ScalarListFile}.
  *
  * @author otsuru
  * @since 2023/3/24
@@ -41,15 +40,14 @@ public class CrossSectionCreator extends Operation {
     private boolean appendFolderDate;
 
     /**
-     * Path of perturbation file.
+     * Path of scalar file.
      */
-    private Path perturbationPath;
+    private Path scalarPath;
     /**
-     * Path of perturbation file to be used as mask.
+     * Path of scalar file to be used as mask.
      */
     private Path maskPath;
-
-    private VariableType variable;
+    private Path raypathPath;
 
     private double pos0Latitude;
     private double pos0Longitude;
@@ -107,38 +105,43 @@ public class CrossSectionCreator extends Operation {
      * Whether to display map as mosaic without smoothing.
      */
     private boolean mosaic;
+    private int cpStyle;
     /**
      * Threshold for mask.
      */
     private double maskThreshold;
 
+    private double pos0Radius = Double.NaN;
+    private double pos1Radius = Double.NaN;
+    private double horizontalGridInterval;
+    private double verticalGridInterval;
+
     /**
-     * @param args  none to create a property file <br>
-     *              [property file] to run
-     * @throws IOException if any
+     * @param args (String[]) Arguments: none to create a property file, path of property file to run it.
+     * @throws IOException
      */
     public static void main(String[] args) throws IOException {
-        if (args.length == 0) writeDefaultPropertiesFile();
+        if (args.length == 0) writeDefaultPropertiesFile(null);
         else Operation.mainFromSubclass(args);
     }
 
-    public static void writeDefaultPropertiesFile() throws IOException {
-        Class<?> thisClass = new Object(){}.getClass().getEnclosingClass();
-        Path outPath = Property.generatePath(thisClass);
+    public static void writeDefaultPropertiesFile(String tag) throws IOException {
+        String className = new Object(){}.getClass().getEnclosingClass().getSimpleName();
+        Path outPath = DatasetAid.generateOutputFilePath(Paths.get(""), className, tag, true, null, ".properties");
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
-            pw.println("manhattan " + thisClass.getSimpleName());
+            pw.println("manhattan " + className);
             pw.println("##Path of work folder. (.)");
             pw.println("#workPath ");
-            pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this blank.");
+            pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this unset.");
             pw.println("#folderTag ");
             pw.println("##(boolean) Whether to append date string at end of output folder name. (true)");
             pw.println("#appendFolderDate false");
-            pw.println("##Path of perturbation file, must be set.");
-            pw.println("#perturbationPath vsPercent.lst");
-            pw.println("##Path of perturbation file for mask, when mask is to be applied.");
-            pw.println("#maskPath vsPercentRatio.lst");
-            pw.println("##Variable type of perturbation file. (Vs)");
-            pw.println("#variable ");
+            pw.println("##Path of scalar file, must be set.");
+            pw.println("#scalarPath scalar.Vs.PERCENT.lst");
+            pw.println("##Path of scalar file for mask, when mask is to be applied.");
+            pw.println("#maskPath scalar.Vs.PERCENT_RATIO.lst");
+            pw.println("##Path of file with raypath information, if plotting raypaths.");
+            pw.println("#raypathPath ");
             pw.println("##########Settings of great circle arc to display in the cross section.");
             pw.println("##(double) Latitude of position 0, must be set.");
             pw.println("#pos0Latitude ");
@@ -177,8 +180,20 @@ public class CrossSectionCreator extends Operation {
             pw.println("#scale ");
             pw.println("##(boolean) Whether to display map as mosaic without smoothing. (false)");
             pw.println("#mosaic true");
+            pw.println("##Style of color palette, from {0: red-turquoise, 1: orange-skyblue, 2: red-purple}. (1)");
+            pw.println("#cpStyle ");
             pw.println("##(double) Threshold for mask. (0.3)");
             pw.println("#maskThreshold ");
+            pw.println("##########Parameters for perturbation values.");
+            pw.println("##(double) Radius of position 0, if displaying its position.");
+            pw.println("#pos0Radius ");
+            pw.println("##(double) Radius of position 1, if displaying its position.");
+            pw.println("#pos1Radius ");
+            pw.println("##########Image resolution parameters.");
+            pw.println("##(double) Horizontal grid interval. (0.25)");
+            pw.println("#horizontalGridInterval ");
+            pw.println("##(double) Vertical grid interval. (2.5)");
+            pw.println("#verticalGridInterval ");
         }
         System.err.println(outPath + " is created.");
     }
@@ -193,12 +208,11 @@ public class CrossSectionCreator extends Operation {
         if (property.containsKey("folderTag")) folderTag = property.parseStringSingle("folderTag", null);
         appendFolderDate = property.parseBoolean("appendFolderDate", "true");
 
-        perturbationPath = property.parsePath("perturbationPath", null, true, workPath);
-        if (property.containsKey("maskPath")) {
+        scalarPath = property.parsePath("scalarPath", null, true, workPath);
+        if (property.containsKey("maskPath"))
             maskPath = property.parsePath("maskPath", null, true, workPath);
-        }
-
-        variable = VariableType.valueOf(property.parseString("variable", "Vs"));
+        if (property.containsKey("raypathPath"))
+            raypathPath = property.parsePath("raypathPath", null, true, workPath);
 
         pos0Latitude = property.parseDouble("pos0Latitude", null);
         pos0Longitude = property.parseDouble("pos0Longitude", null);
@@ -239,39 +253,54 @@ public class CrossSectionCreator extends Operation {
 
         scale = property.parseDouble("scale", "3");
         mosaic = property.parseBoolean("mosaic", "false");
+        cpStyle = property.parseInt("cpStyle", "1");
         maskThreshold = property.parseDouble("maskThreshold", "0.3");
+
+        if (property.containsKey("pos0Radius")) pos0Radius = property.parseDouble("pos0Radius", null);
+        if (property.containsKey("pos1Radius")) pos1Radius = property.parseDouble("pos1Radius", null);
+        horizontalGridInterval = property.parseDouble("horizontalGridInterval", "0.25");
+        verticalGridInterval = property.parseDouble("verticalGridInterval", "2.5");
     }
 
     @Override
     public void run() throws IOException {
 
         // read perturbation file
-        Map<FullPosition, Double> discreteMap = PerturbationListFile.read(perturbationPath);
+        ScalarListFile inputFile = new ScalarListFile(scalarPath);
+        VariableType variable = inputFile.getVariable();
+        ScalarType scalarType = inputFile.getScalarType();
+        Map<FullPosition, Double> discreteMap = inputFile.getValueMap();
         Set<FullPosition> discretePositions = discreteMap.keySet();
 
         // read mask perturbation file
         Map<FullPosition, Double> maskDiscreteMap = null;
-        boolean maskExists = false;
+        VariableType maskVariable = null;
+        ScalarType maskScalarType = null;
         if (maskPath != null) {
-            maskExists = true;
-            maskDiscreteMap = PerturbationListFile.read(maskPath);
+            ScalarListFile maskInputFile = new ScalarListFile(maskPath);
+            maskVariable = maskInputFile.getVariable();
+            maskScalarType = maskInputFile.getScalarType();
+            maskDiscreteMap = maskInputFile.getValueMap();
         }
 
         // create output folder
-        Path outPath = DatasetAid.createOutputFolder(workPath, "crossSection", folderTag, appendFolderDate, GadgetAid.getTemporaryString());
+        Path outPath = DatasetAid.createOutputFolder(workPath, "crossSection", folderTag, appendFolderDate, null);
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
-
-        String modelFileNameRoot = FileAid.extractNameRoot(perturbationPath);
-        String scaleLabel = "@~d@~" + variable + "/" + variable + " \\(\\%\\)";
 
         CrossSectionWorker worker = new CrossSectionWorker(pos0Latitude, pos0Longitude, pos1Latitude, pos1Longitude,
                 beforePos0Deg, afterPosDeg, useAfterPos1, zeroPointRadius, zeroPointName, flipVerticalAxis,
                 marginLatitudeRaw, setMarginLatitudeByKm, marginLongitudeRaw, setMarginLongitudeByKm, marginRadius,
-                scale, mosaic, maskExists, maskThreshold, modelFileNameRoot, discretePositions);
+                scale, mosaic, variable, scalarType, horizontalGridInterval, verticalGridInterval, null, discretePositions);
+        if (maskPath != null) worker.setMask(maskVariable, maskScalarType, maskThreshold);
+        worker.setCpStyle(cpStyle, variable);
+        if (!Double.isNaN(pos0Radius)) worker.setSourceRadius(pos0Radius);
+        if (!Double.isNaN(pos1Radius)) worker.setReceiverRadius(pos1Radius);
+        if (raypathPath != null) worker.setRaypathFile(Paths.get("..").resolve(raypathPath));
         worker.computeCrossSection(discreteMap, maskDiscreteMap, outPath);
-        worker.writeScripts(scaleLabel, outPath);
+        worker.writeScripts(outPath);
+        String plotFileNameRoot = worker.getPlotFileNameRoot();
 
-        System.err.println("After this finishes, please enter " + outPath + "/ and run " + modelFileNameRoot + "Section.sh");
+        System.err.println("After this finishes, please enter " + outPath + "/ and run " + plotFileNameRoot + "Section.sh");
     }
 
 }

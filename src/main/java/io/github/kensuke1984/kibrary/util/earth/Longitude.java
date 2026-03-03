@@ -15,13 +15,14 @@ import io.github.kensuke1984.kibrary.util.MathAid;
  * This class is <b>IMMUTABLE</b>.
  *
  * @author Kensuke Konishi
+ * @since a long time ago
  */
-final class Longitude implements Comparable<Longitude> {
+public final class Longitude implements Comparable<Longitude> {
 
     /**
      * The number of decimal places to round off the longitude value.
      */
-    static final int DECIMALS = 4;
+    public static final int DECIMALS = 4;
 
     /**
      * Longitude [deg]. [-180:180)
@@ -42,7 +43,7 @@ final class Longitude implements Comparable<Longitude> {
         // round again to eliminate computation error
         this.longitude = Precision.round(fixedLongitude, DECIMALS);
         // [deg] to [rad]
-        phi = FastMath.toRadians(this.longitude);
+        phi = Math.toRadians(this.longitude);
     }
 
     /**
@@ -78,7 +79,7 @@ final class Longitude implements Comparable<Longitude> {
         if (getClass() != obj.getClass()) return false;
         Longitude other = (Longitude) obj;
 
-        return Precision.equals(longitude, other.longitude, Math.pow(10, -DECIMALS)/2);
+        return Precision.equals(longitude, other.longitude, FastMath.pow(10, -DECIMALS)/2);
     }
 
     @Override
@@ -90,7 +91,7 @@ final class Longitude implements Comparable<Longitude> {
      * Longitude [deg] in range [-180:180).
      * @return (double) Longitude [deg].
      */
-    public double getLongitude() {
+    double getLongitude() {
         return longitude;
     }
 
@@ -157,7 +158,7 @@ final class Longitude implements Comparable<Longitude> {
      * followed by 2 + {@value #DECIMALS} digits.
      * @return (String) Code for this longitude.
      */
-    public String toCode() {
+    String toCode() {
         String letter;
         double absolute = Math.abs(longitude);
         if (longitude <= -100) {  // -180 ~ -100
@@ -175,7 +176,7 @@ final class Longitude implements Comparable<Longitude> {
             absolute -= 100;
         }
 
-        int number = (int) Math.round(absolute * Math.pow(10, DECIMALS));
+        int number = (int) Math.round(absolute * FastMath.pow(10, DECIMALS));
 
         return letter + MathAid.padToString(number, 2 + DECIMALS, true);
     }

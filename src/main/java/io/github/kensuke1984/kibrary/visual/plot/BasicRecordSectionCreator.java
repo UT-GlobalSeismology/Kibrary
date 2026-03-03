@@ -54,10 +54,6 @@ import io.github.kensuke1984.kibrary.waveform.BasicIDPairUp;
 public class BasicRecordSectionCreator extends Operation {
 
     /**
-     * The interval of exporting travel times.
-     */
-    private static final double TRAVEL_TIME_INTERVAL = 1;
-    /**
      * The interval of deciding graph size; should be a multiple of TRAVEL_TIME_INTERVAL.
      */
     private static final int GRAPH_SIZE_INTERVAL = 2;
@@ -118,6 +114,10 @@ public class BasicRecordSectionCreator extends Operation {
      */
     private String[] displayPhases;
     /**
+     * Whether to plot travel time curves as shaded thick lines.
+     */
+    private boolean shadeCurve;
+    /**
      * Names of phases to use to align the record section. The fastest of these arrivals is used.
      */
     private String[] alignPhases;
@@ -148,23 +148,22 @@ public class BasicRecordSectionCreator extends Operation {
      * Instance of tool to use to compute travel times.
      */
     private TauP_Time timeTool;
-    private String dateStr;
+    private String dateString;
 
     /**
-     * @param args  none to create a property file <br>
-     *              [property file] to run
-     * @throws IOException if any
+     * @param args (String[]) Arguments: none to create a property file, path of property file to run it.
+     * @throws IOException
      */
     public static void main(String[] args) throws IOException {
-        if (args.length == 0) writeDefaultPropertiesFile();
+        if (args.length == 0) writeDefaultPropertiesFile(null);
         else Operation.mainFromSubclass(args);
     }
 
-    public static void writeDefaultPropertiesFile() throws IOException {
-        Class<?> thisClass = new Object(){}.getClass().getEnclosingClass();
-        Path outPath = Property.generatePath(thisClass);
+    public static void writeDefaultPropertiesFile(String tag) throws IOException {
+        String className = new Object(){}.getClass().getEnclosingClass().getSimpleName();
+        Path outPath = DatasetAid.generateOutputFilePath(Paths.get(""), className, tag, true, null, ".properties");
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
-            pw.println("manhattan " + thisClass.getSimpleName());
+            pw.println("manhattan " + className);
             pw.println("##Path of work folder. (.)");
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output file names. If no tag is needed, leave this unset.");
@@ -192,6 +191,8 @@ public class BasicRecordSectionCreator extends Operation {
             pw.println("#flipAzimuth ");
             pw.println("##Names of phases to plot travel time curves, listed using spaces. Only when byAzimuth is false.");
             pw.println("#displayPhases ");
+            pw.println("##(boolean) Whether to plot travel time curves as shaded thick lines. (false)");
+            pw.println("#shadeCurve ");
             pw.println("##Names of phases to use for alignment, listed using spaces. When unset, the following reductionSlowness will be used.");
             pw.println("##  When multiple phases are set, the fastest arrival of them will be used for alignment.");
             pw.println("#alignPhases ");
@@ -262,6 +263,7 @@ public class BasicRecordSectionCreator extends Operation {
 
         if (property.containsKey("displayPhases") && byAzimuth == false)
             displayPhases = property.parseStringArray("displayPhases", null);
+        shadeCurve = property.parseBoolean("shadeCurve", "false");
         if (property.containsKey("alignPhases"))
             alignPhases = property.parseStringArray("alignPhases", null);
         reductionSlowness = property.parseDouble("reductionSlowness", "0");
@@ -291,72 +293,70 @@ public class BasicRecordSectionCreator extends Operation {
             throw new IllegalArgumentException("refBasicPath2 must be set when refSynStyle2 != 0");
     }
 
-   @Override
-   public void run() throws IOException {
-       dateStr = GadgetAid.getTemporaryString();
+    @Override
+    public void run() throws IOException {
+        dateString = GadgetAid.getTemporaryString();
 
-       // read main basic waveform folders and write waveforms to be used into txt files
-       List<BasicID> mainBasicIDs = BasicIDFile.read(mainBasicPath, true).stream()
-               .filter(id -> components.contains(id.getSacComponent())).collect(Collectors.toList());
-       if (!tendEvents.isEmpty()) {
-           mainBasicIDs = mainBasicIDs.stream().filter(id -> tendEvents.contains(id.getGlobalCMTID())).collect(Collectors.toList());
-       }
-       BasicIDFile.outputWaveformTxts(mainBasicIDs, mainBasicPath);
+        // read main basic waveform folders and write waveforms to be used into txt files
+        List<BasicID> mainBasicIDs = BasicIDFile.read(mainBasicPath, true).stream()
+                .filter(id -> components.contains(id.getSacComponent())).collect(Collectors.toList());
+        if (!tendEvents.isEmpty()) {
+            mainBasicIDs = mainBasicIDs.stream().filter(id -> tendEvents.contains(id.getGlobalCMTID())).collect(Collectors.toList());
+        }
+        BasicIDFile.outputWaveformTxts(mainBasicIDs, mainBasicPath);
 
-       // collect events included in mainBasicIDs
-       Set<GlobalCMTID> events = mainBasicIDs.stream().map(id -> id.getGlobalCMTID()).distinct().collect(Collectors.toSet());
-       if (!DatasetAid.checkNum(events.size(), "event", "events")) {
-           return;
-       }
+        // collect events included in mainBasicIDs
+        Set<GlobalCMTID> events = mainBasicIDs.stream().map(id -> id.getGlobalCMTID()).distinct().collect(Collectors.toSet());
+        if (!DatasetAid.checkNum(events.size(), "event", "events")) {
+            return;
+        }
 
-       // read reference basic waveform folders and write waveforms to be used into txt files
-       List<BasicID> refBasicIDs1 = null;
-       if (refBasicPath1 != null) {
-           refBasicIDs1 = BasicIDFile.read(refBasicPath1, true).stream()
-                   .filter(id -> components.contains(id.getSacComponent()) && events.contains(id.getGlobalCMTID()))
-                   .collect(Collectors.toList());
-           BasicIDFile.outputWaveformTxts(refBasicIDs1, refBasicPath1);
-       }
-       List<BasicID> refBasicIDs2 = null;
-       if (refBasicPath2 != null) {
-           refBasicIDs2 = BasicIDFile.read(refBasicPath2, true).stream()
-                   .filter(id -> components.contains(id.getSacComponent()) && events.contains(id.getGlobalCMTID()))
-                   .collect(Collectors.toList());
-           BasicIDFile.outputWaveformTxts(refBasicIDs2, refBasicPath2);
-       }
+        // read reference basic waveform folders and write waveforms to be used into txt files
+        if (refBasicPath1 != null) {
+            List<BasicID> refBasicIDs1 = BasicIDFile.read(refBasicPath1, true).stream()
+                    .filter(id -> components.contains(id.getSacComponent()) && events.contains(id.getGlobalCMTID()))
+                    .collect(Collectors.toList());
+            BasicIDFile.outputWaveformTxts(refBasicIDs1, refBasicPath1);
+        }
+        if (refBasicPath2 != null) {
+            List<BasicID> refBasicIDs2 = BasicIDFile.read(refBasicPath2, true).stream()
+                    .filter(id -> components.contains(id.getSacComponent()) && events.contains(id.getGlobalCMTID()))
+                    .collect(Collectors.toList());
+            BasicIDFile.outputWaveformTxts(refBasicIDs2, refBasicPath2);
+        }
 
-       try {
-           // set up taup_time tool
-           if (alignPhases != null || displayPhases != null) {
-               timeTool = new TauP_Time(structureName);
-           }
+        try {
+            // set up taup_time tool
+            if (alignPhases != null || displayPhases != null) {
+                timeTool = new TauP_Time(structureName);
+            }
 
-           for (GlobalCMTID event : events) {
+            for (GlobalCMTID event : events) {
 
-               // set event to taup_time tool
-               // The same instance is reused for all observers because computation takes time when changing source depth (see TauP manual).
-               if (alignPhases != null || displayPhases != null) {
-                   timeTool.setSourceDepth(event.getEventData().getCmtPosition().getDepth());
-               }
+                // set event to taup_time tool
+                // The same instance is reused for all observers because computation takes time when changing source depth (see TauP manual).
+                if (alignPhases != null || displayPhases != null) {
+                    timeTool.setSourceDepth(event.getEventData().getCmtPosition().getDepth());
+                }
 
-               // create plots under workPath
-               Path eventPath = workPath.resolve(event.toString());
-               Files.createDirectories(eventPath);
-               for (SACComponent component : components) {
-                   List<BasicID> useIds = mainBasicIDs.stream()
-                           .filter(id -> id.getSacComponent().equals(component) && id.getGlobalCMTID().equals(event))
-                           .sorted(Comparator.comparing(BasicID::getObserver))
-                           .collect(Collectors.toList());
+                // create plots under workPath
+                Path eventPath = workPath.resolve(event.toString());
+                Files.createDirectories(eventPath);
+                for (SACComponent component : components) {
+                    List<BasicID> useIds = mainBasicIDs.stream()
+                            .filter(id -> id.getSacComponent().equals(component) && id.getGlobalCMTID().equals(event))
+                            .sorted(Comparator.comparing(BasicID::getObserver))
+                            .collect(Collectors.toList());
 
-                   Plotter plotter = new Plotter(eventPath, useIds, component);
-                   plotter.plot();
-               }
-           }
+                    Plotter plotter = new Plotter(eventPath, useIds, component);
+                    plotter.plot();
+                }
+            }
 
-       } catch (TauModelException e) {
-           e.printStackTrace();
-       }
-   }
+        } catch (TauModelException e) {
+            e.printStackTrace();
+        }
+    }
 
     private class Plotter {
         private final Path eventPath;
@@ -385,7 +385,7 @@ public class BasicRecordSectionCreator extends Operation {
             }
 
             // prepare IDs
-            BasicIDPairUp pairer = new BasicIDPairUp(ids);
+            BasicIDPairUp pairer = new BasicIDPairUp(ids, true);
             List<BasicID> obsList = pairer.getObsList();
             List<BasicID> synList = pairer.getSynList();
 
@@ -449,15 +449,15 @@ public class BasicRecordSectionCreator extends Operation {
 
             // set ranges
             if (minDistance > maxDistance || minTime > maxTime) return;
-            int startDistance = (int) Math.floor(minDistance / GRAPH_SIZE_INTERVAL) * GRAPH_SIZE_INTERVAL - Y_AXIS_RIM;
-            int endDistance = (int) Math.ceil(maxDistance / GRAPH_SIZE_INTERVAL) * GRAPH_SIZE_INTERVAL + Y_AXIS_RIM;
-            gnuplot.setCommonYrange(startDistance, endDistance);
+            int startDistance = (int) MathAid.floor(minDistance / GRAPH_SIZE_INTERVAL) * GRAPH_SIZE_INTERVAL - Y_AXIS_RIM;
+            int endDistance = (int) MathAid.ceil(maxDistance / GRAPH_SIZE_INTERVAL) * GRAPH_SIZE_INTERVAL + Y_AXIS_RIM;
+            if (!byAzimuth) gnuplot.setCommonYrange(startDistance, endDistance);
             gnuplot.setCommonXrange(minTime - TIME_RIM, maxTime + TIME_RIM);
 
             // add travel time curves
-            if (displayPhases != null) {
-                BasicPlotAid.plotTravelTimeCurve(timeTool, displayPhases, alignPhases, reductionSlowness, startDistance, endDistance,
-                        fileTag, dateStr, eventPath, component, gnuplot);
+            if (displayPhases != null && !byAzimuth) {
+                BasicPlotAid.plotTravelTimeCurve(timeTool, displayPhases, shadeCurve, alignPhases, reductionSlowness,
+                        startDistance, endDistance, fileTag, dateString, eventPath, component, gnuplot);
             }
 
             // plot
@@ -467,26 +467,26 @@ public class BasicRecordSectionCreator extends Operation {
 
         private void profilePlotSetup() {
             // Here, generateOutputFilePath() is used in an irregular way, adding the component along with the file extension.
-            Path plotPath = DatasetAid.generateOutputFilePath(eventPath, "recordSection", fileTag, true, dateStr, "_" + component.toString() + ".plt");
+            Path plotPath = DatasetAid.generateOutputFilePath(eventPath, "recordSection", fileTag, true, dateString, "_" + component.toString() + ".plt");
 
             gnuplot = new GnuplotFile(plotPath);
-            gnuplot.setOutput("pdf", plotPath.getFileName().toString().replace(".plt", ".pdf"), 21, 29.7, true);
-            gnuplot.setMarginH(15, 25);
-            gnuplot.setMarginV(15, 15);
+            gnuplot.setOutput("png", plotPath.getFileName().toString().replace(".plt", ".png"), 480, 640, false);
+//            gnuplot.setMarginH(15, 25);
+//            gnuplot.setMarginV(15, 15);
             gnuplot.setFont("Arial", 20, 15, 15, 15, 10);
             gnuplot.setCommonKey(true, false, "top right");
 
             gnuplot.setCommonTitle(eventPath.getFileName().toString());
             if (alignPhases != null) {
-                gnuplot.setCommonXlabel("Time aligned on " + String.join(",", alignPhases) + "-wave arrival (s)");
+                gnuplot.setCommonXlabel("Time from " + String.join(",", alignPhases) + "-phase arrival (s)");
             } else {
                 gnuplot.setCommonXlabel("Reduced time (T - " + reductionSlowness + " Δ) (s)");
             }
             if (!byAzimuth) {
-                gnuplot.setCommonYlabel("Distance (deg)");
+                gnuplot.setCommonYlabel("Distance (\\U+00B0)");
                 gnuplot.addLabel("station network azimuth", "graph", 1.0, 1.0);
             } else {
-                gnuplot.setCommonYlabel("Azimuth (deg)");
+                gnuplot.setCommonYlabel("Azimuth (\\U+00B0)");
                 gnuplot.addLabel("station network distance", "graph", 1.0, 1.0);
             }
         }

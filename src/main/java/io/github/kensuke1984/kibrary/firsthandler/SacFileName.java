@@ -7,6 +7,7 @@ import java.time.LocalDateTime;
  * To be used in {@link EventProcessor}.
  *
  * @author Kensuke Konishi
+ * @since a long time ago
  */
 class SacFileName implements Comparable<SacFileName> {
 
