@@ -376,7 +376,7 @@ public class SourceTimeFunction {
 
         if (cmdLine.hasOption("i")) {
             GlobalCMTID event = new GlobalCMTID(cmdLine.getOptionValue("i"));
-            SourceTimeFunctionHandler stfHandler = new SourceTimeFunctionHandler(type, null, null, null);
+            SourceTimeFunctionHandler stfHandler = new SourceTimeFunctionHandler(type, null, null);
             Path outputPath = DatasetAid.generateOutputFilePath(Paths.get(""), event.toString(), fileTag, false, null, ".stf");
             stfHandler.createSourceTimeFunction(np, tlen, event).write(outputPath);
 

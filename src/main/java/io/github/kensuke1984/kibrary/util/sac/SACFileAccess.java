@@ -8,7 +8,6 @@ import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
-import java.util.Set;
 import java.util.stream.IntStream;
 
 import org.apache.commons.cli.CommandLine;
@@ -20,7 +19,6 @@ import org.apache.commons.math3.util.Precision;
 import io.github.kensuke1984.kibrary.Summon;
 import io.github.kensuke1984.kibrary.filter.ButterworthFilter;
 import io.github.kensuke1984.kibrary.math.Trace;
-import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 
@@ -321,36 +319,4 @@ public interface SACFileAccess extends SACHeaderAccess {
         }
     }
 
-    /**
-     * Read SAC files in event directories and output in ascii format.
-     * Output file name is "SAC file name".txt"
-     * @param eventDirs (set of {@link EventFolder})
-     */
-    public static void outputSacFileTxt(Set<EventFolder> eventDirs) {
-        for (EventFolder eventDir : eventDirs) {
-            try {
-                Set<SACFileName> set = eventDir.sacFileSet();
-
-                for (SACFileName sacName : set) {
-                    // set output
-                    String fileName = sacName.toPath().getFileName().toString();
-                    Path outputPath = eventDir.toPath().resolve(fileName + ".txt");
-
-                    // set input file path
-                    SACFileAccess sacData = sacName.read();
-                    Trace sacTrace = sacData.createTrace();
-
-                    // output
-                    try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath))) {
-                        for (int i = 0; i < sacTrace.getLength(); i++) {
-                            pw.println(sacTrace.getXAt(i) + " " + sacTrace.getYAt(i));
-                        }
-                    }
-                }
-            } catch (Exception e) {
-                System.err.println("Error on " + eventDir);
-                e.printStackTrace();
-            }
-        }
-    }
 }

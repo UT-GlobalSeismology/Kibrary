@@ -74,19 +74,6 @@ public final class DatasetAid {
         return outPath;
     }
 
-    public static String generateOutputFileName(String nameRoot, String tag, String dateStr, String extension) {
-        String fileName;
-        if (dateStr == null) {
-            if (tag == null) fileName = nameRoot + extension;
-            else fileName = nameRoot + "_" + tag + extension;
-        }
-        else {
-            if (tag == null) fileName = nameRoot + dateStr + extension;
-            else fileName = nameRoot + "_" + tag + "_" + dateStr + extension;
-        }
-        return fileName;
-    }
-
     /**
      * Generates the name of a file with specified name root, tag, and date string.
      * Fails if a file with the same name, including the same date string, already exists.
@@ -102,7 +89,6 @@ public final class DatasetAid {
      * @author otsuru
      * @since 2022/4/13
      */
-
     public static Path generateOutputFilePath(Path workPath, String nameRoot, String tag, boolean appendDate, String inputDateString, String extension) {
         String dateString = (inputDateString != null) ? inputDateString : GadgetAid.getTemporaryString();
         String nondatedName = ((tag == null) ? nameRoot : nameRoot + "_" + tag) + extension;

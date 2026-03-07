@@ -32,7 +32,6 @@ import io.github.kensuke1984.kibrary.timewindow.TimeWindow;
 import io.github.kensuke1984.kibrary.timewindow.TimeWindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimeWindowDataFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
-import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.Earth;
@@ -100,10 +99,6 @@ public class PartialsAssembler3D extends Operation {
      * Path of the work folder.
      */
     private Path workPath;
-    /**
-     * If this is true, a time stamp is included in output folder name.
-     */
-    private boolean timeStamp;
     /**
      * A tag to include in output folder name. When this is empty, no tag is used.
      */
@@ -242,8 +237,6 @@ public class PartialsAssembler3D extends Operation {
     private List<SPCFileName> bpCatalogSH;
     private List<SPCFileName> bpCatalogPSV;
 
-    private String dateStr;
-
     /**
      * @param args (String[]) Arguments: none to create a property file, path of property file to run it.
      * @throws IOException
@@ -296,11 +289,13 @@ public class PartialsAssembler3D extends Operation {
             pw.println("##########Computation settings.");
             pw.println("##Path of folder containing source time functions. If not set, the following sourceTimeFunctionType will be used.");
             pw.println("#userSourceTimeFunctionPath ");
-            pw.println("##Type of source time function, from {0:none, 1:boxcar, 2:triangle, 3:asymmetricTriangle, 4:auto, 5:gaussian} (0)");
+            pw.println("##Type of source time function, from {0:none, 1:boxcar, 2:triangle, 3:asymmetricTriangle, 4:auto, 5:gaussian}. (0)");
             pw.println("##  When 'auto' is selected, the function specified in the GCMT catalog will be used.");
             pw.println("#sourceTimeFunctionType ");
             pw.println("##Path of a catalog to set source time function durations. If unneeded, leave this unset.");
             pw.println("#sourceTimeFunctionCatalogPath ");
+            pw.println("##Half duration for source time functions. To use the GCMT catalog values, leave this unset.");
+            pw.println("#halfDuration ");
             pw.println("##(double) Sampling frequency for computation [Hz], must be (a power of 2)/tlen. (20)");
             pw.println("#partialSamplingHz ");
             pw.println("##(double) Sampling frequency in output files [Hz], must be a factor of partialSamplingHz. (1)");
@@ -326,7 +321,6 @@ public class PartialsAssembler3D extends Operation {
     @Override
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
-        timeStamp = property.parseBoolean("timeStamp", "true");
         if (property.containsKey("folderTag")) folderTag = property.parseStringSingle("folderTag", null);
         appendFolderDate = property.parseBoolean("appendFolderDate", "true");
         components = Arrays.stream(property.parseStringArray("components", "Z R T"))
@@ -367,11 +361,11 @@ public class PartialsAssembler3D extends Operation {
             userSourceTimeFunctionPath = property.parsePath("userSourceTimeFunctionPath", null, true, workPath);
         } else {
             sourceTimeFunctionType = SourceTimeFunctionType.ofNumber(property.parseInt("sourceTimeFunctionType", "0"));
-            halfDuration = property.parseDouble("halfDuration", "NaN");
         }
         if (property.containsKey("sourceTimeFunctionCatalogPath")) {
             sourceTimeFunctionCatalogPath = property.parsePath("sourceTimeFunctionCatalogPath", null, true, workPath);
         }
+        halfDuration = property.parseDouble("halfDuration", "NaN");
 
         partialSamplingHz = property.parseDouble("partialSamplingHz", "20");
         // check validity
@@ -391,9 +385,6 @@ public class PartialsAssembler3D extends Operation {
 
     @Override
     public void run() throws IOException {
-        if (timeStamp) dateStr = GadgetAid.getTemporaryString();
-        else dateStr = null;
-
         System.err.println("Using mode " + usableSPCMode);
         System.err.println("Model name is " + modelName);
         // information about output partial types
@@ -429,8 +420,8 @@ public class PartialsAssembler3D extends Operation {
 
         // set source time functions
         SourceTimeFunctionHandler stfHandler = new SourceTimeFunctionHandler(sourceTimeFunctionType,
-                sourceTimeFunctionCatalogPath, userSourceTimeFunctionPath, halfDuration, eventSet);
-        sourceTimeFunctions = stfHandler.createSourceTimeFunctionMap(np, tlen);
+                sourceTimeFunctionCatalogPath, userSourceTimeFunctionPath, halfDuration);
+        sourceTimeFunctions = stfHandler.createSourceTimeFunctionMap(eventSet, np, tlen);
 
         // read Q structure
         if (qStructurePath != null)

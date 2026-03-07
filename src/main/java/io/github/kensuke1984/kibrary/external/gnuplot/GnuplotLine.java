@@ -38,7 +38,6 @@ class GnuplotLine {
     }
 
     /**
-     *
      * @param fileName1 (String) Name of file1 that contains data to be plotted.
      * @param fileName2 (String) Name of file2 that contains data to be plotted.
      * @param plotPart (String) The part after "using" (ex. 1:3, 1:($3+$1) )

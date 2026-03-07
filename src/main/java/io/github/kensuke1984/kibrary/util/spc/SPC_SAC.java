@@ -23,7 +23,6 @@ import io.github.kensuke1984.kibrary.source.SourceTimeFunctionHandler;
 import io.github.kensuke1984.kibrary.source.SourceTimeFunctionType;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.EventFolder;
-import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.ThreadAid;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
@@ -62,10 +61,6 @@ public final class SPC_SAC extends Operation {
      * Path of the work folder.
      */
     private Path workPath;
-    /**
-     * If this is true, a time stamp is included in output folder name.
-     */
-    private boolean timeStamp;
     /**
      * A tag to include in output folder name. When this is empty, no tag is used.
      */
@@ -127,7 +122,6 @@ public final class SPC_SAC extends Operation {
     private Set<SPCFileName> shSPCs;
     private Set<SPCFileName> psvSPCs;
     private SourceTimeFunctionHandler stfHandler;
-    private String dateStr;
     /**
      * Number of sac files that are done creating.
      */
@@ -167,12 +161,12 @@ public final class SPC_SAC extends Operation {
             pw.println("#modelName ");
             pw.println("##Path of folder containing source time functions. If not set, the following sourceTimeFunctionType will be used.");
             pw.println("#userSourceTimeFunctionPath ");
-            pw.println("##Type of source time function, from {0:none, 1:boxcar, 2:triangle, 3:asymmetricTriangle, 4:auto, 5:gaussian} (0)");
+            pw.println("##Type of source time function, from {0:none, 1:boxcar, 2:triangle, 3:asymmetricTriangle, 4:auto, 5:gaussian}. (0)");
             pw.println("##  When 'auto' is selected, the function specified in the GCMT catalog will be used.");
             pw.println("#sourceTimeFunctionType ");
             pw.println("##Path of a catalog to set source time function durations. If unneeded, leave this unset.");
             pw.println("#sourceTimeFunctionCatalogPath ");
-            pw.println("##Half duration for source time functions. To use the GCMT catalog value, leave this unset");
+            pw.println("##Half duration for source time functions. To use the GCMT catalog values, leave this unset.");
             pw.println("#halfDuration ");
             pw.println("##(double) Sampling frequency [Hz], must be (a power of 2)/tlen for each SPC file. (20)");
             pw.println("#samplingHz ");
@@ -192,7 +186,6 @@ public final class SPC_SAC extends Operation {
     @Override
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
-        timeStamp = property.parseBoolean("timeStamp", "true");
         if (property.containsKey("folderTag")) folderTag = property.parseStringSingle("folderTag", null);
         appendFolderDate = property.parseBoolean("appendFolderDate", "true");
         components = Arrays.stream(property.parseStringArray("components", "Z R T"))
@@ -211,11 +204,11 @@ public final class SPC_SAC extends Operation {
             userSourceTimeFunctionPath = property.parsePath("userSourceTimeFunctionPath", null, true, workPath);
         } else {
             sourceTimeFunctionType = SourceTimeFunctionType.ofNumber(property.parseInt("sourceTimeFunctionType", "0"));
-            halfDuration = property.parseDouble("halfDuration", "NaN");
         }
         if (property.containsKey("sourceTimeFunctionCatalogPath")) {
             sourceTimeFunctionCatalogPath = property.parsePath("sourceTimeFunctionCatalogPath", null, true, workPath);
         }
+        halfDuration = property.parseDouble("halfDuration", "NaN");
 
         samplingHz = property.parseDouble("samplingHz", "20");
         if (!MathAid.isTerminatingDecimal(1.0 / samplingHz))
@@ -246,14 +239,11 @@ public final class SPC_SAC extends Operation {
 
     @Override
     public void run() throws IOException {
-        if (timeStamp) dateStr = GadgetAid.getTemporaryString();
-        else dateStr = null;
-
         System.err.println("Using mode " + usableSPCMode);
         System.err.println("Model name is " + modelName);
 
         stfHandler = new SourceTimeFunctionHandler(sourceTimeFunctionType,
-                sourceTimeFunctionCatalogPath, userSourceTimeFunctionPath, halfDuration, DatasetAid.globalCMTIDSet(workPath));
+                sourceTimeFunctionCatalogPath, userSourceTimeFunctionPath, halfDuration);
 
         if (usableSPCMode != SPCFileAid.UsableSPCMode.PSV && (shSPCs = collectSPCsFromAllEvents(SPCMode.SH, shPath)).isEmpty()) {
             throw new FileNotFoundException("No SH spectrum files are found.");

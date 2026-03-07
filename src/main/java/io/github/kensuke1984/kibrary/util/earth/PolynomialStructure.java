@@ -296,6 +296,45 @@ public final class PolynomialStructure implements Serializable {
     }
 
     /**
+     * Set function of a certain parameter to a certain zone.
+     * This returns a new instance; the original instance is unchanged.
+     *
+     * @param variable (VariableType) The type of variable to set. Only RHO, Vpv, Vph, Vsv, Vsh, ETA are allowed.
+     * @param izone (int) Index of zone to set.
+     * @param function (PolynomialFunction) Function to set for the given parameter in the given zone.
+     * @return ({@link PolynomialStructure}) A new structure with function set.
+     *
+     * @author rei
+     * @since 2024/6/28
+     */
+    public PolynomialStructure withFunction(VariableType variable, int izone, PolynomialFunction function) {
+        PolynomialStructure structure = new PolynomialStructure(nZone, nCoreZone, rMin, rMax, rho, vpv, vph, vsv, vsh, eta, qMu, qKappa, isDefault);
+        switch(variable) {
+        case RHO:
+            structure.rho[izone] = function;
+            break;
+        case Vpv:
+            structure.vpv[izone] = function;
+            break;
+        case Vph:
+            structure.vph[izone] = function;
+            break;
+        case Vsv:
+            structure.vsv[izone] = function;
+            break;
+        case Vsh:
+            structure.vsh[izone] = function;
+            break;
+        case ETA:
+            structure.eta[izone] = function;
+            break;
+        default:
+            throw new IllegalArgumentException("Illegal variable type: " + variable);
+        }
+        return structure;
+    }
+
+    /**
      * Set function of a certain parameter to an arbitrary layer.
      * This returns a new instance; the original instance is unchanged.
      *
@@ -473,39 +512,69 @@ public final class PolynomialStructure implements Serializable {
     }
 
     /**
-     * @param variable (VariableType) the type of variable to obtain. Only RHO, Vpv, Vph, Vsv, Vsh, ETA are allowed.
-     * @param izone (int) zone
-     * @param polynomialFunction replace the function for the parameter in the given zone
-     * @return new structure
+     * Replace the D boundary with a layer of which functions are linear functions.
+     * The linear functions are computed using the values at the upper & lower boundaries of the modifed layer.
+     * @param boundary (double) The radius of a D boundary.
+     * @param zone (double) Half the height of zone to modify.
+     * @return ({@link PoiynomialStructure}) New structure with modified D boundary.
      *
      * @author rei
-     * @since 2024/6/28
+     * @since 2024/7/2
      */
-    public PolynomialStructure setFunction(VariableType variable, int izone, PolynomialFunction polynomialFunction) {
-        PolynomialStructure str = new PolynomialStructure(nZone, nCoreZone, rMin, rMax, rho, vpv, vph, vsv, vsh, eta, qMu, qKappa, isDefault);
-        switch(variable) {
-        case RHO:
-            str.rho[izone] = polynomialFunction;
-            break;
-        case Vpv:
-            str.rho[izone] = polynomialFunction;
-            break;
-        case Vph:
-            str.rho[izone] = polynomialFunction;
-            break;
-        case Vsv:
-            str.rho[izone] = polynomialFunction;
-            break;
-        case Vsh:
-            str.rho[izone] = polynomialFunction;
-            break;
-        case ETA:
-            str.rho[izone] = polynomialFunction;
-            break;
-        default:
-            throw new IllegalArgumentException("Illegal parameter type");
+    public PolynomialStructure replaceDBoundary(double boundary, double zone) {
+        int iZone = zoneOf(boundary);
+        if (iZone <= nCoreZone)
+            throw new IllegalArgumentException("D boundary in the core cannot be treated now.");
+        double rLower = boundary - zone;
+        double rUpper = boundary + zone;
+        // make new boundary at "boundary ± zone"
+        PolynomialStructure structure = this.withBoundaries(rLower, rUpper);
+        // delete boundary at "boundary"
+        double[] rminNew = Arrays.stream(structure.getRmin()).filter(r -> !Precision.equals(r, boundary, R_EPSILON)).sorted().toArray();
+        double[] rmaxNew = Arrays.stream(structure.getRmax()).filter(r -> !Precision.equals(r, boundary, R_EPSILON)).sorted().toArray();
+        int nZoneNew = nZone + 1;
+        int nCoreZoneNew = nCoreZone;
+        PolynomialFunction[] rhoNew = new PolynomialFunction[nZoneNew];
+        PolynomialFunction[] vpvNew = new PolynomialFunction[nZoneNew];
+        PolynomialFunction[] vphNew = new PolynomialFunction[nZoneNew];
+        PolynomialFunction[] vsvNew = new PolynomialFunction[nZoneNew];
+        PolynomialFunction[] vshNew = new PolynomialFunction[nZoneNew];
+        PolynomialFunction[] etaNew = new PolynomialFunction[nZoneNew];
+        double[] qMuNew = new double[nZoneNew];
+        double[] qKappaNew = new double[nZoneNew];
+        for (int iZoneNew = 0; iZoneNew < nZoneNew; iZoneNew++) {
+            double rmin = rminNew[iZoneNew];
+            // izone in this for rmin
+            int iZoneOld = zoneOf(rmin);
+            // copy. PolynomialFunction is immutable so instances do not have to be recreated.
+            rhoNew[iZoneNew] = rho[iZoneOld];
+            vpvNew[iZoneNew] = vpv[iZoneOld];
+            vphNew[iZoneNew] = vph[iZoneOld];
+            vsvNew[iZoneNew] = vsv[iZoneOld];
+            vshNew[iZoneNew] = vsh[iZoneOld];
+            etaNew[iZoneNew] = eta[iZoneOld];
+            qMuNew[iZoneNew] = qMu[iZoneOld];
+            qKappaNew[iZoneNew] = qKappa[iZoneOld];
         }
-        return str;
+        // make new PolynomialFunction as a linear function in the D boundary zone
+        rhoNew[iZone] = computeLinearFunction(VariableType.RHO, rLower, rUpper);
+        vpvNew[iZone] = computeLinearFunction(VariableType.Vpv, rLower, rUpper);
+        vphNew[iZone] = computeLinearFunction(VariableType.Vph, rLower, rUpper);
+        vsvNew[iZone] = computeLinearFunction(VariableType.Vsv, rLower, rUpper);
+        vshNew[iZone] = computeLinearFunction(VariableType.Vsh, rLower, rUpper);
+        etaNew[iZone] = computeLinearFunction(VariableType.ETA, rLower, rUpper);
+        return new PolynomialStructure(nZoneNew, nCoreZoneNew, rminNew, rmaxNew,
+                rhoNew, vpvNew, vphNew, vsvNew, vshNew, etaNew, qMuNew, qKappaNew);
+    }
+
+    private PolynomialFunction computeLinearFunction(VariableType type, double rLower, double rUpper) {
+        double xLower = rLower / planetRadius();
+        double xUpper = rUpper / planetRadius();
+        double lowerValue = this.getAtRadius(type, rLower);
+        double upperValue = this.getAtRadius(type, rUpper);
+        double a = (upperValue - lowerValue) / (xUpper - xLower);
+        double b = upperValue - a * xUpper;
+        return new PolynomialFunction(new double[]{b, a});
     }
 
     /**
@@ -604,9 +673,9 @@ public final class PolynomialStructure implements Serializable {
 
     /**
      * Get polynomial function of a specified parameter in a given zone.
-     * @param variable (VariableType) the type of variable to obtain. Only RHO, Vpv, Vph, Vsv, Vsh, ETA are allowed.
-     * @param izone (int) zone
-     * @return ({@link PolynomialFunction}) a polynomial function of the parameter in the given zone
+     * @param variable (VariableType) The type of variable to obtain. Only RHO, Vpv, Vph, Vsv, Vsh, ETA are allowed.
+     * @param izone (int) Index of zone.
+     * @return (PolynomialFunction) Polynomial function of the specified parameter in the given zone.
      *
      * @author rei
      * @since 2024/6/28
@@ -628,72 +697,6 @@ public final class PolynomialStructure implements Serializable {
         default:
             throw new IllegalArgumentException("Illegal parameter type");
         }
-    }
-
-    /**
-     * Replace the D boundary with a layer of which functions are linear functions.
-     * The linear finctions are computed using the values at the upper & lower boundary of modifed layer.
-     * @param boundary (double) the radius of a D boundary
-     * @param zone (double) inside of this zone will be modified
-     * @return ({@link PoiynomialStructure}) new structure modified D boundary
-     *
-     * @author rei
-     * @since 2024/7/2
-     */
-    public PolynomialStructure replaceDBoundary(double boundary, double zone) {
-        int iZone = zoneOf(boundary);
-        if (iZone <= nCoreZone)
-            throw new IllegalArgumentException("D boundary in the core region cannot treat now.");
-        double rLower = boundary - zone;
-        double rUpper = boundary + zone;
-        //make new boundary at "boundary ± zone"
-        PolynomialStructure structure = this.withBoundaries(rLower, rUpper);
-        //delete boundary at "boundary"
-        double[] rminNew = Arrays.stream(structure.getRmin()).filter(r -> !Precision.equals(r, boundary, R_EPSILON)).sorted().toArray();
-        double[] rmaxNew = Arrays.stream(structure.getRmax()).filter(r -> !Precision.equals(r, boundary, R_EPSILON)).sorted().toArray();
-        int nZoneNew = nZone + 1;
-        int nCoreZoneNew = nCoreZone;
-        PolynomialFunction[] rhoNew = new PolynomialFunction[nZoneNew];
-        PolynomialFunction[] vpvNew = new PolynomialFunction[nZoneNew];
-        PolynomialFunction[] vphNew = new PolynomialFunction[nZoneNew];
-        PolynomialFunction[] vsvNew = new PolynomialFunction[nZoneNew];
-        PolynomialFunction[] vshNew = new PolynomialFunction[nZoneNew];
-        PolynomialFunction[] etaNew = new PolynomialFunction[nZoneNew];
-        double[] qMuNew = new double[nZoneNew];
-        double[] qKappaNew = new double[nZoneNew];
-        for (int iZoneNew = 0; iZoneNew < nZoneNew; iZoneNew++) {
-            double rmin = rminNew[iZoneNew];
-            // izone in this for rmin
-            int iZoneOld = zoneOf(rmin);
-            // copy. PolynomialFunction is immutable so instances do not have to be recreated.
-            rhoNew[iZoneNew] = rho[iZoneOld];
-            vpvNew[iZoneNew] = vpv[iZoneOld];
-            vphNew[iZoneNew] = vph[iZoneOld];
-            vsvNew[iZoneNew] = vsv[iZoneOld];
-            vshNew[iZoneNew] = vsh[iZoneOld];
-            etaNew[iZoneNew] = eta[iZoneOld];
-            qMuNew[iZoneNew] = qMu[iZoneOld];
-            qKappaNew[iZoneNew] = qKappa[iZoneOld];
-        }
-        //make new PolynomialFunction as a linear function in the D boundary zone
-        rhoNew[iZone] = computeLinearFunction(VariableType.RHO, rLower, rUpper);
-        vpvNew[iZone] = computeLinearFunction(VariableType.Vpv, rLower, rUpper);
-        vphNew[iZone] = computeLinearFunction(VariableType.Vph, rLower, rUpper);
-        vsvNew[iZone] = computeLinearFunction(VariableType.Vsv, rLower, rUpper);
-        vshNew[iZone] = computeLinearFunction(VariableType.Vsh, rLower, rUpper);
-        etaNew[iZone] = computeLinearFunction(VariableType.ETA, rLower, rUpper);
-        return new PolynomialStructure(nZoneNew, nCoreZoneNew, rminNew, rmaxNew,
-                rhoNew, vpvNew, vphNew, vsvNew, vshNew, etaNew, qMuNew, qKappaNew);
-    }
-
-    private PolynomialFunction computeLinearFunction(VariableType type, double rLower, double rUpper) {
-        double xLower = rLower / planetRadius();
-        double xUpper = rUpper / planetRadius();
-        double lowerValue = this.getAtRadius(type, rLower);
-        double upperValue = this.getAtRadius(type, rUpper);
-        double a = (upperValue - lowerValue) / (xUpper - xLower);
-        double b = upperValue - a * xUpper;
-        return new PolynomialFunction(new double[]{b, a});
     }
 
     /**

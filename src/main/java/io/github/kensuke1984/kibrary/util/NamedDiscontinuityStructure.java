@@ -366,7 +366,6 @@ public class NamedDiscontinuityStructure implements Serializable {
         default:
             throw new RuntimeException("The variable type " + type + " is not utilized.");
         }
-
     }
 
     /**

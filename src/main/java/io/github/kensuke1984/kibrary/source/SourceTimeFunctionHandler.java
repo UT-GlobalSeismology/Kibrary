@@ -25,21 +25,20 @@ public class SourceTimeFunctionHandler {
     private final SourceTimeFunctionType type;
     private final Path userSTFPath;
     private final Path catalogPath;
-    private Set<GlobalCMTID> events;
     private Map<GlobalCMTID, SourceTimeFunction> userSourceTimeFunctions;
     private Map<GlobalCMTID, String> sourceTimeFunctionCatalog;
-    private double halfDur;
+    private double customHalfDuration;
 
-    public SourceTimeFunctionHandler(SourceTimeFunctionType type, Path catalogPath, Path userSTFPath, Set<GlobalCMTID> events) throws IOException {
-        this(type, catalogPath, userSTFPath, Double.NaN, events);
+    public SourceTimeFunctionHandler(SourceTimeFunctionType type, Path catalogPath, Path userSTFPath) throws IOException {
+        this(type, catalogPath, userSTFPath, Double.NaN);
     }
 
-    public SourceTimeFunctionHandler(SourceTimeFunctionType type, Path catalogPath, Path userSTFPath, double halfDur, Set<GlobalCMTID> events) throws IOException {
+    public SourceTimeFunctionHandler(SourceTimeFunctionType type, Path catalogPath, Path userSTFPath, double customHalfDuration)
+            throws IOException {
         this.type = type;
         this.userSTFPath = userSTFPath;
         this.catalogPath = catalogPath;
-        this.halfDur = halfDur;
-        this.events = events;
+        this.customHalfDuration = customHalfDuration;
 
         if (userSTFPath != null) {
             readUserSourceTimeFunctions(userSTFPath);
@@ -53,7 +52,7 @@ public class SourceTimeFunctionHandler {
     }
 
     private void readCatalog(Path inputPath) throws IOException {
-        System.err.println("STF catalogue: " + inputPath);
+        System.err.println("STF catalog: " + inputPath);
         InformationFileReader reader = new InformationFileReader(inputPath, true);
         while(reader.hasNext()) {
             String line = reader.next();
@@ -77,7 +76,7 @@ public class SourceTimeFunctionHandler {
         }
     }
 
-    public Map<GlobalCMTID, SourceTimeFunction> createSourceTimeFunctionMap(int np, double tlen) {
+    public Map<GlobalCMTID, SourceTimeFunction> createSourceTimeFunctionMap(Set<GlobalCMTID> events, int np, double tlen) {
         if (userSTFPath != null) {
             return userSourceTimeFunctions;
 
@@ -93,8 +92,8 @@ public class SourceTimeFunctionHandler {
 
     public SourceTimeFunction createSourceTimeFunction(int np, double tlen, GlobalCMTID event) {
         double halfDuration;
-        if (Double.isNaN(halfDur)) halfDuration = event.getEventData().getHalfDuration();
-        else halfDuration = halfDur;
+        if (Double.isNaN(customHalfDuration)) halfDuration = event.getEventData().getHalfDuration();
+        else halfDuration = customHalfDuration;
 
         if (userSTFPath != null) {
             SourceTimeFunction tmp = userSourceTimeFunctions.get(event);

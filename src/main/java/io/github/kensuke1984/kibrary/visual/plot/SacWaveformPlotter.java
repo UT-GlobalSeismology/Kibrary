@@ -22,6 +22,7 @@ import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotColorName;
 import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotFile;
+import io.github.kensuke1984.kibrary.math.Trace;
 import io.github.kensuke1984.kibrary.timewindow.TravelTimeInformation;
 import io.github.kensuke1984.kibrary.timewindow.TravelTimeInformationFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
@@ -34,7 +35,6 @@ import io.github.kensuke1984.kibrary.util.sac.SACFileName;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
 
 /**
- *
  * Plots waveform data from a root folder including synthetic waveform data.
  * For each event, a pdf file with waveforms for all observers will be created.
  * In each plot, the main synthetic waveform, the reference synthetic waveform, and the residual waveform can be plotted.
@@ -49,7 +49,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
 public class SacWaveformPlotter extends Operation {
 
     /**
-     * Number of fields per page on output pdf file
+     * Number of fields per page on output pdf file.
      */
     private static final int NUM_PER_PAGE = 12;
     /**
@@ -59,7 +59,7 @@ public class SacWaveformPlotter extends Operation {
 
     private final Property property;
     /**
-     * Path of the work folder
+     * Path of the work folder.
      */
     private Path workPath;
     /**
@@ -67,41 +67,37 @@ public class SacWaveformPlotter extends Operation {
      */
     private String fileTag;
     /**
-     * components to be included in the dataset
+     * Components to use.
      */
     private Set<SACComponent> components;
-    /**
-     * sampling Hz of SAC file （skip SAC of which sampling Hz is different form this one）
-     */
-    private double sacSamplingHz;
 
     /**
-     * Path of a root folder containing synthetic dataset
+     * Path of a root folder containing synthetic dataset.
      */
     private Path mainSynPath;
     /**
-     * Path of a reference root folder1 containing synthetic dataset
+     * Path of a reference root folder1 containing synthetic dataset.
      */
     private Path refSynPath1;
     /**
-     * Path of a reference root folder2 containing synthetic dataset
+     * Path of a reference root folder2 containing synthetic dataset.
      */
     private Path refSynPath2;
     /**
-     * Path of a travel time information file
+     * Path of a travel time information file.
      */
     private Path travelTimePath;
     /**
-     * Names of phases to plot travel time curves
+     * Names of phases to plot travel time curves.
      */
     private String[] displayPhases;
     /**
-     * Name of structure to compute travel times
+     * Name of structure to compute travel times.
      */
     private String structureName;
 
     /**
-     * Whether to export individual files for each component
+     * Whether to export individual files for each component.
      */
     private boolean splitComponents;
     /**
@@ -134,19 +130,18 @@ public class SacWaveformPlotter extends Operation {
     private String residualName2;
 
     /**
-     * Set of information of travel times
+     * Set of information of travel times.
      */
     private Set<TravelTimeInformation> travelTimeInfoSet;
     /**
-     * Inxtance of tool to use to compute travel times
+     * Instance of tool to use to compute travel times.
      */
     private TauP_Time timeTool;
-    private String dateStr;
+    private String dateString;
 
     /**
-     * @param args  none to create a property file <br>
-     *              [property file] to run
-     * @throws IOException if any
+     * @param args (String[]) Arguments: none to create a property file, path of property file to run it.
+     * @throws IOException
      */
     public static void main(String[] args) throws IOException {
         if (args.length == 0) writeDefaultPropertiesFile(null);
@@ -158,63 +153,60 @@ public class SacWaveformPlotter extends Operation {
         Path outPath = DatasetAid.generateOutputFilePath(Paths.get(""), className, tag, true, null, ".properties");
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
             pw.println("manhattan " + className);
-            pw.println("##Path of a working directory. (.)");
+            pw.println("##Path of work folder. (.)");
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output file names. If no tag is needed, leave this unset.");
             pw.println("#fileTag ");
-            pw.println("##SacComponents to be used, listed using spaces (Z R T)");
+            pw.println("##SacComponents to be used, listed using spaces. (Z R T)");
             pw.println("#components ");
-            pw.println("##(double) Value of sac sampling Hz (20) can't be changed now");
-            pw.println("#sacSamplingHz the value will be ignored");
-            pw.println("##Path of a root folder containing synthetic dataset (.)");
+            pw.println("##Path of a root folder containing synthetic dataset. (.)");
             pw.println("#mainSynPath ");
-            pw.println("##Path of a reference root folder 1 containing synthetic dataset, when plotting their waveforms");
+            pw.println("##Path of a reference root folder 1 containing synthetic dataset, when plotting their waveforms.");
             pw.println("#refSynPath1 ");
-            pw.println("##Path of a reference root folder 2 containing synthetic dataset, when plotting their waveforms");
+            pw.println("##Path of a reference root folder 2 containing synthetic dataset, when plotting their waveforms.");
             pw.println("#refSynPath2 ");
-            pw.println("##If plotting travel times, set the following travelTimePath or displayPhases");
-            pw.println("##Path of a travel time information file. If this is unset, the following displayPhases will be referenced");
+            pw.println("##Path of a travel time information file. If this is unset, the following displayPhases will be referenced.");
             pw.println("#travelTimePath travelTime.inf");
             pw.println("##Names of phases to plot travel time curves, listed using spaces.");
             pw.println("#displayPhases ");
-            pw.println("##(String) Name of structure to compute travel times using TauP (prem)");
+            pw.println("##(String) Name of structure to compute travel times using TauP. (prem)");
             pw.println("#structureName ");
-            pw.println("##(boolean) Whether to export individual files for each component (true)");
+            pw.println("##(boolean) Whether to export individual files for each component. (true)");
             pw.println("#splitComponents ");
             pw.println("##GlobalCMTIDs of events to work for, listed using spaces. To use all events, leave this unset.");
             pw.println("#tendEvents ");
             pw.println("##########Setting for time range to plot");
-            pw.println("##Time range of each plot defined from phases in tarvelTimePath or displayPhases");
+            pw.println("##Time range of each plot defined from phases in travelTimePath or displayPhases");
             pw.println("##If these are unset, the following lowerTime and upperTime will be referenced");
-            pw.println("##(double) Time range to plot before phase arrival of usePhases [sec]");
+            pw.println("##(double) Time range to plot before phase arrival of usePhases [s].");
             pw.println("#frontShift ");
-            pw.println("##(double) Time range to plot after phase arrival of usePhases [sec]");
+            pw.println("##(double) Time range to plot after phase arrival of usePhases [s].");
             pw.println("#rearShift ");
             pw.println("##Time range of each plot designated directly");
-            pw.println("##(double) Lower limit of time range to be used [sec] (0)");
+            pw.println("##(double) Lower limit of time range to be used [s]. (0)");
             pw.println("#lowerTime ");
-            pw.println("##(double) Upper limit of time range to be used [sec] (150)");
+            pw.println("##(double) Upper limit of time range to be used [s]. (150)");
             pw.println("#upperTime ");
             pw.println("##########Setting for plot style");
-            pw.println("##Plot style for main synthetic waveform, from {0:no plot, 1:red, 2:green, 3:blue} (1)");
+            pw.println("##Plot style for main synthetic waveform, from {0:no plot, 1:red, 2:green, 3:blue, 4:gray}. (1)");
             pw.println("#mainSynStyle 2");
-            pw.println("##Name for main synthetic waveform (synthetic)");
+            pw.println("##Name for main synthetic waveform. (synthetic)");
             pw.println("#mainSynName recovered");
-            pw.println("##Plot style for reference synthetic waveform 1, from {0:no plot, 1:red, 2:green, 3:blue} (0)");
+            pw.println("##Plot style for reference synthetic waveform 1, from {0:no plot, 1:red, 2:green, 3:blue, 4:gray}. (0)");
             pw.println("#refSynStyle1 1");
-            pw.println("##Name for reference synthetic waveform 1 (reference1)");
+            pw.println("##Name for reference synthetic waveform 1. (reference1)");
             pw.println("#refSynName1 ");
-            pw.println("##Plot style for residual waveform between main and reference1, from {0:no plot, 1:sky blue} (0)");
+            pw.println("##Plot style for residual waveform between main and reference1, from {0:no plot, 1:sky blue}. (0)");
             pw.println("#residualStyle1 1");
-            pw.println("##Name for residual1 waveform (residual1)");
+            pw.println("##Name for residual1 waveform. (residual1)");
             pw.println("#residualName1 ");
-            pw.println("##Plot style for reference synthetic waveform 2, from {0:no plot, 1:red, 2:green, 3:blue} (0)");
+            pw.println("##Plot style for reference synthetic waveform 2, from {0:no plot, 1:red, 2:green, 3:blue, 4:gray}. (0)");
             pw.println("#refSynStyle2 ");
-            pw.println("##Name for reference synthetic waveform 2 (reference2)");
+            pw.println("##Name for reference synthetic waveform 2. (reference2)");
             pw.println("#refSynName2 ");
-            pw.println("##Plot style for residual waveform between main and reference2, from {0:no plot, 1:sky blue} (0)");
+            pw.println("##Plot style for residual waveform between main and reference2, from {0:no plot, 1:sky blue}. (0)");
             pw.println("#residualStyle2 1");
-            pw.println("##Name for residual2 waveform (residual2)");
+            pw.println("##Name for residual2 waveform. (residual2)");
             pw.println("#residualName2 ");
         }
         System.err.println(outPath + " is created.");
@@ -230,7 +222,6 @@ public class SacWaveformPlotter extends Operation {
         if (property.containsKey("fileTag")) fileTag = property.parseStringSingle("fileTag", null);
         components = Arrays.stream(property.parseStringArray("components", "Z R T"))
                 .map(SACComponent::valueOf).collect(Collectors.toSet());
-        sacSamplingHz = 20;  // TODO property.parseDouble("sacSamplingHz", "20");
 
         mainSynPath = property.parsePath("mainSynPath", ".", true, workPath);
         if (property.containsKey("refSynPath1"))
@@ -278,214 +269,240 @@ public class SacWaveformPlotter extends Operation {
             throw new IllegalArgumentException("refSynPath2 must be set when refSynStyle2 != 0");
     }
 
-   @Override
-   public void run() throws IOException {
-       dateStr = GadgetAid.getTemporaryString();
+    @Override
+    public void run() throws IOException {
+        dateString = GadgetAid.getTemporaryString();
 
-       // read main synthetic dataset and write waveforms to be used into txt files
-       Set<EventFolder> mainEventDirs = DatasetAid.eventFolderSet(mainSynPath);
-       if (!tendEvents.isEmpty())
-           mainEventDirs = mainEventDirs.stream().filter(dirs -> tendEvents.contains(dirs.getGlobalCMTID())).collect(Collectors.toSet());
-       SACFileAccess.outputSacFileTxt(mainEventDirs);
+        // read main synthetic dataset and write waveforms to be used into txt files
+        Set<EventFolder> mainEventDirs = DatasetAid.eventFolderSet(mainSynPath);
+        if (!tendEvents.isEmpty())
+            mainEventDirs = mainEventDirs.stream().filter(dirs -> tendEvents.contains(dirs.getGlobalCMTID())).collect(Collectors.toSet());
+        outputSacFileTxts(mainEventDirs);
 
-       Set<GlobalCMTID> events = new HashSet<>();
-       mainEventDirs.forEach(dirs -> events.add(dirs.getGlobalCMTID()));
+        Set<GlobalCMTID> events = mainEventDirs.stream().map(dir -> dir.getGlobalCMTID()).collect(Collectors.toSet());
 
-       // read reference synthetic dataset and write waveforms to be used into txt files
-       Set<EventFolder> refEventDirs1 = null;
-       if (refSynPath1 != null) {
-           refEventDirs1 = DatasetAid.eventFolderSet(refSynPath1);
-           if (!tendEvents.isEmpty())
-               refEventDirs1 = refEventDirs1.stream().filter(dirs -> tendEvents.contains(dirs.getGlobalCMTID())).collect(Collectors.toSet());
-           // check the event directories are same as mainSynPath
-           Set<GlobalCMTID> refEvents1 = new HashSet<>();
-           refEventDirs1.forEach(dirs -> refEvents1.add(dirs.getGlobalCMTID()));
-           if (!refEvents1.equals(events))
-               throw new IllegalArgumentException("The number of event directories in mainSynPath and in refSynPath1 is different");
-           // output text file
-           SACFileAccess.outputSacFileTxt(refEventDirs1);
-       }
-       Set<EventFolder> refEventDirs2 = null;
-       if (refSynPath2 != null) {
-           refEventDirs2 = DatasetAid.eventFolderSet(refSynPath2);
-           if (!tendEvents.isEmpty())
-               refEventDirs2 = refEventDirs2.stream().filter(dirs -> tendEvents.contains(dirs.getGlobalCMTID())).collect(Collectors.toSet());
-           // check the event directories are same as mainSynPath
-           Set<GlobalCMTID> refEvents2 = new HashSet<>();
-           refEventDirs2.forEach(dirs -> refEvents2.add(dirs.getGlobalCMTID()));
-           if (!refEvents2.equals(events))
-               throw new IllegalArgumentException("The number of event directories in mainSynPath and in refSynPath2 is different");
-           // output text file
-           SACFileAccess.outputSacFileTxt(refEventDirs2);
-       }
+        // read reference synthetic dataset and write waveforms to be used into txt files
+        if (refSynPath1 != null) {
+            Set<EventFolder> refEventDirs1 = DatasetAid.eventFolderSet(refSynPath1);
+            if (!tendEvents.isEmpty())
+                refEventDirs1 = refEventDirs1.stream().filter(dirs -> tendEvents.contains(dirs.getGlobalCMTID())).collect(Collectors.toSet());
+            // check the event directories are same as mainSynPath
+            Set<GlobalCMTID> refEvents1 = refEventDirs1.stream().map(dir -> dir.getGlobalCMTID()).collect(Collectors.toSet());
+            if (!refEvents1.equals(events))
+                throw new IllegalArgumentException("The number of event directories in mainSynPath and in refSynPath1 is different");
+            // output text file
+            outputSacFileTxts(refEventDirs1);
+        }
+        if (refSynPath2 != null) {
+            Set<EventFolder> refEventDirs2 = DatasetAid.eventFolderSet(refSynPath2);
+            if (!tendEvents.isEmpty())
+                refEventDirs2 = refEventDirs2.stream().filter(dirs -> tendEvents.contains(dirs.getGlobalCMTID())).collect(Collectors.toSet());
+            // check the event directories are same as mainSynPath
+            Set<GlobalCMTID> refEvents2 = refEventDirs2.stream().map(dir -> dir.getGlobalCMTID()).collect(Collectors.toSet());
+            if (!refEvents2.equals(events))
+                throw new IllegalArgumentException("The number of event directories in mainSynPath and in refSynPath2 is different");
+            // output text file
+            outputSacFileTxts(refEventDirs2);
+        }
 
-       try {
-           // set up to plot travel times
-           // read travel time information
-           if (travelTimePath != null) {
-               travelTimeInfoSet = TravelTimeInformationFile.read(travelTimePath);
-           }
-           // set up taup_time tool
-           else if (displayPhases != null) {
-               timeTool = new TauP_Time(structureName);
-           }
+        try {
+            // set up to plot travel times
+            // read travel time information
+            if (travelTimePath != null) {
+                travelTimeInfoSet = TravelTimeInformationFile.read(travelTimePath);
+            }
+            // set up taup_time tool
+            else if (displayPhases != null) {
+                timeTool = new TauP_Time(structureName);
+            }
 
-           for (GlobalCMTID event : events) {
+            for (GlobalCMTID event : events) {
 
-               // set event to taup_time tool
-               // The same instance is reused for all observers because computation takes time when changing source depth (see TauP manual).
-               if (displayPhases != null) {
-                   timeTool.setSourceDepth(event.getEventData().getCmtPosition().getDepth());
-               }
+                // set event to taup_time tool
+                // The same instance is reused for all observers because computation takes time when changing source depth (see TauP manual).
+                if (displayPhases != null) {
+                    timeTool.setSourceDepth(event.getEventData().getCmtPosition().getDepth());
+                }
 
-               // create plots under workPath
-               Path eventPath = workPath.resolve(event.toString());
-               Files.createDirectories(eventPath);
-               if (splitComponents) {
-                   for (SACComponent component : components) {
-                       Set<SACFileName> sacNames = new EventFolder(mainSynPath.resolve(event.toString())).sacFileSet();
-                       sacNames = sacNames.stream().filter(name -> name.getComponent().equals(component)).collect(Collectors.toSet());
+                // create plots under workPath
+                Path eventPath = workPath.resolve(event.toString());
+                Files.createDirectories(eventPath);
+                if (splitComponents) {
+                    for (SACComponent component : components) {
+                        Set<SACFileName> sacNames = new EventFolder(mainSynPath.resolve(event.toString())).sacFileSet();
+                        sacNames = sacNames.stream().filter(name -> name.getComponent().equals(component)).collect(Collectors.toSet());
 
-                       // Here, generateOutputFileName() is used in an irregular way, without adding the file extension but adding the component.
-                       String fileNameRoot = DatasetAid.generateOutputFileName("plot", fileTag, dateStr, "_" + component.toString());
-                       createPlot(eventPath, sacNames, fileNameRoot);
-                   }
-               }
-               else {
-                   Set<SACFileName> sacNames = new EventFolder(mainSynPath.resolve(event.toString())).sacFileSet();
+                        // Here, generateOutputFilePath() is used in an irregular way, adding the component along with the file extension.
+                        Path plotPath = DatasetAid.generateOutputFilePath(eventPath, "plot", fileTag, true, dateString, "_" + component.toString() + ".plt");
+                        createPlot(eventPath, plotPath, sacNames);
+                    }
+                } else {
+                    Set<SACFileName> sacNames = new EventFolder(mainSynPath.resolve(event.toString())).sacFileSet();
 
-                   // Here, generateOutputFileName() is used in an irregular way, without adding the file extension.
-                   String fileNameRoot = DatasetAid.generateOutputFileName("plot", fileTag, dateStr, "");
-                   createPlot(eventPath, sacNames, fileNameRoot);
-               }
-           }
+                    Path plotPath = DatasetAid.generateOutputFilePath(eventPath, "plot", fileTag, true, dateString, ".plt");
+                    createPlot(eventPath, plotPath, sacNames);
+                }
+            }
 
-       } catch (TauModelException e) {
-           e.printStackTrace();
-       }
-   }
+        } catch (TauModelException e) {
+            e.printStackTrace();
+        }
+    }
 
-   /**
-    * @param eventDir (EventFolder)
-    * @param sacNames (SACFileName) sac files to be plotted
-    * @param fileNameRoot (String) The root of file names of output plot and graph files
-    * @throws IOException
-    * @throws TauModelException
-    */
-   private void createPlot(Path eventPath, Set<SACFileName> sacNames, String fileNameRoot) throws IOException, TauModelException {
-       if (sacNames.size() == 0) {
-           return;
-       }
+    /**
+     * @param eventPath (Path) Path of event folder.
+     * @param plotPath (Path) Gnuplot file path.
+     * @param sacNames (Set of {@link SACFileName}) SAC files to be plotted.
+     * @throws IOException
+     * @throws TauModelException
+     */
+    private void createPlot(Path eventPath, Path plotPath, Set<SACFileName> sacNames) throws IOException, TauModelException {
+        if (sacNames.size() == 0) {
+            return;
+        }
 
-       GnuplotFile gnuplot = new GnuplotFile(eventPath.resolve(fileNameRoot + ".plt"));
+        GnuplotFile gnuplot = new GnuplotFile(plotPath);
 
-       gnuplot.setOutput("pdf", fileNameRoot + ".pdf", 21, 29.7, true);
-       gnuplot.setMarginH(15, 5);
-       gnuplot.setFont("Arial", 10, 8, 8, 8, 8);
-       gnuplot.setCommonKey(true, false, "top right");
+        gnuplot.setOutput("pdf", plotPath.getFileName().toString().replace(".plt", ".pdf"), 21, 29.7, true);
+        gnuplot.setMarginH(15, 5);
+        gnuplot.setFont("Arial", 10, 8, 8, 8, 8);
+        gnuplot.setCommonKey(true, false, "top right");
 
-       int i = 0;
-       for (SACFileName sacName : sacNames) {
-           SACFileAccess sacData = sacName.read();
-           String txtFileName = sacName.toPath().getFileName().toString() + ".txt";
-           double minTime = Double.MAX_VALUE;
-           double maxTime = -Double.MAX_VALUE;
+        int i = 0;
+        for (SACFileName sacName : sacNames) {
+            SACFileAccess sacData = sacName.read();
+            String txtFileName = sacName.toPath().getFileName().toString() + ".txt";
+            double minTime = Double.MAX_VALUE;
+            double maxTime = -Double.MAX_VALUE;
 
-           // display data of timewindow
-           gnuplot.addLabel(sacData.getObserver().toPaddedInfoString() + " " + sacData.getComponent().toString(), "graph", 0.01, 0.95);
-           gnuplot.addLabel(sacData.getGlobalCMTID().toString(), "graph", 0.01, 0.85);
+            // display data of timewindow
+            gnuplot.addLabel(sacData.getObserver().toPaddedInfoString() + " " + sacData.getComponent().toString(), "graph", 0.01, 0.95);
+            gnuplot.addLabel(sacData.getGlobalCMTID().toString(), "graph", 0.01, 0.85);
 
-           // plot waveforms
-           // Absolute paths are used here because relative paths are hard to construct when workPath != mainBasicPath.
-           String eventName = eventPath.getFileName().toString();
-           gnuplot.addLine("0", BasicPlotAid.ZERO_APPEARANCE, "");
-           Path mainFilePath = mainSynPath.toAbsolutePath().resolve(eventName).resolve(txtFileName);
-           if (mainSynStyle != 0)
-               gnuplot.addLine(mainFilePath.toString(), 1, 2, BasicPlotAid.switchSyntheticAppearance(mainSynStyle), mainSynName);
-           if (refSynStyle1 != 0) {
-               Path refFilePath1 = refSynPath1.toAbsolutePath().resolve(eventName).resolve(txtFileName);
-               gnuplot.addLine(refFilePath1.toString(), 1, 2, BasicPlotAid.switchSyntheticAppearance(refSynStyle1), refSynName1);
-           }
-           if (residualStyle1 != 0) {
-               Path refFilePath1 = refSynPath1.toAbsolutePath().resolve(eventName).resolve(txtFileName);
-               gnuplot.addLine(refFilePath1.toString(), mainFilePath.toString(), "1:($2-$4)", BasicPlotAid.switchResidualAppearance(residualStyle1), residualName1);
-           }
-           if (refSynStyle2 != 0) {
-               Path refFilePath2 = refSynPath2.toAbsolutePath().resolve(eventName).resolve(txtFileName);
-               gnuplot.addLine(refFilePath2.toString(), 1, 2, BasicPlotAid.switchSyntheticAppearance(refSynStyle2), refSynName2);
-           }
-           if (residualStyle2 != 0) {
-               Path refFilePath2 = refSynPath2.toAbsolutePath().resolve(eventName).resolve(txtFileName);
-               gnuplot.addLine(refFilePath2.toString(), mainFilePath.toString(), "1:($2-$4)", BasicPlotAid.switchResidualAppearance(residualStyle2), residualName2);
-           }
+            // plot waveforms
+            // Absolute paths are used here because relative paths are hard to construct when workPath != mainBasicPath.
+            String eventName = eventPath.getFileName().toString();
+            gnuplot.addLine("0", BasicPlotAid.ZERO_APPEARANCE, "");
+            Path mainFilePath = mainSynPath.toAbsolutePath().resolve(eventName).resolve(txtFileName);
+            if (mainSynStyle != 0)
+                gnuplot.addLine(mainFilePath.toString(), 1, 2, BasicPlotAid.switchSyntheticAppearance(mainSynStyle), mainSynName);
+            if (refSynStyle1 != 0) {
+                Path refFilePath1 = refSynPath1.toAbsolutePath().resolve(eventName).resolve(txtFileName);
+                gnuplot.addLine(refFilePath1.toString(), 1, 2, BasicPlotAid.switchSyntheticAppearance(refSynStyle1), refSynName1);
+            }
+            if (residualStyle1 != 0) {
+                Path refFilePath1 = refSynPath1.toAbsolutePath().resolve(eventName).resolve(txtFileName);
+                gnuplot.addLine(refFilePath1.toString(), mainFilePath.toString(), "1:($2-$4)", BasicPlotAid.switchResidualAppearance(residualStyle1), residualName1);
+            }
+            if (refSynStyle2 != 0) {
+                Path refFilePath2 = refSynPath2.toAbsolutePath().resolve(eventName).resolve(txtFileName);
+                gnuplot.addLine(refFilePath2.toString(), 1, 2, BasicPlotAid.switchSyntheticAppearance(refSynStyle2), refSynName2);
+            }
+            if (residualStyle2 != 0) {
+                Path refFilePath2 = refSynPath2.toAbsolutePath().resolve(eventName).resolve(txtFileName);
+                gnuplot.addLine(refFilePath2.toString(), mainFilePath.toString(), "1:($2-$4)", BasicPlotAid.switchResidualAppearance(residualStyle2), residualName2);
+            }
 
-        // add vertical lines and labels of travel times listed in travelTimeFile
-           if (travelTimePath != null) {
-               Set<TravelTimeInformation> useInfoSet = travelTimeInfoSet.stream()
-                       .filter(info -> info.getEvent().equals(sacData.getGlobalCMTID()) && info.getObserver().equals(sacData.getObserver())).collect(Collectors.toSet());
-               for (TravelTimeInformation info : useInfoSet) {
-                   Map<Phase, Double> usePhaseMap = info.getUsePhases();
-                   for (Map.Entry<Phase, Double> entry : usePhaseMap.entrySet()) {
-                       gnuplot.addArrow(entry.getValue(), BasicPlotAid.USE_PHASE_APPEARANCE);
-                       gnuplot.addLabel(entry.getKey().toString(), "first", entry.getValue(), "graph", 0.95, GnuplotColorName.turquoise);
-                       if (!Double.isNaN(frontShift) && !Double.isNaN(rearShift)) {
-                           if (entry.getValue() < minTime) minTime = entry.getValue();
-                           if (entry.getValue() > maxTime) maxTime = entry.getValue();
-                       }
-                   }
-                   Map<Phase, Double> avoidPhaseMap = info.getAvoidPhases();
-                   for (Map.Entry<Phase, Double> entry : avoidPhaseMap.entrySet()) {
-                       gnuplot.addArrow(entry.getValue(), BasicPlotAid.AVOID_PHASE_APPEARANCE);
-                       gnuplot.addLabel(entry.getKey().toString(), "first", entry.getValue(), "graph", 0.95, GnuplotColorName.violet);
-                   }
-               }
-           }
-           // add vertical lines and labels of travel times computed by TauP
-           else if (displayPhases != null) {
-               timeTool.setPhaseNames(displayPhases);
-               timeTool.calculate(sacData.getValue(SACHeaderEnum.GCARC));
-               List<Arrival> arrivals = timeTool.getArrivals();
-               for (String phase : displayPhases) {
-                   Optional<Arrival> arrivalOpt = arrivals.stream().filter(arrival -> arrival.getPhase().getName().equals(phase)).findFirst();
-                   if (arrivalOpt.isPresent()) {
-                       gnuplot.addArrow(arrivalOpt.get().getTime(), BasicPlotAid.USE_PHASE_APPEARANCE);
-                       gnuplot.addLabel(phase, "first", arrivalOpt.get().getTime(), "graph", 0.95, GnuplotColorName.turquoise);
-                       if (!Double.isNaN(frontShift) && !Double.isNaN(rearShift)) {
-                           if (arrivalOpt.get().getTime() < minTime) minTime = arrivalOpt.get().getTime();
-                           if (arrivalOpt.get().getTime() > maxTime) maxTime = arrivalOpt.get().getTime();
-                       }
-                   }
-               }
-           }
-           if (!Double.isNaN(frontShift) && !Double.isNaN(rearShift)) {
-               minTime = minTime - frontShift;
-               maxTime = maxTime + rearShift;
-           }
-           if (Double.isNaN(frontShift) && Double.isNaN(rearShift)) {
-               maxTime = upperTime;
-               minTime = lowerTime;
-           }
-           // set xrange
-           gnuplot.setXrange(minTime - FRONT_MARGIN, maxTime + FRONT_MARGIN);
+            // add vertical lines and labels of travel times listed in travelTimeFile
+            if (travelTimePath != null) {
+                Set<TravelTimeInformation> useInfoSet = travelTimeInfoSet.stream()
+                        .filter(info -> info.getEvent().equals(sacData.getGlobalCMTID()) && info.getObserver().equals(sacData.getObserver())).collect(Collectors.toSet());
+                for (TravelTimeInformation info : useInfoSet) {
+                    Map<Phase, Double> usePhaseMap = info.getUsePhases();
+                    for (Map.Entry<Phase, Double> entry : usePhaseMap.entrySet()) {
+                        gnuplot.addArrow(entry.getValue(), BasicPlotAid.USE_PHASE_APPEARANCE);
+                        gnuplot.addLabel(entry.getKey().toString(), "first", entry.getValue(), "graph", 0.95, GnuplotColorName.turquoise);
+                        if (!Double.isNaN(frontShift) && !Double.isNaN(rearShift)) {
+                            if (entry.getValue() < minTime) minTime = entry.getValue();
+                            if (entry.getValue() > maxTime) maxTime = entry.getValue();
+                        }
+                    }
+                    Map<Phase, Double> avoidPhaseMap = info.getAvoidPhases();
+                    for (Map.Entry<Phase, Double> entry : avoidPhaseMap.entrySet()) {
+                        gnuplot.addArrow(entry.getValue(), BasicPlotAid.AVOID_PHASE_APPEARANCE);
+                        gnuplot.addLabel(entry.getKey().toString(), "first", entry.getValue(), "graph", 0.95, GnuplotColorName.violet);
+                    }
+                }
+            }
+            // add vertical lines and labels of travel times computed by TauP
+            else if (displayPhases != null) {
+                timeTool.setPhaseNames(displayPhases);
+                timeTool.calculate(sacData.getValue(SACHeaderEnum.GCARC));
+                List<Arrival> arrivals = timeTool.getArrivals();
+                for (String phase : displayPhases) {
+                    Optional<Arrival> arrivalOpt = arrivals.stream().filter(arrival -> arrival.getPhase().getName().equals(phase)).findFirst();
+                    if (arrivalOpt.isPresent()) {
+                        gnuplot.addArrow(arrivalOpt.get().getTime(), BasicPlotAid.USE_PHASE_APPEARANCE);
+                        gnuplot.addLabel(phase, "first", arrivalOpt.get().getTime(), "graph", 0.95, GnuplotColorName.turquoise);
+                        if (!Double.isNaN(frontShift) && !Double.isNaN(rearShift)) {
+                            if (arrivalOpt.get().getTime() < minTime) minTime = arrivalOpt.get().getTime();
+                            if (arrivalOpt.get().getTime() > maxTime) maxTime = arrivalOpt.get().getTime();
+                        }
+                    }
+                }
+            }
+            if (!Double.isNaN(frontShift) && !Double.isNaN(rearShift)) {
+                minTime = minTime - frontShift;
+                maxTime = maxTime + rearShift;
+            }
+            if (Double.isNaN(frontShift) && Double.isNaN(rearShift)) {
+                maxTime = upperTime;
+                minTime = lowerTime;
+            }
+            // set xrange
+            gnuplot.setXrange(minTime - FRONT_MARGIN, maxTime + FRONT_MARGIN);
 
-           // this is not done for the last obsID because we don't want an extra blank page to be created
-           if ((i + 1) < sacNames.size()) {
-               if ((i + 1) % NUM_PER_PAGE == 0) {
-                   gnuplot.nextPage();
-               } else {
-                   gnuplot.nextField();
-               }
-           }
-           i++;
-       }
-       // fill the last page with blank fields so that fields on the last page will get the same size as those on other pages
-       while(i % NUM_PER_PAGE != 0) {
-           i++;
-           gnuplot.nextField();
-       }
+            // this is not done for the last obsID because we don't want an extra blank page to be created
+            if ((i + 1) < sacNames.size()) {
+                if ((i + 1) % NUM_PER_PAGE == 0) {
+                    gnuplot.nextPage();
+                } else {
+                    gnuplot.nextField();
+                }
+            }
+            i++;
+        }
+        // fill the last page with blank fields so that fields on the last page will get the same size as those on other pages
+        while(i % NUM_PER_PAGE != 0) {
+            i++;
+            gnuplot.nextField();
+        }
 
-       gnuplot.write();
-       if (!gnuplot.execute()) System.err.println("gnuplot failed!!");
-   }
+        gnuplot.write();
+        if (!gnuplot.execute()) System.err.println("gnuplot failed!!");
+    }
+
+    /**
+     * Read SAC files in event directories and output in ascii format.
+     * Output file name is "SAC file name".txt"
+     * @param eventDirs (set of {@link EventFolder})
+     */
+    public static void outputSacFileTxts(Set<EventFolder> eventDirs) {
+        for (EventFolder eventDir : eventDirs) {
+            try {
+                Set<SACFileName> set = eventDir.sacFileSet();
+
+                for (SACFileName sacName : set) {
+                    // set output
+                    String fileName = sacName.toPath().getFileName().toString();
+                    Path outputPath = eventDir.toPath().resolve(fileName + ".txt");
+
+                    // set input file path
+                    SACFileAccess sacData = sacName.read();
+                    Trace sacTrace = sacData.createTrace();
+
+                    // output
+                    try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath))) {
+                        for (int i = 0; i < sacTrace.getLength(); i++) {
+                            pw.println(sacTrace.getXAt(i) + " " + sacTrace.getYAt(i));
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                System.err.println("Error on " + eventDir);
+                e.printStackTrace();
+            }
+        }
+    }
 
 }

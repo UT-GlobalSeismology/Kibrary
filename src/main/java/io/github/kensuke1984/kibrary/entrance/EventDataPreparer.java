@@ -114,7 +114,7 @@ class EventDataPreparer {
                 "&starttime=" + toLine(startTime) + "&endtime=" + toLine(endTime) + "&format=miniseed&nodata=404";
         URL url = new URL(urlString);
 
-        // leave it for redirect validation
+        // leave this for redirect validation
         //followingRedirects(url);
 
         Files.createDirectories(mseedSetPath);
@@ -550,9 +550,9 @@ class EventDataPreparer {
     }
 
     /**
-     * Following redirects during HTTP Status Codes are 3xx.
+     * Follow redirects while HTTP Status Codes are 3xx.
      * Leave this method for redirect validation.
-     * @param URL start
+     * @param start (URL)
      * @return HttpURLConnection when HTTP Status Codes are NOT 3xx
      * @throws IOException
      */

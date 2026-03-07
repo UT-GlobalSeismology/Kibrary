@@ -279,7 +279,6 @@ public class GnuplotFile {
     }
 
     /**
-     *
      * @param fileName1 (String)
      * @param fileName2 (String)
      * @param plotPart (String) The content of the "using" part. (ex. 1:3, 1:($3+$1) )

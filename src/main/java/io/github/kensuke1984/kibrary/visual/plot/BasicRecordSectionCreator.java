@@ -64,15 +64,15 @@ import io.github.kensuke1984.kibrary.waveform.BasicIDPairUp;
 public class BasicRecordSectionCreator extends Operation {
 
     /**
-     * The interval of exporting travel times
+     * The interval of exporting travel times.
      */
     private static final double DISTANCE_INTERVAL = 1;
     /**
-     * The interval of ray parameters (s/degree)
+     * The interval of ray parameters (s/degree).
      */
     private static final double RAY_PARAMETER_INTERVAL = 0.01;
     /**
-     * The interval of deciding graph size; should be a multiple of TRAVEL_TIME_INTERVAL
+     * The interval of deciding graph size; should be a multiple of TRAVEL_TIME_INTERVAL.
      */
     private static final int GRAPH_SIZE_INTERVAL = 2;
     /**
@@ -144,15 +144,15 @@ public class BasicRecordSectionCreator extends Operation {
      */
     private double reductionSlowness;
     /**
-     * Path of structure file to compute travel times instead of structureName. This is referred only for anisotimeMode
+     * Path of structure file to compute travel times instead of structureName. This is referred only for anisotimeMode.
      */
     private Path structurePath;
     /**
-     * Name of structure to compute travel times
+     * Name of structure to compute travel times.
      */
     private String structureName;
     /**
-     * Use anisotime to compute travel times instead of TauP
+     * Use anisotime to compute travel times instead of TauP.
      */
     private boolean anisotimeMode;
     /**
@@ -219,6 +219,7 @@ public class BasicRecordSectionCreator extends Operation {
             pw.println("##(boolean) Whether to set the azimuth range to [-180:180) instead of [0:360). (false)");
             pw.println("##  This is effective when using south-to-north raypaths in byAzimuth mode.");
             pw.println("#flipAzimuth ");
+            pw.println("##########Settings of travel times.");
             pw.println("##Names of phases to plot travel time curves, listed using spaces. Only when byAzimuth is false.");
             pw.println("#displayPhases ");
             pw.println("##(boolean) Whether to plot travel time curves as shaded thick lines. (false)");
@@ -229,15 +230,16 @@ public class BasicRecordSectionCreator extends Operation {
             pw.println("##(double) The apparent slowness to use for time reduction [s/deg]. (0)");
             pw.println("#reductionSlowness ");
             pw.println("##Path of a structure file you want to use. If this is unset, the following structureName will be referenced.");
-            pw.println("##This option is valid when the floowing anisotimeMode is true");
+            pw.println("##  This option is valid when the following anisotimeMode is true.");
             pw.println("#structurePath ");
-            pw.println("##(String) Name of structure to compute travel times (prem)");
+            pw.println("##(String) Name of structure to compute travel times. (prem)");
             pw.println("#structureName ");
-            pw.println("##(boolean) Whether you use anisotime to compute TRAVEL TIME CURVES instead of TauP (false).");
-            pw.println("##Note that alignPhases are computed using TauP even if this is ture.");
+            pw.println("##(boolean) Whether to use anisotime instead of TauP to compute TRAVEL TIME CURVES. (false).");
+            pw.println("##  Note that alignPhases are computed using TauP even if this is true.");
             pw.println("#anisotimeMode true");
-            pw.println("##(boolean) Compute travel time curves using anisotime for... (true: P-SV wave, false: SH wave) (false)");
+            pw.println("##(boolean) Whether to compute travel time curves using anisotime for P-SV waves. Otherwise, SH. (false)");
             pw.println("#computeSV true");
+            pw.println("##########Settings of graph display.");
             pw.println("##(double) Lower limit of range of epicentral distance to be used [deg], inclusive; [0:upperDistance). (0)");
             pw.println("#lowerDistance ");
             pw.println("##(double) Upper limit of range of epicentral distance to be used [deg], exclusive; (lowerDistance:180]. (180)");
@@ -308,7 +310,7 @@ public class BasicRecordSectionCreator extends Operation {
         anisotimeMode = property.parseBoolean("anisotimeMode", "false");
         if (anisotimeMode) {
             if (property.containsKey("structurePath"))
-            structurePath = property.parsePath("structurePath", null, true, workPath);
+                structurePath = property.parsePath("structurePath", null, true, workPath);
             computeSV = property.parseBoolean("computeSV", "false");
         }
         structureName = property.parseString("structureName", "iprem").toLowerCase();
@@ -369,14 +371,14 @@ public class BasicRecordSectionCreator extends Operation {
             BasicIDFile.outputWaveformTxts(refBasicIDs2, refBasicPath2);
         }
 
-       try {
-           // set up taup_time tool
-           if (alignPhases != null || displayPhases != null) {
-               if (structureName.equals("iprem"))
-                   timeTool = new TauP_Time("prem");
-               else
-                   timeTool = new TauP_Time(structureName);
-           }
+        try {
+            // set up taup_time tool
+            if (alignPhases != null || displayPhases != null) {
+                if (structureName.equals("iprem"))
+                    timeTool = new TauP_Time("prem");
+                else
+                    timeTool = new TauP_Time(structureName);
+            }
 
             for (GlobalCMTID event : events) {
 
@@ -722,5 +724,7 @@ public class BasicRecordSectionCreator extends Operation {
                 gnuplot.addLine(curveFileName, 2, 1, BasicPlotAid.USE_PHASE_APPEARANCE, "");
             }
         }
+
     }
+
 }
