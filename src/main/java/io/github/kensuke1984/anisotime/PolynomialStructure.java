@@ -80,23 +80,23 @@ public class PolynomialStructure implements VelocityStructure {
 //            newStructure = newStructure.mergeLayer(newStructure.zoneOf(boundary));
 //            int izone = newStructure.zoneOf(boundary);
 //            //rho
-//            newStructure = newStructure.setFunction(VariableType.RHO, izone,
+//            newStructure = newStructure.withFunction(VariableType.RHO, izone,
 //                    computeReplacement(boundary, earthRadius, newStructure.getRho()[izone],
 //                            newStructure.getRho()[izone + 1]));
 //            //Vpv
-//            newStructure = newStructure.setFunction(VariableType.Vpv, izone,
+//            newStructure = newStructure.withFunction(VariableType.Vpv, izone,
 //                    computeReplacement(boundary, earthRadius, newStructure.getVpv()[izone],
 //                            newStructure.getVpv()[izone + 1]));
 //            //Vph
-//            newStructure = newStructure.setFunction(VariableType.Vph, izone,
+//            newStructure = newStructure.withFunction(VariableType.Vph, izone,
 //                    computeReplacement(boundary, earthRadius, newStructure.getVph()[izone],
 //                            newStructure.getVph()[izone + 1]));
 //            //Vsv
-//            newStructure = newStructure.setFunction(VariableType.Vsv, izone,
+//            newStructure = newStructure.withFunction(VariableType.Vsv, izone,
 //                    computeReplacement(boundary, earthRadius, newStructure.getVsv()[izone],
 //                            newStructure.getVsv()[izone + 1]));
 //            //Vsh
-//            newStructure = newStructure.setFunction(VariableType.Vsh, izone,
+//            newStructure = newStructure.withFunction(VariableType.Vsh, izone,
 //                    computeReplacement(boundary, earthRadius, newStructure.getVsh()[izone],
 //                            newStructure.getVsh()[izone + 1]));
         }

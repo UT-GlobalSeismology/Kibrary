@@ -43,7 +43,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
 public class SacRecordSectionCreator extends Operation {
 
     /**
-     * The interval of deciding graph size; should be a multiple of TRAVEL_TIME_INTERVAL.
+     * The interval of deciding graph size.
      */
     private static final int GRAPH_SIZE_INTERVAL = 2;
     /**
