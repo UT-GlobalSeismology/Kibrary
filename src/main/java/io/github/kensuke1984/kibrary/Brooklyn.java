@@ -13,12 +13,12 @@ import io.github.kensuke1984.kibrary.entrance.DataTransfer;
 import io.github.kensuke1984.kibrary.external.specfem.SPECFEMModelMaker;
 import io.github.kensuke1984.kibrary.external.specfem.SPECFEMPostProcess;
 import io.github.kensuke1984.kibrary.external.specfem.SPECFEMSetup;
-import io.github.kensuke1984.kibrary.inversion.DiagATAExtract;
 import io.github.kensuke1984.kibrary.inversion.EntryWeightListFile;
+import io.github.kensuke1984.kibrary.inversion.ExtractValuesFromMatrix;
+import io.github.kensuke1984.kibrary.inversion.ResolutionMatrixComputer;
 import io.github.kensuke1984.kibrary.inversion.WeightingHandler;
 import io.github.kensuke1984.kibrary.math.MatrixFile;
 import io.github.kensuke1984.kibrary.math.VectorFile;
-import io.github.kensuke1984.kibrary.perturbation.PerturbationComparison;
 import io.github.kensuke1984.kibrary.source.SourceTimeFunction;
 import io.github.kensuke1984.kibrary.timewindow.TimeWindowDataFile;
 import io.github.kensuke1984.kibrary.timewindow.TimeWindowSubtract;
@@ -99,13 +99,13 @@ enum Brooklyn {
     WeightingHandler(70, WeightingHandler.class),
     VectorFile(71, VectorFile.class),
     MatrixFile(72, MatrixFile.class),
-    DiagATAExtract(73, DiagATAExtract.class),
+    ExtractValuesFromMatrix(73, ExtractValuesFromMatrix.class),
+    ResolutionMatrixComputer(77, ResolutionMatrixComputer.class),
     // Tests 80
     SPECFEMSetup(80, SPECFEMSetup.class),
     SPECFEMModelMaker(81, SPECFEMModelMaker.class),
     SPECFEMPostProcess(82, SPECFEMPostProcess.class),
     // Scalar & Sensitivity 90
-    PerturbationComparison(90, PerturbationComparison.class),
     // Temporal 100
     RecordNumberPlot(100, RecordNumberPlot.class),
     ;

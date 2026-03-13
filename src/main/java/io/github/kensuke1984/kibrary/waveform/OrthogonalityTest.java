@@ -229,7 +229,7 @@ public class OrthogonalityTest extends Operation {
 
         // set DVector
         System.err.println("Setting data for d vector");
-        DVectorBuilder dVectorBuilder = new DVectorBuilder(basicIDs);
+        DVectorBuilder dVectorBuilder = new DVectorBuilder(basicIDs, true);
 
         // set weighting
         System.err.println("Setting weighting");

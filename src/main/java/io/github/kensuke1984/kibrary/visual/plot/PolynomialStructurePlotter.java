@@ -85,7 +85,7 @@ public class PolynomialStructurePlotter extends Operation {
             pw.println("#fileTag ");
             pw.println("##(boolean) Whether to append date string at end of output file names. (true)");
             pw.println("#appendFileDate false");
-            pw.println("##Variable types to map, listed using spaces, from {RHO,Vp,Vpv,Vph,Vs,Vsv,Vsh,ETA}. (RHO Vpv Vph Vsv Vsh ETA)");
+            pw.println("##Variable types to plot, listed using spaces, from {RHO,Vp,Vpv,Vph,Vs,Vsv,Vsh,ETA}. (RHO Vpv Vph Vsv Vsh ETA)");
             pw.println("#variableTypes ");
             pw.println("##(boolean) How to distinguish structures, from {COLOR, SHADE, DASH, NONE}. (SHADE)");
             pw.println("#structureDistinguisher ");

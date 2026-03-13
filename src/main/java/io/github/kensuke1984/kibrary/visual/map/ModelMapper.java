@@ -18,6 +18,7 @@ import io.github.kensuke1984.kibrary.elastic.VariableType;
 import io.github.kensuke1984.kibrary.fusion.FusionDesign;
 import io.github.kensuke1984.kibrary.fusion.FusionInformationFile;
 import io.github.kensuke1984.kibrary.math.Interpolation;
+import io.github.kensuke1984.kibrary.math.geometry.CoordinateConverter;
 import io.github.kensuke1984.kibrary.perturbation.PerturbationModel;
 import io.github.kensuke1984.kibrary.perturbation.ScalarListFile;
 import io.github.kensuke1984.kibrary.perturbation.ScalarType;
@@ -75,6 +76,10 @@ public class ModelMapper extends Operation {
      * Path of a {@link FusionInformationFile}.
      */
     private Path fusionPath;
+    /**
+     * Path of coordinate converter file to be used when interpolating.
+     */
+    private Path converterPath;
     private Set<VariableType> variableTypes;
 
     private double[] boundaries;
@@ -132,6 +137,8 @@ public class ModelMapper extends Operation {
             pw.println("#referenceStructureName ");
             pw.println("##Path of a fusion information file, if adaptive grid inversion is conducted.");
             pw.println("#fusionPath fusion.inf");
+            pw.println("##Path of coordinate converter file, when interpolating on curvilinear grid.");
+            pw.println("#converterPath converter.inf");
             pw.println("##Variable types to map, listed using spaces. (Vs)");
             pw.println("#variableTypes ");
             pw.println("##(double[]) The display values of each layer boundary, listed from the inside using spaces. (0 50 100 150 200 250 300 350 400)");
@@ -186,8 +193,12 @@ public class ModelMapper extends Operation {
         } else {
             referenceStructureName = property.parseString("referenceStructureName", "PREM");
         }
-        if (property.containsKey("fusionPath"))
+        if (property.containsKey("fusionPath")) {
             fusionPath = property.parsePath("fusionPath", null, true, workPath);
+        }
+        if (property.containsKey("converterPath")) {
+            converterPath = property.parsePath("converterPath", null, true, workPath);
+        }
 
         variableTypes = Arrays.stream(property.parseStringArray("variableTypes", "Vs")).map(VariableType::valueOf)
                 .collect(Collectors.toSet());
@@ -242,6 +253,9 @@ public class ModelMapper extends Operation {
             knowns = fusionDesign.reverseFusion(knowns);
         }
 
+        // read coordinate converver file
+        CoordinateConverter converter = (converterPath != null) ? new CoordinateConverter(converterPath) : null;
+
         // build model
         PerturbationModel model = new PerturbationModel(knowns, initialStructure);
         if (!referenceStructure.equals(initialStructure)) {
@@ -261,9 +275,17 @@ public class ModelMapper extends Operation {
             Map<FullPosition, Double> discreteMap = model.getValueMap(variable, ScalarType.PERCENT);
             Path outputDiscretePath = outPath.resolve(ScalarListFile.generateFileName(variable, ScalarType.PERCENT));
             ScalarListFile.write(discreteMap, outputDiscretePath);
+
+            // interpolate
+            Map<FullPosition, Double> interpolatedMap;
+            if (converterPath != null) {
+                interpolatedMap = Interpolation.curvilinearInEachMapLayer(discreteMap, gridInterval, converter, mosaic);
+            } else {
+                interpolatedMap = Interpolation.inEachMapLayer(discreteMap, gridInterval,
+                        marginLatitudeRaw, setMarginLatitudeByKm, marginLongitudeRaw, setMarginLongitudeByKm, crossDateLine, mosaic);
+            }
+
             // output interpolated perturbation file, in range [0:360) when crossDateLine==true so that mapping will succeed
-            Map<FullPosition, Double> interpolatedMap = Interpolation.inEachMapLayer(discreteMap, gridInterval,
-                    marginLatitudeRaw, setMarginLatitudeByKm, marginLongitudeRaw, setMarginLongitudeByKm, crossDateLine, mosaic);
             Path outputInterpolatedPath = outPath.resolve(ScalarListFile.generateFileName(variable, ScalarType.PERCENT, "XY"));
             ScalarListFile.write(interpolatedMap, crossDateLine, outputInterpolatedPath);
 

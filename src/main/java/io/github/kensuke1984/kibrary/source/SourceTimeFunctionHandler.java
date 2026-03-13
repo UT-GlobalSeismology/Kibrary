@@ -91,8 +91,7 @@ public class SourceTimeFunctionHandler {
         if (userSTFPath != null) {
             SourceTimeFunction tmp = userSourceTimeFunctions.get(event);
             if (tmp == null) {
-                System.err.println("! Source time function for " + event + " not found, using triangular instead.");
-                tmp = SourceTimeFunction.triangleSourceTimeFunction(np, tlen, halfDuration);
+                return null;
             } else if (tmp.getNp() != np || !Precision.equals(tmp.getTlen(), tlen)) {
                 System.err.println("! Input np " + tmp.getNp() + " and tlen " + tmp.getTlen() + " do not match requirements, using triangular instead.");
                 tmp = SourceTimeFunction.triangleSourceTimeFunction(np, tlen, halfDuration);

@@ -20,6 +20,7 @@ import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.elastic.VariableType;
 import io.github.kensuke1984.kibrary.math.Interpolation;
+import io.github.kensuke1984.kibrary.math.geometry.CoordinateConverter;
 import io.github.kensuke1984.kibrary.perturbation.ScalarListFile;
 import io.github.kensuke1984.kibrary.perturbation.ScalarType;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
@@ -80,6 +81,10 @@ public class SensitivityKernelMapper3D extends Operation {
      * Whether to create map.
      */
     private boolean map;
+    /**
+     * Path of coordinate converter file to be used when interpolating.
+     */
+    private Path converterPath;
     private double[] boundaries;
     /**
      * Indices of layers to display in the figure. Listed from the inside. Layers are numbered 0, 1, 2, ... from the inside.
@@ -136,6 +141,8 @@ public class SensitivityKernelMapper3D extends Operation {
             pw.println("##########The following are parameters for the map.");
             pw.println("##(boolean) Whether to create map. (false)");
             pw.println("#map true");
+            pw.println("##Path of coordinate converter file, when interpolating on curvilinear grid.");
+            pw.println("#converterPath converter.inf");
             pw.println("##(double[]) The display values of each layer boundary, listed from the inside using spaces. (0 50 100 150 200 250 300 350 400)");
             pw.println("#boundaries ");
             pw.println("##(int[]) Indices of layers to display, listed from the inside using spaces, when specific layers are to be displayed.");
@@ -187,6 +194,9 @@ public class SensitivityKernelMapper3D extends Operation {
         tendObservers = Arrays.stream(property.parseStringArray("tendObservers", null)).collect(Collectors.toSet());
 
         map = property.parseBoolean("map", "false");
+        if (property.containsKey("converterPath")) {
+            converterPath = property.parsePath("converterPath", null, true, workPath);
+        }
         boundaries = property.parseDoubleArray("boundaries", "0 50 100 150 200 250 300 350 400");
         if (property.containsKey("displayLayers")) displayLayers = property.parseIntArray("displayLayers", null);
         nPanelsPerRow = property.parseInt("nPanelsPerRow", "4");
@@ -227,6 +237,9 @@ public class SensitivityKernelMapper3D extends Operation {
         }
         Set<FullPosition> positions = partialIDs.stream().map(partial -> partial.getVoxelPosition()).collect(Collectors.toSet());
         double[] radii = positions.stream().mapToDouble(pos -> pos.getR()).distinct().sorted().toArray();
+
+        // read coordinate converver file
+        CoordinateConverter converter = (converterPath != null) ? new CoordinateConverter(converterPath) : null;
 
         // decide map region
         boolean crossDateLine = false;
@@ -291,12 +304,20 @@ public class SensitivityKernelMapper3D extends Operation {
                             ScalarListFile.write(discreteMap, outputDiscretePath);
 
                             if (map) {
+                                // interpolate
+                                Map<FullPosition, Double> interpolatedMap;
+                                if (converterPath != null) {
+                                    interpolatedMap = Interpolation.curvilinearInEachMapLayer(discreteMap, gridInterval, converter, mosaic);
+                                } else {
+                                    interpolatedMap = Interpolation.inEachMapLayer(discreteMap, gridInterval,
+                                            marginLatitude, setLatitudeByKm, marginLongitude, setLongitudeByKm, crossDateLine, mosaic);
+                                }
+
                                 // output interpolated perturbation file, in range [0:360) when crossDateLine==true so that mapping will succeed
-                                Map<FullPosition, Double> interpolatedMap = Interpolation.inEachMapLayer(discreteMap, gridInterval,
-                                        marginLatitude, setLatitudeByKm, marginLongitude, setLongitudeByKm, crossDateLine, mosaic);
                                 Path outputInterpolatedPath = observerPath.resolve(ScalarListFile.generateFileName(variableType, scalarType, tag + "_XY"));
                                 ScalarListFile.write(interpolatedMap, crossDateLine, outputInterpolatedPath);
 
+                                // write shellscripts for mapping
                                 ScalarMapShellscript script = new ScalarMapShellscript(variableType, scalarType, tag, radii, boundaries,
                                         mapRegion, gridInterval, scale, nPanelsPerRow);
                                 if (displayLayers != null) script.setDisplayLayers(displayLayers);

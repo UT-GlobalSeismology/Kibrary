@@ -1,5 +1,8 @@
 package io.github.kensuke1984.kibrary.inversion.solve;
 
+import java.io.IOException;
+import java.nio.file.Path;
+
 import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.LUDecomposition;
 import org.apache.commons.math3.linear.MatrixUtils;
@@ -142,8 +145,12 @@ public class ConstrainedConjugateGradientMethod extends InversionMethod {
     }
 
     @Override
-    public RealMatrix getBaseVectors() {
+    public RealMatrix getBasisVectors() {
         return p;
+    }
+
+    @Override
+    public void outputBasisVectors(Path outPath) throws IOException {
     }
 
     @Override
