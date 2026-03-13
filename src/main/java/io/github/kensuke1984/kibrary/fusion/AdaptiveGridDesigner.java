@@ -11,22 +11,17 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.apache.commons.math3.linear.RealMatrix;
-import org.apache.commons.math3.util.FastMath;
 
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.elastic.VariableType;
 import io.github.kensuke1984.kibrary.inversion.WeightingHandler;
-import io.github.kensuke1984.kibrary.inversion.setup.AtAFile;
 import io.github.kensuke1984.kibrary.inversion.setup.MatrixAssembly;
+import io.github.kensuke1984.kibrary.math.MatrixFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameterFile;
-import io.github.kensuke1984.kibrary.waveform.BasicID;
-import io.github.kensuke1984.kibrary.waveform.BasicIDFile;
-import io.github.kensuke1984.kibrary.waveform.PartialID;
-import io.github.kensuke1984.kibrary.waveform.PartialIDFile;
 
 /**
  * Computes correlation between partial waveforms of each unknown parameter,
@@ -42,7 +37,7 @@ public class AdaptiveGridDesigner extends Operation {
 
     private final Property property;
     /**
-     * Path of the work folder
+     * Path of the work folder.
      */
     private Path workPath;
     /**
@@ -50,28 +45,28 @@ public class AdaptiveGridDesigner extends Operation {
      */
     private String folderTag;
     /**
-     * Path of the output folder
+     * Whether to append date string at end of output folder name.
      */
-    private Path outPath;
+    private boolean appendFolderDate;
 
     /**
-     * path of ata file
+     * Path of ata file.
      */
     private Path ataPath;
     /**
-     * path of basic waveform folder
+     * Path of basic waveform folder.
      */
     private Path basicPath;
     /**
-     * path of partial waveform folder
+     * Path of partial waveform folder.
      */
     private Path partialPath;
     /**
-     * Path of unknown parameter file
+     * Path of unknown parameter file.
      */
     private Path unknownParameterPath;
     /**
-     * Partial types of parameters to be fused
+     * Partial types of parameters to be fused.
      */
     private List<VariableType> variableTypes;
 
@@ -82,44 +77,45 @@ public class AdaptiveGridDesigner extends Operation {
     private double minDiagonalAmplitude;
 
     /**
-     * @param args  none to create a property file <br>
-     *              [property file] to run
-     * @throws IOException if any
+     * @param args (String[]) Arguments: none to create a property file, path of property file to run it.
+     * @throws IOException
      */
     public static void main(String[] args) throws IOException {
-        if (args.length == 0) writeDefaultPropertiesFile();
+        if (args.length == 0) writeDefaultPropertiesFile(null);
         else Operation.mainFromSubclass(args);
     }
 
-    public static void writeDefaultPropertiesFile() throws IOException {
-        Class<?> thisClass = new Object(){}.getClass().getEnclosingClass();
-        Path outPath = Property.generatePath(thisClass);
+    public static void writeDefaultPropertiesFile(String tag) throws IOException {
+        String className = new Object(){}.getClass().getEnclosingClass().getSimpleName();
+        Path outPath = DatasetAid.generateOutputFilePath(Paths.get(""), className, tag, true, null, ".properties");
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
-            pw.println("manhattan " + thisClass.getSimpleName());
-            pw.println("##Path of a work folder (.)");
+            pw.println("manhattan " + className);
+            pw.println("##Path of work folder. (.)");
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this unset.");
             pw.println("#folderTag ");
+            pw.println("##(boolean) Whether to append date string at end of output folder name. (true)");
+            pw.println("#appendFolderDate false");
             pw.println("##########If this section is set, the next section is not neeeded.");
-            pw.println("##Path of an AtA file");
+            pw.println("##Path of an AtA file.");
             pw.println("#ataPath ata.lst");
             pw.println("##########If the previous section is set, this section is not neeeded.");
-            pw.println("##Path of a basic waveform folder");
+            pw.println("##Path of a basic waveform folder.");
             pw.println("#basicPath actual");
-            pw.println("##Path of a partial waveform folder");
+            pw.println("##Path of a partial waveform folder.");
             pw.println("#partialPath partial");
             pw.println("##Path of a weighting properties file, must be set.");
             pw.println("#weightingPropertiesPath ");
             pw.println("##########Other settings.");
-            pw.println("##Path of an unknown parameter list file, must be set and must match ata file if it is used");
+            pw.println("##Path of an unknown parameter list file, must be set and must match ata file if it is used.");
             pw.println("#unknownParameterPath unknowns.lst");
             pw.println("##Variable types of parameters to fuse. If not set, all variable types will be used.");
             pw.println("#variableTypes ");
-            pw.println("##(double) Minimum value of correlation for a pair of voxels to be fused (0.8)");
+            pw.println("##(double) Minimum value of correlation for a pair of voxels to be fused. (0.8)");
             pw.println("#minCorrelation ");
-            pw.println("##(double) Minimum value of amplitude ratio for a pair of voxels to be fused (0.9)");
+            pw.println("##(double) Minimum value of amplitude ratio for a pair of voxels to be fused. (0.9)");
             pw.println("#minAmpRatio ");
-            pw.println("##(double) Minimum diagonal component amplitude of AtA for a voxel to be fused (0)");
+            pw.println("##(double) Minimum diagonal component amplitude of AtA for a voxel to be fused. (0)");
             pw.println("#minDiagonalAmplitude ");
         }
         System.err.println(outPath + " is created.");
@@ -133,6 +129,7 @@ public class AdaptiveGridDesigner extends Operation {
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
         if (property.containsKey("folderTag")) folderTag = property.parseStringSingle("folderTag", null);
+        appendFolderDate = property.parseBoolean("appendFolderDate", "true");
 
         if (property.containsKey("ataPath")) {
             ataPath = property.parsePath("ataPath", null, true, workPath);
@@ -153,28 +150,25 @@ public class AdaptiveGridDesigner extends Operation {
 
     @Override
     public void run() throws IOException {
-        String dateStr = GadgetAid.getTemporaryString();
 
         // read input and construct AtA
         List<UnknownParameter> parameterList = UnknownParameterFile.read(unknownParameterPath);
         RealMatrix ata;
         if (ataPath != null) {
-            ata = AtAFile.read(ataPath);
+            ata = MatrixFile.read(ataPath);
             if (ata.getColumnDimension() != parameterList.size())
                 throw new IllegalArgumentException("AtA size does not match number of parameters.");
         } else {
             // read input
-            List<BasicID> basicIDs = BasicIDFile.read(basicPath, true);
-            List<PartialID> partialIDs = PartialIDFile.read(partialPath, true);
             WeightingHandler weightingHandler = new WeightingHandler(weightingPropertiesPath);
 
             // assemble matrices
-            MatrixAssembly assembler = new MatrixAssembly(basicIDs, partialIDs, parameterList, weightingHandler, false);
+            MatrixAssembly assembler = new MatrixAssembly(basicPath, partialPath, parameterList, weightingHandler, false);
             ata = assembler.getAta();
         }
 
         // prepare output folder
-        outPath = DatasetAid.createOutputFolder(workPath, "adaptiveGrid", folderTag, dateStr);
+        Path outPath = DatasetAid.createOutputFolder(workPath, "adaptiveGrid", folderTag, appendFolderDate, null);
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         // output unknown parameter with large diagonal component and correlation
@@ -192,8 +186,8 @@ public class AdaptiveGridDesigner extends Operation {
                     if (!parameterList.get(i).getVariableType().equals(parameterList.get(j).getVariableType()))
                         continue;
 
-                    double coeff = ata.getEntry(i, j) / FastMath.sqrt(ata.getEntry(i, i) * ata.getEntry(j, j));
-                    double ampRatio = FastMath.sqrt(ata.getEntry(i, i) / ata.getEntry(j, j));
+                    double coeff = ata.getEntry(i, j) / Math.sqrt(ata.getEntry(i, i) * ata.getEntry(j, j));
+                    double ampRatio = Math.sqrt(ata.getEntry(i, i) / ata.getEntry(j, j));
                     if (ata.getEntry(i, i) > minDiagonalAmplitude && coeff > minCorrelation && ampRatio > minAmpRatio && ampRatio < 1 / minAmpRatio) {
                         GadgetAid.dualPrintln(pw, i + " " + j + " " + ata.getEntry(i, i) + " " + ata.getEntry(i, j) + " " + coeff);
                         GadgetAid.dualPrintln(pw, " - " + parameterList.get(i));

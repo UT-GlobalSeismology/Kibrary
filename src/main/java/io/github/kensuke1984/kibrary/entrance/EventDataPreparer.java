@@ -2,6 +2,7 @@ package io.github.kensuke1984.kibrary.entrance;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
@@ -39,8 +40,8 @@ import io.github.kensuke1984.kibrary.util.sac.SACUtil;
  * <p>
  * (memo: this class does not hold "datacenter" beacuse it is not needed for seed files that already exist.)
  *
- * @since 2021/09/14
  * @author otsuru
+ * @since 2021/09/14
  */
 class EventDataPreparer {
 
@@ -112,12 +113,14 @@ class EventDataPreparer {
                 "&starttime=" + toLine(startTime) + "&endtime=" + toLine(endTime) + "&format=miniseed&nodata=404";
         URL url = new URL(urlString);
 
-        try {
-            System.err.println(" ~ Downloading mseed file ...");
-            Files.createDirectories(mseedSetPath);
-            Path mseedPath = mseedSetPath.resolve(mseedFileName);
-            double sizeMiB = (double) Files.copy(url.openStream(), mseedPath, StandardCopyOption.REPLACE_EXISTING) / 1024 / 1024;
-            System.err.println(" ~ Downloaded : " + eventData + " - " + MathAid.roundToString(sizeMiB, 3) + " MiB");
+        Files.createDirectories(mseedSetPath);
+        Path mseedPath = mseedSetPath.resolve(mseedFileName);
+
+        System.err.print(" ~ Downloading mseed file ...");
+        try (InputStream inputStream = url.openStream()) {
+            double sizeMiB = (double) Files.copy(inputStream, mseedPath, StandardCopyOption.REPLACE_EXISTING) / 1024 / 1024;
+            System.err.println("\r ~ Downloaded : " + eventData + " - " + MathAid.roundToString(sizeMiB, 3) + " MiB  "
+                    + DateTimeFormatter.ofPattern("<yyyy/MM/dd HH:mm:ss>").format(LocalDateTime.now()));
         } catch (FileNotFoundException e) {
             // if there is no available data for this request, return false
             return false;
@@ -246,7 +249,7 @@ class EventDataPreparer {
      * @throws IOException
      */
     private boolean xml2resp(StationXmlFile xmlFile, RespDataFile respFile) throws IOException {
-        String command = "xml2resp -o " + respSetPath.getFileName().resolve(respFile.getRespFile())
+        String command = "xml2resp -o " + respSetPath.getFileName().resolve(respFile.getRespName())
                 + " " + stationSetPath.getFileName().resolve(xmlFile.getXmlFile());
         //System.err.println(command);
         ExternalProcess xProcess = ExternalProcess.launch(command, eventDir.toPath());
@@ -322,11 +325,12 @@ class EventDataPreparer {
 */
     /**
      * Downloads StationXML files for the event into "eventDir/station/", given a set of SAC files.
-     * The downloads may be skipped if the SAC file name is not in mseed-style.
+     * The downloads might be skipped if the SAC file name is not in mseed-style.
      * @param datacenter (String) The name of the datacenter to download from.
+     * @param redo (boolean) Whether to download existing stationXml files again.
      * @throws IOException
      */
-    void downloadXmlMseed(String datacenter) throws IOException {
+    void downloadXmlMseed(String datacenter, boolean redo) throws IOException {
         if (!Files.exists(mseedSetPath)) {
             return;
         }
@@ -345,7 +349,7 @@ class EventDataPreparer {
                 String channel = sacFile.getChannel();
 
                 StationXmlFile stationInfo = new StationXmlFile(network, station, location, channel, stationSetPath);
-                if (!Files.exists(stationInfo.getXmlPath())) {
+                if (!Files.exists(stationInfo.getXmlPath()) || redo) {
                     stationInfo.setRequest(datacenter, eventData.getCMTTime(), eventData.getCMTTime());
                     stationInfo.downloadStationXml();
                 }
@@ -388,8 +392,8 @@ class EventDataPreparer {
                 }
 
                 // create resp file
-                RespDataFile respData = new RespDataFile(network, station, location, channel);
-                if (!xml2resp(stationInfo, respData)) {
+                RespDataFile respFile = new RespDataFile(network, station, location, channel);
+                if (!xml2resp(stationInfo, respFile)) {
                     // if RESP file fails to be created, skip the SAC file
                     System.err.println("!!! xml2resp for "+ sacPath + " failed.");
                     continue;
@@ -469,9 +473,13 @@ class EventDataPreparer {
                 String channel = sacFile.getChannel();
 
                 // move resp file
-                RespDataFile respData = new RespDataFile(network, station, location, channel);
-                Files.move(seedSetPath.resolve(respData.getRespFile()), respSetPath.resolve(respData.getRespFile()),
-                        StandardCopyOption.REPLACE_EXISTING);
+                String respFileName = new RespDataFile(network, station, location, channel).getRespName();
+                // There are cases where 2 SAC files exist for 1 channel, in which case there is only 1 resp file.
+                //   The resp file will be moved when treating the 1st SAC file, so nothing has to be moved for the 2nd SAC file.
+                if (Files.exists(seedSetPath.resolve(respFileName))) {
+                    Files.move(seedSetPath.resolve(respFileName), respSetPath.resolve(respFileName),
+                            StandardCopyOption.REPLACE_EXISTING);
+                }
 
                 // read SAC file
                 Map<SACHeaderEnum, String> headerMap = SACUtil.readHeader(sacPath);

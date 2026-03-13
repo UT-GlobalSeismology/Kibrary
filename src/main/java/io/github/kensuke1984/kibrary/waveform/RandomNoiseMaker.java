@@ -18,7 +18,7 @@ import io.github.kensuke1984.kibrary.math.Trace;
  * Create noise for given waveform.
  *
  * @author Kensuke Konishi
- * @since version 0.1.0 ランダム波形作成を並列化
+ * @since a long time ago
  * TODO adopt hite Gaussian noise
  */
 public final class RandomNoiseMaker {

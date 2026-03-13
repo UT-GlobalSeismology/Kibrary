@@ -1,20 +1,20 @@
-# Kibrary 
+# Kibrary
 
 ![version][version-image]
 [![Java8][Java8-image]][Java8]
 
-Library for waveform inversion.   
+Library for waveform inversion.
 It bundles [ANISOtime](https://github.com/kensuke1984/Kibrary/wiki/ANISOtime) ([ANISOtime][ANISOtime]) package.<br>
 A tutorial on how to use Kibrary for waveform inversion can be found [here](https://github.com/kensuke1984/Kibrary/wiki/Tutorial-for-waveform-inversion-using-Kibrary)
 
 
 # INSTALLATION
 ## Java environment
- 
+
 Kibrary currently runs on *[Java SE Runtime Environment 8][JRE8]* or higher (Java 14 is strongly recommended).
-If you are not sure about the version you have, 
-click <a href="https://www.java.com/en/download/installed8.jsp" target="_blank">here</a> to check. 
- 
+If you are not sure about the version you have,
+click <a href="https://www.java.com/en/download/installed8.jsp" target="_blank">here</a> to check.
+
 You can download from [Oracle](https://www.oracle.com/technetwork/java/javase/downloads/index.html),
 while you might want to manage by something like [sdkman](https://sdkman.io/).
 If you are a macOS user and have [Homebrew](https://brew.sh) installed, then you can have the latest Java as below.
@@ -31,12 +31,12 @@ brew install maven
 ````
 2. Clone the Kibrary respository to your local machine
 ```bash
-git clone git@github.com:afeborgeaud/Kibrary.git
+git clone git@github.com:UT-GlobalSeismology/Kibrary.git
 ```
 4. Change to the Kibrary directory, and build Kibrary using Maven
 ```
 cd Kibrary
-mvn package assembly:single
+mvn package
 ```
 4. Add the generated JAR file ```kibrary-1.1a-jar-with-dependencies.jar``` to your CLASSPATH (in ~/.bashrc)
 ```bash

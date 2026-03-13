@@ -10,19 +10,19 @@ import java.util.Arrays;
 public enum SourceTimeFunctionType {
     NONE(0), BOXCAR(1), TRIANGLE(2), ASYMMETRIC_TRIANGLE(3), AUTO(4);
 
-    private int value;
+    private final int number;
 
-    SourceTimeFunctionType(int n) {
-        value = n;
+    private SourceTimeFunctionType(int number) {
+        this.number = number;
     }
 
-    public int getValue() {
-        return value;
+    public int getNumber() {
+        return number;
     }
 
-    public static SourceTimeFunctionType valueOf(int n) {
-        return Arrays.stream(values()).filter(type -> type.value == n).findAny()
-                .orElseThrow(() -> new IllegalArgumentException("Input n " + n + " is invalid."));
+    public static SourceTimeFunctionType ofNumber(int number) {
+        return Arrays.stream(values()).filter(type -> type.number == number).findAny()
+                .orElseThrow(() -> new IllegalArgumentException("Input number " + number + " is invalid."));
     }
 
     public static SourceTimeFunctionType ofCode(String code) {

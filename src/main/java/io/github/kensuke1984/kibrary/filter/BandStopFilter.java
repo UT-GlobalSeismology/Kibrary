@@ -5,10 +5,10 @@ import org.apache.commons.math3.complex.ComplexUtils;
 import org.apache.commons.math3.util.FastMath;
 
 /**
- * Bandstop filter
+ * Bandstop filter.
  *
  * @author Kensuke Konishi
- * @version 0.0.5.1.1
+ * @since a long time ago
  */
 public class BandStopFilter extends ButterworthFilter {
 

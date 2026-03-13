@@ -6,6 +6,7 @@ import java.util.Map;
 /**
  * Class that holds a set of elastic parameters for of a block of homogenious isotropic or transversely isotropic (TI) medium.
  * Unknown parameters that can be computed from given parameters are automatically computed.
+ *
  * <p>
  * Relationships between parameters are as follows:
  * <ul>
@@ -21,6 +22,19 @@ import java.util.Map;
  * <li> &kappa; = &lambda; + 2/3 &mu; (bulk modulus) </li>
  * <li> Vb = sqrt(&kappa; / &rho;) </li>
  * </ul>
+ *
+ * <p>
+ * To prevent inconsistencies, each instance can only accept 1 of 4 groups of variables:
+ * {isotropic moduli, isotropic velocities, TI moduli, TI velocities}.<br>
+ * Variables in each group are as follows:
+ * <ul>
+ * <li> isotropic moduli: LAMBDA, MU, LAMBDA2MU, KAPPA </li>
+ * <li> isotropic velocities: Vp, Vs, Vb </li>
+ * <li> TI moduli: A, C, F, L, N, XI </li>
+ * <li> TI velocities: Vpv, Vph, Vsv, Vsh, ETA </li>
+ * </ul>
+ * RHO, Qkappa, and Qmu can be accepted for any group.<br>
+ *
  * <p>
  * CAUTION, this class is <b>NOT IMMUTABLE</b>.
  *
@@ -38,33 +52,33 @@ public class ElasticMedium implements Cloneable {
     public ElasticMedium() {
     }
 
-    public void set(VariableType type, double value) {
-        if (!isFineAddition(type)) throw new IllegalArgumentException(type + " cannot be added");
+    public void set(VariableType variable, double value) {
+        if (!isFineAddition(variable)) throw new IllegalArgumentException(variable + " cannot be added.");
 
-        if (VariableType.isIsotropicModulus(type)) isAddingIsotropicModuli = true;
-        else if (VariableType.isIsotropicVelocity(type)) isAddingIsotropicVelocities = true;
-        else if (VariableType.isTIModulus(type)) isAddingTIModuli = true;
-        else if (VariableType.isTIVelocity(type)) isAddingTIVelocities = true;
+        if (variable.isIsotropicModulus()) isAddingIsotropicModuli = true;
+        else if (variable.isIsotropicVelocity()) isAddingIsotropicVelocities = true;
+        else if (variable.isTIModulus()) isAddingTIModuli = true;
+        else if (variable.isTIVelocity()) isAddingTIVelocities = true;
 
-        variableMap.put(type, value);
-        calculateWhenAdding(type);
+        variableMap.put(variable, value);
+        calculateWhenAdding(variable);
     }
 
-    public double get(VariableType type) {
-        if (!isDefined(type)) throw new IllegalArgumentException("Not enough information is given to define " + type);
-        return variableMap.get(type);
+    public double get(VariableType variable) {
+        if (!isDefined(variable)) throw new IllegalArgumentException("Not enough information is given to define " + variable + ".");
+        return variableMap.get(variable);
     }
 
-    private boolean isFineAddition(VariableType type) {
+    private boolean isFineAddition(VariableType variable) {
         // not allowed to modify a parameter that is already defined
-        if (isDefined(type)) return false;
+        if (isDefined(variable)) return false;
         // when nothing has been started, anything is OK
         if (!isAddingIsotropicModuli && !isAddingIsotropicVelocities && !isAddingTIModuli && !isAddingTIVelocities) return true;
         // when some group has been started to be added, only its group can be added
-        if (VariableType.isIsotropicModulus(type) && !isAddingIsotropicModuli) return false;
-        if (VariableType.isIsotropicVelocity(type) && !isAddingIsotropicVelocities) return false;
-        if (VariableType.isTIModulus(type) && !isAddingTIModuli) return false;
-        if (VariableType.isTIVelocity(type) && !isAddingTIVelocities) return false;
+        if (variable.isIsotropicModulus() && !isAddingIsotropicModuli) return false;
+        if (variable.isIsotropicVelocity() && !isAddingIsotropicVelocities) return false;
+        if (variable.isTIModulus() && !isAddingTIModuli) return false;
+        if (variable.isTIVelocity() && !isAddingTIVelocities) return false;
         // others (rho, Q) are OK
         return true;
 
@@ -93,8 +107,8 @@ public class ElasticMedium implements Cloneable {
 */
     }
 
-    private void calculateWhenAdding(VariableType type) {
-        if (type == VariableType.RHO) {
+    private void calculateWhenAdding(VariableType variable) {
+        if (variable == VariableType.RHO) {
             convertToTIModuli();
             findTIModuli();
             convertToTIVelocities();
@@ -105,27 +119,55 @@ public class ElasticMedium implements Cloneable {
             findIsotropicModuli();
             convertToIsotropicVelocities();
 
-        } else if (VariableType.isIsotropicModulus(type)) {
+        } else if (variable.isIsotropicModulus()) {
             findIsotropicModuli();
             convertToIsotropicVelocities();
-        } else if (VariableType.isIsotropicVelocity(type)) {
+
+            isotropicToTI();
+            findTIModuli();
+            convertToTIVelocities();
+        } else if (variable.isIsotropicVelocity()) {
             convertToIsotropicModuli();
             findIsotropicModuli();
             convertToIsotropicVelocities();
-        } else if (VariableType.isTIModulus(type)) {
+
+            isotropicToTI();
             findTIModuli();
             convertToTIVelocities();
+        } else if (variable.isTIModulus()) {
+            findTIModuli();
+            convertToTIVelocities();
+
             tiToIsotropic();
             findIsotropicModuli();
             convertToIsotropicVelocities();
-        } else if (VariableType.isTIVelocity(type)) {
+        } else if (variable.isTIVelocity()) {
             convertToTIModuli();
             findTIModuli();
+            convertToTIVelocities();
+
             tiToIsotropic();
             findIsotropicModuli();
             convertToIsotropicVelocities();
         }
         // else : nothing has to be calculated
+    }
+
+    private void isotropicToTI() {
+        if (isDefined(VariableType.LAMBDA2MU)) {
+            double lambda_2mu = variableMap.get(VariableType.LAMBDA2MU);
+            variableMap.put(VariableType.A, lambda_2mu);
+            variableMap.put(VariableType.C, lambda_2mu);
+        }
+        if (isDefined(VariableType.LAMBDA)) {
+            double lambda = variableMap.get(VariableType.LAMBDA);
+            variableMap.put(VariableType.F, lambda);
+        }
+        if (isDefined(VariableType.MU)) {
+            double mu = variableMap.get(VariableType.MU);
+            variableMap.put(VariableType.L, mu);
+            variableMap.put(VariableType.N, mu);
+        }
     }
 
     private void tiToIsotropic() {
@@ -376,7 +418,7 @@ public class ElasticMedium implements Cloneable {
         }
     }
 
-    public boolean isDefined(VariableType type) {
-        return variableMap.containsKey(type);
+    public boolean isDefined(VariableType variable) {
+        return variableMap.containsKey(variable);
     }
 }

@@ -1,11 +1,13 @@
 package io.github.kensuke1984.kibrary.entrance;
 
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URL;
-import java.nio.file.Files;
+import java.nio.channels.Channels;
+import java.nio.channels.FileChannel;
+import java.nio.channels.ReadableByteChannel;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
@@ -14,15 +16,15 @@ import java.time.format.DateTimeFormatter;
  * Class for RESP files, which allows us to download RESP files from IRIS DMC IRISWS RESP Web Service.
  * @see <a href=http://service.iris.edu/irisws/resp/1/> IRIS DMC IRISWS RESP Web Service Documentation
  *
- * @since 2021/08/25
  * @author Kenji Kawai
+ * @since 2021/08/25
  */
 public class RespDataFile {
 
     private static final String RESP_URL = "http://service.iris.edu/irisws/resp/1/query?";
-    private String url;
-    private String responseFile;
-    private String spectraFile;
+    private URL url;
+    private String respName;
+    private String spectraName;
 
     private String network = "";
     private String station = "";
@@ -47,9 +49,9 @@ public class RespDataFile {
         this.channel = channel;
 
         // file name is "RESP.II.PFO.00.BHE" or "RESP.IU.INU..BHE"
-        responseFile = "RESP." + network + "." + station + "." + location + "." + channel;
+        respName = "RESP." + network + "." + station + "." + location + "." + channel;
         // file name is "SPECTRA.II.PFO.00.BHE" or "SPECTRA.IU.INU..BHE"
-        spectraFile = "SPECTRA." + network + "." + station + "." + location + "." + channel;
+        spectraName = "SPECTRA." + network + "." + station + "." + location + "." + channel;
 
     }
     /**
@@ -59,14 +61,14 @@ public class RespDataFile {
      *      Service Documentation
      * @param time     (LocalDateTime) Find the response for the given time.
      */
-    public void setRequest(LocalDateTime time) {
+    public void setRequest(LocalDateTime time) throws IOException {
 
         String requestLocation = (location.isEmpty() ? "--" : location);
 
         // set url here (version 2021-08-23).
-        url = RESP_URL + "net=" + network + "&" + "sta=" + station + "&" + "cha="
+        String urlString = RESP_URL + "net=" + network + "&" + "sta=" + station + "&" + "cha="
                 + channel + "&" + "loc=" + requestLocation + "&" + "time=" + time.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
-
+        url = new URL(urlString);
     }
 
     /**
@@ -74,17 +76,15 @@ public class RespDataFile {
      * Output directory is here.
      */
     public void downloadRespData() {
-        Path outPath = Paths.get(responseFile);
+        Path outPath = Paths.get(respName);
 
-        try {
-            URL IRISWSURL = new URL(url);
-            long size = 0L;
-
-            size = Files.copy(IRISWSURL.openStream(), outPath , StandardCopyOption.REPLACE_EXISTING);
-            System.out.println("Downloaded : " + responseFile + " - " + size + " bytes");
+        try (ReadableByteChannel readChannel = Channels.newChannel(url.openStream());
+                FileOutputStream fos = new FileOutputStream(outPath.toFile()); FileChannel outChannel = fos.getChannel()) {
+            long size = outChannel.transferFrom(readChannel, 0, Long.MAX_VALUE);
+            System.err.println("Downloaded : " + respName + " - " + size + " bytes");
 
         } catch (IOException e) {
-            System.out.println(e);
+            System.err.println(e.toString());
         }
     }
 
@@ -92,33 +92,31 @@ public class RespDataFile {
      * Method downloading the Station information from IRIS/WS.
      * @param outDir (Path) Output directory
      */
-    public void downloadRespData (Path outDir) {
-        Path outPath = outDir.resolve(responseFile);
+    public void downloadRespData(Path outDir) {
+        Path outPath = outDir.resolve(respName);
 
-        try {
-            URL IRISWSURL = new URL(url);
-            long size = 0L;
-
-            size = Files.copy(IRISWSURL.openStream(), outPath , StandardCopyOption.REPLACE_EXISTING);
-            System.out.println("Downloaded : " + responseFile + " - " + size + " bytes");
+        try (ReadableByteChannel readChannel = Channels.newChannel(url.openStream());
+                FileOutputStream fos = new FileOutputStream(outPath.toFile()); FileChannel outChannel = fos.getChannel()) {
+            long size = outChannel.transferFrom(readChannel, 0, Long.MAX_VALUE);
+            System.err.println("Downloaded : " + respName + " - " + size + " bytes");
 
         } catch (IOException e) {
-            System.out.println(e);
+            System.err.println(e.toString());
         }
     }
 
     /**
      * @return (String) Name of RESP file
      */
-    public String getRespFile() {
-        return responseFile;
+    public String getRespName() {
+        return respName;
     }
 
     /**
      * @return (String) Name of SPECTRA file
      */
-    public String getSpectraFile() {
-        return spectraFile;
+    public String getSpectraName() {
+        return spectraName;
     }
 
 }

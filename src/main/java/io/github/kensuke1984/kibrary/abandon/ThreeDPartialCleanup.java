@@ -15,15 +15,24 @@ import org.apache.commons.cli.ParseException;
 import org.apache.commons.io.FileUtils;
 
 import io.github.kensuke1984.kibrary.Summon;
+import io.github.kensuke1984.kibrary.util.FileAid;
 
 /**
  * Class to clean threeDPartial folders when they are not needed any more.
- * This deletes all files under FPpool/modelName/ and BPpool/modelName/ (which should all be SPC files).
+ * This deletes all files under FPpool/{@literal *}/modelName/ and BPpool/{@literal *}/modelName/ (which should all be SPC files).
+ * This also deletes all log files under FPpool/{@literal *}/ and BPpool/{@literal *}/.
+ * Note that this class does not check the directory IDs, SPC file names, or log file names.
+ *
  * @author otsuru
  * @since 2023/3/21
  */
 public class ThreeDPartialCleanup {
 
+    /**
+     * Clean up threeDPartial folders when they are not needed any more.
+     * @param args Options.
+     * @throws IOException if an I/O error occurs
+     */
     public static void main(String[] args) throws IOException {
         Options options = defineOptions();
         try {
@@ -41,13 +50,13 @@ public class ThreeDPartialCleanup {
         Options options = Summon.defaultOptions();
 
         options.addOption(Option.builder("d").longOpt("delete").required()
-                .desc("Delete spc files in FP and BP folders").build());
+                .desc("Delete spc files in FP and BP folders.").build());
         options.addOption(Option.builder("f").hasArg().argName("fpPath")
-                .desc("Path of FP folder (FPpool)").build());
+                .desc("Path of FP folder. (FPpool)").build());
         options.addOption(Option.builder("b").hasArg().argName("bpPath")
-                .desc("Path of BP folder (BPpool)").build());
+                .desc("Path of BP folder. (BPpool)").build());
         options.addOption(Option.builder("h").hasArg().argName("header")
-                .desc("Header of model files (PREM)").build());
+                .desc("Header of model files. (PREM)").build());
 
         return options;
     }
@@ -67,24 +76,41 @@ public class ThreeDPartialCleanup {
 
         // clean FP folder
         System.err.println("Cleaning " + fpPath);
-        Set<Path> fpModelFolders = collectModelFolders(fpPath, modelName);
-        for (Path modelFolder : fpModelFolders) {
+        Set<Path> fpSourceFolders = collectSourceFolders(fpPath);
+        for (Path sourceFolder : fpSourceFolders) {
+            // delete log files
+            deleteLogFiles(sourceFolder);
+            // delete SPC files
+            Path modelFolder = sourceFolder.resolve(modelName);
             FileUtils.cleanDirectory(modelFolder.toFile());
         }
 
         // clean BP folder
         System.err.println("Cleaning " + bpPath);
-        Set<Path> bpModelFolders = collectModelFolders(bpPath, modelName);
-        for (Path modelFolder : bpModelFolders) {
+        Set<Path> bpSourceFolders = collectSourceFolders(bpPath);
+        for (Path sourceFolder : bpSourceFolders) {
+            // delete log files
+            deleteLogFiles(sourceFolder);
+            // delete SPC files
+            Path modelFolder = sourceFolder.resolve(modelName);
             FileUtils.cleanDirectory(modelFolder.toFile());
         }
-
     }
 
-    private static Set<Path> collectModelFolders(Path inPath, String modelName) throws IOException {
+    private static Set<Path> collectSourceFolders(Path inPath) throws IOException {
         // CAUTION: Files.list() must be in try-with-resources.
         try (Stream<Path> stream = Files.list(inPath)) {
-            return stream.filter(path -> Files.isDirectory(path)).map(path -> path.resolve(modelName)).collect(Collectors.toSet());
+            return stream.filter(path -> Files.isDirectory(path)).collect(Collectors.toSet());
         }
     }
+
+    private static void deleteLogFiles(Path inPath) throws IOException {
+        Set<Path> logFiles;
+        // CAUTION: Files.list() must be in try-with-resources.
+        try (Stream<Path> stream = Files.list(inPath)) {
+            logFiles = stream.filter(path -> FileAid.extractExtension(path).equals(".log")).collect(Collectors.toSet());
+        }
+        for (Path logFile : logFiles) Files.delete(logFile);
+    }
+
 }

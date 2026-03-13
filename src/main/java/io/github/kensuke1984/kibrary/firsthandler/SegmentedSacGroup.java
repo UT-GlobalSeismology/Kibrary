@@ -20,6 +20,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACUtil;
  * This means that they are supposed to compose part of the same waveform.
  *
  * @author Kensuke Konishi
+ * @since a long time ago
  */
 class SegmentedSacGroup {
 
@@ -127,7 +128,7 @@ class SegmentedSacGroup {
         // the output waveform
         List<Double> sacdata = new ArrayList<>(currentNpts);
 
-        // timewindow length of file0 (msec)
+        // time window length of file0 (msec)
         long timelength = deltaInMillis * (currentNpts - 1);
         // b value of file0 (msec)
         double currentB = Double.parseDouble(headerMap.get(SACHeaderEnum.B));

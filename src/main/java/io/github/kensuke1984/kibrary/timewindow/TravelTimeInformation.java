@@ -105,5 +105,4 @@ public final class TravelTimeInformation {
         return new HashMap<>(avoidPhaseTimes);
     }
 
-
 }

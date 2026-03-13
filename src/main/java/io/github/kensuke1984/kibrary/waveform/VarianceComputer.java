@@ -5,9 +5,11 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
+import org.apache.commons.cli.OptionGroup;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.math3.linear.RealVector;
@@ -15,14 +17,22 @@ import org.apache.commons.math3.linear.RealVector;
 import io.github.kensuke1984.kibrary.Summon;
 import io.github.kensuke1984.kibrary.inversion.WeightingHandler;
 import io.github.kensuke1984.kibrary.inversion.setup.DVectorBuilder;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowData;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowDataFile;
+import io.github.kensuke1984.kibrary.timewindow.TimeWindowData;
+import io.github.kensuke1984.kibrary.timewindow.TimeWindowDataFile;
 import io.github.kensuke1984.kibrary.util.MathAid;
+import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 
+/**
+ * Computes variance of {@link BasicIDFile}s, with the specified weighting.
+ *
+ * @author otsuru
+ * @since 2022/7/22
+ */
 public class VarianceComputer {
 
     /**
      * Computes normalized variance of residual waveforms in a basic waveform folder.
+     * @param args Options.
      * @throws IOException if an I/O error occurs
      */
     public static void main(String[] args) throws IOException {
@@ -42,11 +52,16 @@ public class VarianceComputer {
         Options options = Summon.defaultOptions();
         //input
         options.addOption(Option.builder("b").longOpt("basic").hasArg().argName("basicFolder").required()
-                .desc("Use basic waveform folder as input").build());
-        options.addOption(Option.builder("w").longOpt("weighting").hasArg().argName("weightingFile").required()
-                .desc("Path of a weighting properties file").build());
+                .desc("Path of basic waveform folder.").build());
+        OptionGroup inputOption = new OptionGroup();
+        inputOption.setRequired(true);
+        inputOption.addOption(Option.builder("w").longOpt("weighting").hasArg().argName("weightingFile")
+                .desc("Path of weighting properties file.").build());
+        inputOption.addOption(Option.builder("I").longOpt("identity")
+                .desc("Use IDENTITY weighting.").build());
+        options.addOptionGroup(inputOption);
         options.addOption(Option.builder("p").longOpt("improvement").hasArg().argName("improvementWindowFile")
-                .desc("Input improvement window file, if it is to be used").build());
+                .desc("Path of improvement window file, if it is to be used.").build());
         return options;
     }
 
@@ -56,24 +71,50 @@ public class VarianceComputer {
      * @throws IOException
      */
     public static void run(CommandLine cmdLine) throws IOException {
-
         List<BasicID> basicIDs = BasicIDFile.read(Paths.get(cmdLine.getOptionValue("b")), true);
-        WeightingHandler weightingHandler = new WeightingHandler(Paths.get(cmdLine.getOptionValue("w")));
+
+        // decide weighting
+        WeightingHandler weightingHandler;
+        if (cmdLine.hasOption("w")) {
+            weightingHandler = new WeightingHandler(Paths.get(cmdLine.getOptionValue("w")));
+        } else if (cmdLine.hasOption("I")) {
+            weightingHandler = WeightingHandler.IDENTITY;
+        } else {
+            throw new IllegalArgumentException("Either -w or -I must be specified.");
+        }
 
         // cut out improvement windows if the file is given
         if (cmdLine.hasOption("p")) {
-            Set<TimewindowData> improvementWindowSet = TimewindowDataFile.read(Paths.get(cmdLine.getOptionValue("p")));
+            Set<TimeWindowData> improvementWindowSet = TimeWindowDataFile.read(Paths.get(cmdLine.getOptionValue("p")));
             System.err.println("Cutting out improvement window from waveform data");
             basicIDs = cutOutImprovementWindows(basicIDs, improvementWindowSet);
         }
 
+        List<GlobalCMTID> events = basicIDs.stream().map(id -> id.getGlobalCMTID()).distinct().sorted().collect(Collectors.toList());
+        for (GlobalCMTID event : events) {
+            List<BasicID> basicIDsForEvent = basicIDs.stream().filter(id -> id.getGlobalCMTID().equals(event)).collect(Collectors.toList());
+
+            // set DVector
+            DVectorBuilder dVectorBuilder = new DVectorBuilder(basicIDsForEvent, false);
+
+            // set weighting
+            RealVector[] weighting = weightingHandler.weightWaveforms(dVectorBuilder);
+
+            // assemble d
+            RealVector d = dVectorBuilder.buildWithWeight(weighting);
+
+            // compute variance
+            RealVector obs = dVectorBuilder.fullObsVecWithWeight(weighting);
+            double normalizedVariance = MathAid.computeVariance(d, obs);
+            System.err.println(event + " : " + normalizedVariance + " (" + basicIDsForEvent.size() + " waveforms)");
+        }
         // set DVector
         System.err.println("Setting data for d vector");
-        DVectorBuilder dVectorBuilder = new DVectorBuilder(basicIDs);
+        DVectorBuilder dVectorBuilder = new DVectorBuilder(basicIDs, true);
 
         // set weighting
         System.err.println("Setting weighting");
-        RealVector[] weighting = weightingHandler.weighWaveforms(dVectorBuilder);
+        RealVector[] weighting = weightingHandler.weightWaveforms(dVectorBuilder);
 
         // assemble d
         System.err.println("Assembling d vector");
@@ -83,22 +124,21 @@ public class VarianceComputer {
         RealVector obs = dVectorBuilder.fullObsVecWithWeight(weighting);
         double normalizedVariance = MathAid.computeVariance(d, obs);
         System.err.println("Npts of whole waveform is " + obs.getDimension());
-        System.err.println("Normalized variance is " + normalizedVariance);
-
+        System.err.println("Normalized variance for all events is " + normalizedVariance);
     }
 
     /**
      * Cut out the parts included in improvement windows from input basicIDs.
      * BasicIDs will be split into several parts if multiple improvement windows exist for one ID.
      * @param basicIDs (List of {@link BasicID}) Input basicIDs
-     * @param improvementWindowSet (Set of {@link TimewindowData}) Improvement windows
+     * @param improvementWindowSet (Set of {@link TimeWindowData}) Improvement windows
      * @return (List of {@link BasicID}) Cut out basicIDs. {@link BasicID#startByte} is not set.
      */
-    private static List<BasicID> cutOutImprovementWindows(List<BasicID> basicIDs, Set<TimewindowData> improvementWindowSet) {
+    private static List<BasicID> cutOutImprovementWindows(List<BasicID> basicIDs, Set<TimeWindowData> improvementWindowSet) {
         List<BasicID> cutOutBasicIDs = new ArrayList<>();
 
         // sort observed and synthetic
-        BasicIDPairUp pairer = new BasicIDPairUp(basicIDs);
+        BasicIDPairUp pairer = new BasicIDPairUp(basicIDs,true);
         List<BasicID> obsIDs = pairer.getObsList();
         List<BasicID> synIDs = pairer.getSynList();
 
@@ -109,11 +149,11 @@ public class VarianceComputer {
 
             // Time frame of synthetic waveform must be compared, since it is the correct one when time shift is applied.
             // All windows are worked for in case the improvement window is split into several parts.
-            Set<TimewindowData> improvementWindows = synID.findAllOverlappingWindows(improvementWindowSet);
+            Set<TimeWindowData> improvementWindows = synID.findAllOverlappingWindows(improvementWindowSet);
             if (improvementWindows.size() == 0) {
                 System.err.println(" No matching improvement window: " + synID.toDataEntry());
             }
-            for (TimewindowData improvementWindow : improvementWindows) {
+            for (TimeWindowData improvementWindow : improvementWindows) {
                 // Time frame of synthetic waveform must be used, since it is the correct one when time shift is applied.
                 double[] cutX = synID.toTrace().cutWindow(improvementWindow).getX();
                 double startTime = cutX[0];
