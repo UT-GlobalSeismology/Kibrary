@@ -179,6 +179,11 @@ public class PartialsAssembler3D extends Operation {
      */
     private Path sourceTimeFunctionCatalogPath;
     /**
+     * Half duration. To use GCMT catalog value, set this NaN
+     */
+    private double halfDuration;
+
+    /**
      * Sampling frequency for intermediate computations [Hz].
      */
     private double partialSamplingHz;
@@ -284,11 +289,13 @@ public class PartialsAssembler3D extends Operation {
             pw.println("##########Computation settings.");
             pw.println("##Path of folder containing source time functions. If not set, the following sourceTimeFunctionType will be used.");
             pw.println("#userSourceTimeFunctionPath ");
-            pw.println("##Type of source time function, from {0:none, 1:boxcar, 2:triangle, 3:asymmetricTriangle, 4:auto}. (0)");
+            pw.println("##Type of source time function, from {0:none, 1:boxcar, 2:triangle, 3:asymmetricTriangle, 4:auto, 5:gaussian}. (0)");
             pw.println("##  When 'auto' is selected, the function specified in the GCMT catalog will be used.");
             pw.println("#sourceTimeFunctionType ");
             pw.println("##Path of a catalog to set source time function durations. If unneeded, leave this unset.");
             pw.println("#sourceTimeFunctionCatalogPath ");
+            pw.println("##Half duration for source time functions. To use the GCMT catalog values, leave this unset.");
+            pw.println("#halfDuration ");
             pw.println("##(double) Sampling frequency for computation [Hz], must be (a power of 2)/tlen. (20)");
             pw.println("#partialSamplingHz ");
             pw.println("##(double) Sampling frequency in output files [Hz], must be a factor of partialSamplingHz. (1)");
@@ -358,6 +365,7 @@ public class PartialsAssembler3D extends Operation {
         if (property.containsKey("sourceTimeFunctionCatalogPath")) {
             sourceTimeFunctionCatalogPath = property.parsePath("sourceTimeFunctionCatalogPath", null, true, workPath);
         }
+        halfDuration = property.parseDouble("halfDuration", "NaN");
 
         partialSamplingHz = property.parseDouble("partialSamplingHz", "20");
         // check validity
@@ -412,8 +420,8 @@ public class PartialsAssembler3D extends Operation {
 
         // set source time functions
         SourceTimeFunctionHandler stfHandler = new SourceTimeFunctionHandler(sourceTimeFunctionType,
-                sourceTimeFunctionCatalogPath, userSourceTimeFunctionPath, eventSet);
-        sourceTimeFunctions = stfHandler.createSourceTimeFunctionMap(np, tlen);
+                sourceTimeFunctionCatalogPath, userSourceTimeFunctionPath, halfDuration);
+        sourceTimeFunctions = stfHandler.createSourceTimeFunctionMap(eventSet, np, tlen);
 
         // read Q structure
         if (qStructurePath != null)
@@ -724,7 +732,6 @@ public class PartialsAssembler3D extends Operation {
             double[] cutPartial = new double[iEnd - iStart];
             // if cutstart < 0 (i.e. before event time), zero-pad the beginning part
             Arrays.parallelSetAll(cutPartial, i -> (i + iStart < 0 ? 0 : partial[i + iStart]));
-
             // filter
             double[] filteredPartial = filter.applyFilter(cutPartial);
 

@@ -6,20 +6,30 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.RealVector;
 
+import edu.sc.seis.TauP.Arrival;
 import edu.sc.seis.TauP.TauModelException;
 import edu.sc.seis.TauP.TauP_Time;
+import io.github.kensuke1984.anisotime.GeneralPart;
+import io.github.kensuke1984.anisotime.Phase;
+import io.github.kensuke1984.anisotime.PhasePart;
+import io.github.kensuke1984.anisotime.Raypath;
+import io.github.kensuke1984.anisotime.VelocityStructure;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
+import io.github.kensuke1984.kibrary.elastic.VariableType;
+import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotColorName;
 import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotFile;
 import io.github.kensuke1984.kibrary.math.CircularRange;
 import io.github.kensuke1984.kibrary.math.LinearRange;
@@ -53,6 +63,14 @@ import io.github.kensuke1984.kibrary.waveform.BasicIDPairUp;
  */
 public class BasicRecordSectionCreator extends Operation {
 
+    /**
+     * The interval of exporting travel times.
+     */
+    private static final double DISTANCE_INTERVAL = 1;
+    /**
+     * The interval of ray parameters (s/degree).
+     */
+    private static final double RAY_PARAMETER_INTERVAL = 0.01;
     /**
      * The interval of deciding graph size; should be a multiple of TRAVEL_TIME_INTERVAL.
      */
@@ -126,9 +144,21 @@ public class BasicRecordSectionCreator extends Operation {
      */
     private double reductionSlowness;
     /**
+     * Path of structure file to compute travel times instead of structureName. This is referred only for anisotimeMode.
+     */
+    private Path structurePath;
+    /**
      * Name of structure to compute travel times.
      */
     private String structureName;
+    /**
+     * Use anisotime to compute travel times instead of TauP.
+     */
+    private boolean anisotimeMode;
+    /**
+     * true: compute travel times for SV wave, false: compute travel times for SH wave.
+     */
+    private boolean computeSV;
 
     private LinearRange distanceRange;
     private CircularRange azimuthRange;
@@ -189,6 +219,7 @@ public class BasicRecordSectionCreator extends Operation {
             pw.println("##(boolean) Whether to set the azimuth range to [-180:180) instead of [0:360). (false)");
             pw.println("##  This is effective when using south-to-north raypaths in byAzimuth mode.");
             pw.println("#flipAzimuth ");
+            pw.println("##########Settings of travel times.");
             pw.println("##Names of phases to plot travel time curves, listed using spaces. Only when byAzimuth is false.");
             pw.println("#displayPhases ");
             pw.println("##(boolean) Whether to plot travel time curves as shaded thick lines. (false)");
@@ -198,8 +229,17 @@ public class BasicRecordSectionCreator extends Operation {
             pw.println("#alignPhases ");
             pw.println("##(double) The apparent slowness to use for time reduction [s/deg]. (0)");
             pw.println("#reductionSlowness ");
-            pw.println("##(String) Name of structure to compute travel times using TauP. (prem)");
+            pw.println("##Path of a structure file you want to use. If this is unset, the following structureName will be referenced.");
+            pw.println("##  This option is valid when the following anisotimeMode is true.");
+            pw.println("#structurePath ");
+            pw.println("##(String) Name of structure to compute travel times. (prem)");
             pw.println("#structureName ");
+            pw.println("##(boolean) Whether to use anisotime instead of TauP to compute TRAVEL TIME CURVES. (false).");
+            pw.println("##  Note that alignPhases are computed using TauP even if this is true.");
+            pw.println("#anisotimeMode true");
+            pw.println("##(boolean) Whether to compute travel time curves using anisotime for P-SV waves. Otherwise, SH. (false)");
+            pw.println("#computeSV true");
+            pw.println("##########Settings of graph display.");
             pw.println("##(double) Lower limit of range of epicentral distance to be used [deg], inclusive; [0:upperDistance). (0)");
             pw.println("#lowerDistance ");
             pw.println("##(double) Upper limit of range of epicentral distance to be used [deg], exclusive; (lowerDistance:180]. (180)");
@@ -267,7 +307,13 @@ public class BasicRecordSectionCreator extends Operation {
         if (property.containsKey("alignPhases"))
             alignPhases = property.parseStringArray("alignPhases", null);
         reductionSlowness = property.parseDouble("reductionSlowness", "0");
-        structureName = property.parseString("structureName", "prem").toLowerCase();
+        anisotimeMode = property.parseBoolean("anisotimeMode", "false");
+        if (anisotimeMode) {
+            if (property.containsKey("structurePath"))
+                structurePath = property.parsePath("structurePath", null, true, workPath);
+            computeSV = property.parseBoolean("computeSV", "false");
+        }
+        structureName = property.parseString("structureName", "iprem").toLowerCase();
 
         double lowerDistance = property.parseDouble("lowerDistance", "0");
         double upperDistance = property.parseDouble("upperDistance", "180");
@@ -328,7 +374,10 @@ public class BasicRecordSectionCreator extends Operation {
         try {
             // set up taup_time tool
             if (alignPhases != null || displayPhases != null) {
-                timeTool = new TauP_Time(structureName);
+                if (structureName.equals("iprem"))
+                    timeTool = new TauP_Time("prem");
+                else
+                    timeTool = new TauP_Time(structureName);
             }
 
             for (GlobalCMTID event : events) {
@@ -456,8 +505,12 @@ public class BasicRecordSectionCreator extends Operation {
 
             // add travel time curves
             if (displayPhases != null && !byAzimuth) {
-                BasicPlotAid.plotTravelTimeCurve(timeTool, displayPhases, shadeCurve, alignPhases, reductionSlowness,
-                        startDistance, endDistance, fileTag, dateString, eventPath, component, gnuplot);
+                if (anisotimeMode) {
+                    plotTravelTimeCurveAnisotime(startDistance, endDistance, ids.get(0).getGlobalCMTID());
+                } else {
+                    BasicPlotAid.plotTravelTimeCurve(timeTool, displayPhases, shadeCurve, alignPhases, reductionSlowness,
+                            startDistance, endDistance, fileTag, dateString, eventPath, component, gnuplot);
+                }
             }
 
             // plot
@@ -546,6 +599,132 @@ public class BasicRecordSectionCreator extends Operation {
             }
             firstPlot = false;
         }
+
+        private void plotTravelTimeCurveAnisotime(double startDistance, double endDistance, GlobalCMTID event) throws IOException, TauModelException {
+            if (alignPhases != null) {
+                for (String phase : alignPhases) timeTool.appendPhaseName(phase);
+            }
+            //convert RAY_PARAMETER_INTERVAL (s/degree) to interval (s/rad)
+            double interval = Math.toDegrees(RAY_PARAMETER_INTERVAL);
+            //set up for anisotime
+            VelocityStructure structure = property.containsKey("structurePath") ?
+                    new io.github.kensuke1984.anisotime.PolynomialStructure(structurePath) : io.github.kensuke1984.anisotime.PolynomialStructure.of(structureName);
+            double eventR = event.getEventData().getCmtPosition().getR();
+            for (int p = 0; p < displayPhases.length; p++) {
+                String phaseName = displayPhases[p];
+                Phase phase = Phase.create(phaseName, computeSV);
+                PhasePart pp = ((GeneralPart) phase.getPassParts()[1]).getPhase();
+                double velocityAtHypocenter;
+                switch(pp) {
+                case P:
+                case K:
+                case I:
+                    velocityAtHypocenter = structure.getVariableType(VariableType.Vph, eventR);
+                    break;
+                case SV:
+                case JV:
+                    velocityAtHypocenter = structure.getVariableType(VariableType.Vsv, eventR);
+                    break;
+                case SH:
+                    velocityAtHypocenter = structure.getVariableType(VariableType.Vsh, eventR);
+                    break;
+                default:
+                    throw new RuntimeException("Phase part " + pp + " is invalid.");
+                }
+                double maxP = eventR / velocityAtHypocenter;
+                double minP = 0;
+
+                //compute travel times for each ray parameter
+                int iNum = (int) Math.round((maxP - minP) / interval) + 1;
+                List<Double> distances = new ArrayList<Double>();
+                List<Double> travelTimes = new ArrayList<Double>();
+                double startP = minP;
+                double endP = maxP;
+                for (int i = 0; i < iNum; i++) {
+                    double rayParameter = minP + i * interval;
+                    Raypath raypath = new Raypath(rayParameter, structure);
+                    double tmpDistance = Math.toDegrees(raypath.computeDelta(phase, eventR));
+                    double tmpTravelTime = raypath.computeT(phase, eventR);
+                    if (Double.isNaN(tmpDistance))
+                        continue;
+                    if (tmpDistance < startDistance || tmpDistance > endDistance)
+                        continue;
+                    if (distances.size() == 0) {
+                        distances.add(tmpDistance);
+                        travelTimes.add(tmpTravelTime);
+                        startP = rayParameter;
+                    } else if (Math.abs(tmpDistance - distances.get(distances.size() - 1)) <= DISTANCE_INTERVAL) {
+                        distances.add(tmpDistance);
+                        travelTimes.add(tmpTravelTime);
+                    } else {
+                        //when interval between distances are large, compute travel time again for ray parameters separated in details
+                        for (int j = 1; j < 10; j++) {
+                            double rayParameterDev = rayParameter - (10. - j) / 10. * interval;
+                            Raypath raypathDev = new Raypath(rayParameterDev, structure);
+                            distances.add(Math.toDegrees(raypathDev.computeDelta(phase, eventR)));
+                            travelTimes.add(raypathDev.computeT(phase, eventR));
+                        }
+                        distances.add(tmpDistance);
+                        travelTimes.add(tmpTravelTime);
+                    }
+                    endP = rayParameter;
+                }
+
+                double dist0 = ((distances.get(1) - distances.get(0)) > 0) ? startDistance : endDistance;
+                if (Math.abs(distances.get(0) - dist0) > DISTANCE_INTERVAL) {
+                    for (int j = 1; j < 10; j++) {
+                        double rayParameterDev = startP - j / 10. * interval;
+                        Raypath raypathDev = new Raypath(rayParameterDev, structure);
+                        distances.add(0, Math.toDegrees(raypathDev.computeDelta(phase, eventR)));
+                        travelTimes.add(0, raypathDev.computeT(phase, eventR));
+                    }
+                }
+
+                double distLast = ((distances.get(distances.size() - 1) - distances.get(distances.size() - 2)) > 0) ? endDistance : startDistance;
+                if (Math.abs(distances.get(distances.size() - 1) - distLast) > DISTANCE_INTERVAL) {
+                    for (int j = 1; j < 10; j++) {
+                        double rayParameterDev = endP + j / 10. * interval;
+                        Raypath raypathDev = new Raypath(rayParameterDev, structure);
+                        distances.add(Math.toDegrees(raypathDev.computeDelta(phase, eventR)));
+                        travelTimes.add(raypathDev.computeT(phase, eventR));
+                    }
+                }
+
+                // output file and add curve
+                Path curvePath = DatasetAid.generateOutputFilePath(eventPath, "curve", fileTag, true, dateString, "_" + component + "_" + phaseName + ".txt");
+                String curveFileName = curvePath.getFileName().toString();
+                boolean wrotePhaseLabel = false;
+                try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(curvePath))) {
+                    for (int i = 0; i < distances.size(); i++) {
+                        double distance = distances.get(i);
+                        // write only at distances where travel time exists
+                        if (travelTimes.get(i) != null) {
+                            // reduce time by alignPhase or reductionSlowness
+                            double reduceTime = Double.NaN;
+                            if (alignPhases != null) {
+                                timeTool.calculate(distance);
+                                List<Arrival> arrivals = timeTool.getArrivals();
+                                List<String> alignPhaseList = Arrays.asList(alignPhases);
+                                Optional<Arrival> arrivalOpt = arrivals.stream().filter(arrival -> alignPhaseList.contains(arrival.getPhase().getName())).findFirst();
+                                if (arrivalOpt.isPresent())
+                                    reduceTime = arrivalOpt.get().getTime();
+                            } else {
+                                reduceTime = reductionSlowness * distance;
+                            }
+                            if (!Double.isNaN(reduceTime))
+                                pw.println(distance + " " + (travelTimes.get(i) - reduceTime));
+                            // add label at first appearance
+                            if (wrotePhaseLabel == false) {
+                                gnuplot.addLabel(phaseName, "first", travelTimes.get(i) - reduceTime, distance, GnuplotColorName.turquoise);
+                                wrotePhaseLabel = true;
+                            }
+                        }
+                    }
+                }
+                gnuplot.addLine(curveFileName, 2, 1, BasicPlotAid.USE_PHASE_APPEARANCE, "");
+            }
+        }
+
     }
 
 }

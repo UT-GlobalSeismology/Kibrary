@@ -154,7 +154,7 @@ public class BasicWaveformPlotter extends Operation {
             pw.println("manhattan " + className);
             pw.println("##Path of work folder. (.)");
             pw.println("#workPath ");
-            pw.println("##(String) A tag to include in output file names. If no tag is needed, set this unset.");
+            pw.println("##(String) A tag to include in output file names. If no tag is needed, leave this unset.");
             pw.println("#fileTag ");
             pw.println("##SacComponents to be used, listed using spaces. (Z R T)");
             pw.println("#components ");
@@ -412,12 +412,12 @@ public class BasicWaveformPlotter extends Operation {
                         .forEach(info -> {
                             Map<Phase, Double> usePhaseMap = info.getUsePhases();
                             for (Map.Entry<Phase, Double> entry : usePhaseMap.entrySet()) {
-                                gnuplot.addVerticalLine(entry.getValue(), BasicPlotAid.USE_PHASE_APPEARANCE);
+                                gnuplot.addArrow(entry.getValue(), BasicPlotAid.USE_PHASE_APPEARANCE);
                                 gnuplot.addLabel(entry.getKey().toString(), "first", entry.getValue(), "graph", 0.95, GnuplotColorName.turquoise);
                             }
                             Map<Phase, Double> avoidPhaseMap = info.getAvoidPhases();
                             for (Map.Entry<Phase, Double> entry : avoidPhaseMap.entrySet()) {
-                                gnuplot.addVerticalLine(entry.getValue(), BasicPlotAid.AVOID_PHASE_APPEARANCE);
+                                gnuplot.addArrow(entry.getValue(), BasicPlotAid.AVOID_PHASE_APPEARANCE);
                                 gnuplot.addLabel(entry.getKey().toString(), "first", entry.getValue(), "graph", 0.95, GnuplotColorName.violet);
                             }
                         });
