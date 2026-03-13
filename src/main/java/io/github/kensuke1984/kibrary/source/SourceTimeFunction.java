@@ -71,6 +71,41 @@ public class SourceTimeFunction {
     }
 
     /**
+     * Gaussian source time function. Note that this is NOT strictly gaussian function (see Borgeaud et al. 2016)
+     * <p>
+     * The width is determined by the half duration &tau;. <br>
+     * f(t) = (18/&pi;&tau;<sup>2</sup>)<sup>1/2</sup> exp(-18/&tau;<sup>2</sup>(t - &tau;/2)<sup>2</sup>) sin(&pi;t/&tau;)<br>
+     * Source time function is as follows;<br>
+     * Re[F(&omega;)] = C<sub>1</sub>sin((&omega;&tau; + &pi;)/2) - C<sub>2</sub>sin((&omega;&tau; - &pi;)/2)<br>
+     * Im[F(&omega;)] = C<sub>1</sub>cos((&omega;&tau; + &pi;)/2) - C<sub>2</sub>cos((&omega;&tau; - &pi;)/2)<br>
+     * where C<sub>1</sub> = exp(-(&omega;&tau; + &pi;)<sup>2</sup>/72) and C<sub>2</sub> = exp(-(&omega;&tau; - &pi;)<sup>2</sup>/72)
+     *
+     * @param np           the number of steps in frequency domain
+     * @param tlen         [s] time length
+     * @param samplingHz   [Hz]
+     * @param halfDuration [s] of the source
+     * @return SourceTimeFunction
+     */
+    //TODO
+    public static final SourceTimeFunction gaussianSourceTimeFunction(int np, double tlen, double halfDuration) {
+        SourceTimeFunction sourceTimeFunction = new SourceTimeFunction(np, tlen);
+        sourceTimeFunction.sourceTimeFunction = new Complex[np + 1];
+        final double deltaF = 1.0 / tlen;
+        final double constant = 2 * Math.PI * deltaF * halfDuration;
+        //sourceTimeFunction.sourceTimeFunction[0] = Complex.ONE;
+        for (int i = 0; i < np + 1; i++) {
+            // TODO check the correctness
+            double omegaTau = i * constant;
+            double coef1 = 0.5 * Math.exp( -1.0 * Math.pow(omegaTau + Math.PI, 2.0) / 72.0);
+            double coef2 = 0.5 * Math.exp( -1.0 * Math.pow(omegaTau - Math.PI, 2.0) / 72.0);
+            sourceTimeFunction.sourceTimeFunction[i] =
+                    new Complex(coef1 * Math.sin(0.5 * (omegaTau + Math.PI)) - coef2 * Math.sin(0.5 * (omegaTau - Math.PI)),
+                            coef1 * Math.cos(0.5 * (omegaTau + Math.PI)) - coef2 * Math.cos(0.5 * (omegaTau - Math.PI)));
+        }
+        return sourceTimeFunction;
+    }
+
+    /**
      * ASYMMETRIC triangle source time function.
      * <p>
      * The width is determined by the left-side half duration &tau;<sub>1</sub> and right-side half duration &tau;<sub>2</sub>. <br>
@@ -308,11 +343,13 @@ public class SourceTimeFunction {
         options.addOptionGroup(inputOption);
 
         options.addOption(Option.builder("f").longOpt("function").hasArg().argName("functionType")
-                .desc("Type of source time function, from {1:boxcar, 2:triangle, 4:auto}. (4)").build());
+                .desc("Type of source time function, from {1:boxcar, 2:triangle, 4:auto, 5: gaussian}. (4)").build());
         options.addOption(Option.builder("n").longOpt("np").hasArg().argName("np")
                 .desc("Number of steps in frequency domain (counting only positive frequency part). (512)").build());
         options.addOption(Option.builder("t").longOpt("tlen").hasArg().argName("tlen")
                 .desc("Time length of whole STF waveform [s]. Its reciprocal will be the size of frequency steps. (3276.8)").build());
+        options.addOption(Option.builder("s").longOpt("samplingHz").hasArgs().argName("samplingHz")
+                .desc("Sampling Hz of STF waveform. If this option is set, the STF waveform is output in the time domain.").build());
 
         // output
         options.addOption(Option.builder("T").longOpt("tag").hasArg().argName("fileTag")
@@ -339,24 +376,33 @@ public class SourceTimeFunction {
 
         if (cmdLine.hasOption("i")) {
             GlobalCMTID event = new GlobalCMTID(cmdLine.getOptionValue("i"));
-            SourceTimeFunctionHandler stfHandler = new SourceTimeFunctionHandler(type, null, null, null);
+            SourceTimeFunctionHandler stfHandler = new SourceTimeFunctionHandler(type, null, null);
             Path outputPath = DatasetAid.generateOutputFilePath(Paths.get(""), event.toString(), fileTag, false, null, ".stf");
             stfHandler.createSourceTimeFunction(np, tlen, event).write(outputPath);
 
         } else if (cmdLine.hasOption("h")) {
             double halfDuration = Double.parseDouble(cmdLine.getOptionValue("h"));
             Path outputPath = DatasetAid.generateOutputFilePath(Paths.get(""), "testSTF", fileTag, appendFileDate, null, ".stf");
+            SourceTimeFunction stf;
             switch (type) {
             case BOXCAR:
-                boxcarSourceTimeFunction(np, tlen, halfDuration).write(outputPath);
+                stf = boxcarSourceTimeFunction(np, tlen, halfDuration);
                 break;
             case TRIANGLE:
-                triangleSourceTimeFunction(np, tlen, halfDuration).write(outputPath);
+                stf = triangleSourceTimeFunction(np, tlen, halfDuration);
+                break;
+            case GAUSSIAN:
+                stf = gaussianSourceTimeFunction(np, tlen, halfDuration);
                 break;
             default:
                 throw new IllegalArgumentException("STF type " + type + " not allowed.");
             }
+            if (cmdLine.hasOption("s")) {
+                double samplingHz = Double.parseDouble(cmdLine.getOptionValue("s"));
+                stf.getSourceTimeFunctionInTimeDomain(samplingHz).write(outputPath);
+            } else {
+                stf.write(outputPath);
+            }
         }
     }
-
 }

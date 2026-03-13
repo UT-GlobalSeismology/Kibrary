@@ -101,6 +101,10 @@ public final class SPC_SAC extends Operation {
      * Catalog containing source time function durations.
      */
     private Path sourceTimeFunctionCatalogPath;
+    /**
+     * Half duration. To use GCMT catalog value, set this NaN
+     */
+    private double halfDuration;
 
     /**
      * Sampling frequency [Hz].
@@ -157,11 +161,13 @@ public final class SPC_SAC extends Operation {
             pw.println("#modelName ");
             pw.println("##Path of folder containing source time functions. If not set, the following sourceTimeFunctionType will be used.");
             pw.println("#userSourceTimeFunctionPath ");
-            pw.println("##Type of source time function, from {0:none, 1:boxcar, 2:triangle, 3:asymmetricTriangle, 4:auto}. (0)");
+            pw.println("##Type of source time function, from {0:none, 1:boxcar, 2:triangle, 3:asymmetricTriangle, 4:auto, 5:gaussian}. (0)");
             pw.println("##  When 'auto' is selected, the function specified in the GCMT catalog will be used.");
             pw.println("#sourceTimeFunctionType ");
             pw.println("##Path of a catalog to set source time function durations. If unneeded, leave this unset.");
             pw.println("#sourceTimeFunctionCatalogPath ");
+            pw.println("##Half duration for source time functions. To use the GCMT catalog values, leave this unset.");
+            pw.println("#halfDuration ");
             pw.println("##(double) Sampling frequency [Hz], must be (a power of 2)/tlen for each SPC file. (20)");
             pw.println("#samplingHz ");
             pw.println("##(boolean) If this is true, temporal partial is computed. (false)");
@@ -202,6 +208,7 @@ public final class SPC_SAC extends Operation {
         if (property.containsKey("sourceTimeFunctionCatalogPath")) {
             sourceTimeFunctionCatalogPath = property.parsePath("sourceTimeFunctionCatalogPath", null, true, workPath);
         }
+        halfDuration = property.parseDouble("halfDuration", "NaN");
 
         samplingHz = property.parseDouble("samplingHz", "20");
         if (!MathAid.isTerminatingDecimal(1.0 / samplingHz))
@@ -236,7 +243,7 @@ public final class SPC_SAC extends Operation {
         System.err.println("Model name is " + modelName);
 
         stfHandler = new SourceTimeFunctionHandler(sourceTimeFunctionType,
-                sourceTimeFunctionCatalogPath, userSourceTimeFunctionPath, null);
+                sourceTimeFunctionCatalogPath, userSourceTimeFunctionPath, halfDuration);
 
         if (usableSPCMode != SPCFileAid.UsableSPCMode.PSV && (shSPCs = collectSPCsFromAllEvents(SPCMode.SH, shPath)).isEmpty()) {
             throw new FileNotFoundException("No SH spectrum files are found.");

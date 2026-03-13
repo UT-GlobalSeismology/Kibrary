@@ -58,9 +58,10 @@ import io.github.kensuke1984.kibrary.visual.plot.DataFeatureHistogram;
 import io.github.kensuke1984.kibrary.visual.plot.ModelStructurePlotter;
 import io.github.kensuke1984.kibrary.visual.plot.PartialsPlotter;
 import io.github.kensuke1984.kibrary.visual.plot.PolynomialStructurePlotter;
+import io.github.kensuke1984.kibrary.visual.plot.SacRecordSectionCreator;
+import io.github.kensuke1984.kibrary.visual.plot.SacWaveformPlotter;
 import io.github.kensuke1984.kibrary.visual.plot.ScalarStructurePlotter;
 import io.github.kensuke1984.kibrary.visual.plot.SensitivityKernelPlotter1D;
-import io.github.kensuke1984.kibrary.visual.plot.SyntheticRecordSection;
 import io.github.kensuke1984.kibrary.voxel.VoxelAutoDesigner;
 import io.github.kensuke1984.kibrary.voxel.VoxelManualDesigner;
 import io.github.kensuke1984.kibrary.waveform.ActualWaveformCompiler;
@@ -101,7 +102,8 @@ enum Manhattan {
     SyntheticDSMSetup(20, SyntheticDSMSetup.class),
     SPC_SAC(21, SPC_SAC.class),
     SourceTimeFunctionConvolver(22, SourceTimeFunctionConvolver.class),
-    SyntheticRecordSection(23, SyntheticRecordSection.class),
+    SacRecordSectionCreator(23, SacRecordSectionCreator.class),
+    SacWaveformPlotter(24, SacWaveformPlotter.class),
     VirtualDatasetMaker(25, VirtualDatasetMaker.class),
     // Filtered 30
     FilterDivider(30, FilterDivider.class),

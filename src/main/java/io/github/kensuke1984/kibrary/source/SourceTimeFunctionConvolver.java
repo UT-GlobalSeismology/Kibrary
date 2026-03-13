@@ -184,7 +184,7 @@ public class SourceTimeFunctionConvolver extends Operation {
     @Override
     public void run() throws IOException {
         stfHandler = new SourceTimeFunctionHandler(sourceTimeFunctionType,
-                sourceTimeFunctionCatalogPath, userSourceTimeFunctionPath, null);
+                sourceTimeFunctionCatalogPath, userSourceTimeFunctionPath);
 
         Set<EventFolder> eventDirs = new HashSet<>();
         eventDirs.addAll(Files.exists(synPath) ? DatasetAid.eventFolderSet(synPath) : Collections.emptySet());

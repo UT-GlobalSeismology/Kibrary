@@ -33,15 +33,17 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  * Creates a record section for each event included in dataset folders.
  * Waveforms can be aligned on a specific phase or by a certain reduction slowness.
  * Travel time curves can be drawn on the graph.
+ * <p>
+ * A root folder containing SAC files is required as input.
+ * Additional folders containing SAC files can be given when plotting multiple synthetic seismograms or resudual seismograms.
  *
- *
- * @author otsuru
- * @since 2024/6/11 Created based on SacRecordSectionCreator in syozemi branch.
+ * @author rei
+ * @since 2023/06/27
  */
-public class SyntheticRecordSection extends Operation {
+public class SacRecordSectionCreator extends Operation {
 
     /**
-     * The interval of deciding graph size; should be a multiple of TRAVEL_TIME_INTERVAL.
+     * The interval of deciding graph size.
      */
     private static final int GRAPH_SIZE_INTERVAL = 2;
     /**
@@ -231,7 +233,7 @@ public class SyntheticRecordSection extends Operation {
         System.err.println(outPath + " is created.");
     }
 
-    public SyntheticRecordSection(Property property) throws IOException {
+    public SacRecordSectionCreator(Property property) throws IOException {
         this.property = (Property) property.clone();
     }
 
