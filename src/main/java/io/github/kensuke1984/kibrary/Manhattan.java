@@ -3,6 +3,7 @@ package io.github.kensuke1984.kibrary;
 import java.util.Arrays;
 
 import io.github.kensuke1984.kibrary.correction.FujiStaticCorrection;
+import io.github.kensuke1984.kibrary.correction.ObayashiStaticCorrection;
 import io.github.kensuke1984.kibrary.correction.StaticCorrectionForger;
 import io.github.kensuke1984.kibrary.correction.StaticCorrectionMerge;
 import io.github.kensuke1984.kibrary.dsmsetup.OneDPartialDSMSetup;
@@ -110,6 +111,7 @@ enum Manhattan {
     FujiStaticCorrection(32, FujiStaticCorrection.class),
     DataSelection(33, DataSelection.class),
     SourceWaveletMaker(34, SourceWaveletMaker.class),
+    ObayashiStaticCorrection(35, ObayashiStaticCorrection.class),
     TimeWindowMerge(37, TimeWindowMerge.class),
     StaticCorrectionMerge(38, StaticCorrectionMerge.class),
     StaticCorrectionForger(39, StaticCorrectionForger.class),
