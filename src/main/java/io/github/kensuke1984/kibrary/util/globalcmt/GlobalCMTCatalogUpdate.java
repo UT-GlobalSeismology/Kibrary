@@ -77,13 +77,14 @@ public final class GlobalCMTCatalogUpdate {
         String catalogName = "jan76_" + version + ".ndk";
         Path catalogPath = Environment.KIBRARY_SHARE.resolve(catalogName);
 
+
         //~Download~//
         if (Files.exists(catalogPath)) {
             System.err.println("Catalog " + catalogName + " already exists; skipping download.");
         } else {
             System.err.println("Downloading catalog " + catalogName + " ...");
 
-            String catalogUrl = "https://www.ldeo.columbia.edu/~gcmt/projects/CMT/catalog/" + catalogName;
+            String catalogUrl = "https://www.ldeo.columbia.edu/~gcmt/projects/CMT/catalog" + catalogName;
             try {
                 FileAid.download(new URL(catalogUrl), catalogPath, false);
             } catch(IOException e) {

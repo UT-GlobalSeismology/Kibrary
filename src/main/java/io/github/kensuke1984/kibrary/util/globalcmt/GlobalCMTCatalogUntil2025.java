@@ -1,7 +1,10 @@
 package io.github.kensuke1984.kibrary.util.globalcmt;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
@@ -10,6 +13,8 @@ import java.nio.file.StandardOpenOption;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
@@ -67,18 +72,61 @@ public final class GlobalCMTCatalogUntil2025 {
     }
 
     private static void switchCatalog(String version) throws IOException {
-        String catalogName = "jan76_" + version + ".ndk";
-        Path catalogPath = Environment.KIBRARY_SHARE.resolve(catalogName);
 
-        //~Download data until 2025~//
+        //~Download ndk files until 2020~//
+        String catalogNameUntil2020 = "jan76_" + version + ".ndk";
+        String catalogURLUntil2020 = "https://www.ldeo.columbia.edu/~gcmt/projects/CMT/catalog/jan76_dec20.ndk";
+        DownloadCatalog(catalogNameUntil2020, catalogURLUntil2020);
+
+        //~Download ndk files until 2025~//
+        for (int eventYear = 2021; eventYear <=2025; eventYear++) {
+            String eventYearURL =
+                    "https://www.ldeo.columbia.edu/~gcmt/projects/CMT/catalog/NEW_MONTHLY/" + eventYear +  "/";
+            System.out.println("Start" + eventYear);
+
+            URL url = new URL(eventYearURL);
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            connection.setRequestMethod("GET");
+
+            BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+            StringBuilder html = new StringBuilder();
+            String line;
+            while ((line = reader.readLine()) != null) {
+                html.append(line);
+            }
+            reader.close();
+            connection.disconnect();
+
+            String htmlString = html.toString();
+            //find and get ndk link
+            Pattern pattern = Pattern.compile("href=\'([^\']+\\.ndk)\'");
+            Matcher matcher = pattern.matcher(htmlString);
+            boolean found = false;
+            while (matcher.find()) {
+                found = true;
+                String ndkFile = matcher.group(1);
+                String fullURL = eventYearURL + ndkFile;
+                System.out.println("FOUND: " + fullURL);
+                DownloadCatalog(ndkFile, fullURL);
+            }
+            if (!found) {
+                System.err.println("No ndk files found for " + eventYear);
+            }
+            System.out.println("Finished " + eventYear);
+        }
+
+
+    }
+
+    //~Method to download GCMT catalog~//
+    private static void DownloadCatalog(String catalogName, String catalogURL) throws IOException{
+        Path catalogPath = Environment.KIBRARY_SHARE.resolve(catalogName);
         if (Files.exists(catalogPath)) {
             System.err.println("Catalog " + catalogName + " already exists; skipping download.");
         } else {
             System.err.println("Downloading catalog " + catalogName + " ...");
-
-            String catalogUrl = "https://www.ldeo.columbia.edu/~gcmt/projects/CMT/catalog/NEW_MONTHLY/" + catalogName;
             try {
-                FileAid.download(new URL(catalogUrl), catalogPath, false);
+                FileAid.download(new URL(catalogURL), catalogPath, false);
             } catch(IOException e) {
                 if(Files.exists(catalogPath)) {
                     // delete the trash that may be made
@@ -89,7 +137,7 @@ public final class GlobalCMTCatalogUntil2025 {
             }
         }
 
-        //~Fix errors in downloaded catalog~//
+      //~Fix errors in downloaded catalog~//
         fixCatalog(catalogPath);
 
         //~Activate (change target of symbolic link)~//
@@ -101,7 +149,6 @@ public final class GlobalCMTCatalogUntil2025 {
         Files.createSymbolicLink(GlobalCMTCatalog.CATALOG_PATH, catalogPath);
 
         System.err.println("The referenced catalog is set to " + catalogName);
-
     }
 
     private static void fixCatalog(Path catalogPath) throws IOException {
