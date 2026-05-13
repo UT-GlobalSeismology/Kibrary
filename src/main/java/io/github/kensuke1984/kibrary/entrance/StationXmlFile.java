@@ -1,10 +1,12 @@
 package io.github.kensuke1984.kibrary.entrance;
 
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URL;
-import java.nio.file.Files;
+import java.nio.channels.Channels;
+import java.nio.channels.FileChannel;
+import java.nio.channels.ReadableByteChannel;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
@@ -21,14 +23,14 @@ import org.xml.sax.helpers.DefaultHandler;
  * Class for downloading and reading StationXML files.
  * @see <a href=http://service.iris.edu/fdsnws/station/1/>IRIS DMC FDSNWS station Web Service</a>
  *
- * @since 2021/11/15
  * @author otsuru
+ * @since 2021/11/15
  */
 class StationXmlFile {
 
     private static final String STATION_URL_IRIS = "http://service.iris.edu/fdsnws/station/1/query?";
     private static final String STATION_URL_ORFEUS = "http://www.orfeus-eu.org/fdsnws/station/1/query?";
-    private String url;
+    private URL url;
 
     private final String xmlFileName;
     private final Path xmlPath;
@@ -45,6 +47,7 @@ class StationXmlFile {
     private String azimuth = "";
     private String dip = "";
     private String networkDescription = "";
+    private String doi = "";
 
     /**
      * Constructor with options to be used in IRIS DMC FDSNWS STATION Web Service.
@@ -85,28 +88,30 @@ class StationXmlFile {
      * @param startTime   (LocalDateTime) Find the response for the given time.
      * @param endTime     (LocalDateTime) Find the response for the given time.
      */
-    void setRequest(String datacenter, LocalDateTime startTime, LocalDateTime endTime) {
+    void setRequest(String datacenter, LocalDateTime startTime, LocalDateTime endTime) throws IOException {
 
         String requestLocation = (location.isEmpty() ? "--" : location);
 
         // set url here (version 2021-08-23) Requested Level is "response".
         // TODO: virtual networks may not be accepted
+        String urlString;
         switch (datacenter) {
         case "IRIS":
-            url = STATION_URL_IRIS;
+            urlString = STATION_URL_IRIS;
             break;
         case "ORFEUS":
-            url = STATION_URL_ORFEUS;
+            urlString = STATION_URL_ORFEUS;
             break;
         default:
             throw new IllegalStateException("Invalid datacenter name");
         }
-        url = url + "net=" + network + "&" + "sta=" + station
+        urlString = urlString + "net=" + network + "&" + "sta=" + station
                 + "&" + "loc=" + requestLocation + "&" + "cha=" + channel
                 + "&" + "starttime=" + startTime.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
                 + "&" + "endtime=" + endTime.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
-                + "&level=response&format=xml&includecomments=true&nodata=404";
+                + "&level=response&format=xml&nodata=404";
 
+        url = new URL(urlString);
     }
 
     /**
@@ -115,16 +120,13 @@ class StationXmlFile {
      * @return (boolean) true if download succeeded
      */
     boolean downloadStationXml() {
-        try {
-            URL IRISWSURL = new URL(url);
-            long size = 0L;
-
-            size = Files.copy(IRISWSURL.openStream(), xmlPath , StandardCopyOption.REPLACE_EXISTING);
-            //System.out.println("Downloaded : " + xmlFile + " - " + size + " bytes");
-
+        try (ReadableByteChannel readChannel = Channels.newChannel(url.openStream());
+                FileOutputStream fos = new FileOutputStream(xmlPath.toFile()); FileChannel outChannel = fos.getChannel()) {
+            outChannel.transferFrom(readChannel, 0, Long.MAX_VALUE);
         } catch (IOException e) {
+            // If stationXML file cannot be downloaded, return false.
             System.err.println("!! Failed to download stationXML file.");
-            e.printStackTrace();
+            System.err.println(e.toString());
             return false;
         }
         return true;
@@ -180,16 +182,6 @@ class StationXmlFile {
         return true;
     }
 
-    String getUrl() {
-        return url;
-    }
-
-
-    void setUrl(String url) {
-        this.url = url;
-    }
-
-
     String getXmlFile() {
         return xmlFileName;
     }
@@ -198,36 +190,29 @@ class StationXmlFile {
         return xmlPath;
     }
 
-
     String getNetwork() {
         return network;
     }
-
 
     String getStation() {
         return station;
     }
 
-
     String getLocation() {
         return location;
     }
-
 
     String getChannel() {
         return channel;
     }
 
-
     String getLatitude() {
         return latitude;
     }
 
-
     String getLongitude() {
         return longitude;
     }
-
 
     /**
      * @return (String) MAY BE EMPTY!!
@@ -236,7 +221,6 @@ class StationXmlFile {
         return elevation;
     }
 
-
     /**
      * @return (String) MAY BE EMPTY!!
      */
@@ -244,11 +228,9 @@ class StationXmlFile {
         return depth;
     }
 
-
     String getAzimuth() {
         return azimuth;
     }
-
 
     String getDip() {
         return dip;
@@ -258,14 +240,31 @@ class StationXmlFile {
         return networkDescription;
     }
 
+    String getDOI() {
+        return doi;
+    }
+
     private class StationXmlHandler extends DefaultHandler {
         String text;
+        /**
+         * Whether in the beginning part of "Network", before "Station" starts.
+         */
         boolean atNetworkBeginning = false;
+        /**
+         * Whether reading "DOI".
+         */
+        boolean inDOI = false;
+        /**
+         * Whether "Channel" has started.
+         */
         boolean inChannel = false;
 
         public void startElement(String uri, String localName, String qName, Attributes attributes) {
             if (qName.equals("Network")) {
                 atNetworkBeginning = true;
+            }
+            if (qName.equals("Identifier") && attributes.getValue("type").equals("DOI")) {
+                inDOI = true;
             }
             if (qName.equals("Station")) {
                 atNetworkBeginning = false;
@@ -280,8 +279,16 @@ class StationXmlFile {
         public void endElement(String uri, String localName, String qName) {
             if (atNetworkBeginning) {
                 if (qName.equals("Description")) {
-                    networkDescription = text;
+                    // if there is a meaningless " ()" at the end of description, get rid of it
+                    networkDescription = (text.endsWith(" ()") ? text.substring(0, text.length() - 3) : text);
                 }
+            }
+            if (inDOI) {
+                if (qName.equals("Identifier")) {
+                    // remove new line that is usually after the DOI
+                    doi = text.replace("\n", "").replace("\r", "");
+                }
+                inDOI = false;
             }
             if (inChannel) {
                 if (qName.equals("Latitude")) {

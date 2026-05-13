@@ -23,6 +23,14 @@ import io.github.kensuke1984.kibrary.voxel.KnownParameterFile;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameterFile;
 
+/**
+ * Creates scalar files by adding or multiplying scaling value to the input scalar file.
+ * Output files are created for each {@link VariableType} and three {@link ScalarType} (ABSOLUTE, DELTA, PERCENT).
+ * Output files are placed under a output folder.
+ *
+ * @author rei
+ * @since 2024/6/11
+ */
 public class ScalingPerturbation extends Operation {
 
     private final Property property;
@@ -34,6 +42,10 @@ public class ScalingPerturbation extends Operation {
      * A tag to include in output folder name. When this is empty, no tag is used.
      */
     private String folderTag;
+    /**
+     * Whether to append date string at end of output file names.
+     */
+    private boolean appendFileDate;
     /**
      * File of 1D structure used in inversion
      */
@@ -47,9 +59,9 @@ public class ScalingPerturbation extends Operation {
      */
     private Path modelPath;
     /**
-     * The format of values of input model file. {difference, percent, absolute}
+     * The scalar type of input model file. {ABSOLUTE, DELTA, PERCENT}
      */
-    private String valueFormat;
+    private ScalarType scalarType;
     /**
      * A variable type to use for scaling
      */
@@ -67,28 +79,34 @@ public class ScalingPerturbation extends Operation {
      */
     private double[] scaleValues;
 
+    /**
+     * @param args (String[]) Arguments: none to create a property file, path of property file to run it.
+     * @throws IOException
+     */
     public static void main(String[] args) throws IOException {
-        if (args.length == 0) writeDefaultPropertiesFile();
+        if (args.length == 0) writeDefaultPropertiesFile(null);
         else Operation.mainFromSubclass(args);
     }
 
-    public static void writeDefaultPropertiesFile() throws IOException {
-        Class<?> thisClass = new Object(){}.getClass().getEnclosingClass();
-        Path outPath = Property.generatePath(thisClass);
+    public static void writeDefaultPropertiesFile(String tag) throws IOException {
+        String className = new Object(){}.getClass().getEnclosingClass().getSimpleName();
+        Path outPath = DatasetAid.generateOutputFilePath(Paths.get(""), className, tag, true, null, ".properties");
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
-            pw.println("manhattan " + thisClass.getSimpleName());
+            pw.println("manhattan " + className);
             pw.println("##Path of work folder. (.)");
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output folder names. If no tag is needed, leave this unset.");
             pw.println("#folderTag ");
+            pw.println("##(boolean) Whether to append date string at end of output file names. (true)");
+            pw.println("#appendFileDate false");
             pw.println("##Path of an initial structure file used in inversion. If this is unset, the following initialStructureName will be referenced.");
             pw.println("#initialStructurePath ");
             pw.println("##Name of an initial structure model used in inversion. (PREM)");
             pw.println("#initialStructureName ");
             pw.println("##Path of a model file to use, must be set.");
             pw.println("#modelPath ");
-            pw.println("##The format of values of input model file, from {difference, percent, absolute}. (percent)");
-            pw.println("#valueFormat ");
+            pw.println("##The type of scalars of input model file, from {ABSOLUTE, DELTA, PERCENT}. (PERCENT)");
+            pw.println("#scalarType ");
             pw.println("##A variable type to use for scaling, from. (Vs)");
             pw.println("#inVariableType ");
             pw.println("##Variable types to be scaled, listed using spaces. (Vp)");
@@ -109,6 +127,8 @@ public class ScalingPerturbation extends Operation {
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
         if (property.containsKey("folderTag")) folderTag = property.parseStringSingle("folderTag", null);
+        appendFileDate = property.parseBoolean("appendFileDate", "true");
+
         if (property.containsKey("initialStructurePath")) {
             initialStructurePath = property.parsePath("initialStructurePath", null, true, workPath);
         } else {
@@ -116,7 +136,7 @@ public class ScalingPerturbation extends Operation {
         }
         modelPath = property.parsePath("modelPath", null, true, workPath);
 
-        valueFormat = property.parseString("valueFormat", "percent");
+        scalarType = ScalarType.valueOf(property.parseString("scalarType", "PERCENT"));
         inVariableType = VariableType.valueOf(property.parseString("inVariableType", "Vs"));
         outVariableTypes = Arrays.stream(property.parseStringArray("outVariableTypes", "Vp")).map(VariableType::valueOf)
                 .collect(Collectors.toList());
@@ -130,7 +150,7 @@ public class ScalingPerturbation extends Operation {
        List<KnownParameter> knowns = KnownParameterFile.read(modelPath);
 
        // create output folder
-       Path outPath = DatasetAid.createOutputFolder(workPath, "scaled", folderTag, GadgetAid.getTemporaryString());
+       Path outPath = DatasetAid.createOutputFolder(workPath, "scaled", folderTag, appendFileDate, GadgetAid.getTemporaryString());
        property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
        List<KnownParameter> scaledList = new ArrayList<>();
@@ -155,6 +175,6 @@ public class ScalingPerturbation extends Operation {
        // read initial structure
        System.err.print("Initial structure: ");
        PolynomialStructure initialStructure = PolynomialStructure.setupFromFileOrName(initialStructurePath, initialStructureName);
-       ConvertModelFileFormat.convertAndOutputModelFiles(scaledList, initialStructure, valueFormat, outVariableTypes, outPath);
+       ConvertModelFileFormat.convertAndOutputModelFiles(scaledList, initialStructure, scalarType, outVariableTypes, outPath);
    }
 }

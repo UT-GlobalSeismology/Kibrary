@@ -11,21 +11,22 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.apache.commons.math3.util.Precision;
+
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.elastic.VariableType;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
-import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.earth.Earth;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
-import io.github.kensuke1984.kibrary.util.spc.PartialType;
 import io.github.kensuke1984.kibrary.voxel.HorizontalPixel;
 import io.github.kensuke1984.kibrary.voxel.KnownParameter;
 import io.github.kensuke1984.kibrary.voxel.KnownParameterFile;
 import io.github.kensuke1984.kibrary.voxel.Physical3DParameter;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
+import io.github.kensuke1984.kibrary.voxel.UnknownParameterFile;
 import io.github.kensuke1984.kibrary.voxel.VoxelInformationFile;
 
 /**
@@ -46,24 +47,36 @@ public class CheckerboardMaker extends Operation {
 
     private final Property property;
     /**
-     * Path of the work folder
+     * Path of the work folder.
      */
     private Path workPath;
     /**
      * A tag to include in output folder name. When this is empty, no tag is used.
      */
     private String folderTag;
+    /**
+     * Whether to append date string at end of output folder name.
+     */
+    private boolean appendFolderDate;
 
     /**
-     * Path of voxel information file
+     * Path of voxel information file.
      */
     private Path voxelPath;
     /**
-     * Structure file to use instead of PREM
+     * Path of unknown parameter list file.
+     */
+    private Path unknownParameterPath;
+    /**
+     * Baseline of longitudes [deg], when using unknownParameterPath.
+     */
+    private double baseLongitude;
+    /**
+     * Structure file to use instead of PREM.
      */
     private Path structurePath;
     /**
-     * Structure to use
+     * Structure to use.
      */
     private String structureName;
 
@@ -75,29 +88,34 @@ public class CheckerboardMaker extends Operation {
     private List<VariableType> outputVariableTypes;
 
     /**
-     * @param args  none to create a property file <br>
-     *              [property file] to run
-     * @throws IOException if any
+     * @param args (String[]) Arguments: none to create a property file, path of property file to run it.
+     * @throws IOException
      */
     public static void main(String[] args) throws IOException {
-        if (args.length == 0) writeDefaultPropertiesFile();
+        if (args.length == 0) writeDefaultPropertiesFile(null);
         else Operation.mainFromSubclass(args);
     }
 
-    public static void writeDefaultPropertiesFile() throws IOException {
-        Class<?> thisClass = new Object(){}.getClass().getEnclosingClass();
-        Path outPath = Property.generatePath(thisClass);
+    public static void writeDefaultPropertiesFile(String tag) throws IOException {
+        String className = new Object(){}.getClass().getEnclosingClass().getSimpleName();
+        Path outPath = DatasetAid.generateOutputFilePath(Paths.get(""), className, tag, true, null, ".properties");
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
-            pw.println("manhattan " + thisClass.getSimpleName());
-            pw.println("##Path of a working folder (.)");
+            pw.println("manhattan " + className);
+            pw.println("##Path of work folder. (.)");
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this unset.");
             pw.println("#folderTag ");
-            pw.println("##Path of a voxel information file, must be set");
+            pw.println("##(boolean) Whether to append date string at end of output folder name. (true)");
+            pw.println("#appendFolderDate false");
+            pw.println("##Path of a voxel information file.");
             pw.println("#voxelPath voxel.inf");
+            pw.println("##Path of an unknown parameter list file. Must be set when voxelPath is not set.");
+            pw.println("#unknownParameterPath unknowns.lst");
+            pw.println("##(double) Baseline of longitudes [deg], when using unknownParameterPath; [-180:360). (0)");
+            pw.println("#baseLongitude ");
             pw.println("##Path of a structure file you want to use. If this is unset, the following structureName will be referenced.");
             pw.println("#structurePath ");
-            pw.println("##Name of a structure model you want to use (PREM)");
+            pw.println("##Name of a structure model you want to use. (PREM)");
             pw.println("#structureName ");
             pw.println("##Variable types to perturb, listed using spaces, must be set.");
             pw.println("#perturbVariableTypes ");
@@ -123,8 +141,19 @@ public class CheckerboardMaker extends Operation {
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
         if (property.containsKey("folderTag")) folderTag = property.parseStringSingle("folderTag", null);
+        appendFolderDate = property.parseBoolean("appendFolderDate", "true");
 
-        voxelPath = property.parsePath("voxelPath", null, true, workPath);
+        if (property.containsKey("voxelPath")) {
+            voxelPath = property.parsePath("voxelPath", null, true, workPath);
+        } else if (property.containsKey("unknownParameterPath")) {
+            unknownParameterPath = property.parsePath("unknownParameterPath", null, true, workPath);
+        } else {
+            throw new IllegalArgumentException("Either voxelPath or unknownParameterPath must be set.");
+        }
+        baseLongitude = property.parseDouble("baseLongitude", "0");
+        if (baseLongitude < -180 || 360 <= baseLongitude)
+            throw new IllegalArgumentException("baseLongitude must be in [-180:360)");
+
         if (property.containsKey("structurePath")) {
             structurePath = property.parsePath("structurePath", null, true, workPath);
         } else {
@@ -155,6 +184,34 @@ public class CheckerboardMaker extends Operation {
         // set structure to use
         PolynomialStructure initialStructure = PolynomialStructure.setupFromFileOrName(structurePath, structureName);
 
+        // construct model from voxel file or unknowns file
+        PerturbationModel model = (voxelPath != null) ? constructFromVoxelFile(initialStructure) : constructFromUnknownsFile(initialStructure);
+
+        Path outPath = DatasetAid.createOutputFolder(workPath, "checkerboard", folderTag, appendFolderDate, null);
+        property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
+
+        System.err.println("Outputting perturbation list files.");
+        for (VariableType perturbVariableType : perturbVariableTypes) {
+            Path paramPath = outPath.resolve(ScalarListFile.generateFileName(perturbVariableType, ScalarType.PERCENT));
+            ScalarListFile.write(model, perturbVariableType, ScalarType.PERCENT, paramPath);
+        }
+
+        // set known parameters
+        System.err.println("Setting checkerboard model parameters.");
+        List<KnownParameter> knowns = new ArrayList<>();
+        for (VariableType outputVariableType : outputVariableTypes) {
+            for (PerturbationVoxel voxel : model.getVoxels()) {
+                UnknownParameter unknown = new Physical3DParameter(outputVariableType, voxel.getPosition(), voxel.getVolume());
+                KnownParameter known = new KnownParameter(unknown, voxel.getValue(outputVariableType, ScalarType.DELTA));
+                knowns.add(known);
+            }
+        }
+
+        Path knownPath = outPath.resolve("model.lst");
+        KnownParameterFile.write(knowns, knownPath);
+    }
+
+    private PerturbationModel constructFromVoxelFile(PolynomialStructure initialStructure) throws IOException {
         // read voxel file
         VoxelInformationFile file = new VoxelInformationFile(voxelPath);
         double[] layerThicknesses = file.getThicknesses();
@@ -185,36 +242,64 @@ public class CheckerboardMaker extends Operation {
                 for (int k = 0; k < perturbVariableTypes.size(); k++) {
                     // CAUTION: (numdiff % 2) can be either 1 or -1 !!
                     double percent = ((numDiff % 2 != 0) ^ signFlips[k]) ? -percents[k] : percents[k]; // ^ is XOR
-                    voxel.setPercent(perturbVariableTypes.get(k), percent);
+                    voxel.setValue(perturbVariableTypes.get(k), ScalarType.PERCENT, percent);
                     // rho must be set to default if it is not in variableTypes  TODO: should this be done to other variables?
                     voxel.setDefaultIfUndefined(VariableType.RHO);
                 }
                 model.add(voxel);
             }
         }
+        return model;
+    }
 
-        Path outPath = DatasetAid.createOutputFolder(workPath, "checkerboard", folderTag, GadgetAid.getTemporaryString());
-        property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
+    private PerturbationModel constructFromUnknownsFile(PolynomialStructure initialStructure) throws IOException {
+        // read unknown parameter file
+        List<UnknownParameter> unknowns = UnknownParameterFile.read(unknownParameterPath);
+        List<FullPosition> voxelPositions = unknowns.stream().map(u -> u.getPosition()).distinct().collect(Collectors.toList());
+        double[] radii = voxelPositions.stream().mapToDouble(FullPosition::getR).distinct().sorted().toArray();
+        double[] latitudes = voxelPositions.stream().mapToDouble(FullPosition::getLatitude).distinct().sorted().toArray();
+        boolean crossDateLine = HorizontalPosition.crossesDateLine(voxelPositions);
 
-        System.err.println("Outputting perturbation list files.");
-        for (VariableType perturbVariableType : perturbVariableTypes) {
-            Path paramPath = outPath.resolve(perturbVariableType.toString().toLowerCase() + "Percent.lst");
-            PerturbationListFile.writePercentForType(perturbVariableType, model, paramPath);
+        // compute dLongitude at each latitude
+        double[] dLongitudes = new double[latitudes.length];
+        for (int j = 0; j < latitudes.length; j++) {
+            double latitude = latitudes[j];
+            double[] longitudes = voxelPositions.stream()
+                    .filter(v -> Precision.equals(v.getLatitude(), latitude, HorizontalPosition.LATITUDE_EPSILON))
+                    .mapToDouble(HorizontalPosition::getLongitude).distinct().sorted().toArray();
+            if (longitudes.length == 1) throw new UnsupportedOperationException("Only 1 pixel for latitude " + latitude);
+            dLongitudes[j] = longitudes[1] - longitudes[0];
         }
 
-        // set known parameters
-        System.err.println("Setting checkerboard model parameters.");
-        List<KnownParameter> knowns = new ArrayList<>();
-        for (VariableType outputVariableType : outputVariableTypes) {
-            for (PerturbationVoxel voxel : model.getVoxels()) {
-                UnknownParameter unknown = new Physical3DParameter(outputVariableType, voxel.getPosition(), voxel.getSize());
-                KnownParameter known = new KnownParameter(unknown, voxel.getDelta(outputVariableType));
-                knowns.add(known);
+        // set checkerboard model
+        System.err.println("Creating checkerboard perturbations.");
+        PerturbationModel model = new PerturbationModel();
+
+        for (UnknownParameter unknown : unknowns) {
+            FullPosition position = unknown.getPosition();
+            double radius = position.getR();
+            double latitude = position.getLatitude();
+            int iRadius = Arrays.binarySearch(radii, radius);
+            int iLatitude = Arrays.binarySearch(latitudes, latitude);
+            double dLongitude = dLongitudes[iLatitude];
+
+            // find the sign shift with respect to the reference position
+            int numDiff = iRadius + iLatitude + numForSuppressFlip(position)
+                    + (int) Math.round((position.getLongitude(crossDateLine) - baseLongitude) / dLongitude);
+
+            // construct voxel
+            double volume = unknown.getSize();
+            PerturbationVoxel voxel = new PerturbationVoxel(position, volume, initialStructure);
+            for (int k = 0; k < perturbVariableTypes.size(); k++) {
+                // CAUTION: (numdiff % 2) can be either 1 or -1 !!
+                double percent = ((numDiff % 2 != 0) ^ signFlips[k]) ? -percents[k] : percents[k]; // ^ is XOR
+                voxel.setValue(perturbVariableTypes.get(k), ScalarType.PERCENT, percent);
+                // rho must be set to default if it is not in variableTypes  TODO: should this be done to other variables?
+                voxel.setDefaultIfUndefined(VariableType.RHO);
             }
+            model.add(voxel);
         }
-
-        Path knownPath = outPath.resolve("model.lst");
-        KnownParameterFile.write(knowns, knownPath);
+        return model;
     }
 
     private int numForSuppressFlip(FullPosition position) {

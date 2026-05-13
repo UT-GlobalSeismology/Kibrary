@@ -7,7 +7,7 @@ package io.github.kensuke1984.anisotime;
  * @author Kensuke Konishi
  * @version 0.0.1.2b
  */
-class GeneralPart implements PathPart {
+public class GeneralPart implements PathPart {
 
     /**
      * if the part goes downward.

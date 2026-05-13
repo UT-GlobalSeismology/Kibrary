@@ -19,6 +19,7 @@ import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.external.TauPPierceWrapper;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
+import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.data.DataEntry;
 import io.github.kensuke1984.kibrary.util.data.DataEntryListFile;
 import io.github.kensuke1984.kibrary.util.data.EventListFile;
@@ -28,6 +29,7 @@ import io.github.kensuke1984.kibrary.util.data.Raypath;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
+import io.github.kensuke1984.kibrary.voxel.UnknownParameterFile;
 import io.github.kensuke1984.kibrary.voxel.VoxelInformationFile;
 
 /**
@@ -47,7 +49,7 @@ import io.github.kensuke1984.kibrary.voxel.VoxelInformationFile;
  * When you want to change the raypaths that are mapped, do not reuse the output folder.
  *
  * @author Kensuke Konishi
- * @since version 0.1.2
+ * @since a long time ago
  * @version 2022/4/24 moved and renamed from external.gmt.RaypathDistribution
  */
 public class RaypathMapper extends Operation {
@@ -55,17 +57,17 @@ public class RaypathMapper extends Operation {
     // color modes, corresponding to the numbers written in the property file
     private static final int COLOR_BY_PHASE = 1;
     private static final int BIN_DISTANCE = 2;
-    private static final int BIN_AZIMUTH = 3;
-    private static final int BIN_BACKAZIMUTH = 4;
-    private static final int BIN_MIDAZIMUTH = 5;
+    private static final int BIN_SOURCE_AZIMUTH = 3;
+    private static final int BIN_BACK_AZIMUTH = 4;
+    private static final int BIN_TURNING_AZIMUTH = 5;
 
     private final Property property;
     /**
-     * Path of the work folder
+     * Path of the work folder.
      */
     private Path workPath;
     /**
-     * Path of an output foler to reuse, if reusing any
+     * Path of an output foler to reuse, if reusing any.
      */
     private Path reusePath;
     /**
@@ -73,20 +75,29 @@ public class RaypathMapper extends Operation {
      */
     private String folderTag;
     /**
+     * Whether to append date string at end of output folder name.
+     */
+    private boolean appendFolderDate;
+    /**
      * A tag to include in output file names. When this is empty, no tag is used.
      */
     private String fileTag;
     /**
-     * components for path
+     * Whether to append date string at end of output file names.
+     */
+    private boolean appendFileDate;
+    /**
+     * Components to use.
      */
     private Set<SACComponent> components;
     /**
-     * Path of the output folder
+     * Path of the output folder.
      */
     private Path outPath;
 
     private Path dataEntryPath;
     private Path voxelPath;
+    private Path unknownParameterPath;
 
     private boolean forSlides;
     private boolean cutAtPiercePoint;
@@ -98,12 +109,26 @@ public class RaypathMapper extends Operation {
     private int colorMode;
     private Path colorBinPath;
     private boolean drawOutsides;
+    private boolean drawTurningPoints;
     private Path outsideColorBinPath;
     private double rayTransparency;
+
+    private boolean lambert;
+    /**
+     * Map region for equidistant cylindrical projection in the form lonMin/lonMax/latMin/latMax, when it is set manually.
+     */
     private String mapRegion;
     private String legendJustification;
+    /**
+     * Center of map region for Lambert azimuthal projection in the form lon/lat, when it is set manually.
+     */
+    private String mapCenter;
+    /**
+     * Horizon of the map region for Lambert azimuthal projection.
+     */
+    private int horizon;
 
-    private String dateStr;
+    private String dateString;
     private ColorBinInformationFile colorBin;
     private ColorBinInformationFile outsideColorBin;
 
@@ -113,71 +138,87 @@ public class RaypathMapper extends Operation {
     private String insideFileName;
     private String outsideFileName;
     private String turningPointFileName;
+    private String diffStartPointFileName;
+    private String diffEndPointFileName;
     private String pixelFileName;
-    private String gmtFileName;
-    private String psFileName;
+    private Path gmtPath;
 
     /**
-     * @param args  none to create a property file <br>
-     *              [property file] to run
-     * @throws IOException if any
+     * @param args (String[]) Arguments: none to create a property file, path of property file to run it.
+     * @throws IOException
      */
     public static void main(String[] args) throws IOException {
-        if (args.length == 0) writeDefaultPropertiesFile();
+        if (args.length == 0) writeDefaultPropertiesFile(null);
         else Operation.mainFromSubclass(args);
     }
 
-    public static void writeDefaultPropertiesFile() throws IOException {
-        Class<?> thisClass = new Object(){}.getClass().getEnclosingClass();
-        Path outPath = Property.generatePath(thisClass);
+    public static void writeDefaultPropertiesFile(String tag) throws IOException {
+        String className = new Object(){}.getClass().getEnclosingClass().getSimpleName();
+        Path outPath = DatasetAid.generateOutputFilePath(Paths.get(""), className, tag, true, null, ".properties");
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
-            pw.println("manhattan " + thisClass.getSimpleName());
-            pw.println("##Path of a working folder (.)");
+            pw.println("manhattan " + className);
+            pw.println("##Path of work folder. (.)");
             pw.println("#workPath ");
-            pw.println("##To reuse raypath data that have already been exported, set the folder containing them");
+            pw.println("##To reuse raypath data that have already been exported, set the folder containing them.");
             pw.println("#reusePath raypathMap");
             pw.println("##########The following is valid when reusePath is not set.");
             pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this unset.");
             pw.println("#folderTag ");
-            pw.println("##SacComponents of data to be used, listed using spaces (Z R T)");
+            pw.println("##(boolean) Whether to append date string at end of output folder name. (true)");
+            pw.println("#appendFolderDate false");
+            pw.println("##SacComponents of data to be used, listed using spaces. (Z R T)");
             pw.println("#components ");
             pw.println("##Path of a data entry file, must be set if reusePath is not set.");
             pw.println("#dataEntryPath dataEntry.lst");
-            pw.println("##########To plot perturbation points, set the following.");
-            pw.println("##Path of a voxel information file");
+            pw.println("##########To plot perturbation points, set one of the following.");
+            pw.println("##Path of a voxel information file.");
             pw.println("#voxelPath voxel.inf");
-            pw.println("##########Overall settings");
+            pw.println("##Path of an unknown parameter list file. Used only when voxelPath is not set.");
+            pw.println("#unknownParameterPath unknowns.lst");
+            pw.println("##########Overall settings.");
             pw.println("##(String) A tag to include in output file names. If no tag is needed, leave this unset.");
             pw.println("#fileTag ");
-            pw.println("##(boolean) Whether to enlarge labels in the figure to use for slides (true)");
+            pw.println("##(boolean) Whether to append date string at end of output file names. (true)");
+            pw.println("#appendFileDate false");
+            pw.println("##(boolean) Whether to enlarge labels in the figure to use for slides. (true)");
             pw.println("#forSlides ");
-            pw.println("##(boolean) Whether to cut raypaths at piercing points (true)");
+            pw.println("##(boolean) Whether to cut raypaths at piercing points. (true)");
             pw.println("#cutAtPiercePoint ");
             pw.println("##########The following settings are valid when reusePath is false and cutAtPiercePoint is true.");
-            pw.println("##Phases to compute pierce points for, listed using spaces (ScS)");
+            pw.println("##Phases to compute pierce points for, listed using spaces. (ScS)");
             pw.println("#piercePhases ");
-            pw.println("##(double) Lower radius to compute pierce points for [km] (3480)");
+            pw.println("##(double) Lower radius to compute pierce points for [km]. (3480)");
             pw.println("#lowerPierceRadius ");
-            pw.println("##(double) Upper radius to compute pierce points for [km] (3880)");
+            pw.println("##(double) Upper radius to compute pierce points for [km]. (3880)");
             pw.println("#upperPierceRadius ");
-            pw.println("##(String) Name of structure to use for calculating pierce points (prem)");
+            pw.println("##(String) Name of structure to use for computing pierce points. (prem)");
             pw.println("#structureName ");
-            pw.println("##########Settings for mapping");
-            pw.println("##Mode of coloring of raypaths {0: single color, 1: color by phase, 2: bin by distance, 3: bin by azimuth,");
-            pw.println("## 4: bin by back azimuth, 5: bin by turning-point-azimuth} (0)");
+            pw.println("##########Settings for mapping.");
+            pw.println("##Mode of coloring of raypaths, from {0: single color, 1: color by phase, 2: bin by distance,");
+            pw.println("##  3: bin by source azimuth, 4: bin by back azimuth, 5: bin by turning point azimuth}. (0)");
             pw.println("#colorMode ");
-            pw.println("##Path of color bin file, must be set if colorMode is not 0");
+            pw.println("##Path of color bin file, must be set if colorMode is not 0.");
             pw.println("#colorBinPath ");
-            pw.println("##(boolean) Whether to draw the raypaths outside the pierce points (false)");
+            pw.println("##(boolean) Whether to draw the raypaths outside the pierce points. (false)");
             pw.println("#drawOutsides ");
-            pw.println("##Path of color bin file for the outside segments, must be set if colorMode is not 0 and drawOutsides is true");
+            pw.println("##(boolean) Whether to draw the turning points. (true)");
+            pw.println("#drawTurningPoints ");
+            pw.println("##Path of color bin file for the outside segments, must be set if colorMode is not 0 and drawOutsides is true.");
             pw.println("#outsideColorBinPath ");
-            pw.println("##(double) Transparency of raypaths and turning points [%] (0)");
+            pw.println("##(double) Transparency of raypaths and turning points [%]. (0)");
             pw.println("#rayTransparency ");
-            pw.println("##To specify the map region, set it in the form lonMin/lonMax/latMin/latMax, range lon:[-180,180] lat:[-90,90]");
+            pw.println("##(boolean) Whether to use Lambert azimuthal projection. Otherwise, equidistant cylindrical projection. (false)");
+            pw.println("#lambert true");
+            pw.println("##########The following are settings for the equidistant cylindrical projection.");
+            pw.println("##To specify the map region, set it in the form lonMin/lonMax/latMin/latMax.");
             pw.println("#mapRegion -180/180/-90/90");
-            pw.println("##The position of the legend, when colorMode>0, from {TL, TR, BL, BR, none} (BR)");
+            pw.println("##The position of the legend, when colorMode>0, from {TL, TR, BL, BR, none}. (BR)");
             pw.println("#legendJustification ");
+            pw.println("##########The following are settings for the Lambert azimuthal projection.");
+            pw.println("##To specify the center of the map region, set it in the form lon/lat.");
+            pw.println("#mapCenter 0/0");
+            pw.println("##(int) Horizon of the map region [deg]. (90)");
+            pw.println("#horizon ");
         }
         System.err.println(outPath + " is created.");
     }
@@ -190,6 +231,7 @@ public class RaypathMapper extends Operation {
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
         if (property.containsKey("folderTag")) folderTag = property.parseStringSingle("folderTag", null);
+        appendFolderDate = property.parseBoolean("appendFolderDate", "true");
         components = Arrays.stream(property.parseStringArray("components", "Z R T"))
                 .map(SACComponent::valueOf).collect(Collectors.toSet());
 
@@ -203,8 +245,11 @@ public class RaypathMapper extends Operation {
 
         if (property.containsKey("voxelPath")) {
             voxelPath = property.parsePath("voxelPath", null, true, workPath);
+        } else if (property.containsKey("unknownParameterPath")) {
+            unknownParameterPath = property.parsePath("unknownParameterPath", null, true, workPath);
         }
         if (property.containsKey("fileTag")) fileTag = property.parseStringSingle("fileTag", null);
+        appendFileDate = property.parseBoolean("appendFileDate", "true");
 
         forSlides = property.parseBoolean("forSlides", "true");
         cutAtPiercePoint = property.parseBoolean("cutAtPiercePoint", "true");
@@ -217,32 +262,37 @@ public class RaypathMapper extends Operation {
         if (colorMode > 0)
             colorBinPath = property.parsePath("colorBinPath", null, true, workPath);
         drawOutsides = property.parseBoolean("drawOutsides", "false");
+        drawTurningPoints = property.parseBoolean("drawTurningPoints", "true");
         if (colorMode > 0 && drawOutsides == true)
             outsideColorBinPath = property.parsePath("outsideColorBinPath", null, true, workPath);
         rayTransparency = property.parseDouble("rayTransparency", "0");
         if (rayTransparency < 0 || 100 < rayTransparency)
             throw new IllegalArgumentException("rayTransparency " + rayTransparency + " is invalid; must be in [0:100]");
+
+        lambert = property.parseBoolean("lambert", "false");
         if (property.containsKey("mapRegion")) mapRegion = property.parseString("mapRegion", null);
         legendJustification = property.parseString("legendJustification", "BR");
+        if (property.containsKey("mapCenter")) mapCenter = property.parseString("mapCenter", null);
+        horizon = property.parseInt("horizon", "90");
 
         // error prevention
-        if (cutAtPiercePoint == false && colorMode == BIN_MIDAZIMUTH)
+        if (cutAtPiercePoint == false && colorMode == BIN_TURNING_AZIMUTH)
             throw new IllegalArgumentException("Cannot compute midazimuth without cutAtPiercePoint");
 
         setName();
     }
 
     private void setName() {
-        dateStr = GadgetAid.getTemporaryString();
+        dateString = GadgetAid.getTemporaryString();
         eventFileName = "event.lst";
         observerFileName = "observer.lst";
         raypathFileName = "raypath.lst";
         insideFileName = "raypathInside.lst";
         outsideFileName = "raypathOutside.lst";
         turningPointFileName = "turningPoint.lst";
+        diffStartPointFileName = "diffStartPoint.lst";
+        diffEndPointFileName = "diffEndPoint.lst";
         pixelFileName = "pixel.lst";
-        gmtFileName = DatasetAid.generateOutputFileName("raypathMap", fileTag, dateStr, ".sh");
-        psFileName = DatasetAid.generateOutputFileName("raypathMap", fileTag, dateStr, ".eps");
     }
 
     @Override
@@ -256,9 +306,16 @@ public class RaypathMapper extends Operation {
             throw new IllegalStateException("Input folder or file not set");
         }
 
+        // read voxelFile or unknownsFile and write voxel positions
+        List<HorizontalPosition> pixelPositions = null;
         if (voxelPath != null) {
-            List<HorizontalPosition> voxelPositions = new VoxelInformationFile(voxelPath).getHorizontalPositions();
-            List<String> pixelLines = voxelPositions.stream().map(HorizontalPosition::toString).collect(Collectors.toList());
+            pixelPositions = new VoxelInformationFile(voxelPath).getHorizontalPositions();
+        } else if (unknownParameterPath != null) {
+            pixelPositions = UnknownParameterFile.read(unknownParameterPath)
+                    .stream().map(u -> u.getPosition().toHorizontalPosition()).distinct().collect(Collectors.toList());
+        }
+        if (pixelPositions != null) {
+            List<String> pixelLines = pixelPositions.stream().map(HorizontalPosition::toString).collect(Collectors.toList());
             Files.write(outPath.resolve(pixelFileName), pixelLines);
             // NOTE: HorizontalPosition.crossesDateLine() is not needed here, as psxy can plot points on longitude+360
         }
@@ -266,8 +323,9 @@ public class RaypathMapper extends Operation {
         if (colorBinPath != null) colorBin = new ColorBinInformationFile(colorBinPath);
         if (outsideColorBinPath != null) outsideColorBin = new ColorBinInformationFile(outsideColorBinPath);
 
+        gmtPath = DatasetAid.generateOutputFilePath(outPath, "raypathMap", fileTag, appendFileDate, dateString, ".sh");
         outputGMT();
-        System.err.println("After this finishes, please run " + outPath.resolve(gmtFileName));
+        System.err.println("After this finishes, please run " + gmtPath);
     }
 
     private void checkReusePath() {
@@ -297,7 +355,7 @@ public class RaypathMapper extends Operation {
         Set<GlobalCMTID> events = validEntrySet.stream().map(entry -> entry.getEvent()).collect(Collectors.toSet());
         Set<Observer> observers = validEntrySet.stream().map(entry -> entry.getObserver()).collect(Collectors.toSet());
 
-        outPath = DatasetAid.createOutputFolder(workPath, "raypathMap", folderTag, dateStr);
+        outPath = DatasetAid.createOutputFolder(workPath, "raypathMap", folderTag, appendFolderDate, dateString);
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         EventListFile.write(events, outPath.resolve(eventFileName));
@@ -335,6 +393,8 @@ public class RaypathMapper extends Operation {
 
         List<Raypath> allRaypaths = pierceTool.getAll();
         List<String> turningPointLines = new ArrayList<>();
+        List<String> diffStartPointLines = new ArrayList<>();
+        List<String> diffEndPointLines = new ArrayList<>();
         List<String> insideLines = new ArrayList<>();
         List<String> outsideLines = new ArrayList<>();
         for (Raypath raypath : allRaypaths) {
@@ -342,8 +402,13 @@ public class RaypathMapper extends Operation {
             List<Raypath> insideSegments = raypath.clipInsideLayer(lowerPierceRadius, upperPierceRadius);
             insideSegments.forEach(segment -> insideLines.add(lineFor(raypath, segment)));
             // add all bottom turning points inside layer
-            insideSegments.stream().flatMap(segment -> segment.findTurningPoints().stream())
+            insideSegments.stream().flatMap(segment -> segment.findTurningPoints(true, false, false, false).stream())
                     .forEach(pos -> turningPointLines.add(pos.toHorizontalPosition().toString()));
+            // add all diffraction starting/ending points inside layer
+            insideSegments.stream().flatMap(segment -> segment.findTurningPoints(false, false, true, false).stream())
+                    .forEach(pos -> diffStartPointLines.add(pos.toHorizontalPosition().toString()));
+            insideSegments.stream().flatMap(segment -> segment.findTurningPoints(false, false, false, true).stream())
+            .forEach(pos -> diffEndPointLines.add(pos.toHorizontalPosition().toString()));
             // add all raypath segments outside layer
             List<Raypath> outsideSegments = raypath.clipOutsideLayer(lowerPierceRadius, upperPierceRadius);
             outsideSegments.forEach(segment -> outsideLines.add(lineFor(raypath, segment)));
@@ -352,17 +417,19 @@ public class RaypathMapper extends Operation {
         System.err.println("Computation of raypath segments for " + allRaypaths.size() + " raypaths succeeded.");
 
         Files.write(outPath.resolve(turningPointFileName), turningPointLines);
+        Files.write(outPath.resolve(diffStartPointFileName), diffStartPointLines);
+        Files.write(outPath.resolve(diffEndPointFileName), diffEndPointLines);
         Files.write(outPath.resolve(insideFileName), insideLines);
         Files.write(outPath.resolve(outsideFileName), outsideLines);
     }
 
     /**
      * Creates output line for a raypath segment.
-     * Output line: lat1 lon1 lat2 lon2 dist azimuth backAzimuth (turningAzimuth)
+     * Output line: lat1 lon1 lat2 lon2 iPhase dist azimuth backAzimuth (turningAzimuth)
      *
-     * @param raypath (Raypath) The whole raypath
-     * @param raypathSegment (Raypath) The raypath segment
-     * @return (String) Output line for the raypath segment
+     * @param raypath ({@link Raypath}) The whole raypath.
+     * @param raypathSegment ({@link Raypath}) The raypath segment.
+     * @return (String) Output line for the raypath segment.
      */
     private String lineFor(Raypath raypath, Raypath raypathSegment) {
         // create output line
@@ -372,48 +439,49 @@ public class RaypathMapper extends Operation {
         String line = raypathSegment.getSource().toHorizontalPosition() + " "
                 + raypathSegment.getReceiver().toHorizontalPosition() + " "
                 + Arrays.asList(piercePhases).indexOf(raypathSegment.getPhaseName()) + " "
-                + (int) Math.floor(raypath.getEpicentralDistanceDeg()) + " "
-                + (int) Math.floor(raypath.getAzimuthDeg()) + " "
-                + (int) Math.floor(raypath.getBackAzimuthDeg());
+                + (int) MathAid.floor(raypath.getEpicentralDistanceDeg()) + " "
+                + (int) MathAid.floor(raypath.getAzimuthDeg()) + " "
+                + (int) MathAid.floor(raypath.getBackAzimuthDeg());
         // Turning point azimuth can be obtained only when turning point has been computed for.
         // The first turning point on the raypath is used.
-        if (raypath.findTurningPoint(0) != null) {
-            line = line + " " + (int) Math.floor(raypath.computeTurningAzimuthDeg(0));
+        if (raypath.findTurningPoint(0, true, true, false, false) != null) {
+            line = line + " " + (int) MathAid.floor(raypath.computeTurningAzimuthDeg(0));
         }
         return line;
     }
 
     private void outputGMT() throws IOException {
-        Path gmtPath = outPath.resolve(gmtFileName);
         String fontSize = forSlides ? "25p" : "15p";
         String legendWidth = forSlides ? "6c" : "4.5cm";
         String rayTransparencyOption = (rayTransparency > 0) ? (" -t" + rayTransparency) : "";
+        String regionString = createRegionString();
+        String projectionString = createProjectionString();
+        String tickString = lambert ? ScalarMapShellscript.decideTickSpacing(horizon * 2, true) : ScalarMapShellscript.decideTickSpacing(regionString);
 
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(gmtPath))) {
             pw.println("#!/bin/sh");
             pw.println("");
-            pw.println("outputps=\"" + psFileName + "\"");
-            pw.println("");
-            pw.println("# GMT options");
+            pw.println("#------- GMT options");
             pw.println("gmt set COLOR_MODEL RGB");
-            pw.println("gmt set PS_MEDIA 1100x1100");
+            pw.println("gmt set PS_MEDIA 1500x1500");
             pw.println("gmt set PS_PAGE_ORIENTATION landscape");
             pw.println("gmt set MAP_DEFAULT_PEN black");
             pw.println("gmt set MAP_TITLE_OFFSET 1p");
             pw.println("gmt set FONT " + fontSize);
-//            pw.println("gmt set FONT_LABEL 15p,Helvetica,black");
-//            pw.println("gmt set FONT_ANNOT_PRIMARY " + fontSize);
             pw.println("");
-            pw.println("# map parameters");
-            pw.println("R='-R" + decideMapRegion() + "'");
-            pw.println("J='-JQ20'");
-            pw.println("B='-Ba30 -BWeSn'");
+            pw.println("#------- Map parameters");
+            pw.println("R='-R" + regionString + "'");
+            pw.println("J='-J" + projectionString + "'");
+            pw.println("B='-B" + tickString + " -BWeSn'");
             pw.println("");
-            pw.println("gmt pscoast -Ggray -Wthinnest,gray20 $B $J $R -P -K > $outputps");
+
+            pw.println("#------- Begin main plot");
+            pw.println("gmt begin " + gmtPath.getFileName().toString().replace(".sh", "") + " eps,pdf,png");
+            pw.println("gmt pscoast -Ggray -Wthinnest,gray20 $B $J $R");
             pw.println("");
             pw.println("#------- Events & Observers");
-            pw.println("awk '{print $2, $3}' " + eventFileName + " | gmt psxy -: -Sa0.3 -G255/156/0 -Wthinnest -J -R -P -O -K  >> $outputps");
-            pw.println("awk '{print $3, $4}' " + observerFileName + " | gmt psxy -: -Si0.3 -G71/187/243 -Wthinnest -J -R -P -O -K >> $outputps");
+            pw.println("awk '{print $2, $3}' " + eventFileName + " | gmt psxy -: -Sa0.3 -G255/156/0 -Wthinnest");
+            pw.println("awk '{print $3, $4}' " + observerFileName + " | gmt psxy -: -Si0.3 -G71/187/243 -Wthinnest");
             pw.println("");
 
             pw.println("#------- Raypath");
@@ -426,7 +494,7 @@ public class RaypathMapper extends Operation {
                     int nSections = outsideColorBin.getNSections();
                     if (nSections == 1) {
                         pw.println("  echo $line | awk '{print $1, $2, \"\\n\", $3, $4}' | \\");
-                        pw.println("  gmt psxy -: -Wthinnest," + outsideColorBin.getColorFor(0) + " -J -R -P -O -K >> $outputps");
+                        pw.println("  gmt psxy -: -Wthinnest," + outsideColorBin.getColorFor(0) + rayTransparencyOption);
                     } else {
                         pw.println("  valueForBin=$(echo $line | awk '{print $" + columnFor(colorMode) + "}')");
                         for (int i = 0; i < nSections + 2; i++) {
@@ -436,7 +504,7 @@ public class RaypathMapper extends Operation {
                             } else if (i < nSections + 1) {
                                 pw.println("  elif [ $valueForBin -lt " + outsideColorBin.getStartValueFor(i) + " ]; then");
                                 pw.println("    echo $line | awk '{print $1, $2, \"\\n\", $3, $4}' | \\");
-                                pw.println("    gmt psxy -: -Wthinnest," + outsideColorBin.getColorFor(i - 1) + " -J -R -P -O -K >> $outputps");
+                                pw.println("    gmt psxy -: -Wthinnest," + outsideColorBin.getColorFor(i - 1) + rayTransparencyOption);
                             } else {
                                 pw.println("  else");
                                 pw.println("    echo \"value $valueForBin out of range\"");
@@ -446,7 +514,7 @@ public class RaypathMapper extends Operation {
                     }
                 } else {
                     pw.println("  echo $line | awk '{print $1, $2, \"\\n\", $3, $4}' | \\");
-                    pw.println("  gmt psxy -: -Wthinnest,lavender -J -R -P -O -K >> $outputps");
+                    pw.println("  gmt psxy -: -Wthinnest,lavender" + rayTransparencyOption);
                 }
                 pw.println("done < " + outsideFileName);
                 pw.println("");
@@ -459,8 +527,7 @@ public class RaypathMapper extends Operation {
                 int nSections = colorBin.getNSections();
                 if (nSections == 1) {
                     pw.println("  echo $line | awk '{print $1, $2, \"\\n\", $3, $4}' | \\");
-                    pw.println("  gmt psxy -: -Wthinnest," + colorBin.getColorFor(0) + rayTransparencyOption
-                            + " -J -R -P -O -K >> $outputps");
+                    pw.println("  gmt psxy -: -Wthinnest," + colorBin.getColorFor(0) + rayTransparencyOption);
                 } else {
                     pw.println("  valueForBin=$(echo $line | awk '{print $" + columnFor(colorMode) + "}')");
                     for (int i = 0; i < nSections + 2; i++) {
@@ -470,8 +537,7 @@ public class RaypathMapper extends Operation {
                         } else if (i < nSections + 1) {
                             pw.println("  elif [ $valueForBin -lt " + colorBin.getStartValueFor(i) + " ]; then");
                             pw.println("    echo $line | awk '{print $1, $2, \"\\n\", $3, $4}' | \\");
-                            pw.println("    gmt psxy -: -Wthinnest," + colorBin.getColorFor(i - 1) + rayTransparencyOption
-                                    + " -J -R -P -O -K >> $outputps");
+                            pw.println("    gmt psxy -: -Wthinnest," + colorBin.getColorFor(i - 1) + rayTransparencyOption);
                         } else {
                             pw.println("  else");
                             pw.println("    echo \"value $valueForBin out of range\"");
@@ -481,7 +547,7 @@ public class RaypathMapper extends Operation {
                 }
             } else {
                 pw.println("  echo $line | awk '{print $1, $2, \"\\n\", $3, $4}' | \\");
-                pw.println("  gmt psxy -: -Wthinnest,red" + rayTransparencyOption + " -J -R -P -O -K >> $outputps");
+                pw.println("  gmt psxy -: -Wthinnest,red" + rayTransparencyOption);
             }
             if (cutAtPiercePoint) {
                 pw.println("done < " + insideFileName);
@@ -491,23 +557,30 @@ public class RaypathMapper extends Operation {
             pw.println("");
 
             // turning points
-            if (cutAtPiercePoint) {
+            if (cutAtPiercePoint && drawTurningPoints) {
                 pw.println("awk '{print $1, $2}' " + turningPointFileName
-                        + " | gmt psxy -: -Sx0.3 -Wthinnest,black" + rayTransparencyOption + " -J -R -P -O -K >> $outputps");
+                        + " | gmt psxy -: -Sx0.3 -Wthinnest,black" + rayTransparencyOption);
+                pw.println("awk '{print $1, $2}' " + diffStartPointFileName
+                        + " | gmt psxy -: -Sc0.25 -Wthinnest,black" + rayTransparencyOption);
+                pw.println("awk '{print $1, $2}' " + diffEndPointFileName
+                        + " | gmt psxy -: -Ss0.3 -Wthinnest,black" + rayTransparencyOption);
                 pw.println("");
             }
 
             // pixel points
-            if (voxelPath != null) {
+            if (voxelPath != null || unknownParameterPath != null) {
                 pw.println("#------- Pixels");
-                pw.println("gmt psxy " + pixelFileName + " -: -Sc0.2 -G0/255/0 -Wthinnest -J -R -P -O -K >> $outputps");
+                pw.println("gmt psxy " + pixelFileName + " -: -Sc0.2 -G0/255/0 -Wthinnest");
                 pw.println("");
             }
 
             // legend
             if (colorMode > 0 && legendJustification.equals("none") == false) {
                 pw.println("#------- Legend");
-                pw.println("gmt pslegend -Dj" + legendJustification + "+w" + legendWidth + " -F+g#FFFFFF+p1p,black -J -R -O -K << END >> $outputps");
+                // For Lambert azimuthal projection, set it on the right outside of the map.
+                // For equidistant cylindrical projection, set it inside the map, based on 'legendJustification'.
+                pw.println("gmt pslegend -D" + (lambert ? "n1/0.05" : "j" + legendJustification) + "+w" + legendWidth
+                        + (lambert ? "" : " -F+gwhite+p1p,black") + " << END");
                 // header of legend
                 pw.println("H - - " + headerFor(colorMode));
                 // contents
@@ -517,11 +590,11 @@ public class RaypathMapper extends Operation {
                     case COLOR_BY_PHASE:
                         // list up all phases for that color (in case one color is used for several consecutive phases)
                         String text = String.join(",", Arrays.copyOfRange(piercePhases, colorBin.getStartValueFor(i), colorBin.getStartValueFor(i + 1)));
-                        pw.println("S 0.8c - 0.8c - 0.4p," + colorBin.getColorFor(i) + " 1.5c " + text);
+                        pw.println("S 0.8c - 0.8c - 1p," + colorBin.getColorFor(i) + " 1.5c " + text);
                         break;
                     default:
                         // print degree range
-                        pw.println("S 0.8c - 0.8c - 0.4p," + colorBin.getColorFor(i) + " 1.5c "
+                        pw.println("S 0.8c - 0.8c - 1p," + colorBin.getColorFor(i) + " 1.5c "
                                 + colorBin.getStartValueFor(i) + "@.~" + colorBin.getStartValueFor(i + 1) + "@.");
                     }
                 }
@@ -530,12 +603,9 @@ public class RaypathMapper extends Operation {
             }
 
             pw.println("#------- Finalize");
-            pw.println("gmt pstext -N -F+jLM+f30p,Helvetica,black -J -R -O << END >> $outputps");
-            pw.println("END");
+            pw.println("gmt end");
             pw.println("");
-            pw.println("gmt psconvert $outputps -A -Tf -Qg4 -E100");
-            pw.println("gmt psconvert $outputps -A -Tg -Qg4 -E500");
-            pw.println("");
+
             pw.println("#-------- Clear");
             pw.println("rm -rf cp.cpt gmt.conf gmt.history");
             pw.println("echo \"Done!\"");
@@ -554,9 +624,9 @@ public class RaypathMapper extends Operation {
         switch (colorMode) {
         case COLOR_BY_PHASE: binColumn = 5; break;
         case BIN_DISTANCE: binColumn = 6; break;
-        case BIN_AZIMUTH: binColumn = 7; break;
-        case BIN_BACKAZIMUTH: binColumn = 8; break;
-        case BIN_MIDAZIMUTH: binColumn = 9; break;
+        case BIN_SOURCE_AZIMUTH: binColumn = 7; break;
+        case BIN_BACK_AZIMUTH: binColumn = 8; break;
+        case BIN_TURNING_AZIMUTH: binColumn = 9; break;
         default: throw new IllegalArgumentException("colorMode out of range");
         }
         return binColumn;
@@ -567,41 +637,36 @@ public class RaypathMapper extends Operation {
         switch (colorMode) {
         case COLOR_BY_PHASE: header = "Phase"; break;
         case BIN_DISTANCE: header = "Distance"; break;
-        case BIN_AZIMUTH: header = "Azimuth"; break;
-        case BIN_BACKAZIMUTH: header = "Back azimuth"; break;
-        case BIN_MIDAZIMUTH: header = "Turn azimuth"; break;
+        case BIN_SOURCE_AZIMUTH: header = "Azimuth"; break;
+        case BIN_BACK_AZIMUTH: header = "Back azimuth"; break;
+        case BIN_TURNING_AZIMUTH: header = "Azimuth"; break;
         default: throw new IllegalArgumentException("colorMode out of range");
         }
         return header;
     }
 
-    private String decideMapRegion() throws IOException {
+    private String createRegionString() throws IOException {
+        if (lambert) {
+            // for Lambert azimuthal
+            // "-Rg" is the same as "-R-180/180/-90/90"
+            return "g";
+        }
+
+        // The rest is for equidistant cylindrical.
         if (mapRegion != null) {
             return mapRegion;
+
         } else {
-            // collect positions of events and observers
-            Set<HorizontalPosition> positions = new HashSet<>();
-            EventListFile.read(outPath.resolve(eventFileName)).stream()
-                    .map(event -> event.getEventData().getCmtPosition().toHorizontalPosition()).forEach(positions::add);
-            ObserverListFile.read(outPath.resolve(observerFileName)).stream()
-                    .map(observer -> observer.getPosition()).forEach(positions::add);
-            if (cutAtPiercePoint) {
-                List<String> turningPointLines = Files.readAllLines(outPath.resolve(turningPointFileName));
-                for (String line : turningPointLines) {
-                    String[] parts = line.trim().split("\\s+");
-                    HorizontalPosition pos = new HorizontalPosition(Double.parseDouble(parts[0]), Double.parseDouble(parts[1]));
-                    positions.add(pos);
-                }
-            }
+            Set<HorizontalPosition> positions = collectPositions();
 
             // decide on a region temporarily, and split up the returned String into coordinates
-            String[] coordinateStrings = PerturbationMapShellscript.decideMapRegion(positions).split("/");
+            String[] coordinateStrings = ScalarMapShellscript.decideMapRegion(positions).split("/");
             double lonMin = Double.parseDouble(coordinateStrings[0]);
             double lonMax = Double.parseDouble(coordinateStrings[1]);
             double latMin = Double.parseDouble(coordinateStrings[2]);
             double latMax = Double.parseDouble(coordinateStrings[3]);
 
-            // space for legend
+            // add space for legend
             if (colorMode > 0) {
                 double fix = forSlides ? 60 : 40;
                 if (legendJustification.equals("TL") || legendJustification.equals("BL")) {
@@ -614,6 +679,48 @@ public class RaypathMapper extends Operation {
             // recreate the region String
             return (int) lonMin + "/" + (int) lonMax + "/" + (int) latMin + "/" + (int) latMax;
         }
+    }
+
+    private String createProjectionString() throws IOException {
+        if (!lambert) {
+            // for equidistant cylindrical
+            return "Q20";
+        }
+
+        // The rest is for Lambert azimuthal.
+        if (mapCenter != null) {
+            return "A" + mapCenter + "/" + horizon + "/20";
+
+        } else {
+            Set<HorizontalPosition> positions = collectPositions();
+            String centerString = ScalarMapShellscript.decideMapCenter(positions);
+            return "A" + centerString + "/" + horizon + "/20";
+        }
+    }
+
+    private Set<HorizontalPosition> collectPositions() throws IOException {
+        // collect positions of events, observers, pierce points, and turning points
+        Set<HorizontalPosition> positions = new HashSet<>();
+        EventListFile.read(outPath.resolve(eventFileName)).stream()
+                .map(event -> event.getEventData().getCmtPosition().toHorizontalPosition()).forEach(positions::add);
+        ObserverListFile.read(outPath.resolve(observerFileName)).stream()
+                .map(observer -> observer.getPosition()).forEach(positions::add);
+        if (cutAtPiercePoint) {
+            List<String> turningPointLines = Files.readAllLines(outPath.resolve(turningPointFileName));
+            turningPointLines.addAll(Files.readAllLines(outPath.resolve(diffStartPointFileName)));
+            turningPointLines.addAll(Files.readAllLines(outPath.resolve(diffEndPointFileName)));
+            for (String line : turningPointLines) {
+                String[] parts = line.trim().split("\\s+");
+                positions.add(new HorizontalPosition(Double.parseDouble(parts[0]), Double.parseDouble(parts[1])));
+            }
+            List<String> insideLines = Files.readAllLines(outPath.resolve(insideFileName));
+            for (String line : insideLines) {
+                String[] parts = line.trim().split("\\s+");
+                positions.add(new HorizontalPosition(Double.parseDouble(parts[0]), Double.parseDouble(parts[1])));
+                positions.add(new HorizontalPosition(Double.parseDouble(parts[2]), Double.parseDouble(parts[3])));
+            }
+        }
+        return positions;
     }
 
 }

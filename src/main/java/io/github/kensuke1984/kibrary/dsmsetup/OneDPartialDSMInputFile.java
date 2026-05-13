@@ -22,12 +22,18 @@ import io.github.kensuke1984.kibrary.util.spc.SPCType;
  * <p>
  * This class is <b>IMMUTABLE</b>
  *
+ * TODO: add PAR0 (partial for density)
+ *
  * @author Kensuke Konishi
- * @since version 0.0.6.1
- * @author anselme add system to comment out perturbations that are too close to the source and takes too long to compute
- * add PAR0 (partial for density)
+ * @since a long time ago
+ * @version 2021/11/18 Renamed from dsminformation.SshDSMInformationFileMaker to dsmsetup.OneDPartialDSMInputFile.
  */
 public class OneDPartialDSMInputFile extends SyntheticDSMInputFile {
+
+    /**
+     * Threshold to decide if perburbation layer is too close to source radius [km].
+     */
+    private static final double CLOSE_SOURCE_THRESHOLD = 10.0;
 
     /**
      * perturbation radii
@@ -51,7 +57,7 @@ public class OneDPartialDSMInputFile extends SyntheticDSMInputFile {
         double eventR = event.getPosition(catalog).getR();
         for (int i = 0; i < perturbationR.length; i++) {
             commentPerturbationR[i] = false;
-            if (Math.abs(eventR - perturbationR[i]) < 10.)
+            if (Math.abs(eventR - perturbationR[i]) < CLOSE_SOURCE_THRESHOLD)
                 commentPerturbationR[i] = true;
         }
     }
@@ -75,8 +81,8 @@ public class OneDPartialDSMInputFile extends SyntheticDSMInputFile {
             Arrays.stream(structurePart).forEach(pw::println);
 
             // source
-            FullPosition eventLocation = event.getPosition(catalog);
-            pw.println(eventLocation.getR() + " " + eventLocation.getLatitude() + " " + eventLocation.getLongitude()
+           FullPosition eventLocation = event.getPosition(catalog);
+           pw.println(eventLocation.getR() + " " + eventLocation.getLatitude() + " " + eventLocation.getLongitude()
                     + " r0(km), lat, lon (deg)");
             pw.println(Arrays.stream(event.getCmt().toDSMStyle()).mapToObj(Double::toString).collect(Collectors.joining(" "))
                     + " Moment Tensor (1.e25 dyne cm)");
@@ -99,17 +105,13 @@ public class OneDPartialDSMInputFile extends SyntheticDSMInputFile {
             observerPositions.stream().sorted().forEach(pos -> pw.println(pos.getLatitude() + " " + pos.getLongitude()));
 
             // radii
-            int nComment = (int) IntStream.range(0, commentPerturbationR.length)
-                .mapToObj(i -> commentPerturbationR[i]).filter(c -> c).count();
+            int nComment = (int) IntStream.range(0, commentPerturbationR.length).filter(i -> commentPerturbationR[i] == true).count();
             pw.println(radii.length - nComment + " nr");
             for (int i = 0; i < radii.length; i++) {
-                if (commentPerturbationR[i])
-                    pw.println("c " + radii[i]);
-                else
-                    pw.println(radii[i]);
+                if (commentPerturbationR[i]) pw.println("c " + radii[i]);
+                else pw.println(radii[i]);
             }
             pw.println("end");
-
         }
     }
 
@@ -153,17 +155,13 @@ public class OneDPartialDSMInputFile extends SyntheticDSMInputFile {
             observerPositions.stream().sorted().forEach(pos -> pw.println(pos.getLatitude() + " " + pos.getLongitude()));
 
             // radii
-            int nComment = (int) IntStream.range(0, commentPerturbationR.length)
-                    .mapToObj(i -> commentPerturbationR[i]).filter(c -> c).count();
+            int nComment = (int) IntStream.range(0, commentPerturbationR.length).filter(i -> commentPerturbationR[i] == true).count();
             pw.println(radii.length - nComment + " nr");
             for (int i = 0; i < radii.length; i++) {
-                if (commentPerturbationR[i])
-                    pw.println("c " + radii[i]);
-                else
-                    pw.println(radii[i]);
+                if (commentPerturbationR[i]) pw.println("c " + radii[i]);
+                else pw.println(radii[i]);
             }
             pw.println("end");
-
         }
     }
 
@@ -207,14 +205,11 @@ public class OneDPartialDSMInputFile extends SyntheticDSMInputFile {
             observerPositions.stream().sorted().forEach(pos -> pw.println(pos.getLatitude() + " " + pos.getLongitude()));
 
             // radii
-            int nComment = (int) IntStream.range(0, commentPerturbationR.length)
-                    .mapToObj(i -> commentPerturbationR[i]).filter(c -> c).count();
+            int nComment = (int) IntStream.range(0, commentPerturbationR.length).filter(i -> commentPerturbationR[i] == true).count();
             pw.println(radii.length - nComment + " nr");
             for (int i = 0; i < radii.length; i++) {
-                if (commentPerturbationR[i])
-                    pw.println("c " + radii[i]);
-                else
-                    pw.println(radii[i]);
+                if (commentPerturbationR[i]) pw.println("c " + radii[i]);
+                else pw.println(radii[i]);
             }
             pw.println("end");
         }
@@ -259,14 +254,11 @@ public class OneDPartialDSMInputFile extends SyntheticDSMInputFile {
             observerPositions.stream().sorted().forEach(pos -> pw.println(pos.getLatitude() + " " + pos.getLongitude()));
 
             // radii
-            int nComment = (int) IntStream.range(0, commentPerturbationR.length)
-                    .mapToObj(i -> commentPerturbationR[i]).filter(c -> c).count();
+            int nComment = (int) IntStream.range(0, commentPerturbationR.length).filter(i -> commentPerturbationR[i] == true).count();
             pw.println(radii.length - nComment + " nr");
             for (int i = 0; i < radii.length; i++) {
-                if (commentPerturbationR[i])
-                    pw.println("c " + radii[i]);
-                else
-                    pw.println(radii[i]);
+                if (commentPerturbationR[i]) pw.println("c " + radii[i]);
+                else pw.println(radii[i]);
             }
             pw.println("end");
         }

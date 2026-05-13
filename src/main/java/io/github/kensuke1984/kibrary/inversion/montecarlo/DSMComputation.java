@@ -83,7 +83,7 @@ class DSMComputation implements DataGenerator<PolynomialStructure, SACFileAccess
         return DatasetAid.eventFolderSet(obsDir).parallelStream().map(eventDir -> {
             try {
                 Set<Observer> stations =
-                        eventDir.sacFileSet().stream().filter(SACFileName::isOBS).map(SACFileName::getStationCode)
+                        eventDir.sacFileSet().stream().filter(SACFileName::isOBS).map(SACFileName::getObserverID)
                                 .distinct().map(this::pickup).collect(Collectors.toSet());
                 GlobalCMTID id = eventDir.getGlobalCMTID();
                 return new SyntheticDSMInputFile(DefaultStructure.PREM, id.getEventData(), stations, id.toString(), TLEN, NP);
@@ -155,7 +155,7 @@ class DSMComputation implements DataGenerator<PolynomialStructure, SACFileAccess
 
     private void makeSacFiles(EventFolder eventDir) throws IOException {
         Path spcPath = eventDir.toPath();
-        SourceTimeFunction sourceTimeFunction = SourceTimeFunction.boxcarSourceTimeFunction(NP, TLEN, SAMPLING_HZ,
+        SourceTimeFunction sourceTimeFunction = SourceTimeFunction.boxcarSourceTimeFunction(NP, TLEN,
                 eventDir.getGlobalCMTID().getEventData().getHalfDuration());
         try (Stream<Path> stream = Files.list(spcPath)) {
             stream.filter(path -> path.toString().endsWith("SH.spc")).forEach(shPath -> {
@@ -164,7 +164,7 @@ class DSMComputation implements DataGenerator<PolynomialStructure, SACFileAccess
                 try {
                     SPCFileAccess shSPC = shName.read();
                     SPCFileAccess psvSPC = psvName.read();
-                    SACMaker sm = new SACMaker(psvSPC, shSPC, sourceTimeFunction);
+                    SACMaker sm = new SACMaker(psvSPC, shSPC, sourceTimeFunction, SAMPLING_HZ);
                     sm.setComponents(components);
                     sm.setOutPath(eventDir.toPath());
                     sm.run();

@@ -18,17 +18,27 @@ import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotLineAppearance;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 
+/**
+ * Utils for plotting basic waveforms.
+ *
+ * @author otsuru
+ * @since 2023/2/12
+ */
 class BasicPlotAid {
+    private BasicPlotAid() {}
+
     static final GnuplotLineAppearance UNSHIFTED_APPEARANCE = new GnuplotLineAppearance(2, GnuplotColorName.gray, 1);
     static final GnuplotLineAppearance SHIFTED_APPEARANCE = new GnuplotLineAppearance(1, GnuplotColorName.black, 1);
-    static final GnuplotLineAppearance RED_APPEARANCE = new GnuplotLineAppearance(1, GnuplotColorName.red, 1);
+    static final GnuplotLineAppearance RED_APPEARANCE = new GnuplotLineAppearance(1, GnuplotColorName.orange_red, 1);
     static final GnuplotLineAppearance GREEN_APPEARANCE = new GnuplotLineAppearance(1, GnuplotColorName.web_green, 1);
     static final GnuplotLineAppearance BLUE_APPEARANCE = new GnuplotLineAppearance(1, GnuplotColorName.web_blue, 1);
+    static final GnuplotLineAppearance GRAY_APPEARANCE = new GnuplotLineAppearance(1, GnuplotColorName.gray, 1);
     static final GnuplotLineAppearance RESIDUAL_APPEARANCE = new GnuplotLineAppearance(1, GnuplotColorName.skyblue, 1);
 
     static final GnuplotLineAppearance ZERO_APPEARANCE = new GnuplotLineAppearance(1, GnuplotColorName.light_gray, 1);
     static final GnuplotLineAppearance USE_PHASE_APPEARANCE = new GnuplotLineAppearance(1, GnuplotColorName.turquoise, 1);
     static final GnuplotLineAppearance AVOID_PHASE_APPEARANCE = new GnuplotLineAppearance(1, GnuplotColorName.violet, 1);
+    static final GnuplotLineAppearance SHADE_PHASE_APPEARANCE = new GnuplotLineAppearance(1, GnuplotColorName.SHADE, 70);
 
     static GnuplotLineAppearance switchObservedAppearance(int num) {
         switch(num) {
@@ -42,6 +52,7 @@ class BasicPlotAid {
         case 1: return RED_APPEARANCE;
         case 2: return GREEN_APPEARANCE;
         case 3: return BLUE_APPEARANCE;
+        case 4: return GRAY_APPEARANCE;
         default: throw new IllegalArgumentException("Undefined style number for synthetic: " + num);
         }
     }
@@ -74,23 +85,30 @@ class BasicPlotAid {
         }
     }
 
-    static void plotTravelTimeCurve(TauP_Time timeTool, String[] displayPhases, String[] alignPhases, double reductionSlowness,
-            double startDistance, double endDistance,
-            String fileTag, String dateStr, Path eventPath, SACComponent component, GnuplotFile gnuplot) throws IOException, TauModelException {
-        // set names of all phases to display, and the phase to align if it is specified
+    static void plotTravelTimeCurve(TauP_Time timeTool, String[] displayPhases, boolean shadeCurve,
+            String[] alignPhases, double reductionSlowness, double startDistance, double endDistance,
+            String fileTag, String dateString, Path eventPath, SACComponent component, GnuplotFile gnuplot) throws IOException, TauModelException {
+        // set names of all phases to display, and the phases to align on if specified
         timeTool.setPhaseNames(displayPhases);
         if (alignPhases != null) {
             for (String phase : alignPhases) timeTool.appendPhaseName(phase);
         }
 
+        // The following is needed to apply source depth if calcTime() has not been done yet.
+        timeTool.depthCorrect(timeTool.getSourceDepth(), timeTool.getReceiverDepth());
+
         // compute travel times
         List<SeismicPhase> phaseList = timeTool.getSeismicPhases();
-        List<String> alignPhaseNameList = Arrays.asList(alignPhases);
-        List<SeismicPhase> alignPhaseList = phaseList.stream().filter(phase -> alignPhaseNameList.contains(phase.getName())).collect(Collectors.toList());
+        // extract information for phases to be used for alignment
+        List<SeismicPhase> alignPhaseList = null;
+        if (alignPhases != null) {
+            List<String> alignPhaseNameList = Arrays.asList(alignPhases);
+            alignPhaseList = phaseList.stream().filter(phase -> alignPhaseNameList.contains(phase.getName())).collect(Collectors.toList());
+        }
 
         // output file and add curve for each phase
         for (SeismicPhase phase : phaseList) {
-            if(!phase.hasArrivals()) {
+            if (!phase.hasArrivals()) {
                 continue;
             }
 
@@ -98,8 +116,8 @@ class BasicPlotAid {
             double[] time = phase.getTime();
 
             String phaseName = phase.getName();
-            String curveFileName = DatasetAid.generateOutputFileName("curve", fileTag, dateStr, "_" + component + "_" + phaseName + ".txt");
-            Path curvePath = eventPath.resolve(curveFileName);
+            Path curvePath = DatasetAid.generateOutputFilePath(eventPath, "curve", fileTag, true, dateString, "_" + component + "_" + phaseName + ".txt");
+            String curveFileName = curvePath.getFileName().toString();
             boolean wrotePhaseLabel = false;
 
             // output file and add curve
@@ -130,7 +148,8 @@ class BasicPlotAid {
                     }
                 }
             }
-            gnuplot.addLine(curveFileName, 2, 1, USE_PHASE_APPEARANCE, "");
+            if (shadeCurve) gnuplot.addLine(curveFileName, "($2+1):1", SHADE_PHASE_APPEARANCE, "");
+            else gnuplot.addLine(curveFileName, 2, 1, USE_PHASE_APPEARANCE, "");
         }
     }
 

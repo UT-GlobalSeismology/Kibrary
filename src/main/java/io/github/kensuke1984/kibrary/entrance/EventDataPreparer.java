@@ -2,6 +2,8 @@ package io.github.kensuke1984.kibrary.entrance;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
@@ -39,12 +41,12 @@ import io.github.kensuke1984.kibrary.util.sac.SACUtil;
  * <p>
  * (memo: this class does not hold "datacenter" beacuse it is not needed for seed files that already exist.)
  *
- * @since 2021/09/14
  * @author otsuru
+ * @since 2021/09/14
  */
 class EventDataPreparer {
 
-    private static final String DATASELECT_URL_IRIS = "http://service.iris.edu/fdsnws/dataselect/1/query?";
+    private static final String DATASELECT_URL_IRIS = "https://service.earthscope.org/fdsnws/dataselect/1/query?";
     private static final String DATASELECT_URL_ORFEUS = "http://www.orfeus-eu.org/fdsnws/dataselect/1/query?";
     /**
      * [s] delta for SAC files. SAC files with different delta will be interpolated
@@ -112,12 +114,17 @@ class EventDataPreparer {
                 "&starttime=" + toLine(startTime) + "&endtime=" + toLine(endTime) + "&format=miniseed&nodata=404";
         URL url = new URL(urlString);
 
-        try {
-            System.err.println(" ~ Downloading mseed file ...");
-            Files.createDirectories(mseedSetPath);
-            Path mseedPath = mseedSetPath.resolve(mseedFileName);
-            double sizeMiB = (double) Files.copy(url.openStream(), mseedPath, StandardCopyOption.REPLACE_EXISTING) / 1024 / 1024;
-            System.err.println(" ~ Downloaded : " + eventData + " - " + MathAid.roundToString(sizeMiB, 3) + " MiB");
+        // leave this for redirect validation
+        //followingRedirects(url);
+
+        Files.createDirectories(mseedSetPath);
+        Path mseedPath = mseedSetPath.resolve(mseedFileName);
+
+        System.err.print(" ~ Downloading mseed file ...");
+        try (InputStream inputStream = url.openStream()) {
+            double sizeMiB = (double) Files.copy(inputStream, mseedPath, StandardCopyOption.REPLACE_EXISTING) / 1024 / 1024;
+            System.err.println("\r ~ Downloaded : " + eventData + " - " + MathAid.roundToString(sizeMiB, 3) + " MiB  "
+                    + DateTimeFormatter.ofPattern("<yyyy/MM/dd HH:mm:ss>").format(LocalDateTime.now()));
         } catch (FileNotFoundException e) {
             // if there is no available data for this request, return false
             return false;
@@ -246,7 +253,7 @@ class EventDataPreparer {
      * @throws IOException
      */
     private boolean xml2resp(StationXmlFile xmlFile, RespDataFile respFile) throws IOException {
-        String command = "xml2resp -o " + respSetPath.getFileName().resolve(respFile.getRespFile())
+        String command = "xml2resp -o " + respSetPath.getFileName().resolve(respFile.getRespName())
                 + " " + stationSetPath.getFileName().resolve(xmlFile.getXmlFile());
         //System.err.println(command);
         ExternalProcess xProcess = ExternalProcess.launch(command, eventDir.toPath());
@@ -322,11 +329,12 @@ class EventDataPreparer {
 */
     /**
      * Downloads StationXML files for the event into "eventDir/station/", given a set of SAC files.
-     * The downloads may be skipped if the SAC file name is not in mseed-style.
+     * The downloads might be skipped if the SAC file name is not in mseed-style.
      * @param datacenter (String) The name of the datacenter to download from.
+     * @param redo (boolean) Whether to download existing stationXml files again.
      * @throws IOException
      */
-    void downloadXmlMseed(String datacenter) throws IOException {
+    void downloadXmlMseed(String datacenter, boolean redo) throws IOException {
         if (!Files.exists(mseedSetPath)) {
             return;
         }
@@ -345,7 +353,7 @@ class EventDataPreparer {
                 String channel = sacFile.getChannel();
 
                 StationXmlFile stationInfo = new StationXmlFile(network, station, location, channel, stationSetPath);
-                if (!Files.exists(stationInfo.getXmlPath())) {
+                if (!Files.exists(stationInfo.getXmlPath()) || redo) {
                     stationInfo.setRequest(datacenter, eventData.getCMTTime(), eventData.getCMTTime());
                     stationInfo.downloadStationXml();
                 }
@@ -388,8 +396,8 @@ class EventDataPreparer {
                 }
 
                 // create resp file
-                RespDataFile respData = new RespDataFile(network, station, location, channel);
-                if (!xml2resp(stationInfo, respData)) {
+                RespDataFile respFile = new RespDataFile(network, station, location, channel);
+                if (!xml2resp(stationInfo, respFile)) {
                     // if RESP file fails to be created, skip the SAC file
                     System.err.println("!!! xml2resp for "+ sacPath + " failed.");
                     continue;
@@ -469,9 +477,13 @@ class EventDataPreparer {
                 String channel = sacFile.getChannel();
 
                 // move resp file
-                RespDataFile respData = new RespDataFile(network, station, location, channel);
-                Files.move(seedSetPath.resolve(respData.getRespFile()), respSetPath.resolve(respData.getRespFile()),
-                        StandardCopyOption.REPLACE_EXISTING);
+                String respFileName = new RespDataFile(network, station, location, channel).getRespName();
+                // There are cases where 2 SAC files exist for 1 channel, in which case there is only 1 resp file.
+                //   The resp file will be moved when treating the 1st SAC file, so nothing has to be moved for the 2nd SAC file.
+                if (Files.exists(seedSetPath.resolve(respFileName))) {
+                    Files.move(seedSetPath.resolve(respFileName), respSetPath.resolve(respFileName),
+                            StandardCopyOption.REPLACE_EXISTING);
+                }
 
                 // read SAC file
                 Map<SACHeaderEnum, String> headerMap = SACUtil.readHeader(sacPath);
@@ -535,6 +547,43 @@ class EventDataPreparer {
             sacD.inputCMD("interpolate delta " + DELTA);
             sacD.inputCMD("w over");
         }
+    }
+
+    /**
+     * Follow redirects while HTTP Status Codes are 3xx.
+     * Leave this method for redirect validation.
+     * @param start (URL)
+     * @return HttpURLConnection when HTTP Status Codes are NOT 3xx
+     * @throws IOException
+     */
+    static HttpURLConnection followingRedirects(URL start) throws IOException {
+        URL url = start;
+
+        for (int i = 0; i < 10; i++) {
+            HttpURLConnection con = (HttpURLConnection) url.openConnection();
+            con.setInstanceFollowRedirects(false);
+            con.setConnectTimeout(30_000);
+            con.setReadTimeout(30_000);
+            con.setRequestMethod("GET");
+            con.setRequestProperty("User-Agent", "Mozilla/5.0");
+            con.setRequestProperty("Accept", "*/*");
+
+            int code = con.getResponseCode();
+            String loc = con.getHeaderField("Location");
+
+            System.err.printf(
+                "Step %d: %s -> %d %s | Location=%s | CT=%s | CL=%d%n",
+                i, url, code, con.getResponseMessage(),
+                loc, con.getContentType(), con.getContentLengthLong()
+            );
+
+            if (code / 100 == 3 && loc != null) {
+                url = new URL(url, loc);
+                continue;
+            }
+            return con;
+        }
+        throw new IOException("Too many redirects");
     }
 
 }

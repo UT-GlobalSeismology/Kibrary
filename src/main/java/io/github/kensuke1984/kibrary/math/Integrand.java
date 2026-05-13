@@ -4,7 +4,7 @@ package io.github.kensuke1984.kibrary.math;
  * Integrand utilities
  *
  * @author Kensuke Konishi
- * @version 0.0.4.1.1
+ * @since a long time ago
  */
 public final class Integrand {
 

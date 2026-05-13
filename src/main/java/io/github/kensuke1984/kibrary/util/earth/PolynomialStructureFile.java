@@ -24,7 +24,7 @@ import io.github.kensuke1984.kibrary.util.InformationFileReader;
  * and 2 variables (Qkappa, Qmu) are defined as constants.
  *
  * @author otsuru
- * @since 2022/6/15 extracted some parts of PolynomialStructure
+ * @since 2022/6/15 Extracted some parts of PolynomialStructure.
  */
 public class PolynomialStructureFile {
     private PolynomialStructureFile() {}
@@ -215,15 +215,15 @@ public class PolynomialStructureFile {
         // input
         OptionGroup inputOption = new OptionGroup();
         inputOption.addOption(Option.builder("n").longOpt("name").hasArg().argName("name")
-                .desc("Specify name of structure").build());
-        inputOption.addOption(Option.builder("d").longOpt("dsmPsv").hasArg().argName("dsmPsvInputFile")
-                .desc("Use DSM PSV input file as input").build());
+                .desc("Specify name of structure.").build());
+        inputOption.addOption(Option.builder("i").longOpt("dsmPsv").hasArg().argName("dsmPsvInputFile")
+                .desc("Use DSM PSV input file as input.").build());
         inputOption.setRequired(true);
         options.addOptionGroup(inputOption);
 
         // output
         options.addOption(Option.builder("o").longOpt("output").hasArg().argName("outputFile")
-                .desc("Set path of output file").build());
+                .desc("Path of output file.").build());
 
         return options;
     }
@@ -243,8 +243,8 @@ public class PolynomialStructureFile {
         if (cmdLine.hasOption("n")) {
             structureName = cmdLine.getOptionValue("n");
             structure = PolynomialStructure.of(structureName);
-        } else if(cmdLine.hasOption("d")) {
-            dsmPsvPath = Paths.get(cmdLine.getOptionValue("d"));
+        } else if(cmdLine.hasOption("i")) {
+            dsmPsvPath = Paths.get(cmdLine.getOptionValue("i"));
             fileName = dsmPsvPath.getFileName().toString();
             structureName = fileName.substring(0, fileName.lastIndexOf('.'));
             structure = PolynomialStructureFile.readDsm(dsmPsvPath);
@@ -253,8 +253,7 @@ public class PolynomialStructureFile {
             return;
         }
 
-        Path outputPath = cmdLine.hasOption("o") ? Paths.get(cmdLine.getOptionValue("o"))
-                : Paths.get(structureName + ".structure");
+        Path outputPath = cmdLine.hasOption("o") ? Paths.get(cmdLine.getOptionValue("o")) : Paths.get(structureName + ".structure");
 
         write(structure, outputPath);
         System.err.println(outputPath + " is created.");

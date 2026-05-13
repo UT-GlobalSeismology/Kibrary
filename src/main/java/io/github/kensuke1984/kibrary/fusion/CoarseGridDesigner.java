@@ -16,8 +16,10 @@ import org.apache.commons.math3.util.Precision;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.elastic.VariableType;
+import io.github.kensuke1984.kibrary.math.CircularRange;
+import io.github.kensuke1984.kibrary.math.LinearRange;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
-import io.github.kensuke1984.kibrary.util.GadgetAid;
+import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
@@ -39,7 +41,7 @@ public class CoarseGridDesigner extends Operation {
 
     private final Property property;
     /**
-     * Path of the work folder
+     * Path of the work folder.
      */
     private Path workPath;
     /**
@@ -47,18 +49,22 @@ public class CoarseGridDesigner extends Operation {
      */
     private String folderTag;
     /**
-     * Path of the output folder
+     * Whether to append date string at end of output folder name.
      */
-    private Path outPath;
+    private boolean appendFolderDate;
 
     /**
-     * Path of unknown parameter file
+     * Path of unknown parameter file.
      */
     private Path unknownParameterPath;
     /**
-     * Partial types of parameters to be fused
+     * Partial types of parameters to be fused.
      */
     private List<VariableType> variableTypes;
+    /**
+     * Number of voxels required in coarse voxel. Otherwise, the voxel will not be used.
+     */
+    private int nMinVoxel;
 
     private boolean fuseVertically;
     private double[] borderRadii;
@@ -72,55 +78,59 @@ public class CoarseGridDesigner extends Operation {
     private double dLongitudeKm;
     private double dLongitudeDeg;
     private boolean setLongitudeByKm;
-    private double longitudeOffset;
+    private double baseLongitude;
 
     private FusionDesign fusionDesign;
+
     /**
-     * @param args  none to create a property file <br>
-     *              [property file] to run
-     * @throws IOException if any
+     * @param args (String[]) Arguments: none to create a property file, path of property file to run it.
+     * @throws IOException
      */
     public static void main(String[] args) throws IOException {
-        if (args.length == 0) writeDefaultPropertiesFile();
+        if (args.length == 0) writeDefaultPropertiesFile(null);
         else Operation.mainFromSubclass(args);
     }
 
-    public static void writeDefaultPropertiesFile() throws IOException {
-        Class<?> thisClass = new Object(){}.getClass().getEnclosingClass();
-        Path outPath = Property.generatePath(thisClass);
+    public static void writeDefaultPropertiesFile(String tag) throws IOException {
+        String className = new Object(){}.getClass().getEnclosingClass().getSimpleName();
+        Path outPath = DatasetAid.generateOutputFilePath(Paths.get(""), className, tag, true, null, ".properties");
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
-            pw.println("manhattan " + thisClass.getSimpleName());
-            pw.println("##Path of a working folder (.)");
+            pw.println("manhattan " + className);
+            pw.println("##Path of work folder. (.)");
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this unset.");
             pw.println("#folderTag ");
-            pw.println("##Path of an unknown parameter list file, must be set");
+            pw.println("##(boolean) Whether to append date string at end of output folder name. (true)");
+            pw.println("#appendFolderDate false");
+            pw.println("##Path of an unknown parameter list file, must be set.");
             pw.println("#unknownParameterPath unknowns.lst");
             pw.println("##Variable types of parameters to fuse. If not set, all variable types will be used.");
             pw.println("#variableTypes ");
-            pw.println("##########Settings for vertical fusion of voxels");
-            pw.println("##(boolean) Whether to fuse voxels vertically (false)");
+            pw.println("##Number of voxels required in coarse voxel. Otherwise, the voxel will not be used. (1)");
+            pw.println("#nMinVoxel ");
+            pw.println("##########Settings for vertical fusion of voxels.");
+            pw.println("##(boolean) Whether to fuse voxels vertically. (false)");
             pw.println("#fuseVertically true");
-            pw.println("##(double) Radii of layer borders, listed using spaces [km] (3480 3530 3580 3630 3680 3730 3780 3830 3880)");
+            pw.println("##(double) Radii of layer borders, listed using spaces [km]. (3480 3530 3580 3630 3680 3730 3780 3830 3880)");
             pw.println("##  Parameters with radii outside this range will not be used.");
             pw.println("#borderRadii ");
-            pw.println("##########Settings for horzontal fusion of voxels");
-            pw.println("##(boolean) Whether to fuse voxels horizontally (false)");
+            pw.println("##########Settings for horzontal fusion of voxels.");
+            pw.println("##(boolean) Whether to fuse voxels horizontally. (false)");
             pw.println("#fuseHorizontally true");
             pw.println("##(double) Latitude spacing [km]. If this is unset, the following dLatitudeDeg will be used.");
             pw.println("##  The (roughly) median radius of target region will be used to convert this to degrees.");
             pw.println("#dLatitudeKm ");
-            pw.println("##(double) Latitude spacing [deg] (5)");
+            pw.println("##(double) Latitude spacing [deg]. (5)");
             pw.println("#dLatitudeDeg ");
-            pw.println("##(double) Offset of boundary latitude [deg], must be positive (2.5)");
+            pw.println("##(double) Offset of boundary latitude [deg], must be positive. (2.5)");
             pw.println("#latitudeOffset ");
             pw.println("##(double) Longitude spacing [km]. If this is unset, the following dLongitudeDeg will be used.");
             pw.println("##  The (roughly) median radius of target region will be used to convert this to degrees at each latitude.");
             pw.println("#dLongitudeKm ");
-            pw.println("##(double) Longitude spacing [deg] (5)");
+            pw.println("##(double) Longitude spacing [deg]. (5)");
             pw.println("#dLongitudeDeg ");
-            pw.println("##(double) Offset of boundary longitude, when dLongitudeDeg is used [deg] [0:dLongitudeDeg) (2.5)");
-            pw.println("#longitudeOffset ");
+            pw.println("##(double) Baseline of boundary longitude [deg]; [-180:360). (0)");
+            pw.println("#baseLongitude ");
         }
         System.err.println(outPath + " is created.");
     }
@@ -133,12 +143,14 @@ public class CoarseGridDesigner extends Operation {
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
         if (property.containsKey("folderTag")) folderTag = property.parseStringSingle("folderTag", null);
+        appendFolderDate = property.parseBoolean("appendFolderDate", "true");
 
         unknownParameterPath = property.parsePath("unknownParameterPath", null, true, workPath);
 
         if (property.containsKey("variableTypes"))
             variableTypes = Arrays.stream(property.parseStringArray("variableTypes", null)).map(VariableType::valueOf)
                     .collect(Collectors.toList());
+        nMinVoxel = property.parseInt("nMinVoxel", "1");
 
         fuseVertically = property.parseBoolean("fuseVertically", "false");
         borderRadii = Arrays.stream(property.parseDoubleArray("borderRadii", "3480 3530 3580 3630 3680 3730 3780 3830 3880"))
@@ -146,6 +158,7 @@ public class CoarseGridDesigner extends Operation {
         if (borderRadii.length < 2) throw new IllegalArgumentException("There must be at least 2 values for borderRadii");
 
         fuseHorizontally = property.parseBoolean("fuseHorizontally", "false");
+
         if (property.containsKey("dLatitudeKm")) {
             dLatitudeKm = property.parseDouble("dLatitudeKm", null);
             if (dLatitudeKm <= 0)
@@ -158,9 +171,9 @@ public class CoarseGridDesigner extends Operation {
             setLatitudeByKm = false;
         }
         latitudeOffset = property.parseDouble("latitudeOffset", "2.5");
-        if (latitudeOffset < 0) {
+        if (latitudeOffset < 0)
             throw new IllegalArgumentException("latitudeOffset must be positive");
-        }
+
         if (property.containsKey("dLongitudeKm")) {
             dLongitudeKm = property.parseDouble("dLongitudeKm", null);
             if (dLongitudeKm <= 0)
@@ -170,11 +183,11 @@ public class CoarseGridDesigner extends Operation {
             dLongitudeDeg = property.parseDouble("dLongitudeDeg", "5");
             if (dLongitudeDeg <= 0)
                 throw new IllegalArgumentException("dLongitudeDeg must be positive");
-            longitudeOffset = property.parseDouble("longitudeOffset", "2.5");
-            if (longitudeOffset < 0 || dLongitudeDeg <= longitudeOffset)
-                throw new IllegalArgumentException("longitudeOffset must be in [0:dLongitudeDeg)");
             setLongitudeByKm = false;
         }
+        baseLongitude = property.parseDouble("baseLongitude", "0");
+        if (baseLongitude < -180 || 360 <= baseLongitude)
+            throw new IllegalArgumentException("baseLongitude must be in [-180:360)");
     }
 
     @Override
@@ -197,11 +210,11 @@ public class CoarseGridDesigner extends Operation {
         for (VariableType variableType : variableTypes) {
             List<UnknownParameter> correspondingParameters = parameterList.stream()
                     .filter(param -> param.getVariableType().equals(variableType)).collect(Collectors.toList());
-            fuseHorizontally(correspondingParameters);
+            fuse(correspondingParameters);
         }
 
         // prepare output folder
-        outPath = DatasetAid.createOutputFolder(workPath, "coarseGrid", folderTag, GadgetAid.getTemporaryString());
+        Path outPath = DatasetAid.createOutputFolder(workPath, "coarseGrid", folderTag, appendFolderDate, null);
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         // output fusion design file
@@ -213,26 +226,25 @@ public class CoarseGridDesigner extends Operation {
         UnknownParameterFile.write(fusionDesign.getFusedParameters(), outputUnknownsPath);
     }
 
-    private void fuseHorizontally(List<UnknownParameter> parameterList) {
+    private void fuse(List<UnknownParameter> parameterList) {
         if (fuseHorizontally) {
             Set<FullPosition> positions = parameterList.stream().map(UnknownParameter::getPosition).collect(Collectors.toSet());
-            // whether to use longitude range [0:360) instead of [-180,180)
-            boolean crossDateLine = HorizontalPosition.crossesDateLine(positions);
             // when using dLatitudeKm, set dLatitude in degrees using the (roughly) median radius of target region
             double averageRadius = positions.stream().mapToDouble(FullPosition::getR).distinct().average().getAsDouble();
             double dLatitude = setLatitudeByKm ? Math.toDegrees(dLatitudeKm / averageRadius) : dLatitudeDeg;
 
             // decide number of latitude intervals
             // When latitudeOffset > 0, intervals for that extra part is needed.
-            int nLatitude = (int) Math.ceil((180 + latitudeOffset) / dLatitude);
+            int nLatitude = (int) MathAid.ceil((180.0 + latitudeOffset) / dLatitude);
             // loop for each latitude band (from north to south)
             for (int i = 0; i < nLatitude; i++) {
                 double tmp;
-                double maxLatitude = (tmp = 90 - (i * dLatitude - latitudeOffset)) > 90 ? 90 : tmp;
-                double minLatitude = (tmp = maxLatitude - dLatitude) < -90 ? -90 : tmp;
-                double averageLatitude = maxLatitude - dLatitude/2;
-                if (averageLatitude < -90) averageLatitude = -90;
-                if (averageLatitude > 90) averageLatitude = 90;
+                double maxLatitude = (tmp = 90.0 - (i * dLatitude - latitudeOffset)) > 90.0 ? 90.0 : tmp;
+                double minLatitude = (tmp = maxLatitude - dLatitude) < -90.0 ? -90.0 : tmp;
+                LinearRange latitudeRange = new LinearRange("Latitude", minLatitude, maxLatitude, -90.0, 90.0);
+                double averageLatitude = maxLatitude - dLatitude / 2.0;
+                if (averageLatitude < -90.0) averageLatitude = -90.0;
+                if (averageLatitude > 90.0) averageLatitude = 90.0;
 
                 // decide dLongitude for this latitude band
                 double dLongitudeForRow;
@@ -248,17 +260,17 @@ public class CoarseGridDesigner extends Operation {
                 // decide number of longitude intervals
                 // When indivisible, the remaining range is not used so that the longitudes do not exceed 360.
                 // It is not a good idea to include overlapped voxels 2 times (at both ends), anyway.
-                int nLongitude = (int) Math.floor(360 / dLongitudeForRow);
+                int nLongitude = (int) MathAid.floor(360.0 / dLongitudeForRow);
                 // loop for each longitude range
                 for (int j = 0; j < nLongitude; j++) {
-                    // decide longitude range, depending on crossDateLine
-                    double minLongitude = crossDateLine ? (j * dLongitudeForRow + longitudeOffset)
-                            : (-180 + j * dLongitudeForRow + longitudeOffset);
-                    double maxLongitude = (tmp = minLongitude + dLongitudeForRow) > 360 ? 360 : tmp;
+                    // decide longitude range, distributing intervals on both sides of baseLongitude
+                    double minLongitude = baseLongitude + (j - nLongitude / 2) * dLongitudeForRow;
+                    double maxLongitude = minLongitude + dLongitudeForRow;
+                    CircularRange longitudeRange = new CircularRange("Longitude", minLongitude, maxLongitude);
 
                     // fuse voxels vertically at this latitude and longitude range
                     List<UnknownParameter> correspondingParameters = parameterList.stream()
-                            .filter(param -> param.getPosition().toHorizontalPosition().isInRange(minLatitude, maxLatitude, minLongitude, maxLongitude))
+                            .filter(param -> param.getPosition().toHorizontalPosition().isInRange(latitudeRange, longitudeRange))
                             .collect(Collectors.toList());
                     if (correspondingParameters.size() == 0) continue;
                     fuseVertically(correspondingParameters);
@@ -288,7 +300,7 @@ public class CoarseGridDesigner extends Operation {
                 List<UnknownParameter> correspondingParameters = parameterList.stream()
                         .filter(param -> lowerR <= param.getPosition().getR() && param.getPosition().getR() < upperR)
                         .collect(Collectors.toList());
-                if (correspondingParameters.size() == 0) continue;
+                if (correspondingParameters.size() < nMinVoxel) continue;
                 fusionDesign.addFusion(correspondingParameters);
             }
 
@@ -299,7 +311,7 @@ public class CoarseGridDesigner extends Operation {
                 List<UnknownParameter> correspondingParameters = parameterList.stream()
                         .filter(param -> Precision.equals(param.getPosition().getR(), radius, FullPosition.RADIUS_EPSILON))
                         .collect(Collectors.toList());
-                if (correspondingParameters.size() == 0) continue;
+                if (correspondingParameters.size() < nMinVoxel) continue;
                 fusionDesign.addFusion(correspondingParameters);
             }
         }

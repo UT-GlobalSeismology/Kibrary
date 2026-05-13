@@ -19,6 +19,7 @@ import java.nio.file.Path;
  * 'PSV', 'SH' must be upper case. 'station' and 'network' must be 8 or less letters.
  *
  * @author Kensuke Konishi
+ * @since a long time ago
  */
 public class FormattedSPCFileName extends SPCFileName {
 

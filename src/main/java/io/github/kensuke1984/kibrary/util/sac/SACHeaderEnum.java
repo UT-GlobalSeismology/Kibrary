@@ -12,7 +12,7 @@ package io.github.kensuke1984.kibrary.util.sac;
  * (If the name is UNUSED then that variable is not currently being used)
  *
  * @author Kensuke Konishi
- * @version 0.0.1.1.1
+ * @since a long time ago
  * @see <a href=http://ds.iris.edu/ds/nodes/dmc/forms/sac/>SAC</a>
  * @see <a href=https://ds.iris.edu/files/sac-manual/manual/file_format.html>SAC data format</a>
  */
@@ -596,10 +596,10 @@ public enum SACHeaderEnum {
      * 0:float, 1:int, 2:enumerated(String), 3:logical(true or false),
      * 8:Alphanumeric(String 8letters), 16:Alphanumeric(String 16letters)
      */
-    private int type;
+    private final int type;
 
-    SACHeaderEnum(int n) {
-        type = n;
+    private SACHeaderEnum(int type) {
+        this.type = type;
     }
 
     /**
@@ -607,7 +607,7 @@ public enum SACHeaderEnum {
      * 8:Alphanumeric(String 8letters), 16:Alphanumeric(String
      * 16letters)
      */
-    public int typeOf() {
+    public int getType() {
         return type;
     }
 

@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -12,6 +13,7 @@ import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.source.MomentTensor;
 import io.github.kensuke1984.kibrary.source.SourceTimeFunctionType;
+import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 
 /**
@@ -76,49 +78,48 @@ public class VirtualEventRegistration extends Operation {
     private MomentTensor momentTensor;
 
     /**
-     * @param args  none to create a property file <br>
-     *              [property file] to run
-     * @throws IOException if any
+     * @param args (String[]) Arguments: none to create a property file, path of property file to run it.
+     * @throws IOException
      */
     public static void main(String[] args) throws IOException {
-        if (args.length == 0) writeDefaultPropertiesFile();
+        if (args.length == 0) writeDefaultPropertiesFile(null);
         else Operation.mainFromSubclass(args);
     }
 
-    public static void writeDefaultPropertiesFile() throws IOException {
-        Class<?> thisClass = new Object(){}.getClass().getEnclosingClass();
-        Path outPath = Property.generatePath(thisClass);
+    public static void writeDefaultPropertiesFile(String tag) throws IOException {
+        String className = new Object(){}.getClass().getEnclosingClass().getSimpleName();
+        Path outPath = DatasetAid.generateOutputFilePath(Paths.get(""), className, tag, true, null, ".properties");
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
-            pw.println("manhattan " + thisClass.getSimpleName());
+            pw.println("manhattan " + className);
             pw.println("##GlobalCMT ID to create. (000000A)");
             pw.println("#globalCMTID ");
             pw.println("##Centroid date and time, in the format 'YYYY/MM/DD hh:mm:ss.s'. (1900/01/01 00:00:00.0)");
             pw.println("#centroidDateTime ");
-            pw.println("##(double) Centroid latitude [deg] [-90:90] (0)");
+            pw.println("##(double) Centroid latitude [deg]; [-90:90]. (0)");
             pw.println("#centroidLatitude ");
-            pw.println("##(double) Centroid longitude [deg] [-180:360) (0)");
+            pw.println("##(double) Centroid longitude [deg]; [-180:360). (0)");
             pw.println("#centroidLongitude ");
-            pw.println("##(double) Centroid depth [km] [0:) (0)");
+            pw.println("##(double) Centroid depth [km]; [0:). (0)");
             pw.println("#centroidDepth ");
             pw.println("##Type of source time function, from {1:boxcar, 2:triangle}. (2)");
             pw.println("#momentRateFunctionType ");
-            pw.println("##(double) Half duration of the moment rate function. [s] (0)");
+            pw.println("##(double) Half duration of the moment rate function [s]. (0)");
             pw.println("#halfDuration ");
             pw.println("##(int) Exponential number for the moment values. (25)");
             pw.println("#momentExponent ");
-            pw.println("##(double) Coefficient for Mrr, to be multiplied by momentExponent. [dyne*cm] (0)");
+            pw.println("##(double) Coefficient for Mrr, to be multiplied by momentExponent [dyne*cm]. (0)");
             pw.println("#mrrCoeff ");
-            pw.println("##(double) Coefficient for Mtt, to be multiplied by momentExponent. [dyne*cm] (0)");
+            pw.println("##(double) Coefficient for Mtt, to be multiplied by momentExponent [dyne*cm]. (0)");
             pw.println("#mttCoeff ");
-            pw.println("##(double) Coefficient for Mpp, to be multiplied by momentExponent. [dyne*cm] (0)");
+            pw.println("##(double) Coefficient for Mpp, to be multiplied by momentExponent [dyne*cm]. (0)");
             pw.println("#mppCoeff ");
-            pw.println("##(double) Coefficient for Mrt, to be multiplied by momentExponent. [dyne*cm] (0)");
+            pw.println("##(double) Coefficient for Mrt, to be multiplied by momentExponent [dyne*cm]. (0)");
             pw.println("#mrtCoeff ");
-            pw.println("##(double) Coefficient for Mrp, to be multiplied by momentExponent. [dyne*cm] (0)");
+            pw.println("##(double) Coefficient for Mrp, to be multiplied by momentExponent [dyne*cm]. (0)");
             pw.println("#mrpCoeff ");
-            pw.println("##(double) Coefficient for Mtp, to be multiplied by momentExponent. [dyne*cm] (0)");
+            pw.println("##(double) Coefficient for Mtp, to be multiplied by momentExponent [dyne*cm]. (0)");
             pw.println("#mtpCoeff ");
-            pw.println("##(double) Coefficient for M0 (scalar moment), to be multiplied by momentExponent. [dyne*cm] (0)");
+            pw.println("##(double) Coefficient for M0 (scalar moment), to be multiplied by momentExponent [dyne*cm]. (0)");
             pw.println("#m0Coeff ");
         }
         System.err.println(outPath + " is created.");
@@ -142,7 +143,7 @@ public class VirtualEventRegistration extends Operation {
         centroidLongitude = property.parseDouble("centroidLongitude", "0");
         centroidDepth = property.parseDouble("centroidDepth", "0");
 
-        momentRateFunctionType = SourceTimeFunctionType.valueOf(property.parseInt("momentRateFunctionType", "2"));
+        momentRateFunctionType = SourceTimeFunctionType.ofNumber(property.parseInt("momentRateFunctionType", "2"));
         halfDuration = property.parseDouble("halfDuration", "0");
 
         momentExponent = property.parseInt("momentExponent", "25");

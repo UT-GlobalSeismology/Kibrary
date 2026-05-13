@@ -29,7 +29,7 @@ import io.github.kensuke1984.kibrary.util.GadgetAid;
  * from <b>1976 January - 2017 September</b> is downloaded.
  *
  * @author Kensuke Konishi
- * @since version 0.1.8
+ * @since a long time ago
  */
 public final class GlobalCMTCatalog {
     private GlobalCMTCatalog() {}

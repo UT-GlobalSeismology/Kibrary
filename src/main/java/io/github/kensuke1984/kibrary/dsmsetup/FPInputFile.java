@@ -19,8 +19,7 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTAccess;
  * This class is <b>immutable</b>
  *
  * @author Kensuke Konishi
- * @version 0.0.6.2
- * @author anselme add information files for psv/sh fpcat (catalog)
+ * @since a long time ago
  */
 public class FPInputFile extends DSMInputHeader {
 
@@ -69,8 +68,8 @@ public class FPInputFile extends DSMInputHeader {
             Arrays.stream(structurePart).forEach(pw::println);
 
             // source
-            pw.println(event.getPosition(catalog).getR() + " " + event.getPosition(catalog).getLatitude() + " " +
-                    event.getPosition(catalog).getLongitude());
+            pw.println(event.getCmtPosition().getR() + " " + event.getCmtPosition().getLatitude() + " " +
+                    event.getCmtPosition().getLongitude());
             double[] mt = event.getCmt().toDSMStyle();
             pw.println(Arrays.stream(mt).mapToObj(Double::toString).collect(Collectors.joining(" ")) +
                     " Moment Tensor (1.e25 dyne cm)");
@@ -115,7 +114,7 @@ public class FPInputFile extends DSMInputHeader {
             Arrays.stream(structurePart).forEach(pw::println);
 
             // source
-            pw.println(event.getPosition(catalog).getR() + " 0. 0.");
+            pw.println(event.getCmtPosition().getR() + " 0. 0.");
             double[] mt = event.getCmt().toDSMStyle();
             pw.println(Arrays.stream(mt).mapToObj(Double::toString).collect(Collectors.joining(" "))
                     + " Moment Tensor (1.e25 dyne cm)");
@@ -209,8 +208,8 @@ public class FPInputFile extends DSMInputHeader {
             Arrays.stream(structurePart).forEach(pw::println);
 
             // source
-            pw.println(event.getPosition(catalog).getR() + " " + event.getPosition(catalog).getLatitude() + " "
-                    + event.getPosition(catalog).getLongitude());
+            pw.println(event.getCmtPosition().getR() + " " + event.getCmtPosition().getLatitude() + " "
+                    + event.getCmtPosition().getLongitude());
             double[] mt = event.getCmt().toDSMStyle();
             pw.println(Arrays.stream(mt).mapToObj(Double::toString).collect(Collectors.joining(" "))
                     + " Moment Tensor (1.e25 dyne cm)");

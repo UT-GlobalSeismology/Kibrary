@@ -19,10 +19,11 @@ import io.github.kensuke1984.kibrary.fusion.FusionDesign;
 import io.github.kensuke1984.kibrary.fusion.FusionInformationFile;
 import io.github.kensuke1984.kibrary.inversion.solve.InverseMethodEnum;
 import io.github.kensuke1984.kibrary.math.Interpolation;
-import io.github.kensuke1984.kibrary.perturbation.PerturbationListFile;
+import io.github.kensuke1984.kibrary.math.geometry.CoordinateConverter;
 import io.github.kensuke1984.kibrary.perturbation.PerturbationModel;
+import io.github.kensuke1984.kibrary.perturbation.ScalarListFile;
+import io.github.kensuke1984.kibrary.perturbation.ScalarType;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
-import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
@@ -42,80 +43,96 @@ public class ModelSetMapper extends Operation {
 
     private final Property property;
     /**
-     * Path of the work folder
+     * Path of the work folder.
      */
     private Path workPath;
     /**
      * A tag to include in output folder name. When this is empty, no tag is used.
      */
     private String folderTag;
+    /**
+     * Whether to append date string at end of output folder name.
+     */
+    private boolean appendFolderDate;
 
     /**
-     * The root folder containing results of inversion
+     * The root folder containing results of inversion.
      */
     private Path resultPath;
     /**
-     * file of 1D structure used in inversion
+     * File of 1D structure used in inversion.
      */
     private Path initialStructurePath;
     /**
-     * name of 1D structure used in inversion
+     * Name of 1D structure used in inversion.
      */
     private String initialStructureName;
     /**
-     * file of 1D structure to map perturbations against
+     * File of 1D structure to map perturbations against.
      */
     private Path referenceStructurePath;
     /**
-     * name of 1D structure to map perturbations against
+     * Name of 1D structure to map perturbations against.
      */
     private String referenceStructureName;
     /**
-     * Path of a {@link FusionInformationFile}
+     * Path of a {@link FusionInformationFile}.
      */
     private Path fusionPath;
+    /**
+     * Path of coordinate converter file to be used when interpolating.
+     */
+    private Path converterPath;
     private Set<VariableType> variableTypes;
     /**
-     * Solvers for equation
+     * Solvers for equation.
      */
     private Set<InverseMethodEnum> inverseMethods;
-    private int maxNum;
+    private int maxBasis;
+    private int basisInterval;
     private double[] boundaries;
     /**
      * Indices of layers to display in the figure. Listed from the inside. Layers are numbered 0, 1, 2, ... from the inside.
      */
     private int[] displayLayers;
     private int nPanelsPerRow;
+    /**
+     * Map region in the form lonMin/lonMax/latMin/latMax, when it is set manually.
+     */
     private String mapRegion;
+    private boolean forSlides;
+
     private double marginLatitudeRaw;
     private boolean setMarginLatitudeByKm;
     private double marginLongitudeRaw;
     private boolean setMarginLongitudeByKm;
     private double scale;
     /**
-     * Whether to display map as mosaic without smoothing
+     * Whether to display map as mosaic without smoothing.
      */
     private boolean mosaic;
+    private int cpStyle;
 
     /**
-     * @param args  none to create a property file <br>
-     *              [property file] to run
-     * @throws IOException if any
+     * @param args (String[]) Arguments: none to create a property file, path of property file to run it.
+     * @throws IOException
      */
     public static void main(String[] args) throws IOException {
-        if (args.length == 0) writeDefaultPropertiesFile();
+        if (args.length == 0) writeDefaultPropertiesFile(null);
         else Operation.mainFromSubclass(args);
     }
 
-    public static void writeDefaultPropertiesFile() throws IOException {
-        Class<?> thisClass = new Object(){}.getClass().getEnclosingClass();
-        Path outPath = Property.generatePath(thisClass);
+    public static void writeDefaultPropertiesFile(String tag) throws IOException {
+        String className = new Object(){}.getClass().getEnclosingClass().getSimpleName();
+        Path outPath = DatasetAid.generateOutputFilePath(Paths.get(""), className, tag, true, null, ".properties");
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
-            pw.println("manhattan " + thisClass.getSimpleName());
+            pw.println("manhattan " + className);
             pw.println("##Path of work folder. (.)");
             pw.println("#workPath ");
-            pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this blank.");
+            pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this unset.");
             pw.println("#folderTag ");
+            pw.println("##(boolean) Whether to append date string at end of output folder name. (true)");
+            pw.println("#appendFolderDate false");
             pw.println("##Path of a root folder containing results of inversion. (.)");
             pw.println("#resultPath ");
             pw.println("##Path of an initial structure file used in inversion. If this is unset, the following initialStructureName will be referenced.");
@@ -128,12 +145,16 @@ public class ModelSetMapper extends Operation {
             pw.println("#referenceStructureName ");
             pw.println("##Path of a fusion information file, if adaptive grid inversion is conducted.");
             pw.println("#fusionPath fusion.inf");
+            pw.println("##Path of coordinate converter file, when interpolating on curvilinear grid.");
+            pw.println("#converterPath converter.inf");
             pw.println("##Variable types to map, listed using spaces. (Vs)");
             pw.println("#variableTypes ");
-            pw.println("##Names of inverse methods, listed using spaces, from {CG,SVD,LSM,NNLS,BCGS,FCG,FCGD,NCG,CCG}. (CG)");
+            pw.println("##Names of inverse methods, listed using spaces, from {CG,SVD,LS,NNLS,BCGS,FCG,FCGD,NCG,CCG}. (CG)");
             pw.println("#inverseMethods ");
             pw.println("##(int) Maximum number of basis vectors to map. (10)");
-            pw.println("#maxNum ");
+            pw.println("#maxBasis ");
+            pw.println("##(int) Interval of basis vectors to map. (1)");
+            pw.println("#basisInterval ");
             pw.println("##(double[]) The display values of each layer boundary, listed from the inside using spaces. (0 50 100 150 200 250 300 350 400)");
             pw.println("#boundaries ");
             pw.println("##(int[]) Indices of layers to display, listed from the inside using spaces, when specific layers are to be displayed.");
@@ -141,8 +162,10 @@ public class ModelSetMapper extends Operation {
             pw.println("#displayLayers ");
             pw.println("##(int) Number of panels to display in each row. (4)");
             pw.println("#nPanelsPerRow ");
-            pw.println("##To specify the map region, set it in the form lonMin/lonMax/latMin/latMax, range lon:[-180,360] lat:[-90,90].");
+            pw.println("##To specify the map region, set it in the form lonMin/lonMax/latMin/latMax.");
             pw.println("#mapRegion -180/180/-90/90");
+            pw.println("##(boolean) Whether to enlarge labels and use stronger colors for slides. (true)");
+            pw.println("#forSlides ");
             pw.println("##########The following should be set to half of dLatitude and dLongitude used to design voxels (or smaller).");
             pw.println("##(double) Latitude margin at both ends [km]. If this is unset, the following marginLatitudeDeg will be used.");
             pw.println("#marginLatitudeKm ");
@@ -152,11 +175,13 @@ public class ModelSetMapper extends Operation {
             pw.println("#marginLongitudeKm ");
             pw.println("##(double) Longitude margin at both ends [deg]. (2.5)");
             pw.println("#marginLongitudeDeg ");
-            pw.println("##########Parameters for perturbation values");
+            pw.println("##########Parameters for perturbation values.");
             pw.println("##(double) Range of percent scale. (3)");
             pw.println("#scale ");
             pw.println("##(boolean) Whether to display map as mosaic without smoothing. (false)");
             pw.println("#mosaic ");
+            pw.println("##Style of color palette, from {0: red-turquoise, 1: orange-skyblue, 2: red-purple}. (1)");
+            pw.println("#cpStyle ");
         }
         System.err.println(outPath + " is created.");
     }
@@ -169,6 +194,7 @@ public class ModelSetMapper extends Operation {
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
         if (property.containsKey("folderTag")) folderTag = property.parseStringSingle("folderTag", null);
+        appendFolderDate = property.parseBoolean("appendFolderDate", "true");
 
         resultPath = property.parsePath("resultPath", ".", true, workPath);
         if (property.containsKey("initialStructurePath")) {
@@ -181,19 +207,25 @@ public class ModelSetMapper extends Operation {
         } else {
             referenceStructureName = property.parseString("referenceStructureName", "PREM");
         }
-        if (property.containsKey("fusionPath"))
+        if (property.containsKey("fusionPath")) {
             fusionPath = property.parsePath("fusionPath", null, true, workPath);
+        }
+        if (property.containsKey("converterPath")) {
+            converterPath = property.parsePath("converterPath", null, true, workPath);
+        }
 
         variableTypes = Arrays.stream(property.parseStringArray("variableTypes", "Vs")).map(VariableType::valueOf)
                 .collect(Collectors.toSet());
         inverseMethods = Arrays.stream(property.parseStringArray("inverseMethods", "CG")).map(InverseMethodEnum::of)
                 .collect(Collectors.toSet());
-        maxNum = property.parseInt("maxNum", "10");
+        maxBasis = property.parseInt("maxBasis", "10");
+        basisInterval = property.parseInt("basisInterval", "1");
 
         boundaries = property.parseDoubleArray("boundaries", "0 50 100 150 200 250 300 350 400");
         if (property.containsKey("displayLayers")) displayLayers = property.parseIntArray("displayLayers", null);
         nPanelsPerRow = property.parseInt("nPanelsPerRow", "4");
         if (property.containsKey("mapRegion")) mapRegion = property.parseString("mapRegion", null);
+        forSlides = property.parseBoolean("forSlides", "true");
 
         if (property.containsKey("marginLatitudeKm")) {
             marginLatitudeRaw = property.parseDouble("marginLatitudeKm", null);
@@ -214,6 +246,7 @@ public class ModelSetMapper extends Operation {
 
         scale = property.parseDouble("scale", "3");
         mosaic = property.parseBoolean("mosaic", "false");
+        cpStyle = property.parseInt("cpStyle", "1");
     }
 
     @Override
@@ -233,18 +266,18 @@ public class ModelSetMapper extends Operation {
         double[] radii = positions.stream().mapToDouble(pos -> pos.getR()).distinct().sorted().toArray();
 
         // read fusion file
-        FusionDesign fusionDesign = null;
-        if (fusionPath != null) {
-            fusionDesign = FusionInformationFile.read(fusionPath);
-        }
+        FusionDesign fusionDesign = (fusionPath != null) ? FusionInformationFile.read(fusionPath) : null;
+
+        // read coordinate converver file
+        CoordinateConverter converter = (converterPath != null) ? new CoordinateConverter(converterPath) : null;
 
         // decide map region
-        if (mapRegion == null) mapRegion = PerturbationMapShellscript.decideMapRegion(positions);
+        if (mapRegion == null) mapRegion = ScalarMapShellscript.decideMapRegion(positions);
         boolean crossDateLine = HorizontalPosition.crossesDateLine(positions);
-        double gridInterval = PerturbationMapShellscript.decideGridSampling(positions);
+        double gridInterval = ScalarMapShellscript.decideGridSampling(positions);
 
         // create output folder
-        Path outPath = DatasetAid.createOutputFolder(workPath, "modelMaps", folderTag, GadgetAid.getTemporaryString());
+        Path outPath = DatasetAid.createOutputFolder(workPath, "modelMaps", folderTag, appendFolderDate, null);
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         // write list files
@@ -255,7 +288,7 @@ public class ModelSetMapper extends Operation {
                 continue;
             }
 
-            for (int k = 1; k <= maxNum; k++){
+            for (int k = basisInterval; k <= maxBasis; k += basisInterval){
                 Path answerPath = methodPath.resolve(method.simpleName() + k + ".lst");
                 if (!Files.exists(answerPath)) {
                     System.err.println("Results for " + method.simpleName() + k + " do not exist, skipping.");
@@ -274,50 +307,59 @@ public class ModelSetMapper extends Operation {
                 Files.createDirectories(outBasisPath);
 
                 for (VariableType variable : variableTypes) {
-                    String variableName = variable.toString().toLowerCase();
                     // output discrete perturbation file
-                    Map<FullPosition, Double> discreteMap = model.getPercentForType(variable);
-                    Path outputDiscretePath = outBasisPath.resolve(variableName + "Percent.lst");
-                    PerturbationListFile.write(discreteMap, outputDiscretePath);
+                    Map<FullPosition, Double> discreteMap = model.getValueMap(variable, ScalarType.PERCENT);
+                    Path outputDiscretePath = outBasisPath.resolve(ScalarListFile.generateFileName(variable, ScalarType.PERCENT));
+                    ScalarListFile.write(discreteMap, outputDiscretePath);
+
+                    // interpolate
+                    Map<FullPosition, Double> interpolatedMap;
+                    if (converterPath != null) {
+                        interpolatedMap = Interpolation.curvilinearInEachMapLayer(discreteMap, gridInterval, converter, mosaic);
+                    } else {
+                        interpolatedMap = Interpolation.inEachMapLayer(discreteMap, gridInterval,
+                                marginLatitudeRaw, setMarginLatitudeByKm, marginLongitudeRaw, setMarginLongitudeByKm, crossDateLine, mosaic);
+                    }
+
                     // output interpolated perturbation file, in range [0:360) when crossDateLine==true so that mapping will succeed
-                    Map<FullPosition, Double> interpolatedMap = Interpolation.inEachMapLayer(discreteMap, gridInterval,
-                            marginLatitudeRaw, setMarginLatitudeByKm, marginLongitudeRaw, setMarginLongitudeByKm, mosaic);
-                    Path outputInterpolatedPath = outBasisPath.resolve(variableName + "PercentXY.lst");
-                    PerturbationListFile.write(interpolatedMap, crossDateLine, outputInterpolatedPath);
+                    Path outputInterpolatedPath = outBasisPath.resolve(ScalarListFile.generateFileName(variable, ScalarType.PERCENT, "XY"));
+                    ScalarListFile.write(interpolatedMap, crossDateLine, outputInterpolatedPath);
                 }
             }
         }
 
         // write shellscripts for mapping
         for (VariableType variable : variableTypes) {
-            String variableName = variable.toString().toLowerCase();
-            writeParentShellscript(variableName, outPath.resolve(variableName + "PercentAllMap.sh"));
-            PerturbationMapShellscript script = new PerturbationMapShellscript(variable, radii, boundaries, mapRegion,
-                    gridInterval, scale, variableName + "Percent", nPanelsPerRow);
+            ScalarMapShellscript script = new ScalarMapShellscript(variable, ScalarType.PERCENT, radii, boundaries,
+                    mapRegion, gridInterval, scale, nPanelsPerRow);
             if (displayLayers != null) script.setDisplayLayers(displayLayers);
+            script.setCpStyle(cpStyle, variable);
+            script.setForSlides(forSlides);
             script.write(outPath);
-            System.err.println("After this finishes, please enter " + outPath + "/ and run " + variableName + "PercentAllMap.sh");
+            String fileNameRoot = script.getPlotFileNameRoot();
+            writeParentShellscript(fileNameRoot, outPath.resolve(fileNameRoot + "AllMap.sh"));
+            System.err.println("After this finishes, please enter " + outPath + "/ and run " + fileNameRoot + "AllMap.sh");
         }
     }
 
-    private void writeParentShellscript(String paramName, Path outputPath) throws IOException {
+    private void writeParentShellscript(String fileNameRoot, Path outputPath) throws IOException {
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath))) {
             pw.println("#!/bin/sh");
             for (InverseMethodEnum method : inverseMethods) {
                 pw.println("");
-                pw.println("for i in `seq 1 " + maxNum + "`");
+                pw.println("for i in `seq " + basisInterval + " " + basisInterval + " " + maxBasis + "`");
                 pw.println("do");
                 pw.println("    cd " + method.simpleName() + "$i");
-                pw.println("    ln -s ../" + paramName + "PercentGrid.sh .");
-                pw.println("    ln -s ../" + paramName + "PercentMap.sh .");
+                pw.println("    ln -s ../" + fileNameRoot + "Grid.sh .");
+                pw.println("    ln -s ../" + fileNameRoot + "Map.sh .");
                 pw.println("    ln -s ../cp_master.cpt .");
-                pw.println("    sh " + paramName + "PercentGrid.sh");
+                pw.println("    sh " + fileNameRoot + "Grid.sh");
                 pw.println("    wait");
-                pw.println("    sh " + paramName + "PercentMap.sh");
+                pw.println("    sh " + fileNameRoot + "Map.sh");
                 pw.println("    wait");
                 pw.println("    rm -rf *.grd gmt.* cp.cpt");
-                pw.println("    unlink " + paramName + "PercentGrid.sh");
-                pw.println("    unlink " + paramName + "PercentMap.sh");
+                pw.println("    unlink " + fileNameRoot + "Grid.sh");
+                pw.println("    unlink " + fileNameRoot + "Map.sh");
                 pw.println("    unlink cp_master.cpt");
                 pw.println("    cd ..");
                 pw.println("done");

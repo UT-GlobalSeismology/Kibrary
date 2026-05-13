@@ -18,8 +18,9 @@ import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.elastic.VariableType;
 import io.github.kensuke1984.kibrary.perturbation.PerturbationModel;
+import io.github.kensuke1984.kibrary.perturbation.ScalarType;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
-import io.github.kensuke1984.kibrary.util.GadgetAid;
+import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.voxel.KnownParameter;
 import io.github.kensuke1984.kibrary.voxel.KnownParameterFile;
 
@@ -33,56 +34,69 @@ public class ModelStructureConverter extends Operation {
 
     private final Property property;
     /**
-     * Path of the work folder
+     * Path of the work folder.
      */
     private Path workPath;
     /**
-     * The first part of the name of output structure file
+     * The first part of the name of output structure file.
      */
     private String nameRoot;
     /**
      * A tag to include in output file names. When this is empty, no tag is used.
      */
     private String fileTag;
+    /**
+     * Whether to append date string at end of output file names.
+     */
+    private boolean appendFileDate;
 
     /**
-     * File of 1D structure used in inversion
+     * File of 1D structure used in inversion.
      */
     private Path initialStructurePath;
     /**
-     * Name of 1D structure used in inversion
+     * Name of 1D structure used in inversion.
      */
     private String initialStructureName;
     /**
-     * Model file with perturbation information
+     * Model file with perturbation information.
      */
     private Path modelPath;
     /**
-     * Variable types to perturb
+     * Variable types to perturb.
      */
     private Set<VariableType> variableTypes;
+    /**
+     * Whether to connect the upper end with the initial structure.
+     */
+    private boolean tieInLowerEnd;
+    /**
+     * Whether to connect the lower end with the initial structure.
+     */
+    private boolean tieInUpperEnd;
 
     /**
-     * @param args  none to create a property file <br>
-     *              [property file] to run
-     * @throws IOException if any
+     * @param args (String[]) Arguments: none to create a property file, path of property file to run it.
+     * @throws IOException
      */
     public static void main(String[] args) throws IOException {
-        if (args.length == 0) writeDefaultPropertiesFile();
+        if (args.length == 0) writeDefaultPropertiesFile(null);
         else Operation.mainFromSubclass(args);
     }
 
-    public static void writeDefaultPropertiesFile() throws IOException {
-        Class<?> thisClass = new Object(){}.getClass().getEnclosingClass();
-        Path outPath = Property.generatePath(thisClass);
+    public static void writeDefaultPropertiesFile(String tag) throws IOException {
+        String className = new Object(){}.getClass().getEnclosingClass().getSimpleName();
+        Path outPath = DatasetAid.generateOutputFilePath(Paths.get(""), className, tag, true, null, ".properties");
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
-            pw.println("manhattan " + thisClass.getSimpleName());
+            pw.println("manhattan " + className);
             pw.println("##Path of work folder. (.)");
             pw.println("#workPath ");
             pw.println("##(String) The first part of the name of output structure file. (PREMp)");
             pw.println("#nameRoot ");
-            pw.println("##(String) A tag to include in output file names. If no tag is needed, set this blank.");
+            pw.println("##(String) A tag to include in output file names. If no tag is needed, leave this unset.");
             pw.println("#fileTag ");
+            pw.println("##(boolean) Whether to append date string at end of output file names. (true)");
+            pw.println("#appendFileDate false");
             pw.println("##Path of an initial structure file used in inversion. If this is unset, the following initialStructureName will be referenced.");
             pw.println("#initialStructurePath ");
             pw.println("##Name of an initial structure model used in inversion. (PREM)");
@@ -91,6 +105,10 @@ public class ModelStructureConverter extends Operation {
             pw.println("#modelPath ");
             pw.println("##Variable types to perturb, listed using spaces, from {RHO,Vp,Vpv,Vph,Vs,Vsv,Vsh,ETA}. (Vs)");
             pw.println("#variableTypes ");
+            pw.println("##(boolean) Whether to connect the lower end with the initial structure. (false)");
+            pw.println("#tieInLowerEnd ");
+            pw.println("##(boolean) Whether to connect the upper end with the initial structure. (false)");
+            pw.println("#tieInUpperEnd ");
         }
         System.err.println(outPath + " is created.");
     }
@@ -104,6 +122,7 @@ public class ModelStructureConverter extends Operation {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
         nameRoot = property.parseStringSingle("nameRoot", "PREMp");
         if (property.containsKey("fileTag")) fileTag = property.parseStringSingle("fileTag", null);
+        appendFileDate = property.parseBoolean("appendFileDate", "true");
 
         if (property.containsKey("initialStructurePath")) {
             initialStructurePath = property.parsePath("initialStructurePath", null, true, workPath);
@@ -114,6 +133,8 @@ public class ModelStructureConverter extends Operation {
 
         variableTypes = Arrays.stream(property.parseStringArray("variableTypes", "Vs")).map(VariableType::valueOf)
                 .collect(Collectors.toSet());
+        tieInLowerEnd = property.parseBoolean("tieInLowerEnd", "false");
+        tieInUpperEnd = property.parseBoolean("tieInUpperEnd", "false");
     }
 
    @Override
@@ -130,19 +151,25 @@ public class ModelStructureConverter extends Operation {
        PolynomialStructure perturbedStructure = convertModel(initialStructure, radii, model);
 
        // output structure
-       Path outputPath = workPath.resolve(DatasetAid.generateOutputFileName(nameRoot, fileTag, GadgetAid.getTemporaryString(), ".structure"));
+       Path outputPath = DatasetAid.generateOutputFilePath(workPath, nameRoot, fileTag, appendFileDate, null, ".structure");
        PolynomialStructureFile.write(perturbedStructure, outputPath);
    }
 
-   private PolynomialStructure convertModel(PolynomialStructure initialStructure, double[] radii, PerturbationModel model) {
-       // extend the topmost and bottommost layers by 0.5*layerThickness
-       double[] extendedRadii = new double[radii.length];
-       for (int i = 1; i < radii.length - 1; i++) extendedRadii[i] = radii[i];
-       extendedRadii[0] = (3 * radii[0] - radii[1]) / 2;
-       extendedRadii[radii.length - 1] = (3 * radii[radii.length - 1] - radii[radii.length - 2]) / 2;
+   private PolynomialStructure convertModel(PolynomialStructure initialStructure, double[] definedRadii, PerturbationModel model) {
+       // extend the bottommost and topmost layers by 0.5*layerThickness (when not tieing in)
+       double lowerExtendedRadius = (3 * definedRadii[0] - definedRadii[1]) / 2;
+       double upperExtendedRadius = (3 * definedRadii[definedRadii.length - 1] - definedRadii[definedRadii.length - 2]) / 2;
+
+       // set the radii of the layer borders
+       double[] borderRadii = new double[definedRadii.length];
+       for (int i = 0; i < definedRadii.length; i++) borderRadii[i] = definedRadii[i];
+       if (!tieInLowerEnd) borderRadii[0] = lowerExtendedRadius;
+       if (!tieInUpperEnd) borderRadii[borderRadii.length - 1] = upperExtendedRadius;
 
        // split up the polynomial structure at boundaries
-       PolynomialStructure originalStructure = initialStructure.withBoundaries(extendedRadii);
+       PolynomialStructure originalStructure = initialStructure.withBoundaries(borderRadii);
+       if (tieInLowerEnd) originalStructure = originalStructure.withBoundaries(lowerExtendedRadius);
+       if (tieInUpperEnd) originalStructure = originalStructure.withBoundaries(upperExtendedRadius);
        // structure information
        int nZone = originalStructure.getNZone();
        int nCoreZone = originalStructure.getNCoreZone();
@@ -160,25 +187,59 @@ public class ModelStructureConverter extends Operation {
        double planetRadius = originalStructure.planetRadius();
 
        for (VariableType variable : variableTypes) {
-           Map<FullPosition, Double> discreteMap = model.getAbsoluteForType(variable);
-           for (int i = 1; i < radii.length; i++) {
-               double x0 = radii[i - 1] / planetRadius;
-               double x1 = radii[i] / planetRadius;
-               double y0 = discreteMap.get(new FullPosition(0, 0, radii[i - 1]));
-               double y1 = discreteMap.get(new FullPosition(0, 0, radii[i]));
-               //slope
+           Map<FullPosition, Double> discreteMap = model.getValueMap(variable, ScalarType.ABSOLUTE);
+
+           // for each layer
+           // i=0: bottommost(below definedRadii[0])
+           // i=definedRadii.length: topmost(above definedRadii[definedRadii.length-1])
+           for (int i = 0; i < definedRadii.length + 1; i++) {
+
+               // compute parameters in the layer, depending on each case
+               double x0, x1, y0, y1;
+               int iZone0, iZone1;
+               if (i == 0) {
+                   // bottommost layer; only when tieing in
+                   if (!tieInLowerEnd) continue;
+                   // the two points that the line segment should pass through
+                   x0 = lowerExtendedRadius / planetRadius;
+                   x1 = definedRadii[0] / planetRadius;
+                   y0 = initialStructure.mediumAt(lowerExtendedRadius).get(variable);
+                   y1 = discreteMap.get(new FullPosition(0, 0, definedRadii[0]));
+                   // which zones this layer corresponds to
+                   iZone0 = originalStructure.zoneOf(lowerExtendedRadius);
+                   iZone1 = originalStructure.zoneOf(borderRadii[0]);
+               } else if (i == definedRadii.length) {
+                   // topmost layer; only when tieing in
+                   if (!tieInUpperEnd) continue;
+                   // the two points that the line segment should pass through
+                   x0 = definedRadii[definedRadii.length - 1] / planetRadius;
+                   x1 = upperExtendedRadius / planetRadius;
+                   y0 = discreteMap.get(new FullPosition(0, 0, definedRadii[definedRadii.length - 1]));
+                   y1 = initialStructure.mediumAt(upperExtendedRadius).get(variable);
+                   // which zones this layer corresponds to
+                   iZone0 = originalStructure.zoneOf(borderRadii[borderRadii.length - 1]);
+                   iZone1 = originalStructure.zoneOf(upperExtendedRadius);
+               } else {
+                   // the two points that the line segment should pass through
+                   x0 = definedRadii[i - 1] / planetRadius;
+                   x1 = definedRadii[i] / planetRadius;
+                   y0 = discreteMap.get(new FullPosition(0, 0, definedRadii[i - 1]));
+                   y1 = discreteMap.get(new FullPosition(0, 0, definedRadii[i]));
+                   // which zones this layer corresponds to
+                   iZone0 = originalStructure.zoneOf(borderRadii[i - 1]);
+                   iZone1 = originalStructure.zoneOf(borderRadii[i]);
+               }
+
+               // slope
                double a = (y1 - y0) / (x1 - x0);
                // intercept
                double b = (x1 * y0 - x0 * y1) / (x1 - x0);
-               double[] coeffs = {b, a};
+               // function form
+               double[] coeffs = {MathAid.roundForPrecision(b), MathAid.roundForPrecision(a)};
                PolynomialFunction lineFunction = new PolynomialFunction(coeffs);
 
-               // which zones this layer corresponds to
-               int iZoneR1 = originalStructure.zoneOf(extendedRadii[i - 1]);
-               int iZoneR2 = originalStructure.zoneOf(extendedRadii[i]);
-
                // overwrite structure information for all zones within this depth range
-               for (int iZone = iZoneR1; iZone < iZoneR2; iZone++) {
+               for (int iZone = iZone0; iZone < iZone1; iZone++) {
                    switch(variable) {
                    case RHO: rho[iZone] = lineFunction; break;
                    case Vpv: vpv[iZone] = lineFunction; break;

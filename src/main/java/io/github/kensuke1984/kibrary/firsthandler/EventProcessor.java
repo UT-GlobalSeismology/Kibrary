@@ -19,9 +19,12 @@ import org.apache.commons.math3.util.Precision;
 import io.github.kensuke1984.kibrary.entrance.RespDataFile;
 import io.github.kensuke1984.kibrary.external.ExternalProcess;
 import io.github.kensuke1984.kibrary.external.SAC;
+import io.github.kensuke1984.kibrary.math.CircularRange;
+import io.github.kensuke1984.kibrary.math.LinearRange;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.FileAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
+import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTAccess;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
@@ -43,36 +46,26 @@ import io.github.kensuke1984.kibrary.util.sac.SACUtil;
  * <p>
  * TODO: The sac "cut b n" command in SacModifier fails if the sac version is too new (102.0 and later?).
  *
- * @since 2021/09/14
  * @author otsuru
+ * @since 2021/09/14
  */
 class EventProcessor implements Runnable {
 
     /**
-     * [s] delta for SAC files. SAC files with different delta will be interpolated
-     * or downsampled.
-     */
-    private static final double  DELTA = 0.05;
-    /**
-     * [Hz] Sampling Hz in write SAC files
-     */
-    private static final double SAMPLING_HZ = 20;
-
-    /**
-     * Path of the input folder containing SAC files
+     * Path of the input folder containing SAC files.
      */
     private final Path inputSacSetPath;
     /**
-     * Path of the input folder containing RESP files
+     * Path of the input folder containing RESP files.
      */
     private final Path inputRespSetPath;
     /**
-     * Path of the output event folder
+     * Path of the output event folder.
      */
     private final Path outputPath;
 
     /**
-     * GlobalCMTData for the event in the seedfile
+     * GlobalCMTData for the event in the seedfile.
      */
     private GlobalCMTAccess event;
     /**
@@ -80,7 +73,7 @@ class EventProcessor implements Runnable {
      */
     private boolean byPDE = false;
     /**
-     * true: this class has finished running
+     * Whether this class has finished running.
      */
     private boolean hasRun = false;
     /**
@@ -89,27 +82,27 @@ class EventProcessor implements Runnable {
     private boolean problem = false;
 
     /**
-     * [deg] Minimum epicentral distance of SAC files to be output
+     * Epicentral distance range of SAC files to be output.
      */
-    private double minDistance = 0;
+    private LinearRange distanceRange = new LinearRange("Distance", 0.0, 180.0);
+    private LinearRange latitudeRange = new LinearRange("Latitude", -90.0, 90.0);
+    private CircularRange longitudeRange = new CircularRange("Longitude", -180.0, 180.0);
+
     /**
-     * [deg] Maximum epicentral distance of SAC files to be output
-     */
-    private double maxDistance = 180;
-    private double minLatitude = -90;
-    private double maxLatitude = 90;
-    private double minLongitude = -180;
-    private double maxLongitude = 180;
-    /**
-     * threshold to judge which stations are in the same position [deg]
+     * Threshold to judge which stations are in the same position [deg].
      */
     private double coordinateGrid = 0.01;
     /**
-     * The maximum length of output time series
+     * The maximum length of output time series.
      */
     private double maxTlen;
     /**
-     * if remove intermediate files
+     * Sampling frequency [Hz] of SAC files to produce. SAC files with a different frequency will be interpolated or downsampled.
+     */
+    private double samplingHz = 20;
+
+    /**
+     * Whether to remove intermediate files.
      */
     private boolean removeIntermediateFiles = true;
 
@@ -163,25 +156,23 @@ class EventProcessor implements Runnable {
     /**
      * Sets parameters.
      *
-     * @param minD (double) lower limit of epicentral distance
-     * @param maxD (double) upper limit of epicentral distance
-     * @param minLa (double) lower limit of latitude
-     * @param maxLa (double) upper limit of latitude
-     * @param minLo (double) lower limit of longitude
-     * @param maxLo (double) upper limit of longitude
-     * @param grid (double) threshold to judge which stations are in the same position
+     * @param distanceRange ({@link LinearRange}) Epicentral distance range.
+     * @param latitudeRange ({@link LinearRange}) Latitude range.
+     * @param longitudeRange ({@link CircularRange}) Longitude range.
+     * @param coordinateGrid (double) Threshold to judge which stations are in the same position [deg].
+     * @param maxTlen (double) The maximum length of output time series [s].
+     * @param samplingHz (double) The frequency to sample the waveforms [Hz].
      * @param remove (boolean) If this is true, then all intermediate files will be removed at the end.
      */
-    void setParameters(double minD, double maxD, double minLa, double maxLa, double minLo, double maxLo, double grid, double maxT, boolean remove) {
-        minDistance = minD;
-        maxDistance = maxD;
-        minLatitude = minLa;
-        maxLatitude = maxLa;
-        minLongitude = minLo;
-        maxLongitude = maxLo;
-        coordinateGrid = grid;
-        maxTlen = maxT;
-        removeIntermediateFiles = remove;
+    void setParameters(LinearRange distanceRange, LinearRange latitudeRange, CircularRange longitudeRange, double coordinateGrid,
+            double maxTlen, double samplingHz, boolean remove) {
+        this.distanceRange = distanceRange;
+        this.latitudeRange = latitudeRange;
+        this.longitudeRange = longitudeRange;
+        this.coordinateGrid = coordinateGrid;
+        this.maxTlen = maxTlen;
+        this.samplingHz = samplingHz;
+        this.removeIntermediateFiles = remove;
     }
 
     @Override
@@ -283,7 +274,7 @@ class EventProcessor implements Runnable {
                 HorizontalPosition position = new HorizontalPosition(latitude, longitude);
 
                 // check epicentral distance
-                if (distance < minDistance || maxDistance < distance) {
+                if (!distanceRange.check(distance)) {
                     // this is not written in standard error because it is too noisy
                     eliminatedWriter.println("!! unwanted epicentral distance : " + event.getGlobalCMTID() + " - " + sacFile.toString());
                     // no need to move files to trash, because nothing is copied yet
@@ -291,7 +282,7 @@ class EventProcessor implements Runnable {
                 }
 
                 // check station coordinate
-                if (!position.isInRange(minLatitude, maxLatitude, minLongitude, maxLongitude)) {
+                if (!position.isInRange(latitudeRange, longitudeRange)) {
                     // this is not written in standard error because it is too noisy
                     eliminatedWriter.println("!! unwanted station coordinate : " + event.getGlobalCMTID() + " - " + sacFile.toString());
                     // no need to move files to trash, because nothing is copied yet
@@ -325,7 +316,6 @@ class EventProcessor implements Runnable {
         }
 
     }
-
 
     /**
      * Checks whether the channel is supported by this class.
@@ -385,7 +375,8 @@ class EventProcessor implements Runnable {
             // read
             sacD.inputCMD("r " + sacPath.getFileName());
 
-            sacD.inputCMD("interpolate delta " + DELTA);
+            double delta = MathAid.roundForPrecision(1.0 / samplingHz);
+            sacD.inputCMD("interpolate delta " + delta);
             sacD.inputCMD("w over");
         }
     }
@@ -423,14 +414,19 @@ class EventProcessor implements Runnable {
             for (Path sacPath : sacPathStream) {
                 SacModifier sm = new SacModifier(event, sacPath, byPDE);
 
-                // check whether the file can be zero-padded
+                // check whether the file is long enough to be tapered
+                if (!sm.canBeTapered()) {
+                    GadgetAid.dualPrintln(eliminatedWriter, "!! length is too short : " + event.getGlobalCMTID() + " - " + sacPath.getFileName());
+                    FileAid.moveToDirectory(sacPath, unModifiedPath, true);
+                    continue;
+                }
+                // check whether the start time is soon enough to be used as is or to be be zero-padded
                 if (!sm.canBeZeroPadded()) {
                     GadgetAid.dualPrintln(eliminatedWriter, "!! start time is too late : " + event.getGlobalCMTID() + " - " + sacPath.getFileName());
                     FileAid.moveToDirectory(sacPath, unModifiedPath, true);
                     continue;
                 }
-
-                // check whether the file can be trimmed
+                // check whether the end time is after event time so that the file can be trimmed
                 if (!sm.canBeTrimmed()) {
                     GadgetAid.dualPrintln(eliminatedWriter, "!! end time is before event time : " + event.getGlobalCMTID() + " - " + sacPath.getFileName());
                     FileAid.moveToDirectory(sacPath, unModifiedPath, true);
@@ -453,7 +449,7 @@ class EventProcessor implements Runnable {
                 sm.zeroPad();
 
                 // SAC start time is set to the event time, and the SAC file is cut so that npts = 2^n
-                sm.trim((int) Math.ceil(maxTlen * SAMPLING_HZ));
+                sm.trim((int) MathAid.ceil(maxTlen * samplingHz));
 
                 // move SAC files after treatment into the merged folder
                 FileAid.moveToDirectory(sacPath, doneModifyPath, true);
@@ -480,8 +476,8 @@ class EventProcessor implements Runnable {
                 Path afterPath = outputPath.resolve(afterName);
 
                 RespDataFile respFile = new RespDataFile(modFile.getNetwork(), modFile.getStation(), modFile.getLocation(), modFile.getChannel());
-                Path respPath = inputRespSetPath.resolve(respFile.getRespFile());
-                Path spectraPath = outputPath.resolve(respFile.getSpectraFile());
+                Path respPath = inputRespSetPath.resolve(respFile.getRespName());
+                Path spectraPath = outputPath.resolve(respFile.getSpectraName());
 
                 //System.out.println("deconvolute: "+ afterPath); // 4debug
 
@@ -526,7 +522,7 @@ class EventProcessor implements Runnable {
 
                 int npts = Integer.parseInt(headerMap.get(SACHeaderEnum.NPTS));
 
-                SacDeconvolution sd = new SacDeconvolution(modPath, spectraPath, afterPath, SAMPLING_HZ / npts, SAMPLING_HZ);
+                SacDeconvolution sd = new SacDeconvolution(modPath, spectraPath, afterPath, samplingHz / npts, samplingHz);
 
                 // execute deconvolution
                 try {
@@ -542,7 +538,7 @@ class EventProcessor implements Runnable {
                 }
 
                 if(sd.isNaN()) {
-                    GadgetAid.dualPrintln(eliminatedWriter, "!! spectra file is NAN or empty : " + event.getGlobalCMTID() + " - " + afterName);
+                    GadgetAid.dualPrintln(eliminatedWriter, "!! spectra file is NaN or empty : " + event.getGlobalCMTID() + " - " + afterName);
                     FileAid.moveToDirectory(modPath, invalidRespPath, true);
                     FileAid.moveToDirectory(spectraPath, invalidRespPath, true);
                     continue;
@@ -577,11 +573,11 @@ class EventProcessor implements Runnable {
      */
     private boolean runEvalresp(Map<SACHeaderEnum, String> headerMap, Path inputPath) throws IOException {
         int npts = Integer.parseInt(headerMap.get(SACHeaderEnum.NPTS));
-        double minFreq = SAMPLING_HZ / npts;
+        double minFreq = samplingHz / npts;
         String command =
                 "evalresp " + headerMap.get(SACHeaderEnum.KSTNM) + " " + headerMap.get(SACHeaderEnum.KCMPNM) + " " +
                         event.getCMTTime().getYear() + " " + event.getCMTTime().getDayOfYear() + " " + minFreq + " " +
-                        SAMPLING_HZ + " " + headerMap.get(SACHeaderEnum.NPTS) +
+                        samplingHz + " " + headerMap.get(SACHeaderEnum.NPTS) +
                         " -n " + headerMap.get(SACHeaderEnum.KNETWK) + " -l " + headerMap.get(SACHeaderEnum.KHOLE) +
                         " -f " + inputPath.toAbsolutePath() +
                         " -s lin -r cs -u vel";
@@ -650,8 +646,9 @@ class EventProcessor implements Runnable {
     /**
      * Eliminates duplication in the data.
      * If there are multiple files with the same network and station for a given component,
-     * or the there are files for several stations that are positioned very close to each other with the same component,
+     * or there are files for several stations that are positioned very close to each other with the same component,
      * one is selected and the others are discarded.
+     * Also, observers that have different positions among components will be discarded.
      * If there are invalid triplets, they will be put in "invalidTriplet".
      * Eliminated SAC files will be put in "duplicateInstrument".
      * @throws IOException
@@ -676,10 +673,16 @@ class EventProcessor implements Runnable {
             }
         }
 
-        // triplets should consist of either {RTZ}, {RT}, or {Z}
         for (SacTriplet oneTriplet : sacTripletSet) {
+            // triplets should consist of either {RTZ}, {RT}, or {Z}
             if (!oneTriplet.checkValidity()) {
                 throw new IllegalStateException("!!! incomplete triplet : " + event.getGlobalCMTID() + " - " + oneTriplet.getName());
+            }
+            // check that all files in each triplet have the same observer position
+            if (!oneTriplet.checkPositionConsistency()) {
+                GadgetAid.dualPrintln(eliminatedWriter, "!! unmatching observer positions : " + event.getGlobalCMTID() + " - " + oneTriplet.getName());
+                oneTriplet.dismiss();
+                oneTriplet.move(duplicateInstrumentPath);
             }
         }
 

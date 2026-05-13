@@ -22,16 +22,16 @@ import org.apache.commons.cli.ParseException;
 import io.github.kensuke1984.kibrary.Summon;
 import io.github.kensuke1984.kibrary.elastic.VariableType;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
-import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.earth.Earth;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 
 /**
  * Class to create an {@link UnknownParameterFile}.
- * @author ???
+ *
+ * @author ?
  * @since a long time ago
- * @version 2022/2/12 moved & renamed from inversion.addons.MakeUnknownParameterFile to voxel.UnknownParameterSetter
+ * @version 2022/2/12 moved & renamed from inversion.addons.MakeUnknownParameterFile to voxel.UnknownParameterSetter.
  */
 public class UnknownParameterSetter {
 
@@ -69,8 +69,10 @@ public class UnknownParameterSetter {
                 .desc("Variable types to make unknown parameters for, listed using commas.").build());
 
         // output
-        options.addOption(Option.builder("t").longOpt("tag").hasArg().argName("tag")
+        options.addOption(Option.builder("T").longOpt("tag").hasArg().argName("fileTag")
                 .desc("A tag to include in output file name.").build());
+        options.addOption(Option.builder("O").longOpt("omitDate")
+                .desc("Omit date string in output file name.").build());
 
         return options;
     }
@@ -81,38 +83,39 @@ public class UnknownParameterSetter {
      * @throws IOException
      */
     public static void run(CommandLine cmdLine) throws IOException {
+        String fileTag = cmdLine.hasOption("T") ? cmdLine.getOptionValue("T") : null;
+        boolean appendFileDate = !cmdLine.hasOption("O");
+        Path outputPath = DatasetAid.generateOutputFilePath(Paths.get(""), "unknowns", fileTag, appendFileDate, null, ".lst");
 
         // partial types
         System.err.print("Working for:");
-        VariableType[] types = Stream.of(cmdLine.getOptionValue("V").split(",")).map(VariableType::valueOf).toArray(VariableType[]::new);
-        for (int i = 0; i < types.length; i++) {
-            System.err.print(" " + types[i]);
+        VariableType[] variables = Stream.of(cmdLine.getOptionValue("V").split(",")).map(VariableType::valueOf).toArray(VariableType[]::new);
+        for (int i = 0; i < variables.length; i++) {
+            System.err.print(" " + variables[i]);
         }
         System.err.println();
-
-        String tag = cmdLine.hasOption("t") ? cmdLine.getOptionValue("t") : null;
 
         List<UnknownParameter> parameterList;
         if (cmdLine.hasOption("l")) {
             // work for layer file
             Path layerPath = Paths.get(cmdLine.getOptionValue("l"));
-            parameterList = createParametersFor1D(layerPath, types);
+            parameterList = createParametersFor1D(layerPath, variables);
 
         } else if (cmdLine.hasOption("v")) {
             // work for voxel file
             Path voxelPath = Paths.get(cmdLine.getOptionValue("v"));
-            parameterList = createParametersFor3D(voxelPath, types);
+            parameterList = createParametersFor3D(voxelPath, variables);
 
         } else {
             throw new IllegalArgumentException("Either a layer information file or a voxel information file must be specified.");
         }
+        System.err.println();
 
-        Path outputPath = Paths.get(DatasetAid.generateOutputFileName("unknowns", tag, GadgetAid.getTemporaryString(), ".lst"));
-        System.err.println("Outputting in "+ outputPath);
+        // output
         UnknownParameterFile.write(parameterList, outputPath);
     }
 
-    private static List<UnknownParameter> createParametersFor1D(Path layerPath, VariableType[] types) throws IOException {
+    private static List<UnknownParameter> createParametersFor1D(Path layerPath, VariableType[] variables) throws IOException {
         // read voxel information
         LayerInformationFile file = new LayerInformationFile(layerPath);
         double[] layerThicknesses = file.getThicknesses();
@@ -122,8 +125,8 @@ public class UnknownParameterSetter {
         List<UnknownParameter> parameterList = new ArrayList<>();
         // loop for each layer
         for (int i = 0; i < radii.length; i++) {
-            for (VariableType type : types) {
-                Physical1DParameter parameter = new Physical1DParameter(type, radii[i], layerThicknesses[i]);
+            for (VariableType variable : variables) {
+                Physical1DParameter parameter = new Physical1DParameter(variable, radii[i], layerThicknesses[i]);
                 parameterList.add(parameter);
             }
         }
@@ -132,7 +135,7 @@ public class UnknownParameterSetter {
         return parameterList;
     }
 
-    private static List<UnknownParameter> createParametersFor3D(Path voxelPath, VariableType[] types) throws IOException {
+    private static List<UnknownParameter> createParametersFor3D(Path voxelPath, VariableType[] variables) throws IOException {
         // read voxel information
         VoxelInformationFile file = new VoxelInformationFile(voxelPath);
         double[] layerThicknesses = file.getThicknesses();
@@ -152,8 +155,8 @@ public class UnknownParameterSetter {
             for (int i = 0; i < radii.length; i++) {
                 FullPosition voxelPosition = horizontalPosition.toFullPosition(radii[i]);
                 double volume = Earth.computeVolume(voxelPosition, layerThicknesses[i], dLatitude, dLongitude);
-                for (VariableType type : types) {
-                    Physical3DParameter parameter = new Physical3DParameter(type, voxelPosition, volume);
+                for (VariableType variable : variables) {
+                    Physical3DParameter parameter = new Physical3DParameter(variable, voxelPosition, volume);
                     parameterSet.add(parameter);
                 }
                 if (numFinished.incrementAndGet() % 100 == 0)
@@ -162,7 +165,9 @@ public class UnknownParameterSetter {
         });
         System.err.println("\rFinished working for all " + numVoxel + " voxels.");
 
-        return parameterSet.stream().sorted(Comparator.comparing(UnknownParameter::getPosition)).collect(Collectors.toList());
+        // sort so that larger latitudes come first
+        return parameterSet.stream().sorted(Comparator.comparing(UnknownParameter::getPosition))
+                .sorted(Comparator.comparing(u -> -u.getPosition().getLatitude())).collect(Collectors.toList());
     }
 
 }

@@ -1,16 +1,17 @@
 package io.github.kensuke1984.kibrary.filter;
 
-import io.github.kensuke1984.kibrary.util.sac.SACFileAccess;
-import io.github.kensuke1984.kibrary.util.sac.SACFileName;
-import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
-import org.apache.commons.math3.complex.Complex;
-import org.apache.commons.math3.complex.ComplexUtils;
-import org.apache.commons.math3.util.FastMath;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+
+import org.apache.commons.math3.complex.Complex;
+import org.apache.commons.math3.complex.ComplexUtils;
+import org.apache.commons.math3.util.FastMath;
+
+import io.github.kensuke1984.kibrary.util.sac.SACFileAccess;
+import io.github.kensuke1984.kibrary.util.sac.SACFileName;
+import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
 
 /**
  * 斎藤正徳 漸化式ディジタルフィルタ<br>
@@ -22,7 +23,7 @@ import java.nio.file.Paths;
  * ω=2πfδt
  *
  * @author Kensuke Konishi
- * @version 0.1.4
+ * @since a long time ago
  */
 public class BandPassFilter extends ButterworthFilter {
 

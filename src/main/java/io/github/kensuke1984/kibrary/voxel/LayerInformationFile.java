@@ -15,7 +15,6 @@ import org.apache.commons.cli.ParseException;
 
 import io.github.kensuke1984.kibrary.Summon;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
-import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.InformationFileReader;
 import io.github.kensuke1984.kibrary.util.MathAid;
 
@@ -34,11 +33,11 @@ import io.github.kensuke1984.kibrary.util.MathAid;
 public class LayerInformationFile {
 
     /**
-     * thickness of each layer
+     * Thickness of each layer.
      */
     private final double[] layerThicknesses;
     /**
-     * Radii of layer center points, sorted, no duplication
+     * Radii of layer center points, sorted, no duplication.
      */
     private final double[] layerRadii;
 
@@ -54,9 +53,7 @@ public class LayerInformationFile {
         if (layerThicknesses.length != layerRadii.length)
             throw new IllegalArgumentException("The number of thicknesses and radii does not match.");
 
-        System.err.println("Outputting "
-                + MathAid.switchSingularPlural(layerRadii.length, "layer", "layers")
-                + " in " + outputPath);
+        DatasetAid.printNumOutput(layerRadii.length, "layer", "layers", outputPath);
 
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath, options))) {
             pw.println("# thicknesses of each layer [km]");
@@ -86,7 +83,7 @@ public class LayerInformationFile {
         if (layerThicknesses.length != layerRadii.length)
             throw new IllegalArgumentException("The number of thicknesses and radii does not match.");
 
-        DatasetAid.checkNum(layerRadii.length, "layer", "layers");
+        DatasetAid.printNumInput(layerRadii.length, "layer", "layers", filePath);
     }
 
     /**
@@ -109,7 +106,7 @@ public class LayerInformationFile {
      * @param dRadius (double) Radius spacing [km]; (0:).
      */
     public LayerInformationFile(double lowerRadius, double upperRadius, double dRadius) {
-        int nRadius = (int) Math.floor((upperRadius - lowerRadius) / dRadius);
+        int nRadius = (int) MathAid.floor((upperRadius - lowerRadius) / dRadius);
         layerThicknesses = new double[nRadius];
         layerRadii = new double[nRadius];
         for (int i = 0; i < nRadius; i++) {
@@ -172,8 +169,10 @@ public class LayerInformationFile {
                 .desc("(double) Radius spacing [km]; (0:).").build());
 
         // output
-        options.addOption(Option.builder("t").longOpt("tag").hasArg().argName("tag")
+        options.addOption(Option.builder("T").longOpt("tag").hasArg().argName("fileTag")
                 .desc("A tag to include in output file name.").build());
+        options.addOption(Option.builder("O").longOpt("omitDate")
+                .desc("Omit date string in output file name.").build());
 
         return options;
     }
@@ -184,8 +183,12 @@ public class LayerInformationFile {
      * @throws IOException
      */
     public static void run(CommandLine cmdLine) throws IOException {
-        LayerInformationFile layerFile;
+        String fileTag = cmdLine.hasOption("T") ? cmdLine.getOptionValue("T") : null;
+        boolean appendFileDate = !cmdLine.hasOption("O");
+        Path outputPath = DatasetAid.generateOutputFilePath(Paths.get(""), "layer", fileTag, appendFileDate, null, ".inf");
 
+        // create layer information
+        LayerInformationFile layerFile;
         if (cmdLine.hasOption("r")) {
             double[] borderRadii = Arrays.stream(cmdLine.getOptionValue("r").split(",")).mapToDouble(Double::parseDouble)
                     .sorted().toArray();
@@ -204,10 +207,7 @@ public class LayerInformationFile {
             throw new IllegalArgumentException("Either '-r' or '-l & -u & -d' must be set.");
         }
 
-        String tag = cmdLine.hasOption("t") ? cmdLine.getOptionValue("t") : null;
-
-        Path outputPath = Paths.get(DatasetAid.generateOutputFileName("layer", tag, GadgetAid.getTemporaryString(), ".inf"));
-        System.err.println("Outputting in "+ outputPath);
+        // output
         layerFile.write(outputPath);
     }
 

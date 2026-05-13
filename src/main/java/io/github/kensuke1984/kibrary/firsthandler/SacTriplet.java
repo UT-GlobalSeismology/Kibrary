@@ -6,6 +6,7 @@ import java.nio.file.Path;
 import java.util.Map;
 
 import io.github.kensuke1984.kibrary.util.FileAid;
+import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
 import io.github.kensuke1984.kibrary.util.sac.SACUtil;
 
@@ -27,8 +28,7 @@ class SacTriplet {
     private String station;
     private String location;
     private String instrument;
-    private double latitude;
-    private double longitude;
+    private HorizontalPosition position;
 
     /**
      * name of the triplet
@@ -62,8 +62,9 @@ class SacTriplet {
         station = sacFile.getStation();
         location = sacFile.getLocation();
         instrument = sacFile.getInstrument();
-        latitude = Double.parseDouble(headerMap.get(SACHeaderEnum.STLA));
-        longitude = Double.parseDouble(headerMap.get(SACHeaderEnum.STLO));
+        double latitude = Double.parseDouble(headerMap.get(SACHeaderEnum.STLA));
+        double longitude = Double.parseDouble(headerMap.get(SACHeaderEnum.STLO));
+        position = new HorizontalPosition(latitude, longitude);
 
         coordinateGrid = grid;
 
@@ -81,8 +82,8 @@ class SacTriplet {
     boolean add(Path sacPath) {
         SacFileName sacFile = new SacFileName(sacPath.getFileName().toString());
 
-        //if variables are same, register
-        if(sacFile.getNetwork().equals(network) && sacFile.getStation().equals(station) &&
+        // if variables are same, register
+        if (sacFile.getNetwork().equals(network) && sacFile.getStation().equals(station) &&
                 sacFile.getLocation().equals(location) && sacFile.getInstrument().equals(instrument)) {
             register(sacPath, sacFile.getComponent());
             return true;
@@ -105,6 +106,34 @@ class SacTriplet {
             zPath = sacPath;
             zRegistered = true;
             break;
+        }
+    }
+
+    /**
+     * Check that all SAC files registered for this triplet have the same observer position.
+     * @return (boolean) Whether the observer positions are consistent.
+     */
+    boolean checkPositionConsistency() {
+        if (rRegistered) {
+            if (!assessPosition(rPath)) return false;
+        }
+        if (tRegistered) {
+            if (!assessPosition(tPath)) return false;
+        }
+        if (zRegistered) {
+            if (!assessPosition(zPath)) return false;
+        }
+        return true;
+    }
+    private boolean assessPosition(Path sacPath) {
+        try {
+            Map<SACHeaderEnum, String> headerMap = SACUtil.readHeader(sacPath);
+            double sacLatitude = Double.parseDouble(headerMap.get(SACHeaderEnum.STLA));
+            double sacLongitude = Double.parseDouble(headerMap.get(SACHeaderEnum.STLO));
+            HorizontalPosition sacPosition = new HorizontalPosition(sacLatitude, sacLongitude);
+            return sacPosition.equals(position);
+        } catch (IOException e) {
+            return false;
         }
     }
 
@@ -200,8 +229,8 @@ class SacTriplet {
      */
     boolean atSamePosition (SacTriplet other) {
         if (other.getNetwork().equals(network) && other.getStation().equals(station)) return true;
-        else if (Math.abs(latitude - other.getLatitude()) < coordinateGrid &&
-                Math.abs(longitude - other.getLongitude()) < coordinateGrid) return true;
+        else if (Math.abs(getLatitude() - other.getLatitude()) < coordinateGrid &&
+                Math.abs(getLongitude() - other.getLongitude()) < coordinateGrid) return true;
         else return false;
     }
 
@@ -226,7 +255,7 @@ class SacTriplet {
      * @param other (SacTriplet) The triplet to be compared to.
      * @return (boolean) true if this triplet is inferior
      */
-    boolean isInferiorTo (SacTriplet other) {
+    boolean isInferiorTo(SacTriplet other) {
         // a full triplet is prefered over incomplete triplets
         if (number < other.getNumber()) return true;
         else if (number > other.getNumber()) return false;
@@ -293,14 +322,14 @@ class SacTriplet {
      * @return latitude
      */
     double getLatitude() {
-        return latitude;
+        return position.getLatitude();
     }
 
     /**
      * @return longitude
      */
     double getLongitude() {
-        return longitude;
+        return position.getLongitude();
     }
 
     /**

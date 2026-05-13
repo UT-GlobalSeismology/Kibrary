@@ -12,7 +12,6 @@ import java.util.List;
 import io.github.kensuke1984.kibrary.elastic.VariableType;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.InformationFileReader;
-import io.github.kensuke1984.kibrary.util.MathAid;
 
 /**
  * File of parameters of which their values are not yet known. See {@link UnknownParameter}.
@@ -31,7 +30,7 @@ import io.github.kensuke1984.kibrary.util.MathAid;
  * TODO ３次元と１次元の混在をさける
  *
  * @author Kensuke Konishi
- * @since version 0.0.6
+ * @since a long time ago
  */
 public class UnknownParameterFile {
     private UnknownParameterFile() {}
@@ -45,9 +44,7 @@ public class UnknownParameterFile {
      */
     public static void write(List<UnknownParameter> parameterList, Path outputPath, OpenOption... options)
             throws IOException {
-        System.err.println("Outputting "
-                + MathAid.switchSingularPlural(parameterList.size(), "unknown parameter", "unknown parameters")
-                + " in " + outputPath);
+        DatasetAid.printNumOutput(parameterList.size(), "unknown parameter", "unknown parameters", outputPath);
 
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath, options))) {
             parameterList.forEach(pw::println);
@@ -73,7 +70,7 @@ public class UnknownParameterFile {
                 if (parameters.get(i).equals(parameters.get(j)))
                     System.err.println("!Caution there is duplication in " + inputPath);
 
-        DatasetAid.checkNum(parameters.size(), "unknown parameter", "unknown parameters");
+        DatasetAid.printNumInput(parameters.size(), "unknown parameter", "unknown parameters", inputPath);
 
         return Collections.unmodifiableList(parameters);
     }

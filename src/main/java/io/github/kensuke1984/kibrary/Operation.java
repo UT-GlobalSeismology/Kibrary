@@ -17,7 +17,7 @@ import io.github.kensuke1984.kibrary.util.GadgetAid;
 /**
  * Parent class of all operations in Kibrary that are executed given a {@link Property} file.
  *
- * @author otsuru
+ * @author Kensuke Konishi
  * @since a long time ago
  * @version 2022/1/7 Recreated the original interface Operation into an abstract class.
  */
@@ -39,12 +39,12 @@ public abstract class Operation {
         if (1 < args.length) {
             throw new IllegalArgumentException("Too many arguments. You can specify only one property file.");
         } else if (args.length == 0) {
-            property.load(Files.newBufferedReader(findPath()));
+            property.readFrom(findPath());
         } else if (args[0].equals("-l")) {
             Manhattan.printList();
             return;
         } else {
-            property.load(Files.newBufferedReader(Paths.get(args[0])));
+            property.readFrom(Paths.get(args[0]));
         }
 
         //~read manhattan~//
@@ -98,7 +98,7 @@ public abstract class Operation {
         } else if (args.length == 0) {
             throw new IllegalArgumentException("A property file must be specified.");
         } else {
-            property.load(Files.newBufferedReader(Paths.get(args[0])));
+            property.readFrom(Paths.get(args[0]));
         }
 
         //~get the Operation class~//

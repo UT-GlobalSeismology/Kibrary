@@ -137,6 +137,7 @@ public class GnuplotFile {
             } else {
                 terminalSize = "size " + sizeX + "," + sizeY;
             }
+            pw.println("set encoding utf8");
             pw.println("set term " + terminal + " " + terminalSize + " font \"" + fontName + "," + fontSizeDefault + "\"");
             pw.println("set out \"" + output + "\"");
 
@@ -148,6 +149,7 @@ public class GnuplotFile {
 
             if (!keySettings.isEmpty()) {
                 pw.println("set key " + keySettings);
+                pw.println("#unset key");
             } else {
                 pw.println("unset key");
             }
@@ -213,13 +215,13 @@ public class GnuplotFile {
                     }
 
                     // each label
-                    if (field.numLabel() == 0) {
-                        pw.println(" unset label");
-                    } else for (int label = 0; label < field.numLabel(); label++) {
+                    pw.println(" unset label");
+                    for (int label = 0; label < field.numLabel(); label++) {
                         pw.println(" set label " + (label + 1) + " " + field.label(label).toString());
                     }
 
                     // each arrow
+                    pw.println(" unset arrow");
                     for (int arrow = 0; arrow < field.numArrow(); arrow++) {
                         pw.println(" set arrow " + (arrow + 1) + " " + field.arrow(arrow).toString());
                     }
@@ -277,6 +279,20 @@ public class GnuplotFile {
     }
 
     /**
+     * @param fileName1 (String)
+     * @param fileName2 (String)
+     * @param plotPart (String) The content of the "using" part. (ex. 1:3, 1:($3+$1) )
+     * @param appearance ({@link GnuplotAppearance})
+     * @param title (String) Name to display in key. If you want to set "notitle", set this as "".
+     */
+    public void addLine(String fileName1, String fileName2, String plotPart, GnuplotLineAppearance appearance, String title) {
+        drawStarted = true;
+        // add line to current page
+        GnuplotPage page = pages.get(pages.size() - 1);
+        page.field(page.numField() - 1).addLine(new GnuplotLine(fileName1, fileName2, plotPart, appearance, title));
+    }
+
+    /**
      * @param fileName (String)
      * @param columnX (double) The column number of input file to use for the x-axis
      * @param columnY (double) The column number of input file to use for the y-axis
@@ -294,7 +310,7 @@ public class GnuplotFile {
      * @param posX (double)
      * @param appearance ({@link GnuplotAppearance})
      */
-    public void addVerticalLine(double posX, GnuplotLineAppearance appearance) {
+    public void addArrow(double posX, GnuplotLineAppearance appearance) {
         drawStarted = true;
         // add line to current page
         GnuplotPage page = pages.get(pages.size() - 1);
