@@ -10,6 +10,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -23,6 +24,7 @@ import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.ThreadAid;
+import io.github.kensuke1984.kibrary.util.data.EventListFile;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTAccess;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTSearch;
@@ -67,6 +69,10 @@ public class DataLobby extends Operation {
     private int footAdjustment;
 
     /**
+     * Path of a event list file.
+     */
+    private Path eventListPath;
+    /**
      * Start of date range, inclusive.
      */
     private LocalDate startDate;
@@ -85,6 +91,8 @@ public class DataLobby extends Operation {
     private LinearRange depthRange;
     private LinearRange latitudeRange;
     private CircularRange longitudeRange;
+    private List<GlobalCMTAccess> requestedEvents;
+    private Set<GlobalCMTID> skippedEventSet = new HashSet<>();;
 
     /**
      * @param args (String[]) Arguments: none to create a property file, path of property file to run it.
@@ -119,6 +127,8 @@ public class DataLobby extends Operation {
             pw.println("##(int) Adjustment at the foot [min], must be set.");
             pw.println("#footAdjustment 120");
             pw.println("##########The following parameters are for seismic events to be searched for.");
+            pw.println("##Path of a eventy list file. If not set, the following parameters will be used.");
+            pw.println("#eventListPath event.lst");
             pw.println("##Start date in yyyy-mm-dd format, inclusive, must be set.");
             pw.println("#startDate 1990-01-01");
             pw.println("##End date in yyyy-mm-dd format, INCLUSIVE, must be set.");
@@ -159,30 +169,40 @@ public class DataLobby extends Operation {
         headAdjustment = property.parseInt("headAdjustment", null);
         footAdjustment = property.parseInt("footAdjustment", null);
 
-        startDate = LocalDate.parse(property.parseString("startDate", null));
-        endDate = LocalDate.parse(property.parseString("endDate", null));
-        MathAid.checkDateRangeValidity(startDate, endDate);
+        if (property.containsKey("eventListPath")) {
+            eventListPath = property.parsePath("eventListPath", null, true, workPath);
+        } else {
+            startDate = LocalDate.parse(property.parseString("startDate", null));
+            endDate = LocalDate.parse(property.parseString("endDate", null));
+            MathAid.checkDateRangeValidity(startDate, endDate);
 
-        double lowerMw = property.parseDouble("lowerMw", "5.5");
-        double upperMw = property.parseDouble("upperMw", "7.31");
-        mwRange = new LinearRange("Magnitude", lowerMw, upperMw);
+            double lowerMw = property.parseDouble("lowerMw", "5.5");
+            double upperMw = property.parseDouble("upperMw", "7.31");
+            mwRange = new LinearRange("Magnitude", lowerMw, upperMw);
 
-        double lowerDepth = property.parseDouble("lowerDepth", "100");
-        double upperDepth = property.parseDouble("upperDepth", "700");
-        depthRange = new LinearRange("Depth", lowerDepth, upperDepth);
+            double lowerDepth = property.parseDouble("lowerDepth", "100");
+            double upperDepth = property.parseDouble("upperDepth", "700");
+            depthRange = new LinearRange("Depth", lowerDepth, upperDepth);
 
-        double lowerLatitude = property.parseDouble("lowerLatitude", "-90");
-        double upperLatitude = property.parseDouble("upperLatitude", "90");
-        latitudeRange = new LinearRange("Latitude", lowerLatitude, upperLatitude, -90.0, 90.0);
+            double lowerLatitude = property.parseDouble("lowerLatitude", "-90");
+            double upperLatitude = property.parseDouble("upperLatitude", "90");
+            latitudeRange = new LinearRange("Latitude", lowerLatitude, upperLatitude, -90.0, 90.0);
 
-        double lowerLongitude = property.parseDouble("lowerLongitude", "-180");
-        double upperLongitude = property.parseDouble("upperLongitude", "180");
-        longitudeRange = new CircularRange("Longitude", lowerLongitude, upperLongitude, -180.0, 360.0);
+            double lowerLongitude = property.parseDouble("lowerLongitude", "-180");
+            double upperLongitude = property.parseDouble("upperLongitude", "180");
+            longitudeRange = new CircularRange("Longitude", lowerLongitude, upperLongitude, -180.0, 360.0);
+        }
     }
 
     @Override
     public void run() throws IOException {
-        List<GlobalCMTAccess> requestedEvents = listEvents();
+        if (eventListPath != null) {
+            requestedEvents = EventListFile.read(eventListPath).stream().map(GlobalCMTID::getEventData)
+                    .sorted(Comparator.comparing(GlobalCMTAccess::getCMTTime)).collect(Collectors.toList());
+        } else {
+            requestedEvents = listEvents();
+        }
+
         int nTotal = requestedEvents.size();
         if (!DatasetAid.checkNum(nTotal, "event", "events")) {
             return;
@@ -219,8 +239,14 @@ public class DataLobby extends Operation {
             } catch (IOException e) {
                 // Here, suppress exceptions for events that failed, and move on to the next event.
                 System.err.println("!!! Download for " + event + " failed, skipping.");
+                skippedEventSet.add(event.getGlobalCMTID());
                 e.printStackTrace();
             }
+        }
+        if (!skippedEventSet.isEmpty()) {
+            Path skippedEventPath = DatasetAid.generateOutputFilePath(outPath, "skippedEvent", null, appendFolderDate, null, ".lst");
+            EventListFile.write(skippedEventSet, skippedEventPath);
+            deleteSkippedEvents(outPath);
         }
     }
 
@@ -232,6 +258,21 @@ public class DataLobby extends Operation {
         search.setLongitudeRange(longitudeRange);
         Set<GlobalCMTID> eventSet = search.search();
         return eventSet.stream().map(GlobalCMTID::getEventData).sorted(Comparator.comparing(GlobalCMTAccess::getCMTTime)).collect(Collectors.toList());
+    }
+
+    private void deleteSkippedEvents(Path outPath) {
+        for (GlobalCMTID skippedEvent : skippedEventSet) {
+            try {
+                Files.walk(outPath.resolve(skippedEvent.toString())).sorted(Comparator.reverseOrder()).forEach(path -> {
+                    try {
+                        Files.delete(path);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }});
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
 }
