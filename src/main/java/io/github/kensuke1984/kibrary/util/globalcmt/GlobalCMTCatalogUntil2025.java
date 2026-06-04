@@ -1,6 +1,7 @@
 package io.github.kensuke1984.kibrary.util.globalcmt;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
@@ -12,9 +13,11 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
@@ -73,12 +76,12 @@ public final class GlobalCMTCatalogUntil2025 {
 
     private static void switchCatalog(String version) throws IOException {
 
-        //~Download ndk files until 2020~//
+        //~Download ndk files from "all_events"~//
         String catalogNameUntil2020 = "jan76_" + version + ".ndk";
         String catalogURLUntil2020 = "https://www.ldeo.columbia.edu/~gcmt/projects/CMT/catalog/jan76_dec20.ndk";
         DownloadCatalog(catalogNameUntil2020, catalogURLUntil2020);
 
-        //~Download ndk files until 2025~//
+        //~Download ndk files from "monthly"~//
         for (int eventYear = 2021; eventYear <=2025; eventYear++) {
             String eventYearURL =
                     "https://www.ldeo.columbia.edu/~gcmt/projects/CMT/catalog/NEW_MONTHLY/" + eventYear +  "/";
@@ -106,7 +109,6 @@ public final class GlobalCMTCatalogUntil2025 {
                 found = true;
                 String ndkFile = matcher.group(1);
                 String fullURL = eventYearURL + ndkFile;
-                System.out.println("FOUND: " + fullURL);
                 DownloadCatalog(ndkFile, fullURL);
             }
             if (!found) {
@@ -115,7 +117,71 @@ public final class GlobalCMTCatalogUntil2025 {
             System.out.println("Finished " + eventYear);
         }
 
+        MergeCatalog();
 
+    }
+
+    //~Method to merge all ndk files into one
+    private static void MergeCatalog() throws IOException{
+        String MergedCatalogName = "jan76_dec25.ndk";
+        Path MergedCatalogPath = Environment.KIBRARY_SHARE.resolve(MergedCatalogName);
+
+        List<String> monthOrder = Arrays.asList(
+                "jan", "feb", "mar", "apr", "may", "jun",
+                "jul", "aug", "sep", "oct", "nov", "dec"
+            );
+        // get only monthly catalog
+        List<Path> monthlyFiles = Files.list(Environment.KIBRARY_SHARE)
+                .filter(p -> {
+
+                    String name = p.getFileName().toString();
+
+                    return name.endsWith(".ndk")
+                            && name.length() == 9;
+                })
+                .sorted((p1, p2) -> {
+                    String f1 = p1.getFileName().toString();
+                    String f2 = p2.getFileName().toString();
+                    String month1 = f1.substring(0, 3);
+                    String month2 = f2.substring(0, 3);
+                    int year1 = Integer.parseInt(f1.substring(3, 5));
+                    int year2 = Integer.parseInt(f2.substring(3, 5));
+                    if (year1 != year2) {
+                        return Integer.compare(year1, year2);
+                    }
+                    return Integer.compare(
+                        monthOrder.indexOf(month1),
+                        monthOrder.indexOf(month2)
+                    );
+                })
+                .collect(Collectors.toList());
+
+        try(BufferedWriter writer = Files.newBufferedWriter(MergedCatalogPath)){
+            //~Write ndk files from "all_Events"~//
+            Path oldCatalog = Environment.KIBRARY_SHARE.resolve("jan76_dec20.ndk");
+            for(String line : Files.readAllLines(oldCatalog)) {
+                writer.write(line);
+                writer.newLine();
+            }
+
+            //~Write ndk files from "monthly"~//
+            for(Path file : monthlyFiles) {
+                for(String line : Files.readAllLines(file)) {
+                    writer.write(line);
+                    writer.newLine();
+                }
+            }
+        }
+
+
+       //~Activate (change target of symbolic link)~//
+        // check whether the symbolic link itself exists, regardless of the existence of its target
+        if(Files.exists(GlobalCMTCatalog.CATALOG_PATH, LinkOption.NOFOLLOW_LINKS)) {
+            // delete the symbolic link, not its target
+            Files.delete(GlobalCMTCatalog.CATALOG_PATH);
+        }
+        Files.createSymbolicLink(GlobalCMTCatalog.CATALOG_PATH, MergedCatalogPath);
+        System.err.println("The referenced catalog is set to " + MergedCatalogName);
     }
 
     //~Method to download GCMT catalog~//
@@ -140,15 +206,15 @@ public final class GlobalCMTCatalogUntil2025 {
       //~Fix errors in downloaded catalog~//
         fixCatalog(catalogPath);
 
-        //~Activate (change target of symbolic link)~//
-        // check whether the symbolic link itself exists, regardless of the existence of its target
-        if(Files.exists(GlobalCMTCatalog.CATALOG_PATH, LinkOption.NOFOLLOW_LINKS)) {
-            // delete the symbolic link, not its target
-            Files.delete(GlobalCMTCatalog.CATALOG_PATH);
-        }
-        Files.createSymbolicLink(GlobalCMTCatalog.CATALOG_PATH, catalogPath);
-
-        System.err.println("The referenced catalog is set to " + catalogName);
+//        //~Activate (change target of symbolic link)~//
+//        // check whether the symbolic link itself exists, regardless of the existence of its target
+//        if(Files.exists(GlobalCMTCatalog.CATALOG_PATH, LinkOption.NOFOLLOW_LINKS)) {
+//            // delete the symbolic link, not its target
+//            Files.delete(GlobalCMTCatalog.CATALOG_PATH);
+//        }
+//        Files.createSymbolicLink(GlobalCMTCatalog.CATALOG_PATH, catalogPath);
+//
+//        System.err.println("The referenced catalog is set to " + catalogName);
     }
 
     private static void fixCatalog(Path catalogPath) throws IOException {

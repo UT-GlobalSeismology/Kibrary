@@ -291,10 +291,41 @@ public final class NDK implements GlobalCMTAccess {
         ndk.m[0] = Integer.parseInt(bsmParts[6]);
         ndk.m[1] = Integer.parseInt(bsmParts[7]);
         ndk.m[2] = Integer.parseInt(bsmParts[8]);
-        String[] cmtParts = lines[1].substring(61).trim().split("\\s+");
+        String cmtLine = lines[1].substring(61).trim().replace("TRIHD:", "TRIHD: ");
+        String[] cmtParts = cmtLine.split("\\s+");
+//        String[] cmtParts = lines[1].substring(61).trim().split("\\s+");
         ndk.cmtType = Integer.parseInt(cmtParts[1]);
         ndk.momentRateFunctionType = SourceTimeFunctionType.ofCode(cmtParts[2].substring(0, 5));
+
+//        //half duration
+//        boolean found = false;
+//        for (String part : cmtParts) {
+//            if (part.startsWith("TRIHD:")) {
+//                String value = part.replace("TRIHD:", "").trim();
+//                ndk.halfDuration = Double.parseDouble(value);
+//                found = true;
+//                break;
+//            }
+//        }
+//        if (!found) {
+//            System.out.println(ndk.id);
+//            throw new RuntimeException(
+//                "Cannot find TRIHD for event "
+//                + ndk.id
+//            );
+//        }
         ndk.halfDuration = Double.parseDouble(cmtParts[3]);
+//
+//        try {
+//            ndk.halfDuration = Double.parseDouble(cmtParts[3]);
+//        }catch(ArrayIndexOutOfBoundsException e) {
+//            System.out.println("errorEvent= " + ndk.id);
+//            System.out.println(Arrays.toString(cmtParts));
+//            for (String line : lines) {
+//                System.out.println(line);
+//            }
+//            throw e;
+//        }
 
         // line3
         parts = lines[2].split("\\s+");
