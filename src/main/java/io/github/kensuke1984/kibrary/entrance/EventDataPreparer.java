@@ -3,6 +3,7 @@ package io.github.kensuke1984.kibrary.entrance;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
@@ -45,7 +46,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACUtil;
  */
 class EventDataPreparer {
 
-    private static final String DATASELECT_URL_IRIS = "http://service.iris.edu/fdsnws/dataselect/1/query?";
+    private static final String DATASELECT_URL_IRIS = "https://service.earthscope.org/fdsnws/dataselect/1/query?";
     private static final String DATASELECT_URL_ORFEUS = "http://www.orfeus-eu.org/fdsnws/dataselect/1/query?";
     /**
      * [s] delta for SAC files. SAC files with different delta will be interpolated
@@ -112,6 +113,9 @@ class EventDataPreparer {
         urlString = urlString + "net=" + networks + "&sta=*&loc=*&cha=" + channels +
                 "&starttime=" + toLine(startTime) + "&endtime=" + toLine(endTime) + "&format=miniseed&nodata=404";
         URL url = new URL(urlString);
+
+        // leave this for redirect validation
+        //followingRedirects(url);
 
         Files.createDirectories(mseedSetPath);
         Path mseedPath = mseedSetPath.resolve(mseedFileName);
@@ -543,6 +547,43 @@ class EventDataPreparer {
             sacD.inputCMD("interpolate delta " + DELTA);
             sacD.inputCMD("w over");
         }
+    }
+
+    /**
+     * Follow redirects while HTTP Status Codes are 3xx.
+     * Leave this method for redirect validation.
+     * @param start (URL)
+     * @return HttpURLConnection when HTTP Status Codes are NOT 3xx
+     * @throws IOException
+     */
+    static HttpURLConnection followingRedirects(URL start) throws IOException {
+        URL url = start;
+
+        for (int i = 0; i < 10; i++) {
+            HttpURLConnection con = (HttpURLConnection) url.openConnection();
+            con.setInstanceFollowRedirects(false);
+            con.setConnectTimeout(30_000);
+            con.setReadTimeout(30_000);
+            con.setRequestMethod("GET");
+            con.setRequestProperty("User-Agent", "Mozilla/5.0");
+            con.setRequestProperty("Accept", "*/*");
+
+            int code = con.getResponseCode();
+            String loc = con.getHeaderField("Location");
+
+            System.err.printf(
+                "Step %d: %s -> %d %s | Location=%s | CT=%s | CL=%d%n",
+                i, url, code, con.getResponseMessage(),
+                loc, con.getContentType(), con.getContentLengthLong()
+            );
+
+            if (code / 100 == 3 && loc != null) {
+                url = new URL(url, loc);
+                continue;
+            }
+            return con;
+        }
+        throw new IOException("Too many redirects");
     }
 
 }
