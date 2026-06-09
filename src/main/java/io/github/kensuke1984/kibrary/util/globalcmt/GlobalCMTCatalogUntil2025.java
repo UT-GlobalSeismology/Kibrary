@@ -73,6 +73,8 @@ public final class GlobalCMTCatalogUntil2025 {
     public static void run(CommandLine cmdLine) throws IOException {
         switchCatalog(cmdLine.getOptionValue("v"));
     }
+    // Path of downloaded ndk files
+    static Path catalogDirectoryPath = Environment.KIBRARY_SHARE.resolve("eachMonth");
 
     private static void switchCatalog(String version) throws IOException {
 
@@ -118,9 +120,7 @@ public final class GlobalCMTCatalogUntil2025 {
         }
 
         MergeCatalog();
-
     }
-
     //~Method to merge all ndk files into one
     private static void MergeCatalog() throws IOException{
         String MergedCatalogName = "jan76_dec25.ndk";
@@ -131,7 +131,7 @@ public final class GlobalCMTCatalogUntil2025 {
                 "jul", "aug", "sep", "oct", "nov", "dec"
             );
         // get only monthly catalog
-        List<Path> monthlyFiles = Files.list(Environment.KIBRARY_SHARE)
+        List<Path> monthlyFiles = Files.list(catalogDirectoryPath)
                 .filter(p -> {
 
                     String name = p.getFileName().toString();
@@ -158,7 +158,7 @@ public final class GlobalCMTCatalogUntil2025 {
 
         try(BufferedWriter writer = Files.newBufferedWriter(MergedCatalogPath)){
             //~Write ndk files from "all_Events"~//
-            Path oldCatalog = Environment.KIBRARY_SHARE.resolve("jan76_dec20.ndk");
+            Path oldCatalog = catalogDirectoryPath.resolve("jan76_dec20.ndk");
             for(String line : Files.readAllLines(oldCatalog)) {
                 writer.write(line);
                 writer.newLine();
@@ -186,7 +186,7 @@ public final class GlobalCMTCatalogUntil2025 {
 
     //~Method to download GCMT catalog~//
     private static void DownloadCatalog(String catalogName, String catalogURL) throws IOException{
-        Path catalogPath = Environment.KIBRARY_SHARE.resolve(catalogName);
+        Path catalogPath = catalogDirectoryPath.resolve(catalogName);
         if (Files.exists(catalogPath)) {
             System.err.println("Catalog " + catalogName + " already exists; skipping download.");
         } else {
@@ -206,15 +206,6 @@ public final class GlobalCMTCatalogUntil2025 {
       //~Fix errors in downloaded catalog~//
         fixCatalog(catalogPath);
 
-//        //~Activate (change target of symbolic link)~//
-//        // check whether the symbolic link itself exists, regardless of the existence of its target
-//        if(Files.exists(GlobalCMTCatalog.CATALOG_PATH, LinkOption.NOFOLLOW_LINKS)) {
-//            // delete the symbolic link, not its target
-//            Files.delete(GlobalCMTCatalog.CATALOG_PATH);
-//        }
-//        Files.createSymbolicLink(GlobalCMTCatalog.CATALOG_PATH, catalogPath);
-//
-//        System.err.println("The referenced catalog is set to " + catalogName);
     }
 
     private static void fixCatalog(Path catalogPath) throws IOException {
