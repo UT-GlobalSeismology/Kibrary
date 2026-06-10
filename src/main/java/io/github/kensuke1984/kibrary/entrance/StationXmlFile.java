@@ -28,8 +28,6 @@ import org.xml.sax.helpers.DefaultHandler;
  */
 class StationXmlFile {
 
-    private static final String STATION_URL_IRIS = "http://service.iris.edu/fdsnws/station/1/query?";
-    private static final String STATION_URL_ORFEUS = "http://www.orfeus-eu.org/fdsnws/station/1/query?";
     private URL url;
 
     private final String xmlFileName;
@@ -81,31 +79,21 @@ class StationXmlFile {
     }
 
     /**
-     * Sets the URL to be used in IRIS DMC FDSNWS STATION Web Service.
+     * Sets the URL to be used in FDSNWS STATION Web Service.
      *
      * @see <a href=http://service.iris.edu/irisws/station/1/> IRIS DMC FDSNWS STATION Web
      *      Service Documentation</a>
-     * @param startTime   (LocalDateTime) Find the response for the given time.
-     * @param endTime     (LocalDateTime) Find the response for the given time.
+     * @param urlHeader (String) Datacenter-dependent part of the URL.
+     * @param startTime (LocalDateTime) Start of time interval to find the response.
+     * @param endTime (LocalDateTime) End of time interval to find the response.
      */
-    void setRequest(String datacenter, LocalDateTime startTime, LocalDateTime endTime) throws IOException {
+    void setRequest(String urlHeader, LocalDateTime startTime, LocalDateTime endTime) throws IOException {
 
         String requestLocation = (location.isEmpty() ? "--" : location);
 
         // set url here (version 2021-08-23) Requested Level is "response".
         // TODO: virtual networks may not be accepted
-        String urlString;
-        switch (datacenter) {
-        case "IRIS":
-            urlString = STATION_URL_IRIS;
-            break;
-        case "ORFEUS":
-            urlString = STATION_URL_ORFEUS;
-            break;
-        default:
-            throw new IllegalStateException("Invalid datacenter name");
-        }
-        urlString = urlString + "net=" + network + "&" + "sta=" + station
+        String urlString = urlHeader + "net=" + network + "&" + "sta=" + station
                 + "&" + "loc=" + requestLocation + "&" + "cha=" + channel
                 + "&" + "starttime=" + startTime.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
                 + "&" + "endtime=" + endTime.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)

@@ -47,7 +47,9 @@ import io.github.kensuke1984.kibrary.util.sac.SACUtil;
 class EventDataPreparer {
 
     private static final String DATASELECT_URL_IRIS = "https://service.earthscope.org/fdsnws/dataselect/1/query?";
-    private static final String DATASELECT_URL_ORFEUS = "http://www.orfeus-eu.org/fdsnws/dataselect/1/query?";
+    private static final String DATASELECT_URL_ORFEUS = "https://federator.orfeus-eu.org/fdsnws/dataselect/1/query?";
+    private static final String STATION_URL_IRIS = "http://service.iris.edu/fdsnws/station/1/query?";
+    private static final String STATION_URL_ORFEUS = "https://federator.orfeus-eu.org/fdsnws/station/1/query?";
     /**
      * [s] delta for SAC files. SAC files with different delta will be interpolated
      * or downsampled.
@@ -339,6 +341,18 @@ class EventDataPreparer {
             return;
         }
 
+        String urlHeader;
+        switch (datacenter) {
+        case "IRIS":
+            urlHeader = STATION_URL_IRIS;
+            break;
+        case "ORFEUS":
+            urlHeader = STATION_URL_ORFEUS;
+            break;
+        default:
+            throw new IllegalStateException("Invalid datacenter name");
+        }
+
         Files.createDirectories(stationSetPath);
         System.err.println(" ~ Downloading XML files ...");
 
@@ -354,7 +368,8 @@ class EventDataPreparer {
 
                 StationXmlFile stationInfo = new StationXmlFile(network, station, location, channel, stationSetPath);
                 if (!Files.exists(stationInfo.getXmlPath()) || redo) {
-                    stationInfo.setRequest(datacenter, eventData.getCMTTime(), eventData.getCMTTime());
+                    // Here, "plusSeconds(1)" is to avoid error on ORFEUS Federator.
+                    stationInfo.setRequest(urlHeader, eventData.getCMTTime(), eventData.getCMTTime().plusSeconds(1));
                     stationInfo.downloadStationXml();
                 }
             }
