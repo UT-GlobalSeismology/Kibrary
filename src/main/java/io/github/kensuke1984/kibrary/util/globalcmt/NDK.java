@@ -291,8 +291,7 @@ public final class NDK implements GlobalCMTAccess {
         ndk.m[0] = Integer.parseInt(bsmParts[6]);
         ndk.m[1] = Integer.parseInt(bsmParts[7]);
         ndk.m[2] = Integer.parseInt(bsmParts[8]);
-        String cmtLine = lines[1].substring(61).trim().replace("TRIHD:", "TRIHD: ");
-        String[] cmtParts = cmtLine.split("\\s+");
+        String[] cmtParts = lines[1].substring(61).trim().split("\\s+");
         ndk.cmtType = Integer.parseInt(cmtParts[1]);
         ndk.momentRateFunctionType = SourceTimeFunctionType.ofCode(cmtParts[2].substring(0, 5));
         ndk.halfDuration = Double.parseDouble(cmtParts[3]);
