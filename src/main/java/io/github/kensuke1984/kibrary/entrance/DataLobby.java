@@ -9,10 +9,13 @@ import java.nio.file.StandardOpenOption;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import org.apache.commons.io.FileUtils;
 
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
@@ -51,6 +54,10 @@ public class DataLobby extends Operation {
      * Path for the work folder.
      */
     private Path workPath;
+    /**
+     * Path of folder to retry download.
+     */
+    private Path retryPath;
     /**
      * A tag to include in output folder name. When this is empty, no tag is used.
      */
@@ -102,6 +109,8 @@ public class DataLobby extends Operation {
             pw.println("manhattan " + className);
             pw.println("##Path of work folder. (.)");
             pw.println("#workPath ");
+            pw.println("##Path of folder to retry download. Otherwise, leave this unset.");
+            pw.println("#retryPath ");
             pw.println("##(String) A tag to include in output folder name. If no tag is needed, leave this unset.");
             pw.println("#folderTag ");
             pw.println("##(boolean) Whether to append date string at end of output folder name. (true)");
@@ -150,6 +159,7 @@ public class DataLobby extends Operation {
     @Override
     public void set() throws IOException {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
+        if (property.containsKey("retryPath")) retryPath = property.parsePath("retryPath", ".", true, workPath);
         if (property.containsKey("folderTag")) folderTag = property.parseStringSingle("folderTag", null);
         appendFolderDate = property.parseBoolean("appendFolderDate", "true");
 
@@ -188,25 +198,41 @@ public class DataLobby extends Operation {
             return;
         }
 
-        Path outPath = DatasetAid.createOutputFolder(workPath, "dl", folderTag, appendFolderDate, null);
-        property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
+        Path outPath;
+        if (retryPath != null) {
+            outPath = retryPath;
+            System.err.println("Retrying for " + retryPath);
+        } else {
+            outPath = DatasetAid.createOutputFolder(workPath, "dl", folderTag, appendFolderDate, null);
+            property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
+        }
 
+        System.err.println("Downloading from " + datacenter);
+
+        // loop for each event
         int n = 0;
+        List<GlobalCMTID> failedEvents = new ArrayList<>();
         for (GlobalCMTAccess event : requestedEvents) {
+            Path eventPath = outPath.resolve(event.toString());
+            if (Files.exists(eventPath)) {
+                System.err.println(event + " exists, skipping.");
+                continue;
+            }
+
             try {
                 n++;
                 System.err.println(event + " (# " + n + " of " + nTotal + ")  "
                         + DateTimeFormatter.ofPattern("<yyyy/MM/dd HH:mm:ss>").format(LocalDateTime.now()));
 
                 // create event folder
-                EventFolder ef = new EventFolder(outPath.resolve(event.toString()));
+                EventFolder ef = new EventFolder(eventPath);
                 if (!ef.mkdirs()) throw new IOException("Can't create " + ef);
 
                 // download by EventDataPreparer
                 EventDataPreparer edp = new EventDataPreparer(ef);
                 String mseedFileName = event + "." + GadgetAid.getTemporaryString() + ".mseed";
                 if (!edp.downloadMseed(datacenter, networks, channels, headAdjustment, footAdjustment, mseedFileName)) {
-                    System.err.println("!!! Data not found for " + event + ", skipping.");
+                    System.err.println("\r!!! Data not found for " + event + ", skipping.");
                     continue;
                 }
 
@@ -217,10 +243,27 @@ public class DataLobby extends Operation {
                 }
 
             } catch (IOException e) {
-                // Here, suppress exceptions for events that failed, and move on to the next event.
-                System.err.println("!!! Download for " + event + " failed, skipping.");
+                // suppress exceptions for events that failed, and move on to the next event
+                System.err.println("\r!!! Download for " + event + " failed, skipping.");
                 e.printStackTrace();
+                failedEvents.add(event.getGlobalCMTID());
+
+                // delete directory of failed event
+                FileUtils.deleteDirectory(eventPath.toFile());
+
+                // wait 15 minutes befere moving on to the next event, so that the Datacenter has some time to rest
+                if (n < nTotal) {
+                    System.err.println(" ~ Resting for 15 minutes ...");
+                    ThreadAid.sleep(1000 * 60 * 15);
+                }
             }
+        }
+
+        if (failedEvents.size() > 0) {
+            System.err.println("Failed events:");
+            failedEvents.stream().forEach(ev -> System.err.println(" " + ev));
+        } else {
+            System.err.println("Everything succeeded!");
         }
     }
 
