@@ -15,15 +15,12 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.apache.commons.io.FileUtils;
-
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.math.CircularRange;
 import io.github.kensuke1984.kibrary.math.LinearRange;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.EventFolder;
-import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.ThreadAid;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTAccess;
@@ -214,48 +211,36 @@ public class DataLobby extends Operation {
         List<GlobalCMTID> failedEvents = new ArrayList<>();
         for (GlobalCMTAccess event : requestedEvents) {
             Path eventPath = outPath.resolve(event.toString());
-            if (Files.exists(eventPath)) {
-                System.err.println(event + " exists, skipping.");
-                continue;
-            }
 
             try {
                 n++;
                 System.err.println(event + " (# " + n + " of " + nTotal + ")  "
                         + DateTimeFormatter.ofPattern("<yyyy/MM/dd HH:mm:ss>").format(LocalDateTime.now()));
 
-                // create event folder
+                // create event folder if it does not yet exist
                 EventFolder ef = new EventFolder(eventPath);
-                if (!ef.mkdirs()) throw new IOException("Can't create " + ef);
+                if (!Files.exists(ef.toPath())) {
+                    if (!ef.mkdirs()) {
+                        System.err.println("Can't create " + ef);
+                        continue;
+                    }
+                }
 
                 // download by EventDataPreparer
                 EventDataPreparer edp = new EventDataPreparer(ef);
-                String mseedFileName = event + "." + GadgetAid.getTemporaryString() + ".mseed";
-                if (!edp.downloadMseed(datacenter, networks, channels, headAdjustment, footAdjustment, mseedFileName)) {
-                    System.err.println("\r!!! Data not found for " + event + ", skipping.");
+                if (!edp.downloadMseeds(datacenter, networks, channels, headAdjustment, footAdjustment)) {
                     continue;
-                }
-
-                // wait 15 minutes befere moving on to the next event, so that the Datacenter has some time to rest
-                if (n < nTotal) {
-                    System.err.println(" ~ Resting for 15 minutes ...");
-                    ThreadAid.sleep(1000 * 60 * 15);
                 }
 
             } catch (IOException e) {
                 // suppress exceptions for events that failed, and move on to the next event
-                System.err.println("\r!!! Download for " + event + " failed, skipping.");
-                e.printStackTrace();
                 failedEvents.add(event.getGlobalCMTID());
+            }
 
-                // delete directory of failed event
-                FileUtils.deleteDirectory(eventPath.toFile());
-
-                // wait 15 minutes befere moving on to the next event, so that the Datacenter has some time to rest
-                if (n < nTotal) {
-                    System.err.println(" ~ Resting for 15 minutes ...");
-                    ThreadAid.sleep(1000 * 60 * 15);
-                }
+            // wait 15 minutes befere moving on to the next event, so that the Datacenter has some time to rest
+            if (n < nTotal) {
+                System.err.println(" ~ Resting for 15 minutes ...");
+                ThreadAid.sleep(1000 * 60 * 15);
             }
         }
 
