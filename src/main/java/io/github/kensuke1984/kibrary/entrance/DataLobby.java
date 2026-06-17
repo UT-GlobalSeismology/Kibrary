@@ -212,35 +212,42 @@ public class DataLobby extends Operation {
         for (GlobalCMTAccess event : requestedEvents) {
             Path eventPath = outPath.resolve(event.toString());
 
-            try {
-                n++;
-                System.err.println(event + " (# " + n + " of " + nTotal + ")  "
-                        + DateTimeFormatter.ofPattern("<yyyy/MM/dd HH:mm:ss>").format(LocalDateTime.now()));
+            n++;
+            System.err.println(event + " (# " + n + " of " + nTotal + ")  "
+                    + DateTimeFormatter.ofPattern("<yyyy/MM/dd HH:mm:ss>").format(LocalDateTime.now()));
 
-                // create event folder if it does not yet exist
-                EventFolder ef = new EventFolder(eventPath);
-                if (!Files.exists(ef.toPath())) {
-                    if (!ef.mkdirs()) {
-                        System.err.println("Can't create " + ef);
-                        continue;
-                    }
-                }
-
-                // download by EventDataPreparer
-                EventDataPreparer edp = new EventDataPreparer(ef);
-                if (!edp.downloadMseeds(datacenter, networks, channels, headAdjustment, footAdjustment)) {
+            // create event folder if it does not yet exist
+            EventFolder ef = new EventFolder(eventPath);
+            if (!Files.exists(ef.toPath())) {
+                if (!ef.mkdirs()) {
+                    System.err.println("Can't create " + ef);
                     continue;
                 }
-
-            } catch (IOException e) {
-                // suppress exceptions for events that failed, and move on to the next event
-                failedEvents.add(event.getGlobalCMTID());
             }
 
-            // wait 15 minutes befere moving on to the next event, so that the Datacenter has some time to rest
-            if (n < nTotal) {
-                System.err.println(" ~ Resting for 15 minutes ...");
-                ThreadAid.sleep(1000 * 60 * 15);
+            // download by EventDataPreparer
+            EventDataPreparer edp = new EventDataPreparer(ef);
+            int downloadStatus = edp.downloadMseeds(datacenter, networks, channels, headAdjustment, footAdjustment);
+            switch (downloadStatus) {
+            case -1:  // no attempt
+                break;
+            case 0:  // attempted but did not exist
+                // wait 2 minutes befere moving on to the next event, so that the Datacenter has some time to rest
+                if (n < nTotal) {
+                    System.err.println(" ~ Resting for 2 minutes ...");
+                    ThreadAid.sleep(1000 * 60 * 2);
+                }
+                break;
+            case 99:  // download failed
+                // add to list of events that failed, and move on to the next event after waiting
+                failedEvents.add(event.getGlobalCMTID());
+            case 1:  // download success
+                // wait 15 minutes befere moving on to the next event, so that the data center has some time to rest
+                if (n < nTotal) {
+                    System.err.println(" ~ Resting for 15 minutes ...");
+                    ThreadAid.sleep(1000 * 60 * 15);
+                }
+                break;
             }
         }
 
@@ -250,6 +257,8 @@ public class DataLobby extends Operation {
         } else {
             System.err.println("Everything succeeded!");
         }
+
+        System.err.println("Finished downloading in " + outPath + " " + DateTimeFormatter.ofPattern("<yyyy/MM/dd HH:mm:ss>").format(LocalDateTime.now()));
     }
 
     private List<GlobalCMTAccess> listEvents() {

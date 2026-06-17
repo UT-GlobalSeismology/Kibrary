@@ -12,7 +12,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACUtil;
 
 
 /**
- * Class for a set of R, T, and Z component SAC files of the same network, station, location, and instrument.
+ * Class for a set of R, T, and Z component SAC files of the same network, station, location, instrument, and quality.
  *
  * @since 2021/10/04
  * @author otsuru
@@ -28,6 +28,7 @@ class SacTriplet {
     private String station;
     private String location;
     private String instrument;
+    private String quality;
     private HorizontalPosition position;
 
     /**
@@ -62,6 +63,7 @@ class SacTriplet {
         station = sacFile.getStation();
         location = sacFile.getLocation();
         instrument = sacFile.getInstrument();
+        quality = sacFile.getQuality();
         double latitude = Double.parseDouble(headerMap.get(SACHeaderEnum.STLA));
         double longitude = Double.parseDouble(headerMap.get(SACHeaderEnum.STLO));
         position = new HorizontalPosition(latitude, longitude);
@@ -83,8 +85,8 @@ class SacTriplet {
         SacFileName sacFile = new SacFileName(sacPath.getFileName().toString());
 
         // if variables are same, register
-        if (sacFile.getNetwork().equals(network) && sacFile.getStation().equals(station) &&
-                sacFile.getLocation().equals(location) && sacFile.getInstrument().equals(instrument)) {
+        if (sacFile.getNetwork().equals(network) && sacFile.getStation().equals(station) && sacFile.getLocation().equals(location) &&
+                sacFile.getInstrument().equals(instrument) && sacFile.getQuality().equals(quality)) {
             register(sacPath, sacFile.getComponent());
             return true;
         } else {
@@ -217,9 +219,9 @@ class SacTriplet {
      * @param other (SacTriplet) The triplet to be compared to.
      * @return (boolean) true if it is the same triplet
      */
-    boolean isItself (SacTriplet other) {
-        return other.getNetwork().equals(network) && other.getStation().equals(station) &&
-                other.getLocation().equals(location) && other.getInstrument().equals(instrument);
+    boolean isItself(SacTriplet other) {
+        return other.getNetwork().equals(network) && other.getStation().equals(station) && other.getLocation().equals(location) &&
+                other.getInstrument().equals(instrument) && other.getQuality().equals(quality);
     }
 
     /**
@@ -227,7 +229,7 @@ class SacTriplet {
      * @param other (SacTriplet) The triplet to be compared to.
      * @return (boolean) true if the statons of the triplets are positioned at or close to each other
      */
-    boolean atSamePosition (SacTriplet other) {
+    boolean atSamePosition(SacTriplet other) {
         if (other.getNetwork().equals(network) && other.getStation().equals(station)) return true;
         else if (Math.abs(getLatitude() - other.getLatitude()) < coordinateGrid &&
                 Math.abs(getLongitude() - other.getLongitude()) < coordinateGrid) return true;
@@ -239,7 +241,7 @@ class SacTriplet {
      * @param other (SacTriplet) The triplet to be compared to.
      * @return (boolean) true if the triplets complement each other
      */
-    boolean complements (SacTriplet other) {
+    boolean complements(SacTriplet other) {
         return other.getNumber() + number == 3;
     }
 
@@ -262,6 +264,9 @@ class SacTriplet {
         // choose instrument that is prefered
         else if (getInstrumentRank() < other.getInstrumentRank()) return true;
         else if (getInstrumentRank() > other.getInstrumentRank()) return false;
+        // choose quality that is prefered
+        else if (getQualityRank() < other.getQualityRank()) return true;
+        else if (getQualityRank() > other.getQualityRank()) return false;
         // locations younger in dictionary order is prefered
         // result of compareTo() is positive if [this location] is after [other location] in dictionary order
         else if (location.compareTo(other.getLocation()) > 0) return true;
@@ -284,6 +289,28 @@ class SacTriplet {
             rank = 2;
             break;
         case "HL":
+            rank = 1;
+            break;
+        }
+        return rank;
+    }
+
+    /**
+     * @return (int) the "rank" of the quality
+     */
+    int getQualityRank() {
+        int rank = 0;
+        switch (instrument) {
+        case "Q":
+            rank = 4;
+            break;
+        case "M":
+            rank = 3;
+            break;
+        case "D":
+            rank = 2;
+            break;
+        case "R":
             rank = 1;
             break;
         }
@@ -316,6 +343,13 @@ class SacTriplet {
      */
     String getInstrument() {
         return instrument;
+    }
+
+    /**
+     * @return quality indicator
+     */
+    public String getQuality() {
+        return quality;
     }
 
     /**

@@ -5,10 +5,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.nio.file.StandardOpenOption;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
@@ -87,10 +89,10 @@ class EventDataPreparer {
      * @param channels (String) Channels to be requested, listed using commas. Wildcards (*, ?) allowed.
      * @param headAdjustment (int) [min] The starting time of request with respect to event time.
      * @param footAdjustment (int) [min] The ending time of request with respect to event time.
-     * @return (boolean) Whether an mseed file was downloaded.
-     * @throws IOException when download for any mseed file fails.
+     * @return (int) Status of download (-1: no attempts; 0: attempted but did not exist; 1: download success; 99: download failed).
+     * @throws IOException
      */
-    boolean downloadMseeds(String dataCenter, String networks, String channels, int headAdjustment, int footAdjustment)
+    int downloadMseeds(String dataCenter, String networks, String channels, int headAdjustment, int footAdjustment)
             throws IOException {
 
         LocalDateTime cmtTime = eventData.getCMTTime();
@@ -103,30 +105,32 @@ class EventDataPreparer {
         List<DataCenterEnum> dataCenterList = DataCenterEnum.listForMseed(dataCenter);
 
         // download from each data center in list
-        boolean downloadFlag = false;
-        IOException lastException = null;
+        int downloadStatus = -1;
         for (DataCenterEnum dataCenterCode : dataCenterList) {
-            String mseedFileName = eventData + "." + dataCenterCode + ".mseed";
-            Path mseedPath = mseedSetPath.resolve(mseedFileName);
+            Path mseedPath = mseedSetPath.resolve(eventData + "." + dataCenterCode + ".mseed");
+            Path infPath = mseedSetPath.resolve(eventData + "." + dataCenterCode + ".inf");
 
-            if (Files.exists(mseedPath)) continue;
+            if (Files.exists(mseedPath) || Files.exists(infPath)) continue;
 
             try {
-                if (downloadMseedEach(dataCenterCode, networks, channels, startTime, endTime, mseedPath)) downloadFlag = true;
+                if (downloadStatus < 0) downloadStatus = 0;
+                if (downloadMseedEach(dataCenterCode, networks, channels, startTime, endTime, mseedPath, infPath)) {
+                    // if any file was downloaded, status will be 1
+                    if (downloadStatus < 1) downloadStatus = 1;
+                }
             } catch (IOException e) {
+                // if any of the downloads failed, status will be 99
                 // suppress exceptions for files that failed, and move on to the next file
-                lastException = e;
+                downloadStatus = 99;
             }
         }
 
-        // if any of the downloads failed, throw IOException
-        if (lastException != null) throw lastException;
-        // return whether any file was downloaded
-        return downloadFlag;
+        // return download status
+        return downloadStatus;
     }
 
     private boolean downloadMseedEach(DataCenterEnum dataCenterCode, String networks, String channels,
-            LocalDateTime startTime, LocalDateTime endTime, Path mseedPath) throws IOException {
+            LocalDateTime startTime, LocalDateTime endTime, Path mseedPath, Path infPath) throws IOException {
 
         String urlString = dataCenterCode.getDataSelectUrl() + "net=" + networks + "&sta=*&loc=*&cha=" + channels +
                 "&starttime=" + toLine(startTime) + "&endtime=" + toLine(endTime) + "&format=miniseed&nodata=404";
@@ -145,6 +149,9 @@ class EventDataPreparer {
         } catch (FileNotFoundException e) {
             // if there is no available data for this request, return false
             System.err.println("\r ! Data not found on " + dataCenterCode + ", skipping.");
+
+            List<String> lines = List.of("Data not found on " + dataCenterCode);
+            Files.write(infPath, lines, StandardCharsets.UTF_8, StandardOpenOption.CREATE);
             return false;
 
         } catch (IOException e) {
