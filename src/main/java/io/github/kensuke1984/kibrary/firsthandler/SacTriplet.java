@@ -249,25 +249,25 @@ class SacTriplet {
      * Checks whether this triplet is inferior to a given triplet.
      * The criteria are as follows:
      * <ol>
-     * <li> A full triplet is prefered over incomplete triplets. </li>
+     * <li> A full triplet is preferred over incomplete triplets. </li>
      * <li> The instrument is ranked as BH > HH > BL > HL. </li>
-     * <li> Locations younger in dictionary order is prefered. </li>
+     * <li> Locations younger in dictionary order is preferred. </li>
      * <li> Otherwise (i.e. different stations but different location and instrument), the selection is random. </li>
      * </ol>
      * @param other (SacTriplet) The triplet to be compared to.
      * @return (boolean) true if this triplet is inferior
      */
     boolean isInferiorTo(SacTriplet other) {
-        // a full triplet is prefered over incomplete triplets
+        // a full triplet is preferred over incomplete triplets
         if (number < other.getNumber()) return true;
         else if (number > other.getNumber()) return false;
-        // choose instrument that is prefered
+        // choose instrument that is preferred
         else if (getInstrumentRank() < other.getInstrumentRank()) return true;
         else if (getInstrumentRank() > other.getInstrumentRank()) return false;
-        // choose quality that is prefered
+        // choose quality that is preferred
         else if (getQualityRank() < other.getQualityRank()) return true;
         else if (getQualityRank() > other.getQualityRank()) return false;
-        // locations younger in dictionary order is prefered
+        // locations younger in dictionary order is preferred
         // result of compareTo() is positive if [this location] is after [other location] in dictionary order
         else if (location.compareTo(other.getLocation()) > 0) return true;
         else return false;

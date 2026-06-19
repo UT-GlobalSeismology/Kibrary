@@ -1,5 +1,6 @@
 package io.github.kensuke1984.kibrary.entrance;
 
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URL;
@@ -111,6 +112,10 @@ class StationXmlFile {
         try (ReadableByteChannel readChannel = Channels.newChannel(url.openStream());
                 FileOutputStream fos = new FileOutputStream(xmlPath.toFile()); FileChannel outChannel = fos.getChannel()) {
             outChannel.transferFrom(readChannel, 0, Long.MAX_VALUE);
+        } catch (FileNotFoundException e) {
+            // If stationXML file not found, return false.
+            System.err.println("  ! File not found for " + network + " " + station + " " + location + " " + channel);
+            return false;
         } catch (IOException e) {
             // If stationXML file cannot be downloaded, return false.
             System.err.println("!! Failed to download stationXML file.");
@@ -135,7 +140,12 @@ class StationXmlFile {
             // 4. SAXParserにXMLを読み込ませて、SAXのイベントハンドラに処理を行わせる
             parser.parse(xmlPath.toFile(), handler);
 
+        } catch (FileNotFoundException e) {
+            // If stationXML file not found, return false.
+            System.err.println("  ! File not found for " + network + " " + station + " " + location + " " + channel);
+            return false;
         } catch (SAXException | ParserConfigurationException | IOException e) {
+            // If stationXML file cannot be read, return false.
             System.err.println("!! Failed to read " + xmlFileName + " : " + e.toString());
             return false;
         }
