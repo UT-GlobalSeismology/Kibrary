@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
+import java.util.Set;
 
 import io.github.kensuke1984.kibrary.util.FileAid;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
@@ -251,11 +252,13 @@ class SacTriplet {
      * <ol>
      * <li> A full triplet is preferred over incomplete triplets. </li>
      * <li> The instrument is ranked as BH > HH > BL > HL. </li>
-     * <li> Locations younger in dictionary order is preferred. </li>
-     * <li> Otherwise (i.e. different stations but different location and instrument), the selection is random. </li>
+     * <li> The network is ranked as trusted > permanent > temporary > SS. </li>
+     * <li> The quality indicator is ranked as Q > M > D > R. </li>
+     * <li> Locations younger in dictionary order is preferred ("--" is before "00"). </li>
+     * <li> Otherwise (i.e. different stations but same instrument and location), this triplet is selected. </li>
      * </ol>
      * @param other (SacTriplet) The triplet to be compared to.
-     * @return (boolean) true if this triplet is inferior
+     * @return (boolean) Whether this triplet is inferior.
      */
     boolean isInferiorTo(SacTriplet other) {
         // a full triplet is preferred over incomplete triplets
@@ -264,6 +267,9 @@ class SacTriplet {
         // choose instrument that is preferred
         else if (getInstrumentRank() < other.getInstrumentRank()) return true;
         else if (getInstrumentRank() > other.getInstrumentRank()) return false;
+        // choose network that is preferred
+        else if (getNetworkRank() < other.getNetworkRank()) return true;
+        else if (getNetworkRank() > other.getNetworkRank()) return false;
         // choose quality that is preferred
         else if (getQualityRank() < other.getQualityRank()) return true;
         else if (getQualityRank() > other.getQualityRank()) return false;
@@ -277,44 +283,39 @@ class SacTriplet {
      * @return (int) the "rank" of the instrument
      */
     int getInstrumentRank() {
-        int rank = 0;
         switch (instrument) {
-        case "BH":
-            rank = 4;
-            break;
-        case "HH":
-            rank = 3;
-            break;
-        case "BL":
-            rank = 2;
-            break;
-        case "HL":
-            rank = 1;
-            break;
+        case "BH": return 4;
+        case "HH": return 3;
+        case "BL": return 2;
+        case "HL": return 1;
         }
-        return rank;
+        return 0;
+    }
+
+    /**
+     * @return (int) the "rank" of the network
+     */
+    int getNetworkRank() {
+        Set<String> globalTrusted = Set.of("IU", "II", "IC", "CU", "GT", "G", "GE", "MN");
+        Set<String> temporary = Set.of("0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "X", "Y", "Z");
+
+        if (globalTrusted.contains(network)) return 10;
+        else if (temporary.contains(network.substring(0, 1))) return 1;
+        else if (network.equals("SS")) return 0;
+        else return 5;
     }
 
     /**
      * @return (int) the "rank" of the quality
      */
     int getQualityRank() {
-        int rank = 0;
         switch (instrument) {
-        case "Q":
-            rank = 4;
-            break;
-        case "M":
-            rank = 3;
-            break;
-        case "D":
-            rank = 2;
-            break;
-        case "R":
-            rank = 1;
-            break;
+        case "Q": return 4;
+        case "M": return 3;
+        case "D": return 2;
+        case "R": return 1;
         }
-        return rank;
+        return 0;
     }
 
     /**
