@@ -7,6 +7,7 @@ import java.io.UncheckedIOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 import java.util.HashSet;
 import java.util.Map;
@@ -533,19 +534,22 @@ class EventProcessor implements Runnable {
                     // throw *.MOD files to trash
                     FileAid.moveToDirectory(modPath, invalidRespPath, true);
                     // throw SPECTRA files to trash
-                    FileAid.moveToDirectory(spectraPath, invalidRespPath, true);
+                    // REPLACE_EXISTING is needed because duplication of quality control can occur (same SPECTRA for different SACs)
+                    FileAid.moveToDirectory(spectraPath, invalidRespPath, true, StandardCopyOption.REPLACE_EXISTING);
                     continue;
                 }
 
                 if(sd.isNaN()) {
                     GadgetAid.dualPrintln(eliminatedWriter, "!! spectra file is NaN or empty : " + event.getGlobalCMTID() + " - " + afterName);
                     FileAid.moveToDirectory(modPath, invalidRespPath, true);
-                    FileAid.moveToDirectory(spectraPath, invalidRespPath, true);
+                    // REPLACE_EXISTING is needed because duplication of quality control can occur (same SPECTRA for different SACs)
+                    FileAid.moveToDirectory(spectraPath, invalidRespPath, true, StandardCopyOption.REPLACE_EXISTING);
                     continue;
                 }
 
                 // move processed SPECTRA files to archive
-                FileAid.moveToDirectory(spectraPath, doneDeconvolvePath, true);
+                // REPLACE_EXISTING is needed because duplication of quality control can occur (same SPECTRA for different SACs)
+                FileAid.moveToDirectory(spectraPath, doneDeconvolvePath, true, StandardCopyOption.REPLACE_EXISTING);
 
                 // move processed MOD files to archive
                 FileAid.moveToDirectory(modPath, doneDeconvolvePath, true);
@@ -700,8 +704,8 @@ class EventProcessor implements Runnable {
                 // if one is {RT} and the other is {Z}, leave both
                 if (oneTriplet.complements(otherTriplet)) continue;
 
-                // remove triplet that has less components, worst instruments, or larger location codes
-                if(oneTriplet.isInferiorTo(otherTriplet)) {
+                // remove triplet that has less components, worse instruments, worse quality, or larger location codes
+                if (oneTriplet.isInferiorTo(otherTriplet)) {
                     GadgetAid.dualPrintln(eliminatedWriter, "!! same or close station, eliminating : " + event.getGlobalCMTID() + " - " +
                             oneTriplet.getName() + " ( :: " + otherTriplet.getName() + " )");
                     oneTriplet.dismiss();

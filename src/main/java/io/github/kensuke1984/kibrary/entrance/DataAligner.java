@@ -3,6 +3,8 @@ package io.github.kensuke1984.kibrary.entrance;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -16,6 +18,7 @@ import org.apache.commons.cli.ParseException;
 import io.github.kensuke1984.kibrary.Summon;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.EventFolder;
+import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.ThreadAid;
 
@@ -134,6 +137,7 @@ public class DataAligner {
     }
 
     private void align() throws IOException {
+        long startTime = System.nanoTime();
 
         // working directory is set to current directory
         Path workPath = Paths.get(".");
@@ -145,7 +149,7 @@ public class DataAligner {
             return;
         }
 
-        // for each event directory
+        // for each event directory, open seed or mseed file and download station files if necessary
         // This part is not parallelized because SocketException occurs when many threads download files simultaneously.
         if (!fromConfigure) {
             final AtomicInteger n = new AtomicInteger();
@@ -179,6 +183,7 @@ public class DataAligner {
             });
         }
 
+        // format SAC and RESP files for succeeding operations
         ExecutorService es = ThreadAid.createFixedThreadPool();
         eventDirs.stream().map(this::process).forEach(es::execute);
         es.shutdown();
@@ -188,6 +193,10 @@ public class DataAligner {
             ThreadAid.sleep(100);
         }
         System.err.println("\r Finished handling all events.");
+
+        // display duration
+        System.err.println("Duration: " + GadgetAid.toTimeString(System.nanoTime() - startTime) + " "
+                + DateTimeFormatter.ofPattern("<yyyy/MM/dd HH:mm:ss>").format(LocalDateTime.now()));
     }
 
     private Runnable process(EventFolder eventDir) {

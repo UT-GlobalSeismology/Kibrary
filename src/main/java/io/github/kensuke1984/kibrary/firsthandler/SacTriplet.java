@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
+import java.util.Set;
 
 import io.github.kensuke1984.kibrary.util.FileAid;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
@@ -12,7 +13,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACUtil;
 
 
 /**
- * Class for a set of R, T, and Z component SAC files of the same network, station, location, and instrument.
+ * Class for a set of R, T, and Z component SAC files of the same network, station, location, instrument, and quality.
  *
  * @since 2021/10/04
  * @author otsuru
@@ -28,6 +29,7 @@ class SacTriplet {
     private String station;
     private String location;
     private String instrument;
+    private String quality;
     private HorizontalPosition position;
 
     /**
@@ -62,6 +64,7 @@ class SacTriplet {
         station = sacFile.getStation();
         location = sacFile.getLocation();
         instrument = sacFile.getInstrument();
+        quality = sacFile.getQuality();
         double latitude = Double.parseDouble(headerMap.get(SACHeaderEnum.STLA));
         double longitude = Double.parseDouble(headerMap.get(SACHeaderEnum.STLO));
         position = new HorizontalPosition(latitude, longitude);
@@ -83,8 +86,8 @@ class SacTriplet {
         SacFileName sacFile = new SacFileName(sacPath.getFileName().toString());
 
         // if variables are same, register
-        if (sacFile.getNetwork().equals(network) && sacFile.getStation().equals(station) &&
-                sacFile.getLocation().equals(location) && sacFile.getInstrument().equals(instrument)) {
+        if (sacFile.getNetwork().equals(network) && sacFile.getStation().equals(station) && sacFile.getLocation().equals(location) &&
+                sacFile.getInstrument().equals(instrument) && sacFile.getQuality().equals(quality)) {
             register(sacPath, sacFile.getComponent());
             return true;
         } else {
@@ -217,9 +220,9 @@ class SacTriplet {
      * @param other (SacTriplet) The triplet to be compared to.
      * @return (boolean) true if it is the same triplet
      */
-    boolean isItself (SacTriplet other) {
-        return other.getNetwork().equals(network) && other.getStation().equals(station) &&
-                other.getLocation().equals(location) && other.getInstrument().equals(instrument);
+    boolean isItself(SacTriplet other) {
+        return other.getNetwork().equals(network) && other.getStation().equals(station) && other.getLocation().equals(location) &&
+                other.getInstrument().equals(instrument) && other.getQuality().equals(quality);
     }
 
     /**
@@ -227,7 +230,7 @@ class SacTriplet {
      * @param other (SacTriplet) The triplet to be compared to.
      * @return (boolean) true if the statons of the triplets are positioned at or close to each other
      */
-    boolean atSamePosition (SacTriplet other) {
+    boolean atSamePosition(SacTriplet other) {
         if (other.getNetwork().equals(network) && other.getStation().equals(station)) return true;
         else if (Math.abs(getLatitude() - other.getLatitude()) < coordinateGrid &&
                 Math.abs(getLongitude() - other.getLongitude()) < coordinateGrid) return true;
@@ -239,7 +242,7 @@ class SacTriplet {
      * @param other (SacTriplet) The triplet to be compared to.
      * @return (boolean) true if the triplets complement each other
      */
-    boolean complements (SacTriplet other) {
+    boolean complements(SacTriplet other) {
         return other.getNumber() + number == 3;
     }
 
@@ -247,22 +250,30 @@ class SacTriplet {
      * Checks whether this triplet is inferior to a given triplet.
      * The criteria are as follows:
      * <ol>
-     * <li> A full triplet is prefered over incomplete triplets. </li>
+     * <li> A full triplet is preferred over incomplete triplets. </li>
      * <li> The instrument is ranked as BH > HH > BL > HL. </li>
-     * <li> Locations younger in dictionary order is prefered. </li>
-     * <li> Otherwise (i.e. different stations but different location and instrument), the selection is random. </li>
+     * <li> The network is ranked as trusted > permanent > temporary > SS. </li>
+     * <li> The quality indicator is ranked as Q > M > D > R. </li>
+     * <li> Locations younger in dictionary order is preferred ("--" is before "00"). </li>
+     * <li> Otherwise (i.e. different stations but same instrument and location), this triplet is selected. </li>
      * </ol>
      * @param other (SacTriplet) The triplet to be compared to.
-     * @return (boolean) true if this triplet is inferior
+     * @return (boolean) Whether this triplet is inferior.
      */
     boolean isInferiorTo(SacTriplet other) {
-        // a full triplet is prefered over incomplete triplets
+        // a full triplet is preferred over incomplete triplets
         if (number < other.getNumber()) return true;
         else if (number > other.getNumber()) return false;
-        // choose instrument that is prefered
+        // choose instrument that is preferred
         else if (getInstrumentRank() < other.getInstrumentRank()) return true;
         else if (getInstrumentRank() > other.getInstrumentRank()) return false;
-        // locations younger in dictionary order is prefered
+        // choose network that is preferred
+        else if (getNetworkRank() < other.getNetworkRank()) return true;
+        else if (getNetworkRank() > other.getNetworkRank()) return false;
+        // choose quality that is preferred
+        else if (getQualityRank() < other.getQualityRank()) return true;
+        else if (getQualityRank() > other.getQualityRank()) return false;
+        // locations younger in dictionary order is preferred
         // result of compareTo() is positive if [this location] is after [other location] in dictionary order
         else if (location.compareTo(other.getLocation()) > 0) return true;
         else return false;
@@ -272,22 +283,39 @@ class SacTriplet {
      * @return (int) the "rank" of the instrument
      */
     int getInstrumentRank() {
-        int rank = 0;
         switch (instrument) {
-        case "BH":
-            rank = 4;
-            break;
-        case "HH":
-            rank = 3;
-            break;
-        case "BL":
-            rank = 2;
-            break;
-        case "HL":
-            rank = 1;
-            break;
+        case "BH": return 4;
+        case "HH": return 3;
+        case "BL": return 2;
+        case "HL": return 1;
         }
-        return rank;
+        return 0;
+    }
+
+    /**
+     * @return (int) the "rank" of the network
+     */
+    int getNetworkRank() {
+        Set<String> globalTrusted = Set.of("IU", "II", "IC", "CU", "GT", "G", "GE", "MN");
+        Set<String> temporary = Set.of("0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "X", "Y", "Z");
+
+        if (globalTrusted.contains(network)) return 10;
+        else if (temporary.contains(network.substring(0, 1))) return 1;
+        else if (network.equals("SS")) return 0;
+        else return 5;
+    }
+
+    /**
+     * @return (int) the "rank" of the quality
+     */
+    int getQualityRank() {
+        switch (instrument) {
+        case "Q": return 4;
+        case "M": return 3;
+        case "D": return 2;
+        case "R": return 1;
+        }
+        return 0;
     }
 
     /**
@@ -316,6 +344,13 @@ class SacTriplet {
      */
     String getInstrument() {
         return instrument;
+    }
+
+    /**
+     * @return quality indicator
+     */
+    public String getQuality() {
+        return quality;
     }
 
     /**

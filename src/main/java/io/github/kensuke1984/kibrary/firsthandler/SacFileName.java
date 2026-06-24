@@ -14,34 +14,33 @@ class SacFileName implements Comparable<SacFileName> {
     private String name;
     private LocalDateTime startTime;
     /**
-     * network identifier ネットワーク名
+     * Network identifier.
      */
     private String network;
     /**
-     * station name
+     * Station name.
      */
     private String station;
     /**
-     * location IDの部分
+     * Location ID.
      */
     private String location;
     /**
-     * channel BHE BHZ とか
+     * Channel. BHE, BHZ, etc.
      */
     private String channel;
     /**
-     * component E Z R T とか (3rd letter of channel name)
-     */
-    private String component;
-    /**
-     * instrument BH HL とか (1st&2nd letters of channel name)
+     * Instrument. BH, HL, etc. (1st & 2nd letters of channel name)
      */
     private String instrument;
     /**
-     * quality control marker D=Data of Undetermined state, M=Merged Data, R=Raw
-     * waveform Data, Q=QC'd data
+     * Component. E, Z, R, T, etc. (3rd letter of channel name)
      */
-    private String qualityControl;
+    private String component;
+    /**
+     * Quality indicator. D=Data of undetermined state, M=Merged data, R=Raw waveform data, Q=Quality controlled data.
+     */
+    private String quality;
 
 
     SacFileName(String sacFileName) {
@@ -59,7 +58,7 @@ class SacFileName implements Comparable<SacFileName> {
             station = parts[1];
             location = parts[2];
             channel = parts[3];
-            qualityControl = parts[4];
+            quality = parts[4];
             break;
         case "MRG":
         case "MOD":
@@ -67,11 +66,11 @@ class SacFileName implements Comparable<SacFileName> {
             station = parts[1];
             location = parts[2];
             channel = parts[3];
-            qualityControl = parts[4];
-            // "component" is the 3rd letter of channel name
-            component = channel.substring(2);
+            quality = parts[4];
             // "instrument" is the 1st&2nd letters of channel name
             instrument = channel.substring(0, 2);
+            // "component" is the 3rd letter of channel name
+            component = channel.substring(2);
             break;
         case "X":
         case "Y":
@@ -82,19 +81,18 @@ class SacFileName implements Comparable<SacFileName> {
             station = parts[1];
             location = parts[2];
             instrument = parts[3];
-            qualityControl = parts[4];
+            quality = parts[4];
             component = parts[5];
             break;
-
         }
     }
 
     /**
      * Creates a new SAC file name for the resulting file after being set up.
-     * @return (String) SAC file name of the form "network.station.location.channel.qualityControl.year.jday.hour.min.sec.msec.SET"
+     * @return (String) SAC file name of the form "network.station.location.channel.quality.year.jday.hour.min.sec.msec.SET"
      */
     String getSetFileName() {
-        return network + "." + station + "." + location + "." + channel + "." + qualityControl + "." +
+        return network + "." + station + "." + location + "." + channel + "." + quality + "." +
                 startTime.getYear() + "." + startTime.getDayOfYear() + "." + startTime.getHour() + "." +
                 startTime.getMinute() + "." + startTime.getSecond() + "." + startTime.getNano()/1000/1000 + ".SET";
 //                year + "." + jday + "." + hour + "." + min + "." + sec + "." + msec + ".SET";
@@ -102,24 +100,24 @@ class SacFileName implements Comparable<SacFileName> {
 
     /**
      * Creates a new SAC file name for the resulting file after being merged.
-     * @return (String) SAC file name of the form "network.station.location.channel.qualityControl.MRG"
+     * @return (String) SAC file name of the form "network.station.location.channel.quality.MRG"
      */
     String getMergedFileName() {
-        return network + "." + station + "." + location + "." + channel + "." + qualityControl + ".MRG";
+        return network + "." + station + "." + location + "." + channel + "." + quality + ".MRG";
     }
 
     /**
      * Creates a new SAC file name for the resulting file after being modified.
-     * @return (String) SAC file name of the form "network.station.location.channel.qualityControl.MOD"
+     * @return (String) SAC file name of the form "network.station.location.channel.quality.MOD"
      */
     String getModifiedFileName() {
-        return network + "." + station + "." + location + "." + channel + "." + qualityControl + ".MOD";
+        return network + "." + station + "." + location + "." + channel + "." + quality + ".MOD";
     }
 
     /**
      * Creates a new SAC file name for the resulting file after being deconvolved.
      * Components "1" and "E" will be renamed to "X", and "2" and "N" to "Y".
-     * @return (String) SAC file name of the form "network.station.location.instrument.qualityControl.[XYZ]"
+     * @return (String) SAC file name of the form "network.station.location.instrument.quality.[XYZ]"
      */
     String getDeconvolvedFileName() {
         String newComponent = "";
@@ -136,23 +134,23 @@ class SacFileName implements Comparable<SacFileName> {
             newComponent = "Z";
             break;
         }
-        return network + "." + station + "." + location + "." + instrument + "." + qualityControl + "." + newComponent;
+        return network + "." + station + "." + location + "." + instrument + "." + quality + "." + newComponent;
     }
 
     /**
      * Returns SAC file name corresponding to the specified component.
-     * @return (String) SAC file name of the form "network.station.location.instrument.qualityControl.[specified component]"
+     * @return (String) SAC file name of the form "network.station.location.instrument.quality.[specified component]"
      */
     String getNameWithComponent(String specifiedComponent) {
-        return network + "." + station + "." + location + "." + instrument + "." + qualityControl + "." + specifiedComponent;
+        return network + "." + station + "." + location + "." + instrument + "." + quality + "." + specifiedComponent;
     }
 
     /**
      * Returns name of triplet.
-     * @return (String) Name of the form "network.station.location.instrument.qualityControl.*"
+     * @return (String) Name of the form "network.station.location.instrument.quality.*"
      */
     String getTripletName() {
-        return network + "." + station + "." + location + "." + instrument + "." + qualityControl + ".*";
+        return network + "." + station + "." + location + "." + instrument + "." + quality + ".*";
     }
 
     /**
@@ -192,10 +190,10 @@ class SacFileName implements Comparable<SacFileName> {
     }
 
     /**
-     * @return network.station.location.BHN.(D).SAC
+     * @return network.station.location.(BH)N.D.SAC
      */
-    String getQualityControl() {
-        return qualityControl;
+    String getInstrument() {
+        return instrument;
     }
 
     /**
@@ -206,10 +204,10 @@ class SacFileName implements Comparable<SacFileName> {
     }
 
     /**
-     * @return network.station.location.(BH)N.D.SAC
+     * @return network.station.location.BHN.(D).SAC
      */
-    String getInstrument() {
-        return instrument;
+    String getQuality() {
+        return quality;
     }
 
     LocalDateTime getStartTime() {
@@ -223,7 +221,7 @@ class SacFileName implements Comparable<SacFileName> {
         else if ((c = station.compareTo(o.station)) != 0) return c;
         else if ((c = location.compareTo(o.location)) != 0) return c;
         else if ((c = channel.compareTo(o.channel)) != 0) return c;
-        else if ((c = qualityControl.compareTo(o.qualityControl)) != 0) return c;
+        else if ((c = quality.compareTo(o.quality)) != 0) return c;
         else return startTime.compareTo(o.startTime);
     }
 
@@ -245,7 +243,7 @@ class SacFileName implements Comparable<SacFileName> {
     boolean isRelated(SacFileName sacFileName) {
         return sacFileName.channel.equals(channel) && sacFileName.network.equals(network) &&
                 sacFileName.station.equals(station) && sacFileName.location.equals(location) &&
-                sacFileName.qualityControl.equals(qualityControl);
+                sacFileName.quality.equals(quality);
     }
 
 }
