@@ -59,7 +59,7 @@ import io.github.kensuke1984.kibrary.waveform.VarianceComputer;
 enum Brooklyn {
     // Environment & General 00
     About(0, About.class),
-    EnvironmentKataoka(1, Environment.class),
+    Environment(1, Environment.class),
     GlobalCMTCatalogUpToLatest(2, GlobalCMTCatalogUpToLatest.class),
     PolynomialStructureFile(3, PolynomialStructureFile.class),
     EventListFile(4, EventListFile.class),

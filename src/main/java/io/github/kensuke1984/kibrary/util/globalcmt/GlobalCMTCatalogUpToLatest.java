@@ -30,7 +30,7 @@ import io.github.kensuke1984.kibrary.Summon;
 import io.github.kensuke1984.kibrary.util.FileAid;
 
 /**
- * Updating the catalog of Gglobal CMT solutions.
+ * Updating the catalog of Global CMT solutions.
  * <p>
  * The specified version of the catalog will be downloaded if it does not already exist.
  * The active version of the catalog will be set to the one specified.
@@ -41,14 +41,13 @@ import io.github.kensuke1984.kibrary.util.FileAid;
  * @author kataoka
  * @since 2026/3/23
  */
-
 public final class GlobalCMTCatalogUpToLatest {
     private GlobalCMTCatalogUpToLatest() {}
 
     /**
      * Path to the directory where individual NDK files are saved.
      */
-    private static final Path catalogDirectoryPath = Environment.KIBRARY_SHARE.resolve("eachMonth");
+    private static final Path CATALOG_DIRECTRY_PATH = Environment.KIBRARY_SHARE.resolve("eachMonth");
 
     /**
      * option flag for catalog version of "AllEvents"
@@ -56,17 +55,12 @@ public final class GlobalCMTCatalogUpToLatest {
     private static final String versionOption = "v1";
 
     /**
-     * optin flag for first year of "monthly" catalog
-     */
-    private static final String firstYearOption = "v2";
-
-    /**
      * option flag for last year of "monthly" catalog
      */
-    private static final String lastYearOption = "v3";
+    private static final String lastYearOption = "v2";
 
     /**
-     * Upadate the catalog of global CMT solutions until 2025
+     * Upadate the catalog of global CMT solutions
      * @param args Options.
      * @throws IOExpetion if any
      */
@@ -90,10 +84,7 @@ public final class GlobalCMTCatalogUpToLatest {
                 .desc("The month and year the version of the catalog is up to, "
                         + "with mmm as the first three letters of the name of the month (lower case), "
                         + "and YY as the lower two digits of the year.").build());
-        options.addOption(Option.builder(firstYearOption).longOpt("firstYear").hasArg().argName("YYYY").required()
-                .desc("The firstyear of catalog in monthly, with YYYY as the four digits of the year.").build()
-                );
-        options.addOption(Option.builder(lastYearOption).longOpt("lastYear").hasArg().argName("YYYY").required()
+        options.addOption(Option.builder(lastYearOption).longOpt("lastYear").hasArg().argName("YYYY")
                 .desc("The lastyear of catalog in monthly, with YYYY as the four digits of the year.").build()
                 );
         return options;
@@ -105,64 +96,108 @@ public final class GlobalCMTCatalogUpToLatest {
      * @throws IOException
      */
     public static void run(CommandLine cmdLine) throws IOException {
-        switchCatalog(cmdLine.getOptionValue(versionOption), cmdLine.getOptionValue(firstYearOption), cmdLine.getOptionValue(lastYearOption));
+        switchCatalog(cmdLine.getOptionValue(versionOption), cmdLine.getOptionValue(lastYearOption));
     }
 
-    private static void switchCatalog(String version, String firstYear, String lastYear) throws IOException {
-        //~Download ndk files from "all_events"~//
+    private static void switchCatalog(String version, String lastYear) throws IOException {
+        Path targetCatalogPath;
+        String targetCatalogName;
+
+        //~Download ndk files from "all events"~//
         String catalogNameofAllEvents = "jan76_" + version + ".ndk";
         String catalogURLofAllEvents = "https://www.ldeo.columbia.edu/~gcmt/projects/CMT/catalog/" + catalogNameofAllEvents;
         downloadCatalog(catalogNameofAllEvents, catalogURLofAllEvents);
 
-        //~Download ndk files from "monthly"~//
-        for (int eventYear = Integer.parseInt(firstYear); eventYear <= Integer.parseInt(lastYear); eventYear++) {
-            String eventYearURL =
-                    "https://www.ldeo.columbia.edu/~gcmt/projects/CMT/catalog/NEW_MONTHLY/" + eventYear +  "/";
-            System.out.println("Start" + eventYear);
+        if (lastYear == null) {
+            targetCatalogPath = CATALOG_DIRECTRY_PATH.resolve(catalogNameofAllEvents);
+            targetCatalogName = catalogNameofAllEvents;
+        } else {
+            //~Download ndk files from "monthly"~//
+            int firstYear = 2000 + Integer.parseInt(version.substring(3, 5)) + 1;
+            for (int eventYear = firstYear; eventYear <= Integer.parseInt(lastYear); eventYear++) {
+                String eventYearURL =
+                        "https://www.ldeo.columbia.edu/~gcmt/projects/CMT/catalog/NEW_MONTHLY/" + eventYear +  "/";
+                System.out.println("Start" + eventYear);
 
-            URL url = new URL(eventYearURL);
-            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-            connection.setRequestMethod("GET");
+                URL url = new URL(eventYearURL);
+                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                connection.setRequestMethod("GET");
+                StringBuilder html = new StringBuilder();
+                try (BufferedReader reader = new BufferedReader(
+                        new InputStreamReader(connection.getInputStream()))){
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        html.append(line);
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                connection.disconnect();
 
-            BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-            StringBuilder html = new StringBuilder();
-            String line;
-            while ((line = reader.readLine()) != null) {
-                html.append(line);
+                String htmlString = html.toString();
+                //find and get ndk link
+                Pattern pattern = Pattern.compile("href=\'([^\']+\\.ndk)\'");
+                Matcher matcher = pattern.matcher(htmlString);
+                boolean found = false;
+                while (matcher.find()) {
+                    found = true;
+                    String ndkFile = matcher.group(1);
+                    String fullURL = eventYearURL + ndkFile;
+                    downloadCatalog(ndkFile, fullURL);
+                }
+                if (!found) {
+                    System.err.println("No ndk files found for " + eventYear);
+                }
+                System.out.println("Finished " + eventYear);
             }
-            reader.close();
-            connection.disconnect();
-
-            String htmlString = html.toString();
-            //find and get ndk link
-            Pattern pattern = Pattern.compile("href=\'([^\']+\\.ndk)\'");
-            Matcher matcher = pattern.matcher(htmlString);
-            boolean found = false;
-            while (matcher.find()) {
-                found = true;
-                String ndkFile = matcher.group(1);
-                String fullURL = eventYearURL + ndkFile;
-                downloadCatalog(ndkFile, fullURL);
-            }
-            if (!found) {
-                System.err.println("No ndk files found for " + eventYear);
-            }
-            System.out.println("Finished " + eventYear);
+            //~Variables for the mergerd catalog~//
+            String yy = lastYear.substring(2);
+            targetCatalogName = "jan76_dec" + yy + ".ndk";
+            targetCatalogPath = Environment.KIBRARY_SHARE.resolve(targetCatalogName);
+            //~Merge all ndk files into one~//
+            mergeCatalog(CATALOG_DIRECTRY_PATH.resolve(catalogNameofAllEvents), targetCatalogPath);
         }
-        mergeCatalog(lastYear);
+
+        //~Activate (change target of symbolic link)~//
+        // check whether the symbolic link itself exists, regardless of the existence of its target
+        if (Files.exists(GlobalCMTCatalog.CATALOG_PATH, LinkOption.NOFOLLOW_LINKS)) {
+            // delete the symbolic link, not its target
+            Files.delete(GlobalCMTCatalog.CATALOG_PATH);
+        }
+        Files.createSymbolicLink(GlobalCMTCatalog.CATALOG_PATH, targetCatalogPath);
+        System.out.println("The referenced catalog is set to " + targetCatalogName);
+    }
+
+    //~Method to download GCMT catalog~//
+    private static void downloadCatalog(String catalogName, String catalogURL) throws IOException {
+        Path catalogPath = CATALOG_DIRECTRY_PATH.resolve(catalogName);
+        if (Files.exists(catalogPath)) {
+            System.err.println("Catalog " + catalogName + " already exists; skipping download.");
+        } else {
+            System.err.println("Downloading catalog " + catalogName + " ...");
+            try {
+                FileAid.download(new URL(catalogURL), catalogPath, false);
+            } catch (IOException e) {
+                if (Files.exists(catalogPath)) {
+                    // delete the trash that may be made
+                    Files.delete(catalogPath);
+                }
+                // If download fails, IOException will be thrown here. Symbolic link will not be changed.
+                throw e;
+            }
+        }
+        //~Fix errors in downloaded catalog~//
+        fixCatalog(catalogPath);
     }
 
     //~Method to merge all ndk files into one
-    private static void mergeCatalog(String lastYear) throws IOException{
-        String yy = lastYear.substring(2);
-        String MergedCatalogName = "jan76_dec" + yy + ".ndk";
-        Path MergedCatalogPath = Environment.KIBRARY_SHARE.resolve(MergedCatalogName);
+    private static void mergeCatalog(Path oldCatalog, Path mergedCatalogPath) throws IOException {
         List<String> monthOrder = Arrays.asList(
                 "jan", "feb", "mar", "apr", "may", "jun",
                 "jul", "aug", "sep", "oct", "nov", "dec"
             );
         // get only monthly catalog
-        List<Path> monthlyFiles = Files.list(catalogDirectoryPath)
+        List<Path> monthlyFiles = Files.list(CATALOG_DIRECTRY_PATH)
                 .filter(p -> {
                     String name = p.getFileName().toString();
                     return name.endsWith(".ndk")
@@ -184,10 +219,10 @@ public final class GlobalCMTCatalogUpToLatest {
                     );
                 })
                 .collect(Collectors.toList());
-        try (BufferedWriter writer = Files.newBufferedWriter(MergedCatalogPath)){
-            //~Write ndk files from "all_Events"~//
-            Path oldCatalog = catalogDirectoryPath.resolve("jan76_dec20.ndk");
-            for(String line : Files.readAllLines(oldCatalog)) {
+
+        try (BufferedWriter writer = Files.newBufferedWriter(mergedCatalogPath)) {
+            //~Write ndk files from "all events"~//
+            for (String line : Files.readAllLines(oldCatalog)) {
                 writer.write(line);
                 writer.newLine();
             }
@@ -200,36 +235,6 @@ public final class GlobalCMTCatalogUpToLatest {
             }
         }
 
-       //~Activate (change target of symbolic link)~//
-       // check whether the symbolic link itself exists, regardless of the existence of its target
-        if (Files.exists(GlobalCMTCatalog.CATALOG_PATH, LinkOption.NOFOLLOW_LINKS)) {
-            // delete the symbolic link, not its target
-            Files.delete(GlobalCMTCatalog.CATALOG_PATH);
-        }
-        Files.createSymbolicLink(GlobalCMTCatalog.CATALOG_PATH, MergedCatalogPath);
-        System.err.println("The referenced catalog is set to " + MergedCatalogName);
-    }
-
-    //~Method to download GCMT catalog~//
-    private static void downloadCatalog(String catalogName, String catalogURL) throws IOException{
-        Path catalogPath = catalogDirectoryPath.resolve(catalogName);
-        if (Files.exists(catalogPath)) {
-            System.err.println("Catalog " + catalogName + " already exists; skipping download.");
-        } else {
-            System.err.println("Downloading catalog " + catalogName + " ...");
-            try {
-                FileAid.download(new URL(catalogURL), catalogPath, false);
-            } catch (IOException e) {
-                if (Files.exists(catalogPath)) {
-                    // delete the trash that may be made
-                    Files.delete(catalogPath);
-                }
-                // If download fails, IOException will be thrown here. Symbolic link will not be changed.
-                throw e;
-            }
-        }
-      //~Fix errors in downloaded catalog~//
-        fixCatalog(catalogPath);
     }
 
     private static void fixCatalog(Path catalogPath) throws IOException {

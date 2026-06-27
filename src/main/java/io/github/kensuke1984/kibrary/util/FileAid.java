@@ -152,7 +152,6 @@ public final class FileAid {
         JFrame frame = null;
         try {
             if (0 < fileSize && !GraphicsEnvironment.isHeadless()) {
-                //~Comment out codes below for conductiong GCMTCatalogUnti2025 without InvocationTargetException
                 bar = new JProgressBar(0, (int) fileSize);
                 frame = new JFrame("Downloading a file");
                 frame.setResizable(false);
@@ -162,7 +161,7 @@ public final class FileAid {
                 frame.setLocationRelativeTo(null);
                 frame.setVisible(true);
             }
-        }catch (AWTError e) {
+        } catch (AWTError e) {
             System.err.println("AWTError");
         }
 

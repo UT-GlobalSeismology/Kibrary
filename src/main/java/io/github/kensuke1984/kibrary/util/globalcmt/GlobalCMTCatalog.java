@@ -22,7 +22,7 @@ import io.github.kensuke1984.kibrary.util.GadgetAid;
 /**
  * Catalog of global CMT solutions.
  * <p>
- * The catalog can be updated using {@link GlobalCMTCatalogUntil2025}.
+ * The catalog can be updated using {@link GlobalCMTCatalogUpdate}.
  * Virtual events can be added to the custom catalog file using {@link }. TODO
  * <p>
  * When no catalog can be found, a default catalog that contains a list of events
@@ -36,7 +36,7 @@ public final class GlobalCMTCatalog {
 
     /**
      * The (symbolic link of) catalog to be referenced.
-     * This is set as package private so that {@link GlobalCMTCatalogUntil2025} can access this.
+     * This is set as package private so that {@link GlobalCMTCatalogUpdate} can access this.
      */
     static final Path CATALOG_PATH = Environment.KIBRARY_SHARE.resolve("globalcmt.catalog");
     static final Path CUSTOM_CATALOG_PATH = Environment.KIBRARY_SHARE.resolve("custom.catalog");

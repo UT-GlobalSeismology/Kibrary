@@ -296,7 +296,6 @@ public final class NDK implements GlobalCMTAccess {
         ndk.momentRateFunctionType = SourceTimeFunctionType.ofCode(cmtParts[2].substring(0, 5));
         ndk.halfDuration = Double.parseDouble(cmtParts[3]);
 
-
         // line3
         parts = lines[2].split("\\s+");
         ndk.timeDifference = Double.parseDouble(parts[1]);
