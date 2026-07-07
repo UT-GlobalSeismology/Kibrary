@@ -16,7 +16,6 @@ import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
-
 import io.github.kensuke1984.kibrary.external.ExternalProcess;
 import io.github.kensuke1984.kibrary.external.SAC;
 import io.github.kensuke1984.kibrary.util.EventFolder;
@@ -53,7 +52,7 @@ class EventDataPreparer {
      * [s] delta for SAC files. SAC files with different delta will be interpolated
      * or downsampled.
      */
-    private static final double  DELTA = 0.05;
+    private static final double DELTA = 0.05;
 
     /**
      * The event folder to download in
@@ -72,7 +71,7 @@ class EventDataPreparer {
      * @param eventFolder (EventFolder) The event folder.
      * Input files must be in this folder if there are any. Output files will also be placed in this folder.
      */
-    EventDataPreparer (EventFolder eventFolder) {
+    EventDataPreparer(EventFolder eventFolder) {
         eventDir = eventFolder;
         mseedSetPath = eventDir.toPath().resolve("mseed");
         seedSetPath = eventDir.toPath().resolve("seed");
@@ -198,7 +197,7 @@ class EventDataPreparer {
                     System.err.println(" ~ Opening " + mseedPath + " ...");
                     // expand mseed file
                     if (!mseed2sac(mseedPath.getFileName().toString())) {
-                        System.err.println("!!! mseed2sac for "+ mseedPath + " failed.");
+                        System.err.println("!!! mseed2sac for " + mseedPath + " failed.");
                         return false;
                     }
                 }
@@ -250,7 +249,7 @@ class EventDataPreparer {
                     System.err.println(" ~ Opening " + seedPath + " ...");
                     // expand seed file
                     if (!rdseed(seedPath.getFileName().toString())) {
-                        System.err.println("!!! rdseed for "+ seedPath + " failed.");
+                        System.err.println("!!! rdseed for " + seedPath + " failed.");
                         return false;
                     }
                 }
@@ -435,7 +434,7 @@ class EventDataPreparer {
                 RespDataFile respFile = new RespDataFile(network, station, location, channel);
                 if (!xml2resp(stationInfo, respFile)) {
                     // if RESP file fails to be created, skip the SAC file
-                    System.err.println("!!! xml2resp for "+ sacPath + " failed.");
+                    System.err.println("!!! xml2resp for " + sacPath + " failed.");
                     continue;
                 }
 
@@ -608,10 +607,9 @@ class EventDataPreparer {
             String loc = con.getHeaderField("Location");
 
             System.err.printf(
-                "Step %d: %s -> %d %s | Location=%s | CT=%s | CL=%d%n",
-                i, url, code, con.getResponseMessage(),
-                loc, con.getContentType(), con.getContentLengthLong()
-            );
+                    "Step %d: %s -> %d %s | Location=%s | CT=%s | CL=%d%n",
+                    i, url, code, con.getResponseMessage(),
+                    loc, con.getContentType(), con.getContentLengthLong());
 
             if (code / 100 == 3 && loc != null) {
                 url = new URL(url, loc);

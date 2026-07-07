@@ -35,7 +35,8 @@ enum DataCenterEnum {
 
         switch (dataCenter) {
         case "IRIS":
-            dataCenterList.add(IRIS); break;
+            dataCenterList.add(IRIS);
+            break;
         case "ORFEUS":
         case "ORFEUS_EACH":
             dataCenterList.add(ODC);
@@ -50,9 +51,11 @@ enum DataCenterEnum {
             dataCenterList.add(NOA);
             dataCenterList.add(UIB);
 //            dataCenterList.add(ICGC);  TODO: SSLHandshakeException caused by SunCertPathBuilderException "unable to find valid certification path" occurs
-            dataCenterList.add(BGS); break;
+            dataCenterList.add(BGS);
+            break;
         case "ORFEUS_FED":
-            dataCenterList.add(ORFEUS_FED); break;
+            dataCenterList.add(ORFEUS_FED);
+            break;
         default:
             throw new IllegalArgumentException("Invalid datacenter name.");
         }

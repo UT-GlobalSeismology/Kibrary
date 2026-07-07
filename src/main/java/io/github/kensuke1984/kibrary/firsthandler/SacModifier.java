@@ -5,10 +5,8 @@ import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Map;
-
 import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.RealVector;
-
 import io.github.kensuke1984.kibrary.external.SAC;
 import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTAccess;
@@ -83,13 +81,11 @@ class SacModifier {
 
         double b = Double.parseDouble(headerMap.get(SACHeaderEnum.B));
         long bInNanos = (long) (b * 1000 * 1000 * 1000);
-        initialSacStartTime =
-                LocalDateTime.of(year, 1, 1, hour, min, sec, msec * 1000 * 1000).plusDays(jday - 1).plusNanos(bInNanos);
+        initialSacStartTime = LocalDateTime.of(year, 1, 1, hour, min, sec, msec * 1000 * 1000).plusDays(jday - 1).plusNanos(bInNanos);
 
         double e = Double.parseDouble(headerMap.get(SACHeaderEnum.E));
         long eInNanos = (long) (e * 1000 * 1000 * 1000);
-        initialSacEndTime =
-                LocalDateTime.of(year, 1, 1, hour, min, sec, msec * 1000 * 1000).plusDays(jday - 1).plusNanos(eInNanos);
+        initialSacEndTime = LocalDateTime.of(year, 1, 1, hour, min, sec, msec * 1000 * 1000).plusDays(jday - 1).plusNanos(eInNanos);
     }
 
     /**

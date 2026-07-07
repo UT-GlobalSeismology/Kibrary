@@ -12,11 +12,9 @@ import java.nio.file.StandardOpenOption;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.math3.util.Precision;
-
 import io.github.kensuke1984.kibrary.entrance.RespDataFile;
 import io.github.kensuke1984.kibrary.external.ExternalProcess;
 import io.github.kensuke1984.kibrary.external.SAC;
@@ -343,7 +341,7 @@ class EventProcessor implements Runnable {
      * @return (boolean) true if location is fine
      */
     private boolean checkLocation(String location) {
-        return location.isEmpty() || ( location.compareTo("00") >= 0 && location.compareTo("99") <= 0 );
+        return location.isEmpty() || (location.compareTo("00") >= 0 && location.compareTo("99") <= 0);
         //return location.isEmpty() || location.equals("00") || location.equals("01") || location.equals("02");
     }
 
@@ -514,7 +512,7 @@ class EventProcessor implements Runnable {
                     continue;
                 }
                 // spectra file should be created by evalresp; if not, throw away the MOD file
-                if(!Files.exists(spectraPath)) {
+                if (!Files.exists(spectraPath)) {
                     GadgetAid.dualPrintln(eliminatedWriter, "!! spectra file not created : " + event.getGlobalCMTID() + " - " + afterName);
                     // throw MOD.* files which cannot produce SPECTRA to trash
                     FileAid.moveToDirectory(modPath, invalidRespPath, true);
@@ -539,7 +537,7 @@ class EventProcessor implements Runnable {
                     continue;
                 }
 
-                if(sd.isNaN()) {
+                if (sd.isNaN()) {
                     GadgetAid.dualPrintln(eliminatedWriter, "!! spectra file is NaN or empty : " + event.getGlobalCMTID() + " - " + afterName);
                     FileAid.moveToDirectory(modPath, invalidRespPath, true);
                     // REPLACE_EXISTING is needed because duplication of quality control can occur (same SPECTRA for different SACs)
@@ -762,7 +760,7 @@ class EventProcessor implements Runnable {
      * @param dirFile (File) Directory to remove
      * @throws IOException
      */
-    private void removeDirectory (File dirFile) throws IOException {
+    private void removeDirectory(File dirFile) throws IOException {
 
         try {
             FileUtils.deleteDirectory(dirFile);

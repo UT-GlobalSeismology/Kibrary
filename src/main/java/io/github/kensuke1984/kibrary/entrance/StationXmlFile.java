@@ -10,11 +10,9 @@ import java.nio.channels.ReadableByteChannel;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
-
 import org.apache.commons.math3.util.Precision;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
@@ -110,7 +108,8 @@ class StationXmlFile {
      */
     boolean downloadStationXml() {
         try (ReadableByteChannel readChannel = Channels.newChannel(url.openStream());
-                FileOutputStream fos = new FileOutputStream(xmlPath.toFile()); FileChannel outChannel = fos.getChannel()) {
+                FileOutputStream fos = new FileOutputStream(xmlPath.toFile());
+                FileChannel outChannel = fos.getChannel()) {
             outChannel.transferFrom(readChannel, 0, Long.MAX_VALUE);
         } catch (FileNotFoundException e) {
             // If stationXML file not found, return false.

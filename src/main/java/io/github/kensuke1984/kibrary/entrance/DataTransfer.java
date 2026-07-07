@@ -6,7 +6,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionGroup;
@@ -17,7 +16,6 @@ import org.apache.commons.net.ftp.FTPClient;
 import org.apache.commons.net.ftp.FTPFile;
 import org.apache.commons.net.ftp.FTPFileFilter;
 import org.apache.commons.net.ftp.FTPReply;
-
 import io.github.kensuke1984.kibrary.Environment;
 import io.github.kensuke1984.kibrary.Summon;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
@@ -113,8 +111,8 @@ public final class DataTransfer {
             // ftpclient.changeWorkingDirectory(userPath);
 
             // read existing files
-            FTPFileFilter fff = file -> date.equals("-a") || date.equals("-c") ? file.getName().endsWith("seed") :
-                    file.getName().endsWith("seed") && file.getName().contains(date);
+            FTPFileFilter fff = file -> date.equals("-a") || date.equals("-c") ? file.getName().endsWith("seed")
+                    : file.getName().endsWith("seed") && file.getName().contains(date);
             FTPFile[] ffiles = ftpclient.listFiles(IRIS_USER_PATH, fff);
             System.err.println(ffiles.length + " seed files are found in the server.");
             for (FTPFile f : ffiles)

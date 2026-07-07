@@ -99,7 +99,8 @@ class StationInformationFile {
      */
     void downloadStationInformation() {
         try (ReadableByteChannel readChannel = Channels.newChannel(url.openStream());
-                FileOutputStream fos = new FileOutputStream(stationPath.toFile()); FileChannel outChannel = fos.getChannel()) {
+                FileOutputStream fos = new FileOutputStream(stationPath.toFile());
+                FileChannel outChannel = fos.getChannel()) {
             long size = outChannel.transferFrom(readChannel, 0, Long.MAX_VALUE);
             System.err.println("Downloaded : " + stationFile + " - " + size + " bytes");
 
@@ -119,35 +120,38 @@ class StationInformationFile {
         String line2 = "";
         try (BufferedReader br = new BufferedReader(new FileReader(file))) {
             String text;
-            while((text = br.readLine())!=null) {
-                if(text.startsWith("#")) { line1 = text.replace("#",""); continue; }
+            while ((text = br.readLine()) != null) {
+                if (text.startsWith("#")) {
+                    line1 = text.replace("#", "");
+                    continue;
+                }
                 line2 = text;
             }
         }
 
-        String [] head = line1.split("[\\s]*\\|[\\s]*");
-        String [] data = line2.split("[\\s]*\\|[\\s]*");
+        String[] head = line1.split("[\\s]*\\|[\\s]*");
+        String[] data = line2.split("[\\s]*\\|[\\s]*");
         if (head.length != data.length) {
             throw new IOException("invalid StationInformationFile");
         }
 
-        for(int i =0; i< head.length; i++) {
-            if(head[i].matches("Network")) {network = data[i];}
-            else if(head[i].matches("Station")) {station = data[i];}
-            else if(head[i].matches("Location")) {location = data[i];}
-            else if(head[i].matches("Channel")) {channel = data[i];}
-            else if(head[i].matches("Latitude")) {latitude = data[i];}
-            else if(head[i].matches("Longitude")) {longitude = data[i];}
-            else if(head[i].matches("Elevation")) {elevation = data[i];}
-            else if(head[i].matches("Depth")) {depth = data[i];}
-            else if(head[i].matches("Azimuth")) {azimuth = data[i];}
-            else if(head[i].matches("Dip")) {dip = data[i];}
-            else if(head[i].matches("SensorDescription")) {sensorDescription = data[i];}
-            else if(head[i].matches("Scale")) {scale = data[i];}
-            else if(head[i].matches("ScaleFreq")) {scalefreq = data[i];}
-            else if(head[i].matches("ScaleUnits")) {scaleunits = data[i];}
-            else if(head[i].matches("SampleRate")) {samplerate = data[i];}
-            else if(head[i].matches("StartTime")) {startTime = LocalDateTime.parse(data[i]);}
+        for (int i = 0; i < head.length; i++) {
+            if (head[i].matches("Network")) network = data[i];
+            else if (head[i].matches("Station")) station = data[i];
+            else if (head[i].matches("Location")) location = data[i];
+            else if (head[i].matches("Channel")) channel = data[i];
+            else if (head[i].matches("Latitude")) latitude = data[i];
+            else if (head[i].matches("Longitude")) longitude = data[i];
+            else if (head[i].matches("Elevation")) elevation = data[i];
+            else if (head[i].matches("Depth")) depth = data[i];
+            else if (head[i].matches("Azimuth")) azimuth = data[i];
+            else if (head[i].matches("Dip")) dip = data[i];
+            else if (head[i].matches("SensorDescription")) sensorDescription = data[i];
+            else if (head[i].matches("Scale")) scale = data[i];
+            else if (head[i].matches("ScaleFreq")) scalefreq = data[i];
+            else if (head[i].matches("ScaleUnits")) scaleunits = data[i];
+            else if (head[i].matches("SampleRate")) samplerate = data[i];
+            else if (head[i].matches("StartTime")) startTime = LocalDateTime.parse(data[i]);
 //          else if(head[i].matches("EndTime")) {if(data[i]!=null){endTime = LocalDateTime.parse(data[i]);}} // TODO Some station information not including EndTime
         }
     }

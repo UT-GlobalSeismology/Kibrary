@@ -96,7 +96,8 @@ public class RespDataFile {
         Path outPath = outDir.resolve(respName);
 
         try (ReadableByteChannel readChannel = Channels.newChannel(url.openStream());
-                FileOutputStream fos = new FileOutputStream(outPath.toFile()); FileChannel outChannel = fos.getChannel()) {
+                FileOutputStream fos = new FileOutputStream(outPath.toFile());
+                FileChannel outChannel = fos.getChannel()) {
             long size = outChannel.transferFrom(readChannel, 0, Long.MAX_VALUE);
             System.err.println("Downloaded : " + respName + " - " + size + " bytes");
 

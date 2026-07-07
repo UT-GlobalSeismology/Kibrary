@@ -94,7 +94,7 @@ class SacFileName implements Comparable<SacFileName> {
     String getSetFileName() {
         return network + "." + station + "." + location + "." + channel + "." + quality + "." +
                 startTime.getYear() + "." + startTime.getDayOfYear() + "." + startTime.getHour() + "." +
-                startTime.getMinute() + "." + startTime.getSecond() + "." + startTime.getNano()/1000/1000 + ".SET";
+                startTime.getMinute() + "." + startTime.getSecond() + "." + startTime.getNano() / 1000 / 1000 + ".SET";
 //                year + "." + jday + "." + hour + "." + min + "." + sec + "." + msec + ".SET";
     }
 
@@ -121,7 +121,7 @@ class SacFileName implements Comparable<SacFileName> {
      */
     String getDeconvolvedFileName() {
         String newComponent = "";
-        switch(component) {
+        switch (component) {
         case "1":
         case "E":
             newComponent = "X";

@@ -9,7 +9,6 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Stream;
-
 import io.github.kensuke1984.kibrary.util.FileAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 
@@ -66,9 +65,8 @@ class SegmentedSacMerger {
     private void listUpSacFiles() throws IOException {
         // CAUTION: Files.list() must be in try-with-resources.
         try (Stream<Path> sacFileStream = Files.list(eventPath)) {
-            sacFileNameList =
-                    sacFileStream.map(path -> path.getFileName().toString()).filter(path -> path.endsWith(".SET"))
-                            .map(SacFileName::new).toArray(SacFileName[]::new);
+            sacFileNameList = sacFileStream.map(path -> path.getFileName().toString()).filter(path -> path.endsWith(".SET"))
+                    .map(SacFileName::new).toArray(SacFileName[]::new);
         }
 
         // SacGroupをつくる

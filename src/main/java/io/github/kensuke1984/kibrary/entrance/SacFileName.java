@@ -120,6 +120,4 @@ class SacFileName {
         return qualityControl;
     }
 
-
-
 }

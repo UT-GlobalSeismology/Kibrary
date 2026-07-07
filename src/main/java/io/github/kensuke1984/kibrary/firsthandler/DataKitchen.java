@@ -12,7 +12,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
-
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.math.CircularRange;
@@ -148,16 +147,16 @@ public class DataKitchen extends Operation {
 
         lobbyPath = property.parsePath("lobbyPath", ".", true, workPath);
         switch (property.parseString("catalog", "cmt")) { // TODO
-            case "cmt":
-            case "CMT":
-                catalog = 0;
-                break;
-            case "pde":
-            case "PDE":
-                catalog = 0;
-                break;
-            default:
-                throw new IllegalArgumentException("Invalid catalog name.");
+        case "cmt":
+        case "CMT":
+            catalog = 0;
+            break;
+        case "pde":
+        case "PDE":
+            catalog = 0;
+            break;
+        default:
+            throw new IllegalArgumentException("Invalid catalog name.");
         }
 
         double lowerDistance = property.parseDouble("lowerDistance", "0");
@@ -195,7 +194,7 @@ public class DataKitchen extends Operation {
 
         // create processors for each event
         Set<EventProcessor> eps = eventDirs.stream().map(eventDir -> {
-           try {
+            try {
                 return new EventProcessor(eventDir, outPath);
             } catch (Exception e) {
                 // If there is something wrong, skip the event (suppress exceptions).

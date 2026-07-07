@@ -5,7 +5,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.Set;
-
 import io.github.kensuke1984.kibrary.util.FileAid;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
@@ -96,7 +95,7 @@ class SacTriplet {
     }
 
     private void register(Path sacPath, String component) {
-        switch(component) {
+        switch (component) {
         case "R":
             rPath = sacPath;
             rRegistered = true;
@@ -233,7 +232,8 @@ class SacTriplet {
     boolean atSamePosition(SacTriplet other) {
         if (other.getNetwork().equals(network) && other.getStation().equals(station)) return true;
         else if (Math.abs(getLatitude() - other.getLatitude()) < coordinateGrid &&
-                Math.abs(getLongitude() - other.getLongitude()) < coordinateGrid) return true;
+                Math.abs(getLongitude() - other.getLongitude()) < coordinateGrid)
+            return true;
         else return false;
     }
 
@@ -284,10 +284,14 @@ class SacTriplet {
      */
     int getInstrumentRank() {
         switch (instrument) {
-        case "BH": return 4;
-        case "HH": return 3;
-        case "BL": return 2;
-        case "HL": return 1;
+        case "BH":
+            return 4;
+        case "HH":
+            return 3;
+        case "BL":
+            return 2;
+        case "HL":
+            return 1;
         }
         return 0;
     }
@@ -310,10 +314,14 @@ class SacTriplet {
      */
     int getQualityRank() {
         switch (instrument) {
-        case "Q": return 4;
-        case "M": return 3;
-        case "D": return 2;
-        case "R": return 1;
+        case "Q":
+            return 4;
+        case "M":
+            return 3;
+        case "D":
+            return 2;
+        case "R":
+            return 1;
         }
         return 0;
     }

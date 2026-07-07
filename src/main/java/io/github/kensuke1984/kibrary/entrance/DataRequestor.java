@@ -10,7 +10,6 @@ import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Set;
-
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.math.CircularRange;
@@ -188,8 +187,7 @@ public class DataRequestor extends Operation {
             System.err.println("Sending requests in 5 sec.");
             System.err.println("Sent mails will be in " + sentPath);
             Thread.sleep(1000 * 5);
-        } catch (Exception e2) {
-        }
+        } catch (Exception e2) {}
         requestedEvents.forEach(event -> {
             BreakFastMail m = createBreakFastMail(event);
             try {
