@@ -12,7 +12,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
-
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.InformationFileReader;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
@@ -104,9 +103,9 @@ public class VoxelInformationFile {
         while ((line = reader.next()) != null) {
             String[] parts = line.split("\\s+");
             HorizontalPosition position = new HorizontalPosition(Double.parseDouble(parts[0]), Double.parseDouble(parts[1]));
-            HorizontalPixel pixel = (parts.length > 5) ?
-                    new HorizontalPixel(position, Double.parseDouble(parts[2]), Double.parseDouble(parts[3]), Integer.parseInt(parts[4]), Integer.parseInt(parts[5])) :
-                    new HorizontalPixel(position, Double.parseDouble(parts[2]), Double.parseDouble(parts[3]), 0, 0);  //TODO This is for older format.
+            HorizontalPixel pixel = (parts.length > 5)
+                    ? new HorizontalPixel(position, Double.parseDouble(parts[2]), Double.parseDouble(parts[3]), Integer.parseInt(parts[4]), Integer.parseInt(parts[5]))
+                    : new HorizontalPixel(position, Double.parseDouble(parts[2]), Double.parseDouble(parts[3]), 0, 0);  //TODO This is for older format.
             horizontalPixels.add(pixel);
         }
 

@@ -5,7 +5,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
-
 import io.github.kensuke1984.kibrary.elastic.VariableType;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
@@ -25,8 +24,7 @@ public class FusionDesign {
     private List<List<UnknownParameter>> originalParameters = new ArrayList<>();
     private List<UnknownParameter> fusedParameters = new ArrayList<>();
 
-    public FusionDesign() {
-    }
+    public FusionDesign() {}
 
     public void addFusion(UnknownParameter... params) {
         addFusion(Arrays.asList(params));

@@ -5,10 +5,8 @@ import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
-
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
-
 import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotFile;
 import io.github.kensuke1984.kibrary.util.MathAid;
 
@@ -105,7 +103,7 @@ public class ResultEvaluation {
             pw.println("infty " + dat[0] + " " + (dat[0] * 100));
             for (int i = 1; i < dat.length; i++) {
                 // lambda normalizedVariance normalizedVariancePercent
-                pw.println(lambdas[i-1] + " " + dat[i] + " " + (dat[i] * 100));
+                pw.println(lambdas[i - 1] + " " + dat[i] + " " + (dat[i] * 100));
             }
         }
     }

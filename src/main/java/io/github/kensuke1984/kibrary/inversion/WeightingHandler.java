@@ -10,14 +10,12 @@ import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.RealVector;
-
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.Summon;
 import io.github.kensuke1984.kibrary.inversion.setup.DVectorBuilder;
@@ -160,7 +158,7 @@ public class WeightingHandler {
         System.err.print("factorZ=" + factorForZComponent + ", ");
         System.err.print("factorR=" + factorForRComponent + ", ");
         System.err.print("factorT=" + factorForTComponent + ", ");
-        System.err.println(MathAid.switchSingularPlural(weightMaps.size(), "weight file.",  "weight files."));
+        System.err.println(MathAid.switchSingularPlural(weightMaps.size(), "weight file.", "weight files."));
         if (weightedComponent != null) System.err.println("  (weighted for " + weightedComponent + " component)");
     }
 
@@ -219,9 +217,15 @@ public class WeightingHandler {
         int numZ = 0, numR = 0, numT = 0;
         for (int i = 0; i < dVector.getNTimeWindow(); i++) {
             switch (dVector.getObsID(i).getSacComponent()) {
-            case Z: numZ++; break;
-            case R: numR++; break;
-            case T: numT++; break;
+            case Z:
+                numZ++;
+                break;
+            case R:
+                numR++;
+                break;
+            case T:
+                numT++;
+                break;
             }
         }
 

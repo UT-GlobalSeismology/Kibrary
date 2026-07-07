@@ -4,11 +4,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
-
 import org.apache.commons.math3.linear.MatrixUtils;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
-
 import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.voxel.KnownParameterFile;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
@@ -131,8 +129,7 @@ public class LeastSquaresMethod extends InversionMethod {
     }
 
     @Override
-    public void outputBasisVectors(Path outPath) throws IOException {
-    }
+    public void outputBasisVectors(Path outPath) throws IOException {}
 
     @Override
     public RealMatrix getBasisVectors() {
