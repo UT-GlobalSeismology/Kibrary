@@ -1,7 +1,6 @@
 package io.github.kensuke1984.kibrary;
 
 import java.util.Arrays;
-
 import io.github.kensuke1984.kibrary.correction.FujiStaticCorrection;
 import io.github.kensuke1984.kibrary.correction.ObayashiStaticCorrection;
 import io.github.kensuke1984.kibrary.correction.StaticCorrectionForger;
@@ -124,7 +123,7 @@ enum Manhattan {
     DataFeatureHistogram(48, DataFeatureHistogram.class),
     // Voxel 50
     VoxelAutoDesigner(50, VoxelAutoDesigner.class),
-    VoxelManualDesigner(51,VoxelManualDesigner.class),
+    VoxelManualDesigner(51, VoxelManualDesigner.class),
     CoarseGridDesigner(52, CoarseGridDesigner.class),
     AdaptiveGridDesigner(53, AdaptiveGridDesigner.class),
     GeometryWeighter(58, GeometryWeighter.class),

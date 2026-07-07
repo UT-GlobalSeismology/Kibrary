@@ -9,9 +9,7 @@ import java.nio.file.StandardOpenOption;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.stream.Stream;
-
 import org.apache.commons.io.FileUtils;
-
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.source.MomentTensor;
@@ -354,10 +352,10 @@ public class ThreeDPartialDSMSetup extends Operation {
                 fp.writePSVFP(eventPoolPath.resolve(header + "_PSV.inf"));
 
                 if (catalogMode) {
-                     Path catInfPath = fpCatPath.resolve(event.toString());
-                     Files.createDirectories(catInfPath.resolve(header));
-                     fp.writeSHFPCAT(catInfPath.resolve(header + "_SH.inf"), thetamin, thetamax, dtheta);
-                     fp.writePSVFPCAT(catInfPath.resolve(header + "_PSV.inf"), thetamin, thetamax, dtheta);
+                    Path catInfPath = fpCatPath.resolve(event.toString());
+                    Files.createDirectories(catInfPath.resolve(header));
+                    fp.writeSHFPCAT(catInfPath.resolve(header + "_SH.inf"), thetamin, thetamax, dtheta);
+                    fp.writePSVFPCAT(catInfPath.resolve(header + "_PSV.inf"), thetamin, thetamax, dtheta);
                 }
             }
             nCreated++;

@@ -6,7 +6,6 @@ import java.nio.file.Files;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.util.Arrays;
-
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
 
@@ -49,7 +48,7 @@ public class BPInputFile extends DSMInputHeader {
      * @param perturbationPositions will be copied
      */
     public BPInputFile(HorizontalPosition observerPositon, String outputDir, PolynomialStructure structure, double tlen, int np,
-                  double[] perturbationRadii, HorizontalPosition[] perturbationPositions) {
+            double[] perturbationRadii, HorizontalPosition[] perturbationPositions) {
         super(tlen, np);
         this.sourcePosition = observerPositon;
         this.output = outputDir;

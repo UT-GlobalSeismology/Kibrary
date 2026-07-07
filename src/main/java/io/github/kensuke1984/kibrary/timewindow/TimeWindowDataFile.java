@@ -19,13 +19,11 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.lang3.StringUtils;
-
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.Summon;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
@@ -104,7 +102,7 @@ public final class TimeWindowDataFile {
         GlobalCMTID[] events = timeWindowSet.stream().map(TimeWindowData::getGlobalCMTID).distinct().sorted()
                 .toArray(GlobalCMTID[]::new);
         Phase[] phases = timeWindowSet.stream().map(TimeWindowData::getPhases).flatMap(p -> Stream.of(p))
-            .distinct().toArray(Phase[]::new);
+                .distinct().toArray(Phase[]::new);
 
         Map<Observer, Integer> observerMap = new HashMap<>();
         Map<GlobalCMTID, Integer> eventMap = new HashMap<>();
@@ -139,9 +137,9 @@ public final class TimeWindowDataFile {
                 for (int i = 0; i < 10; i++) {
                     if (i < infophases.length) {
                         dos.writeShort(phaseMap.get(infophases[i]));
-                    }
-                    else
+                    } else {
                         dos.writeShort(-1);
+                    }
                 }
                 dos.writeByte(info.getComponent().getNumber());
                 float startTime = (float) info.startTime;

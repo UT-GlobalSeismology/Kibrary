@@ -2,7 +2,6 @@ package io.github.kensuke1984.kibrary.dsmsetup;
 
 import java.util.ArrayList;
 import java.util.List;
-
 import org.apache.commons.math3.util.ArithmeticUtils;
 
 /**
@@ -68,7 +67,7 @@ class DSMInputHeader {
     }
 
     DSMInputHeader(double tlen, int np, int imin, int imax, double relativeError, double ratc, double ratl,
-              double artificialDamping) {
+            double artificialDamping) {
         if (!ArithmeticUtils.isPowerOfTwo(np) || !validTlen(tlen))
             throw new IllegalArgumentException("Input TLEN:" + tlen + " or NP:" + np + " is invalid");
         this.tlen = tlen;

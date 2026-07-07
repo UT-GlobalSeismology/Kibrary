@@ -20,13 +20,11 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
-
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.lang3.StringUtils;
-
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.Summon;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
@@ -135,9 +133,9 @@ public final class StaticCorrectionDataFile {
                 for (int i = 0; i < 10; i++) {
                     if (i < Infophases.length) {
                         dos.writeShort(phaseMap.get(Infophases[i]));
-                    }
-                    else
+                    } else {
                         dos.writeShort(-1);
+                    }
                 }
                 dos.writeByte(correction.getComponent().getNumber());
                 dos.writeFloat((float) correction.getSynStartTime());

@@ -7,7 +7,6 @@ import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.stream.Collectors;
-
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTAccess;
@@ -228,7 +227,7 @@ public class FPInputFile extends DSMInputHeader {
 //				if (commentPerturbationR[i])
 //					pw.println("c " + RADII[i]);
 //				else
-                    pw.println(radii[i]);
+                pw.println(radii[i]);
             }
             pw.println("end");
         }

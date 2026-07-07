@@ -9,9 +9,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Properties;
-
 import org.apache.commons.lang3.StringUtils;
-
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 
 /**
@@ -99,7 +97,7 @@ public class Property extends Properties {
      */
     public void write(Path path) throws IOException {
         String manhattan = (containsKey("manhattan") ? getProperty("manhattan") : "(unknown manhattan)");
-        try (BufferedWriter bw = Files.newBufferedWriter(path)){
+        try (BufferedWriter bw = Files.newBufferedWriter(path)) {
             store(bw, "Properties for " + manhattan);
         }
     }
@@ -229,7 +227,7 @@ public class Property extends Properties {
         else path = workPath.resolve(pathString).normalize();
 
         if (requireExisting && (Files.exists(path) == false))
-            throw new NoSuchFileException("The " + key +  " " + path + " does not exist");
+            throw new NoSuchFileException("The " + key + " " + path + " does not exist");
 
         return path;
     }

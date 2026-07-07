@@ -15,9 +15,7 @@ import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
 import org.apache.commons.math3.linear.RealVector;
-
 import edu.sc.seis.TauP.Arrival;
 import edu.sc.seis.TauP.TauModelException;
 import edu.sc.seis.TauP.TauP_Time;
@@ -279,8 +277,7 @@ public class DataSelection extends Operation {
         Set<GlobalCMTID> eventSet = sourceTimeWindowSet.stream().map(TimeWindowData::getGlobalCMTID).collect(Collectors.toSet());
 
         // read static corrections
-        staticCorrectionSet = (staticCorrectionPath == null ? Collections.emptySet() :
-                StaticCorrectionDataFile.read(staticCorrectionPath));
+        staticCorrectionSet = (staticCorrectionPath == null ? Collections.emptySet() : StaticCorrectionDataFile.read(staticCorrectionPath));
 
         ExecutorService es = ThreadAid.createFixedThreadPool();
         System.err.println("Working for " + eventSet.size() + " events.");

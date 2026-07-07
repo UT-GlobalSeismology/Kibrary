@@ -10,7 +10,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
-
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
@@ -48,7 +47,7 @@ public class SyntheticDSMInputFile extends DSMInputHeader {
      * @param np        NP
      */
     public SyntheticDSMInputFile(PolynomialStructure structure, GlobalCMTAccess event, Set<Observer> observers, String outputDir,
-                            double tlen, int np) {
+            double tlen, int np) {
         super(tlen, np);
         this.structure = structure;
         this.event = event;

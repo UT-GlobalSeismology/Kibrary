@@ -14,7 +14,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.util.InformationFileReader;
 import io.github.kensuke1984.kibrary.util.MathAid;
@@ -100,11 +99,11 @@ public class TravelTimeInformationFile {
 
         // read 1st and 2nd lines
         String useListString = reader.next();
-        List<Phase> useList = (useListString.equals("-")) ? Collections.emptyList() :
-                Arrays.stream(useListString.split("\\s+")).map(Phase::create).collect(Collectors.toList());
+        List<Phase> useList = (useListString.equals("-")) ? Collections.emptyList()
+                : Arrays.stream(useListString.split("\\s+")).map(Phase::create).collect(Collectors.toList());
         String avoidListString = reader.next();
-        List<Phase> avoidList = (avoidListString.equals("-")) ? Collections.emptyList() :
-                Arrays.stream(avoidListString.split("\\s+")).map(Phase::create).collect(Collectors.toList());
+        List<Phase> avoidList = (avoidListString.equals("-")) ? Collections.emptyList()
+                : Arrays.stream(avoidListString.split("\\s+")).map(Phase::create).collect(Collectors.toList());
 
         // read rest of file
         String line;

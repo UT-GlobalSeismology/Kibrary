@@ -2,7 +2,6 @@ package io.github.kensuke1984.kibrary.filter;
 
 import org.apache.commons.math3.complex.Complex;
 import org.apache.commons.math3.util.FastMath;
-
 import io.github.kensuke1984.kibrary.util.MathAid;
 
 /**
@@ -50,8 +49,7 @@ public abstract class ButterworthFilter {
     double[] b1;
     double[] b2;
 
-    ButterworthFilter() {
-    }
+    ButterworthFilter() {}
 
     /**
      * Compute a value of Saito 1.7. <br>
