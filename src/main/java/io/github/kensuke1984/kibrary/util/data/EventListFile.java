@@ -12,13 +12,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
-
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionGroup;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
-
 import io.github.kensuke1984.kibrary.Summon;
 import io.github.kensuke1984.kibrary.timewindow.TimeWindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimeWindowDataFile;
@@ -58,7 +56,7 @@ public class EventListFile {
             pw.println("# GCMTID latitude longitude radius depth");
             eventSet.stream().sorted().forEach(event -> {
                 pw.println(event.toPaddedString() + " " + event.getEventData().getCmtPosition().toString()
-                         + " " + event.getEventData().getCmtPosition().getDepth());
+                        + " " + event.getEventData().getCmtPosition().getDepth());
             });
         }
     }
@@ -97,7 +95,7 @@ public class EventListFile {
     public static Set<GlobalCMTID> read(Path inputPath) throws IOException {
         Set<GlobalCMTID> eventSet = new HashSet<>();
         InformationFileReader reader = new InformationFileReader(inputPath, true);
-        while(reader.hasNext()) {
+        while (reader.hasNext()) {
             String[] parts = reader.next().split("\\s+");
             GlobalCMTID event = new GlobalCMTID(parts[0]);
             if (!eventSet.add(event))
@@ -177,10 +175,10 @@ public class EventListFile {
             Set<DataEntry> entries = DataEntryListFile.readAsSet(Paths.get(cmdLine.getOptionValue("e")));
             eventSet = entries.stream().map(DataEntry::getEvent).collect(Collectors.toSet());
         } else if (cmdLine.hasOption("t")) {
-            Set<TimeWindowData> timeWindows =  TimeWindowDataFile.read(Paths.get(cmdLine.getOptionValue("t")));
+            Set<TimeWindowData> timeWindows = TimeWindowDataFile.read(Paths.get(cmdLine.getOptionValue("t")));
             eventSet = timeWindows.stream().map(TimeWindowData::getGlobalCMTID).collect(Collectors.toSet());
         } else if (cmdLine.hasOption("b")) {
-            List<BasicID> basicIDs =  BasicIDFile.read(Paths.get(cmdLine.getOptionValue("b")), false);
+            List<BasicID> basicIDs = BasicIDFile.read(Paths.get(cmdLine.getOptionValue("b")), false);
             eventSet = basicIDs.stream().map(BasicID::getGlobalCMTID).collect(Collectors.toSet());
         } else {
             String pathString = "";

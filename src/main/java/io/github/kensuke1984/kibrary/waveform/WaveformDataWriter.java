@@ -11,9 +11,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-
 import org.apache.commons.lang3.StringUtils;
-
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
@@ -183,7 +181,7 @@ public class WaveformDataWriter implements Closeable, Flushable {
     private void makeAndWritePhaseMap(Phase[] phases) throws IOException {
         int i = 0;
         phaseMap = new HashMap<>();
-        for (Phase phase : phases)	{
+        for (Phase phase : phases) {
             phaseMap.put(phase, i++);
             idStream.writeBytes(StringUtils.rightPad(phase.toString(), 16));
         }
@@ -221,9 +219,9 @@ public class WaveformDataWriter implements Closeable, Flushable {
         for (int i = 0; i < 10; i++) { // 10 * 2 Byte
             if (i < phases.length) {
                 idStream.writeShort(phaseMap.get(phases[i]));
-            }
-            else
+            } else {
                 idStream.writeShort(-1);
+            }
         }
 
         // 4Byte * 3
@@ -242,7 +240,7 @@ public class WaveformDataWriter implements Closeable, Flushable {
      */
     public synchronized void addPartialID(PartialID partialID) throws IOException {
         if (partialID.type != WaveformType.PARTIAL) throw new RuntimeException(
-                    "This is not a partial derivative. " + Thread.currentThread().getStackTrace()[1].getMethodName());
+                "This is not a partial derivative. " + Thread.currentThread().getStackTrace()[1].getMethodName());
         if (mode != 1) throw new RuntimeException("No Partial please, would you.");
         long startByte = dataLength;
         addWaveform(partialID.getData());
@@ -254,9 +252,9 @@ public class WaveformDataWriter implements Closeable, Flushable {
         for (int i = 0; i < 10; i++) { // 10 * 2 Byte
             if (i < phases.length) {
                 idStream.writeShort(phaseMap.get(phases[i]));
-            }
-            else
+            } else {
                 idStream.writeShort(-1);
+            }
         }
         idStream.writeFloat((float) partialID.startTime); // start time; 4 Byte
         idStream.writeInt(partialID.npts); // number of points; 4 Byte

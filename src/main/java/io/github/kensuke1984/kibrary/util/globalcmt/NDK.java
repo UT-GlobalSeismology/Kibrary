@@ -2,9 +2,7 @@ package io.github.kensuke1984.kibrary.util.globalcmt;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-
 import org.apache.commons.lang3.StringUtils;
-
 import io.github.kensuke1984.kibrary.source.MomentTensor;
 import io.github.kensuke1984.kibrary.source.SourceTimeFunctionType;
 import io.github.kensuke1984.kibrary.util.MathAid;
@@ -251,8 +249,7 @@ public final class NDK implements GlobalCMTAccess {
         this.rake1 = rake1;
     }
 
-    private NDK() {
-    }
+    private NDK() {}
 
     /**
      * Creates an NDK from 5 lines of the catalog.

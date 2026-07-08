@@ -22,15 +22,12 @@ import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-
 import javax.swing.JOptionPane;
-
 import org.apache.commons.io.input.CloseShieldInputStream;
 import org.apache.commons.mail.DefaultAuthenticator;
 import org.apache.commons.mail.Email;
 import org.apache.commons.mail.SimpleEmail;
 import org.apache.commons.math3.util.FastMath;
-
 import io.github.kensuke1984.kibrary.Environment;
 
 /**
@@ -97,9 +94,9 @@ public final class GadgetAid {
      * @return password, secret phrase, ...
      */
     public static String getPassword(String phrase) throws InterruptedException {
-        return GraphicsEnvironment.isHeadless() ?
-                String.copyValueOf(System.console().readPassword("Password for " + phrase)) :
-                PasswordInput.getPassword(phrase);
+        return GraphicsEnvironment.isHeadless()
+                ? String.copyValueOf(System.console().readPassword("Password for " + phrase))
+                : PasswordInput.getPassword(phrase);
     }
 
     /**
@@ -107,10 +104,10 @@ public final class GadgetAid {
      * @throws UnsupportedFlavorException if the clipboard has any that can not be string.
      * @throws IOException                if an I/O error occurs.
      */
-        public static String getClipBoard() throws UnsupportedFlavorException, IOException {
-            return Toolkit.getDefaultToolkit().getSystemClipboard().getContents(null)
-                    .getTransferData(DataFlavor.stringFlavor).toString();
-        }
+    public static String getClipBoard() throws UnsupportedFlavorException, IOException {
+        return Toolkit.getDefaultToolkit().getSystemClipboard().getContents(null)
+                .getTransferData(DataFlavor.stringFlavor).toString();
+    }
 
     /**
      * Reads input from standard input.

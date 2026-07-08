@@ -28,14 +28,14 @@ public enum SACExtension {
      */
     public static SACExtension valueOfObserved(SACComponent component) {
         switch (component) {
-            case R:
-                return R;
-            case T:
-                return T;
-            case Z:
-                return Z;
-            default:
-                throw new RuntimeException("Unexpected happens.");
+        case R:
+            return R;
+        case T:
+            return T;
+        case Z:
+            return Z;
+        default:
+            throw new RuntimeException("Unexpected happens.");
         }
     }
 
@@ -45,14 +45,14 @@ public enum SACExtension {
      */
     public static SACExtension valueOfSynthetic(SACComponent component) {
         switch (component) {
-            case Z:
-                return Zs;
-            case R:
-                return Rs;
-            case T:
-                return Ts;
-            default:
-                throw new RuntimeException("Unexpected happens.");
+        case Z:
+            return Zs;
+        case R:
+            return Rs;
+        case T:
+            return Ts;
+        default:
+            throw new RuntimeException("Unexpected happens.");
         }
     }
 
@@ -62,14 +62,14 @@ public enum SACExtension {
      */
     public static SACExtension valueOfConvolutedSynthetic(SACComponent component) {
         switch (component) {
-            case Z:
-                return Zsc;
-            case R:
-                return Rsc;
-            case T:
-                return Tsc;
-            default:
-                throw new RuntimeException("Unexpected happens.");
+        case Z:
+            return Zsc;
+        case R:
+            return Rsc;
+        case T:
+            return Tsc;
+        default:
+            throw new RuntimeException("Unexpected happens.");
         }
     }
 
@@ -79,14 +79,14 @@ public enum SACExtension {
      */
     public static SACExtension valueOfConvolutedTemporalPartial(SACComponent component) {
         switch (component) {
-            case Z:
-                return Zsct;
-            case R:
-                return Rsct;
-            case T:
-                return Tsct;
-            default:
-                throw new RuntimeException("Unexpected happens.");
+        case Z:
+            return Zsct;
+        case R:
+            return Rsct;
+        case T:
+            return Tsct;
+        default:
+            throw new RuntimeException("Unexpected happens.");
         }
     }
 
@@ -96,14 +96,14 @@ public enum SACExtension {
      */
     public static SACExtension valueOfTemporalPartial(SACComponent component) {
         switch (component) {
-            case Z:
-                return Zst;
-            case R:
-                return Rst;
-            case T:
-                return Tst;
-            default:
-                throw new RuntimeException("Unexpected happens.");
+        case Z:
+            return Zst;
+        case R:
+            return Rst;
+        case T:
+            return Tst;
+        default:
+            throw new RuntimeException("Unexpected happens.");
         }
     }
 

@@ -2,9 +2,7 @@ package io.github.kensuke1984.kibrary.util.spc;
 
 import java.util.ArrayList;
 import java.util.List;
-
 import org.apache.commons.math3.complex.Complex;
-
 import io.github.kensuke1984.kibrary.elastic.ElasticMedium;
 import io.github.kensuke1984.kibrary.elastic.VariableType;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;

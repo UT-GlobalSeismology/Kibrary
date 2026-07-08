@@ -12,7 +12,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
 import io.github.kensuke1984.kibrary.timewindow.TimeWindowData;
 import io.github.kensuke1984.kibrary.util.data.DataEntry;
 import io.github.kensuke1984.kibrary.util.data.DataEntryListFile;
@@ -243,7 +242,7 @@ public final class DatasetAid {
                 observers = removeObserversWithSameName(event, observers);
                 arcMap.put(event, observers);
             }
-        } else if (obsPath != null){
+        } else if (obsPath != null) {
             Set<EventFolder> eventDirs = DatasetAid.eventFolderSet(obsPath);
             // collect observers for each event
             for (EventFolder eventDir : eventDirs) {
@@ -354,8 +353,7 @@ public final class DatasetAid {
                 }
 
                 // get synthetic data
-                SACExtension synExt = convolved ? SACExtension.valueOfConvolutedSynthetic(component) :
-                        SACExtension.valueOfSynthetic(component);
+                SACExtension synExt = convolved ? SACExtension.valueOfConvolutedSynthetic(component) : SACExtension.valueOfSynthetic(component);
                 SACFileName synName = new SACFileName(synEventPath.resolve(SACFileName.generate(observer, eventID, synExt)));
                 if (!synName.exists()) {
                     System.err.println();

@@ -3,10 +3,8 @@ package io.github.kensuke1984.kibrary.util.earth;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.stream.Collectors;
-
 import org.apache.commons.math3.util.FastMath;
 import org.apache.commons.math3.util.Precision;
-
 import io.github.kensuke1984.kibrary.math.CircularRange;
 import io.github.kensuke1984.kibrary.math.LinearRange;
 import io.github.kensuke1984.kibrary.math.geometry.RThetaPhi;
@@ -199,10 +197,10 @@ public final class FullPosition extends HorizontalPosition {
      */
     public FullPosition[] findNearestPosition(FullPosition[] locations, double maxSearchRange) {
         FullPosition[] newLocations = Arrays.stream(locations).parallel().filter(loc -> {
-    //		System.out.println(loc + " " + this.toString() + " " + this.getDistance(loc));
+            //		System.out.println(loc + " " + this.toString() + " " + this.getDistance(loc));
             return Math.abs(this.radius - loc.getR()) < maxSearchRange;
         }).collect(Collectors.toList()).toArray(new FullPosition[0]);
-    //	System.out.println(newLocations.length);
+        //	System.out.println(newLocations.length);
         Arrays.parallelSort(newLocations, Comparator.comparingDouble(this::computeStraightDistance));
         return newLocations;
     }

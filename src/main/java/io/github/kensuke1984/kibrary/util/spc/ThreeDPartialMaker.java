@@ -5,9 +5,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
 import org.apache.commons.math3.complex.Complex;
-
 import io.github.kensuke1984.kibrary.elastic.VariableType;
 import io.github.kensuke1984.kibrary.math.FourierTransform;
 import io.github.kensuke1984.kibrary.source.SourceTimeFunction;
@@ -68,7 +66,7 @@ public class ThreeDPartialMaker {
     private SourceTimeFunction sourceTimeFunction;
     Set<Double> ignoreBodyR;
 
-     /**
+    /**
      * 用いたいspcファイルたちと ヘッダーに加えたい情報
      *
      * @param fp a spc file for forward propagation
@@ -230,7 +228,7 @@ public class ThreeDPartialMaker {
      * @param dhFP
      * @author anselme
      */
-    public ThreeDPartialMaker(SPCFileAccess fp1PSV, SPCFileAccess fp1SH, SPCFileAccess fp2PSV,  SPCFileAccess fp2SH, SPCFileAccess fp3PSV, SPCFileAccess fp3SH,
+    public ThreeDPartialMaker(SPCFileAccess fp1PSV, SPCFileAccess fp1SH, SPCFileAccess fp2PSV, SPCFileAccess fp2SH, SPCFileAccess fp3PSV, SPCFileAccess fp3SH,
             SPCFileAccess bp1PSV, SPCFileAccess bp1SH, SPCFileAccess bp2PSV, SPCFileAccess bp2SH, SPCFileAccess bp3PSV, SPCFileAccess bp3SH, double[] dhBP, double[] dhFP, double samplingHz) {
         ignoreBodyR = new HashSet<>();
         if (!isGoodPair(fp1SH, bp1SH))
@@ -470,8 +468,8 @@ public class ThreeDPartialMaker {
         double fpR = fp.getBodyR()[iBody];
         if (fpR != bpR) throw new IllegalStateException("rBody of fp and bp differs: " + fpR + " " + bpR);
 
-        Complex[] partial_frequency = (variable == VariableType.Qmu) ? computeQpartial(component, iBody) :
-                computeTensorCulculus(component, iBody, iBody, variable, parallel);
+        Complex[] partial_frequency = (variable == VariableType.Qmu) ? computeQpartial(component, iBody)
+                : computeTensorCulculus(component, iBody, iBody, variable, parallel);
 
         if (sourceTimeFunction != null)
             partial_frequency = sourceTimeFunction.convolve(partial_frequency, parallel);
@@ -574,7 +572,7 @@ public class ThreeDPartialMaker {
                     bp.getSpcBodyList().get(ibody), variable.getWeightingFactor(), angleForTensor, true);
             // tensorcalc.setBP(angleBP);
             // tensorcalc.setFP(angleFP);
-             System.out.println("angleForTensor " + angleForTensor);
+            System.out.println("angleForTensor " + angleForTensor);
             Complex[] partialZ = tensorcalc.calc(0); // frequency domain Z
             Complex[] partial1 = tensorcalc.calc(1); // R
             Complex[] partial2 = tensorcalc.calc(2); // T

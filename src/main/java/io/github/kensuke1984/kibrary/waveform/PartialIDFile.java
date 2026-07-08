@@ -13,12 +13,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.IntStream;
-
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
-
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.Summon;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
@@ -248,7 +246,7 @@ public final class PartialIDFile {
                 dis.read(bytes[i]);
             PartialID[] ids = new PartialID[nid];
             IntStream.range(0, nid).parallel()
-                .forEach(i -> ids[i] = createID(bytes[i], observers, events, periodRanges, phases, voxelPositions));
+                    .forEach(i -> ids[i] = createID(bytes[i], observers, events, periodRanges, phases, voxelPositions));
             System.err.println("\r " + ids.length + " IDs read in " + GadgetAid.toTimeString(System.nanoTime() - t));
             return ids;
         }
@@ -266,7 +264,7 @@ public final class PartialIDFile {
      * @return ({@link PartialID}) Created ID.
      */
     private static PartialID createID(byte[] bytes, Observer[] observers, GlobalCMTID[] events, double[][] periodRanges,
-             Phase[] phases, FullPosition[] voxelPositions) {
+            Phase[] phases, FullPosition[] voxelPositions) {
         ByteBuffer bb = ByteBuffer.wrap(bytes);
         Observer observer = observers[bb.getShort()];
         GlobalCMTID event = events[bb.getShort()];
@@ -300,7 +298,7 @@ public final class PartialIDFile {
      * @param args Options.
      * @throws IOException if an I/O error occurs
      */
-    public static void main(String[] args) throws IOException{
+    public static void main(String[] args) throws IOException {
         Options options = defineOptions();
         try {
             run(Summon.parseArgs(options, args));
@@ -313,7 +311,7 @@ public final class PartialIDFile {
      * To be called from {@link Summon}.
      * @return options
      */
-    public static Options defineOptions() throws IOException{
+    public static Options defineOptions() throws IOException {
         Options options = Summon.defaultOptions();
         //input
         options.addOption(Option.builder("p").longOpt("partial").hasArg().argName("partailFolder")
@@ -329,7 +327,7 @@ public final class PartialIDFile {
      * @param cmdLine options
      * @throws IOException
      */
-    public static void run(CommandLine cmdLine) throws IOException{
+    public static void run(CommandLine cmdLine) throws IOException {
         Path partialPath = cmdLine.hasOption("p") ? Paths.get(cmdLine.getOptionValue("p")) : Paths.get(".");
         List<PartialID> ids = read(partialPath, false);
 

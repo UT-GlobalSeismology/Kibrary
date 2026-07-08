@@ -2,7 +2,6 @@ package io.github.kensuke1984.kibrary.util.earth;
 
 import org.apache.commons.math3.util.FastMath;
 import org.apache.commons.math3.util.Precision;
-
 import io.github.kensuke1984.kibrary.math.LinearRange;
 import io.github.kensuke1984.kibrary.math.geometry.Ellipse;
 import io.github.kensuke1984.kibrary.util.MathAid;

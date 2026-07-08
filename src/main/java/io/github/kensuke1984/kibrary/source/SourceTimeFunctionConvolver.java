@@ -13,9 +13,7 @@ import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
-
 import org.apache.commons.math3.complex.Complex;
-
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.math.FourierTransform;
@@ -216,7 +214,7 @@ public class SourceTimeFunctionConvolver extends Operation {
                 sacNameSet.removeIf(s -> !judgeSAC(s));
 
                 // escape if the event folder was blank. The 'finally' will be executed, so count will be incremented.
-                if(sacNameSet.size() == 0) {
+                if (sacNameSet.size() == 0) {
                     return;
                 }
 

@@ -32,7 +32,7 @@ public class UncaughtExceptionAid {
         }
     }
 
-    public static ExecutorService createAidedExecutorService () {
+    public static ExecutorService createAidedExecutorService() {
         int nThreads = Runtime.getRuntime().availableProcessors();
         System.err.println("Running on " + nThreads + " processors");
         ExecutorService es = Executors.newFixedThreadPool(nThreads, new AidedThreadFactory());

@@ -8,9 +8,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
 import org.apache.commons.math3.util.Precision;
-
 import io.github.kensuke1984.kibrary.util.InformationFileReader;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 
@@ -54,7 +52,7 @@ public class SourceTimeFunctionHandler {
     private void readCatalog(Path inputPath) throws IOException {
         System.err.println("STF catalog: " + inputPath);
         InformationFileReader reader = new InformationFileReader(inputPath, true);
-        while(reader.hasNext()) {
+        while (reader.hasNext()) {
             String line = reader.next();
             String[] parts = line.split("\\s+");
             sourceTimeFunctionCatalog.put(new GlobalCMTID(parts[0]), line);
@@ -70,7 +68,7 @@ public class SourceTimeFunctionHandler {
         }
 
         userSourceTimeFunctions = new HashMap<>();
-        for (Path stfPath: stfPaths) {
+        for (Path stfPath : stfPaths) {
             GlobalCMTID event = new GlobalCMTID(stfPath.getFileName().toString().split("\\.")[0]);
             userSourceTimeFunctions.put(event, SourceTimeFunction.read(stfPath));
         }

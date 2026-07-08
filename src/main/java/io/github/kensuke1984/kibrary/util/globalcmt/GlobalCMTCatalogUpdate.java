@@ -10,13 +10,11 @@ import java.nio.file.StandardOpenOption;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.math3.util.Precision;
-
 import io.github.kensuke1984.kibrary.Environment;
 import io.github.kensuke1984.kibrary.Summon;
 import io.github.kensuke1984.kibrary.util.FileAid;
@@ -86,8 +84,8 @@ public final class GlobalCMTCatalogUpdate {
             String catalogUrl = "https://www.ldeo.columbia.edu/~gcmt/projects/CMT/catalog/" + catalogName;
             try {
                 FileAid.download(new URL(catalogUrl), catalogPath, false);
-            } catch(IOException e) {
-                if(Files.exists(catalogPath)) {
+            } catch (IOException e) {
+                if (Files.exists(catalogPath)) {
                     // delete the trash that may be made
                     Files.delete(catalogPath);
                 }
@@ -101,7 +99,7 @@ public final class GlobalCMTCatalogUpdate {
 
         //~Activate (change target of symbolic link)~//
         // check whether the symbolic link itself exists, regardless of the existence of its target
-        if(Files.exists(GlobalCMTCatalog.CATALOG_PATH, LinkOption.NOFOLLOW_LINKS)) {
+        if (Files.exists(GlobalCMTCatalog.CATALOG_PATH, LinkOption.NOFOLLOW_LINKS)) {
             // delete the symbolic link, not its target
             Files.delete(GlobalCMTCatalog.CATALOG_PATH);
         }

@@ -3,7 +3,6 @@ package io.github.kensuke1984.kibrary.util.sac;
 
 import java.util.HashSet;
 import java.util.Set;
-
 import io.github.kensuke1984.kibrary.waveform.WaveformDataWriter;
 
 /**
@@ -38,14 +37,14 @@ public enum SACComponent {
      */
     public static SACComponent ofNumber(int n) {
         switch (n) {
-            case 1:
-                return Z;
-            case 2:
-                return R;
-            case 3:
-                return T;
-            default:
-                throw new IllegalArgumentException("Invalid component! Components are Z(1) R(2) T(3)");
+        case 1:
+            return Z;
+        case 2:
+            return R;
+        case 3:
+            return T;
+        default:
+            throw new IllegalArgumentException("Invalid component! Components are Z(1) R(2) T(3)");
         }
     }
 

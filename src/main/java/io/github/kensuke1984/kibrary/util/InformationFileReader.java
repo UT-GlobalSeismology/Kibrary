@@ -71,7 +71,7 @@ public class InformationFileReader {
     public String next() {
         if (readlineNum == linesNum) return null;
         String line;
-        for (; ; )
+        for (;;)
             if (!isComment(line = lines.get(readlineNum++))) return line;
     }
 

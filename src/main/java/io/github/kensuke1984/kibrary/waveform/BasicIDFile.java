@@ -15,12 +15,10 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
-
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.Summon;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
@@ -406,7 +404,7 @@ public final class BasicIDFile {
         Path outputPath = eventPath.resolve(getWaveformTxtFileName(obsID));
 
         try (PrintWriter pwTrace = new PrintWriter(Files.newBufferedWriter(outputPath,
-                StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING))){
+                StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING))) {
             for (int j = 0; j < obsData.length; j++) {
                 double obsTime = obsStartTime + j / obsSamplingHz;
                 double synTime = synStartTime + j / synSamplingHz;

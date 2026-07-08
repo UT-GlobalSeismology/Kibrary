@@ -6,14 +6,12 @@ import java.nio.file.Files;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionGroup;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
-
 import io.github.kensuke1984.kibrary.Summon;
 import io.github.kensuke1984.kibrary.util.InformationFileReader;
 
@@ -126,7 +124,7 @@ public class PolynomialStructureFile {
         return new PolynomialStructure(nZone, nCoreZone, rMin, rMax, rho, vpv, vph, vsv, vsh, eta, qMu, qKappa);
     }
 
-    public static PolynomialStructure readDsm(Path inputPath) throws IOException{
+    public static PolynomialStructure readDsm(Path inputPath) throws IOException {
         InformationFileReader reader = new InformationFileReader(inputPath, false);
         String[] structureLines = reader.getNonCommentLines();
 
@@ -243,7 +241,7 @@ public class PolynomialStructureFile {
         if (cmdLine.hasOption("n")) {
             structureName = cmdLine.getOptionValue("n");
             structure = PolynomialStructure.of(structureName);
-        } else if(cmdLine.hasOption("i")) {
+        } else if (cmdLine.hasOption("i")) {
             dsmPsvPath = Paths.get(cmdLine.getOptionValue("i"));
             fileName = dsmPsvPath.getFileName().toString();
             structureName = fileName.substring(0, fileName.lastIndexOf('.'));

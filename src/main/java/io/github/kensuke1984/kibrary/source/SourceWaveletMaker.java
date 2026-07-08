@@ -12,10 +12,8 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
-
 import org.apache.commons.math3.complex.Complex;
 import org.apache.commons.math3.linear.RealVector;
-
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.Test_temp;
@@ -211,8 +209,7 @@ public class SourceWaveletMaker extends Operation {
         Set<GlobalCMTID> eventSet = sourceTimeWindowSet.stream().map(TimeWindowData::getGlobalCMTID).collect(Collectors.toSet());
 
         // read static corrections
-        staticCorrectionSet = (staticCorrectionPath == null ? Collections.emptySet() :
-                StaticCorrectionDataFile.read(staticCorrectionPath));
+        staticCorrectionSet = (staticCorrectionPath == null ? Collections.emptySet() : StaticCorrectionDataFile.read(staticCorrectionPath));
 
         outPath = DatasetAid.createOutputFolder(workPath, "wavelets", folderTag, appendFolderDate, null);
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
@@ -319,7 +316,7 @@ public class SourceWaveletMaker extends Operation {
             Path eventDirectryPath = outPath.resolve(eventID + "");
 
             // omit events with less than 5 observation as in Yamaya et al. (2018)
-            if(num < 5) {
+            if (num < 5) {
                 System.out.println(eventID + " has less than 5 observation");
                 return;
             }
@@ -355,7 +352,7 @@ public class SourceWaveletMaker extends Operation {
             double maxtau1 = t0 - waveletTrace.getXAt(0);
             double maxtau2 = waveletTrace.getXAt(waveletTrace.getLength() - 1) - t0;
             double delta = 0.1;
-            double minsum  = Double.POSITIVE_INFINITY;
+            double minsum = Double.POSITIVE_INFINITY;
             double tau1 = 0;
             double tau2 = 0;
             for (double temptau1 = t0 - t1; temptau1 <= maxtau1; temptau1 += delta) {
@@ -445,8 +442,7 @@ public class SourceWaveletMaker extends Operation {
             }
 
             // output triangle stf
-            SourceTimeFunction triangleSourceTimeFunction
-                = SourceTimeFunction.asymmetricTriangleSourceTimeFunction(np, tlen, tau1, tau2);
+            SourceTimeFunction triangleSourceTimeFunction = SourceTimeFunction.asymmetricTriangleSourceTimeFunction(np, tlen, tau1, tau2);
 
             Path triangleDirectryPath = outPath.resolve("triangle");
             Path triangleWaveletPath = triangleDirectryPath.resolve(eventID + ".stf");
@@ -479,13 +475,13 @@ public class SourceWaveletMaker extends Operation {
 
     }
     //output triangle
-    private void writeTriangle(double t0, double tau1, double tau2, double maxtau2, Path outputPath)throws IOException {
+    private void writeTriangle(double t0, double tau1, double tau2, double maxtau2, Path outputPath) throws IOException {
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath))) {
             pw.println(0 + " " + 0);
             pw.println((t0 - tau1) + " " + 0);
-            pw.println(t0 +" " + (2 / (tau1 +tau2)));
+            pw.println(t0 + " " + (2 / (tau1 + tau2)));
             pw.println((t0 + tau2) + " " + 0);
-            pw.println((t0 + maxtau2)+ " " + 0);
+            pw.println((t0 + maxtau2) + " " + 0);
         }
     }
     //t1

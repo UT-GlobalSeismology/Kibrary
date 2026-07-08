@@ -11,7 +11,6 @@ import java.util.Arrays;
 import java.util.EnumMap;
 import java.util.Map;
 import java.util.Set;
-
 import io.github.kensuke1984.kibrary.external.SAC;
 import io.github.kensuke1984.kibrary.math.Trace;
 import io.github.kensuke1984.kibrary.util.EventFolder;
@@ -100,7 +99,7 @@ public final class SACUtil {
      * @throws IOException if an I/O error occurs
      */
     public static void writeSAC(Path outPath, Map<SACHeaderEnum, String> headerMap, double[] data,
-                                OpenOption... options) throws IOException {
+            OpenOption... options) throws IOException {
         if (Integer.parseInt(headerMap.get(SACHeaderEnum.NPTS)) != data.length)
             throw new IllegalArgumentException("NPTS is invalid");
         try (SACOutputStream stream = new SACOutputStream(

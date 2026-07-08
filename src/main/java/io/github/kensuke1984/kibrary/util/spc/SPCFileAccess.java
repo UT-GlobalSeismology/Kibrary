@@ -9,13 +9,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
-
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.math3.complex.Complex;
-
 import io.github.kensuke1984.kibrary.Summon;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
@@ -107,7 +105,7 @@ public interface SPCFileAccess {
      * To be called from {@link Summon}.
      * @return options
      */
-    public static Options defineOptions() throws IOException{
+    public static Options defineOptions() throws IOException {
         Options options = Summon.defaultOptions();
         //input
         options.addOption(Option.builder("s").longOpt("spc").hasArg().argName("spcFile").required()

@@ -17,7 +17,6 @@ import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
-
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.Test_temp;
@@ -493,7 +492,7 @@ public class PartialsAssembler3D extends Operation {
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
-                 }
+                }
             }
         }
     }

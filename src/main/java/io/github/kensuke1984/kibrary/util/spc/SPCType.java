@@ -14,7 +14,7 @@ public enum SPCType {
     SYNTHETIC;
 
     static SPCType ofNumber(int number) {
-        switch(number) {
+        switch (number) {
         case 3: // Normal synthetic
             return SYNTHETIC;
         case 4: // Forward propagation dislocation field. 4 is an identifier. Holds 3 components. (3 non-zero components).
@@ -63,7 +63,7 @@ public enum SPCType {
     }
 
     int getNElement() {
-        switch(this) {
+        switch (this) {
         case PB:
         case PBSHCAT:
         case PBPSVCAT:

@@ -3,7 +3,6 @@ package io.github.kensuke1984.kibrary.util.sac;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-
 import io.github.kensuke1984.kibrary.util.data.DataEntry;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
@@ -87,18 +86,18 @@ public interface SACHeaderAccess {
      */
     default SACComponent getComponent() {
         switch (getSACString(SACHeaderEnum.KCMPNM)) {
-            case "Z":
-            case "BHZ": //TODO erase: this is set here because DataKitchen hadn't placed "vertical" in Sac headers before.
-            case "vertical": //TODO erase: old format. This is here for backward compatibility.
-                return SACComponent.Z;
-            case "R":
-            case "radial": //TODO erase: old format. This is here for backward compatibility.
-                return SACComponent.R;
-            case "T":
-            case "trnsvers": //TODO erase: old format. This is here for backward compatibility.
-                return SACComponent.T;
-            default:
-                throw new RuntimeException("KCMPNM is invalid; must be Z, R, or T.");
+        case "Z":
+        case "BHZ": //TODO erase: this is set here because DataKitchen hadn't placed "vertical" in Sac headers before.
+        case "vertical": //TODO erase: old format. This is here for backward compatibility.
+            return SACComponent.Z;
+        case "R":
+        case "radial": //TODO erase: old format. This is here for backward compatibility.
+            return SACComponent.R;
+        case "T":
+        case "trnsvers": //TODO erase: old format. This is here for backward compatibility.
+            return SACComponent.T;
+        default:
+            throw new RuntimeException("KCMPNM is invalid; must be Z, R, or T.");
         }
     }
 

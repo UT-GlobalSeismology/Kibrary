@@ -65,7 +65,7 @@ public final class ThreadAid {
             exec.execute(() -> process.accept(eventDirectory));
         exec.shutdown();
         try {
-            if(!exec.awaitTermination(timeout, unit))
+            if (!exec.awaitTermination(timeout, unit))
                 throw new RuntimeException(timeout + " " + unit + " elapsed.");
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();

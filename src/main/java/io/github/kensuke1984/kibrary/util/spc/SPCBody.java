@@ -2,9 +2,7 @@ package io.github.kensuke1984.kibrary.util.spc;
 
 import java.util.Arrays;
 import java.util.stream.IntStream;
-
 import org.apache.commons.math3.complex.Complex;
-
 import io.github.kensuke1984.kibrary.source.SourceTimeFunction;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 
@@ -98,9 +96,9 @@ public class SPCBody {
 //		double c1 = 1 - dh[0] + dh[0]*dh[1]/2.;
 //		double c2 = dh[0] - dh[0]*dh[1];
 //		double c3 = dh[0]*dh[1]/2.;
-        double c1 = dh[1]*dh[2] / 2.;
-        double c2 = -dh[0]*dh[2];
-        double c3 = dh[0]*dh[1] / 2.;
+        double c1 = dh[1] * dh[2] / 2.;
+        double c2 = -dh[0] * dh[2];
+        double c3 = dh[0] * dh[1] / 2.;
 
         for (int j = 0; j < body1.nElement; j++) {
             SPCElement comp1 = body1.spcElements[j].copy();
@@ -132,9 +130,9 @@ public class SPCBody {
 //		double c1 = 1 - dh[0] + dh[0]*dh[1]/2.;
 //		double c2 = dh[0] - dh[0]*dh[1];
 //		double c3 = dh[0]*dh[1]/2.;
-        double c1 = -dh[1]*dh[2];
-        double c2 = dh[0]*dh[2] / 2.;
-        double c3 = dh[0]*dh[1] / 2.;
+        double c1 = -dh[1] * dh[2];
+        double c2 = dh[0] * dh[2] / 2.;
+        double c3 = dh[0] * dh[1] / 2.;
 
         for (int j = 0; j < body1.nElement; j++) {
             SPCElement element1 = body1.spcElements[j];

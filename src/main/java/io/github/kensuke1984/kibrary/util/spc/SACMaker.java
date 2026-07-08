@@ -9,7 +9,6 @@ import java.util.EnumSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-
 import io.github.kensuke1984.kibrary.filter.ButterworthFilter;
 import io.github.kensuke1984.kibrary.math.Trace;
 import io.github.kensuke1984.kibrary.source.SourceTimeFunction;
@@ -387,8 +386,7 @@ public class SACMaker implements Runnable {
 
         private Map<SACHeaderEnum, String> headerMap = new EnumMap<>(INITIAL_MAP);
 
-        private SAC() {
-        }
+        private SAC() {}
 
         @Override
         public boolean getBoolean(SACHeaderEnum sacHeaderEnum) {

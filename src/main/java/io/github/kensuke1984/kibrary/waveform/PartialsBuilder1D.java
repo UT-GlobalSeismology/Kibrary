@@ -15,9 +15,7 @@ import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-
 import org.apache.commons.math3.util.Precision;
-
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.Test_temp;
@@ -334,7 +332,7 @@ public class PartialsBuilder1D extends Operation {
         // for each event, execute run() of class Worker, which is defined at the bottom of this java file
         eventSet.stream().map(Worker::new).forEach(es::execute);
         es.shutdown();
-        while (!es.isTerminated()){
+        while (!es.isTerminated()) {
             ThreadAid.sleep(1000);
         }
         // this println() is for starting new line after writing "."s

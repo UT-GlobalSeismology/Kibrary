@@ -2,7 +2,6 @@ package io.github.kensuke1984.kibrary.util.earth;
 
 import org.apache.commons.math3.util.FastMath;
 import org.apache.commons.math3.util.Precision;
-
 import io.github.kensuke1984.kibrary.util.MathAid;
 
 /**
@@ -79,7 +78,7 @@ public final class Longitude implements Comparable<Longitude> {
         if (getClass() != obj.getClass()) return false;
         Longitude other = (Longitude) obj;
 
-        return Precision.equals(longitude, other.longitude, FastMath.pow(10, -DECIMALS)/2);
+        return Precision.equals(longitude, other.longitude, FastMath.pow(10, -DECIMALS) / 2);
     }
 
     @Override
@@ -164,14 +163,11 @@ public final class Longitude implements Comparable<Longitude> {
         if (longitude <= -100) {  // -180 ~ -100
             letter = "N";
             absolute -= 100;
-        }
-        else if (longitude < 0) {  // -100 ~ 0
+        } else if (longitude < 0) {  // -100 ~ 0
             letter = "M";
-        }
-        else if (longitude < 100) {  // 0 ~ 100
+        } else if (longitude < 100) {  // 0 ~ 100
             letter = "P";
-        }
-        else {  // 100 ~ 180
+        } else {  // 100 ~ 180
             letter = "Q";
             absolute -= 100;
         }

@@ -7,9 +7,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-
 import org.apache.commons.math3.complex.Complex;
-
 import io.github.kensuke1984.kibrary.util.earth.Earth;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
@@ -87,8 +85,8 @@ public class SPCFile implements SPCFileAccess {
      * @author anselme add content for BP/FP catalog
      * @author rei add content for UB/UF catalog
      */
-    public static final SPCFile getInstance(SPCFileName spcFileName, double phi, HorizontalPosition receiverPosition
-            , FullPosition sourcePosition) throws IOException {
+    public static final SPCFile getInstance(SPCFileName spcFileName, double phi, HorizontalPosition receiverPosition,
+            FullPosition sourcePosition) throws IOException {
         SPCFile specFile = new SPCFile(spcFileName);
         specFile.sourceID = spcFileName.getSourceID();
         specFile.receiverID = spcFileName.getReceiverID();
@@ -199,7 +197,7 @@ public class SPCFile implements SPCFileAccess {
 
                     if (specFile.spcFileType.equals(SPCType.PBSHCAT)) {
                         for (int k = 0; k < specFile.nElement; k++) {
-                            if (SPCTensorComponent.isBPSHCATzero(k+1))
+                            if (SPCTensorComponent.isBPSHCATzero(k + 1))
                                 u[k] = Complex.ZERO;
                             else {
                                 double tmpReal_m1 = dis.readDouble();
@@ -207,10 +205,10 @@ public class SPCFile implements SPCFileAccess {
                                 double tmpReal_p1 = dis.readDouble();
                                 double tmpImag_p1 = dis.readDouble();
 
-                                double tmpReal = tmpReal_m1*cosphi + tmpImag_m1*sinphi
-                                        + tmpReal_p1*cosphi - tmpImag_p1*sinphi;
-                                double tmpImag = -tmpReal_m1*sinphi + tmpImag_m1*cosphi
-                                        + tmpReal_p1*sinphi + tmpImag_p1*cosphi;
+                                double tmpReal = tmpReal_m1 * cosphi + tmpImag_m1 * sinphi
+                                        + tmpReal_p1 * cosphi - tmpImag_p1 * sinphi;
+                                double tmpImag = -tmpReal_m1 * sinphi + tmpImag_m1 * cosphi
+                                        + tmpReal_p1 * sinphi + tmpImag_p1 * cosphi;
 
                                 u[k] = new Complex(tmpReal, tmpImag);
                             }
@@ -224,14 +222,14 @@ public class SPCFile implements SPCFileAccess {
                             double tmpReal_p1 = dis.readDouble();
                             double tmpImag_p1 = dis.readDouble();
 
-                            double tmpReal = tmpReal_m0 + tmpReal_m1*cosphi + tmpImag_m1*sinphi
-                                    + tmpReal_p1*cosphi - tmpImag_p1*sinphi;
-                            double tmpImag = tmpImag_m0 + -tmpReal_m1*sinphi + tmpImag_m1*cosphi
-                                    + tmpReal_p1*sinphi + tmpImag_p1*cosphi;
+                            double tmpReal = tmpReal_m0 + tmpReal_m1 * cosphi + tmpImag_m1 * sinphi
+                                    + tmpReal_p1 * cosphi - tmpImag_p1 * sinphi;
+                            double tmpImag = tmpImag_m0 + -tmpReal_m1 * sinphi + tmpImag_m1 * cosphi
+                                    + tmpReal_p1 * sinphi + tmpImag_p1 * cosphi;
 
                             u[k] = new Complex(tmpReal, tmpImag);
                         }
-                    } else if (specFile.spcFileType.equals(SPCType.PFSHCAT) ) {
+                    } else if (specFile.spcFileType.equals(SPCType.PFSHCAT)) {
                         for (int k = 0; k < specFile.nElement; k++) {
                             double tmpReal_m2 = dis.readDouble();
                             double tmpImag_m2 = dis.readDouble();
@@ -242,18 +240,18 @@ public class SPCFile implements SPCFileAccess {
                             double tmpReal_p2 = dis.readDouble();
                             double tmpImag_p2 = dis.readDouble();
 
-                            double tmpReal = tmpReal_m2*cos2phi + tmpImag_m2*sin2phi
-                                    + tmpReal_m1*cosphi + tmpImag_m1*sinphi
-                                    + tmpReal_p1*cosphi - tmpImag_p1*sinphi
-                                    + tmpReal_p2*cos2phi - tmpImag_p2*sin2phi;
-                            double tmpImag = -tmpReal_m2*sin2phi + tmpImag_m2*cos2phi
-                                    - tmpReal_m1*sinphi + tmpImag_m1*cosphi
-                                    + tmpReal_p1*sinphi + tmpImag_p1*cosphi
-                                    + tmpReal_p2*sin2phi + tmpImag_p2*cos2phi;
+                            double tmpReal = tmpReal_m2 * cos2phi + tmpImag_m2 * sin2phi
+                                    + tmpReal_m1 * cosphi + tmpImag_m1 * sinphi
+                                    + tmpReal_p1 * cosphi - tmpImag_p1 * sinphi
+                                    + tmpReal_p2 * cos2phi - tmpImag_p2 * sin2phi;
+                            double tmpImag = -tmpReal_m2 * sin2phi + tmpImag_m2 * cos2phi
+                                    - tmpReal_m1 * sinphi + tmpImag_m1 * cosphi
+                                    + tmpReal_p1 * sinphi + tmpImag_p1 * cosphi
+                                    + tmpReal_p2 * sin2phi + tmpImag_p2 * cos2phi;
 
                             u[k] = new Complex(tmpReal, tmpImag);
                         }
-                    } else if (specFile.spcFileType.equals(SPCType.PFPSVCAT) ) {
+                    } else if (specFile.spcFileType.equals(SPCType.PFPSVCAT)) {
                         for (int k = 0; k < specFile.nElement; k++) {
                             double tmpReal_m2 = dis.readDouble();
                             double tmpImag_m2 = dis.readDouble();
@@ -266,14 +264,14 @@ public class SPCFile implements SPCFileAccess {
                             double tmpReal_p2 = dis.readDouble();
                             double tmpImag_p2 = dis.readDouble();
 
-                            double tmpReal = tmpReal_m0 + tmpReal_m2*cos2phi + tmpImag_m2*sin2phi
-                                    + tmpReal_m1*cosphi + tmpImag_m1*sinphi
-                                    + tmpReal_p1*cosphi - tmpImag_p1*sinphi
-                                    + tmpReal_p2*cos2phi - tmpImag_p2*sin2phi;
-                            double tmpImag = tmpImag_m0 - tmpReal_m2*sin2phi + tmpImag_m2*cos2phi
-                                    - tmpReal_m1*sinphi + tmpImag_m1*cosphi
-                                    + tmpReal_p1*sinphi + tmpImag_p1*cosphi
-                                    + tmpReal_p2*sin2phi + tmpImag_p2*cos2phi;
+                            double tmpReal = tmpReal_m0 + tmpReal_m2 * cos2phi + tmpImag_m2 * sin2phi
+                                    + tmpReal_m1 * cosphi + tmpImag_m1 * sinphi
+                                    + tmpReal_p1 * cosphi - tmpImag_p1 * sinphi
+                                    + tmpReal_p2 * cos2phi - tmpImag_p2 * sin2phi;
+                            double tmpImag = tmpImag_m0 - tmpReal_m2 * sin2phi + tmpImag_m2 * cos2phi
+                                    - tmpReal_m1 * sinphi + tmpImag_m1 * cosphi
+                                    + tmpReal_p1 * sinphi + tmpImag_p1 * cosphi
+                                    + tmpReal_p2 * sin2phi + tmpImag_p2 * cos2phi;
 
                             u[k] = new Complex(tmpReal, tmpImag);
                         }
