@@ -4,9 +4,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Arrays;
 import java.util.List;
-
 import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
-
 import io.github.kensuke1984.kibrary.elastic.VariableType;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
 
@@ -61,19 +59,25 @@ public class StructurePlotAid {
         PolynomialFunction[] functions;
         switch (variable) {
         case RHO:
-            functions = structure.getRho(); break;
+            functions = structure.getRho();
+            break;
         case Vpv:
-            functions = structure.getVpv(); break;
+            functions = structure.getVpv();
+            break;
         case Vph:
         case Vp:
-            functions = structure.getVph(); break;
+            functions = structure.getVph();
+            break;
         case Vsv:
-            functions = structure.getVsv(); break;
+            functions = structure.getVsv();
+            break;
         case Vsh:
         case Vs:
-            functions = structure.getVsh(); break;
+            functions = structure.getVsh();
+            break;
         case ETA:
-            functions = structure.getEta(); break;
+            functions = structure.getEta();
+            break;
         default:
             throw new IllegalArgumentException(variable + " not supported yet.");
         }
@@ -148,7 +152,7 @@ public class StructurePlotAid {
      * @return (String) String specifying line type.
      */
     String lineTypeFor(int iStructure, int iModel, VariableType variable, int nStructure) {
-        switch(structureDistinguisher) {
+        switch (structureDistinguisher) {
         case SHADE:
         case DASH:
             return lineTypeFor(nStructure - 1 - iStructure, iModel, variable);
@@ -171,19 +175,19 @@ public class StructurePlotAid {
         int iShade = 1;
         int iDash = 1;
         // select
-        switch(structureDistinguisher) {
+        switch (structureDistinguisher) {
         case COLOR: iColor = iStructure % 6; break;
         case SHADE: iShade = iStructure % 4; break;
         case DASH: iDash = iStructure + 1; break;
         case NONE: break;
         }
-        switch(modelDistinguisher) {
+        switch (modelDistinguisher) {
         case COLOR: iColor = iModel % 6; break;
         case SHADE: iShade = iModel % 4; break;
         case DASH: iDash = iModel + 1; break;
         case NONE: break;
         }
-        switch(variableDistinguisher) {
+        switch (variableDistinguisher) {
         case COLOR: iColor = iVariable % 6; break;
         case SHADE: iShade = iVariable % 4; break;
         case DASH: iDash = iVariable + 1; break;

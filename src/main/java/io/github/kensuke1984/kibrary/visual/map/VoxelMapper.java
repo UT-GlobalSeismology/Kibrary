@@ -7,13 +7,11 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.stream.Collectors;
-
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionGroup;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
-
 import io.github.kensuke1984.kibrary.Summon;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
@@ -130,7 +128,7 @@ public class VoxelMapper {
         // output GMT script
         String gmtFileName = "voxelMap.sh";
         Path gmtPath = outPath.resolve(gmtFileName);
-        outputGMT(gmtPath, regionString, projectionString, tickString) ;
+        outputGMT(gmtPath, regionString, projectionString, tickString);
 
         System.err.println("After this finishes, please run " + gmtPath);
     }

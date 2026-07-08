@@ -7,9 +7,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.Map;
-
 import org.apache.commons.math3.util.Precision;
-
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.elastic.VariableType;
@@ -29,7 +27,7 @@ import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
  * @author otsuru
  * @since 2024/11/6
  */
-public class ScalarStructurePlotter  extends Operation {
+public class ScalarStructurePlotter extends Operation {
 
     /**
      * Margin in radius direction (y-axis).

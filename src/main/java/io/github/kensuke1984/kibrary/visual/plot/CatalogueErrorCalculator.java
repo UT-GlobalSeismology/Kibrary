@@ -13,9 +13,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
-
 import org.apache.commons.math3.util.Precision;
-
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.elastic.VariableType;
@@ -121,8 +119,8 @@ public class CatalogueErrorCalculator extends Operation {
             pw.println("########## Up to " + MAX_PAIR + " pairs can be managed. Any pair may be left blank.");
             for (int i = 1; i <= MAX_PAIR; i++) {
                 pw.println("##" + MathAid.ordinalNumber(i) + " set.");
-                 pw.println("#dtheta" + i + " ");
-                 pw.println("#catPartialPath" + i + " partial");
+                pw.println("#dtheta" + i + " ");
+                pw.println("#catPartialPath" + i + " partial");
             }
         }
         System.err.println(outPath + " is created.");
@@ -142,8 +140,7 @@ public class CatalogueErrorCalculator extends Operation {
         variableTypes = Arrays.stream(property.parseStringArray("variableTypes", "MU")).map(VariableType::valueOf)
                 .collect(Collectors.toSet());
 
-        tendEvents = Arrays.stream(property.parseStringArray("tendEvents", null)).map(GlobalCMTID::new)
-                    .collect(Collectors.toSet());
+        tendEvents = Arrays.stream(property.parseStringArray("tendEvents", null)).map(GlobalCMTID::new).collect(Collectors.toSet());
         tendObservers = property.parseString("tendObservers", null);
 
         voxelPosition = property.parseDoubleArray("tendVoxelPosition", null);
@@ -271,7 +268,7 @@ public class CatalogueErrorCalculator extends Operation {
         if (!Files.exists(filePath))
             Files.createFile(filePath);
         PrintWriter pw = new PrintWriter(new FileWriter(filePath.toString(), true));
-        for (int i = 0; i < dthetas.size(); i ++)
+        for (int i = 0; i < dthetas.size(); i++)
             pw.println(dthetas.get(i) + " " + relativeErrors.get(i));
         pw.close();
 
@@ -295,7 +292,7 @@ public class CatalogueErrorCalculator extends Operation {
         pw2.println("set sample 11");
         pw2.println("set output 'relativeError.png'");
         for (int i = 0; i < dthetas.size(); i++) {
-             pw2.println("set label " + (i + 1) + " point pt 2 ps 2 lc rgb \"red\" at " + dthetas.get(i) + "," + relativeErrors.get(i));
+            pw2.println("set label " + (i + 1) + " point pt 2 ps 2 lc rgb \"red\" at " + dthetas.get(i) + "," + relativeErrors.get(i));
         }
         pw2.println("p [" + minDTheta + ":" + maxDTheta * 2. + "][0.001:1000] 1/0 notitle");
         pw2.close();

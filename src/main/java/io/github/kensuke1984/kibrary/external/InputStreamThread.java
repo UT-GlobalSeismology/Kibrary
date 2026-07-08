@@ -41,7 +41,7 @@ public class InputStreamThread extends Thread {
         // By using try-with-resources, br will certainly be closed.
         // INPUT_STREAM_READER, and also the InputStream used to make it, will then be closed as well.
         try (BufferedReader br = new BufferedReader(inputStreamReader)) {
-            for (; ; ) {
+            for (;;) {
                 String line = br.readLine();
                 if (line == null) break;
                 inputStringList.add(line);

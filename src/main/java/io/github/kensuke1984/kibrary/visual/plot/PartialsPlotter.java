@@ -12,9 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-
 import org.apache.commons.math3.util.Precision;
-
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
@@ -184,209 +182,207 @@ public class PartialsPlotter extends Operation {
         residualScale = property.parseDouble("residualScale", "1e7");
     }
 
-   @Override
-   public void run() throws IOException {
-       List<PartialID> partialIDs = PartialIDFile.read(partialPath, true).stream().filter(id ->
-               components.contains(id.getSacComponent())
-               && tendEvents.contains(id.getGlobalCMTID())
-               && tendObserverNames.contains(id.getObserver().toString())
-               && checkPosition(id.getVoxelPosition()))
-               .collect(Collectors.toList());
+    @Override
+    public void run() throws IOException {
+        List<PartialID> partialIDs = PartialIDFile.read(partialPath, true).stream().filter(id -> components.contains(id.getSacComponent())
+                && tendEvents.contains(id.getGlobalCMTID())
+                && tendObserverNames.contains(id.getObserver().toString())
+                && checkPosition(id.getVoxelPosition()))
+                .collect(Collectors.toList());
 
-       // read basicIDs
-       if (basicPath != null) {
-           basicIDs = BasicIDFile.read(basicPath, true);
-       }
+        // read basicIDs
+        if (basicPath != null) {
+            basicIDs = BasicIDFile.read(basicPath, true);
+        }
 
-       // read travel time information
-       if (travelTimePath != null) {
-           travelTimeInfoSet = TravelTimeInformationFile.read(travelTimePath);
-       }
+        // read travel time information
+        if (travelTimePath != null) {
+            travelTimeInfoSet = TravelTimeInformationFile.read(travelTimePath);
+        }
 
-       // prepare output folder
-       Path outPath = DatasetAid.createOutputFolder(workPath, "partialPlot", folderTag, appendFolderDate, null);
-       property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
+        // prepare output folder
+        Path outPath = DatasetAid.createOutputFolder(workPath, "partialPlot", folderTag, appendFolderDate, null);
+        property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
-       int num = 0;
-       for (GlobalCMTID event : tendEvents) {
-           for (String observerName : tendObserverNames) {
-               Path eventObserverPath = outPath.resolve(event + "_" + observerName);
+        int num = 0;
+        for (GlobalCMTID event : tendEvents) {
+            for (String observerName : tendObserverNames) {
+                Path eventObserverPath = outPath.resolve(event + "_" + observerName);
 
-               for (SACComponent component : components) {
-                   List<PartialID> useIDs = partialIDs.stream().filter(id ->
-                           id.getSacComponent().equals(component)
-                           && id.getGlobalCMTID().equals(event)
-                           && id.getObserver().toString().equals(observerName))
-                           .sorted(Comparator.comparing(PartialID::getVoxelPosition))
-                           .collect(Collectors.toList());
-                   if (useIDs.size() == 0) continue;
+                for (SACComponent component : components) {
+                    List<PartialID> useIDs = partialIDs.stream().filter(id -> id.getSacComponent().equals(component)
+                            && id.getGlobalCMTID().equals(event)
+                            && id.getObserver().toString().equals(observerName))
+                            .sorted(Comparator.comparing(PartialID::getVoxelPosition))
+                            .collect(Collectors.toList());
+                    if (useIDs.size() == 0) continue;
 
-                   Files.createDirectories(eventObserverPath);
-                   String fileNameRoot = "plot_" + event + "_" + observerName + "_" + component;
-                   createPlot(eventObserverPath, useIDs, fileNameRoot);
-                   num++;
-               }
-           }
-       }
-       System.err.println("Created " + MathAid.switchSingularPlural(num, "plot.", "plots."));
-   }
+                    Files.createDirectories(eventObserverPath);
+                    String fileNameRoot = "plot_" + event + "_" + observerName + "_" + component;
+                    createPlot(eventObserverPath, useIDs, fileNameRoot);
+                    num++;
+                }
+            }
+        }
+        System.err.println("Created " + MathAid.switchSingularPlural(num, "plot.", "plots."));
+    }
 
-   private boolean checkPosition(FullPosition position) {
+    private boolean checkPosition(FullPosition position) {
 
-       // check latitude
-       double latitude = position.getLatitude();
-       boolean flag = false;
-       for (double tendLatitude : tendVoxelLatitudes) {
-           if (Precision.equals(latitude, tendLatitude, FullPosition.LATITUDE_EPSILON)) {
-               flag = true;
-               break;
-           }
-       }
-       if (flag == false) return false;
+        // check latitude
+        double latitude = position.getLatitude();
+        boolean flag = false;
+        for (double tendLatitude : tendVoxelLatitudes) {
+            if (Precision.equals(latitude, tendLatitude, FullPosition.LATITUDE_EPSILON)) {
+                flag = true;
+                break;
+            }
+        }
+        if (flag == false) return false;
 
-       // check longitude
-       double longitude = position.getLongitude();
-       flag = false;
-       for (double tendLongitude : tendVoxelLongitudes) {
-           if (Precision.equals(longitude, tendLongitude, FullPosition.LONGITUDE_EPSILON)) {
-               flag = true;
-               break;
-           }
-       }
-       if (flag == false) return false;
+        // check longitude
+        double longitude = position.getLongitude();
+        flag = false;
+        for (double tendLongitude : tendVoxelLongitudes) {
+            if (Precision.equals(longitude, tendLongitude, FullPosition.LONGITUDE_EPSILON)) {
+                flag = true;
+                break;
+            }
+        }
+        if (flag == false) return false;
 
-       // check radius
-       double radius = position.getR();
-       flag = false;
-       for (double tendRadius : tendVoxelRadii) {
-           if (Precision.equals(radius, tendRadius, FullPosition.RADIUS_EPSILON)) {
-               flag = true;
-               break;
-           }
-       }
-       return flag;
-   }
+        // check radius
+        double radius = position.getR();
+        flag = false;
+        for (double tendRadius : tendVoxelRadii) {
+            if (Precision.equals(radius, tendRadius, FullPosition.RADIUS_EPSILON)) {
+                flag = true;
+                break;
+            }
+        }
+        return flag;
+    }
 
-   private void createPlot(Path rayPath, List<PartialID> ids, String fileNameRoot) throws IOException {
-       if (ids.size() == 0) {
-           return;
-       }
+    private void createPlot(Path rayPath, List<PartialID> ids, String fileNameRoot) throws IOException {
+        if (ids.size() == 0) {
+            return;
+        }
 
-       // output partial data in text file
-       String fileName = "partialWaveforms." + ids.get(0).getSacComponent() + ".txt";
-       outputWaveformTxt(rayPath.resolve(fileName), ids);
+        // output partial data in text file
+        String fileName = "partialWaveforms." + ids.get(0).getSacComponent() + ".txt";
+        outputWaveformTxt(rayPath.resolve(fileName), ids);
 
-       // output waveform data to text file
-       boolean wroteBasic = false;
-       String basicFileName = null;
-       if (basicIDs != null) {
-           List<BasicID> pairIDs = basicIDs.stream().filter(basic -> BasicID.isPair(basic, ids.get(0))).collect(Collectors.toList());
-           if (pairIDs.size() != 2) {
-               System.err.println(pairIDs.size());
-               for (BasicID basic : pairIDs) System.err.println(basic);
-               System.err.println("Failed to find basicIDs for " + ids.get(0).getGlobalCMTID() + " " + ids.get(0).getObserver()
-                       + " " + ids.get(0).getSacComponent());
-           } else {
-               BasicID obsID = (pairIDs.get(0).getWaveformType() == WaveformType.OBS) ? pairIDs.get(0) : pairIDs.get(1);
-               BasicID synID = (pairIDs.get(0).getWaveformType() == WaveformType.SYN) ? pairIDs.get(0) : pairIDs.get(1);
-               basicFileName = BasicIDFile.getWaveformTxtFileName(obsID);
-               BasicIDFile.outputWaveformTxt(rayPath, obsID, synID);
-               wroteBasic = true;
-           }
-       }
+        // output waveform data to text file
+        boolean wroteBasic = false;
+        String basicFileName = null;
+        if (basicIDs != null) {
+            List<BasicID> pairIDs = basicIDs.stream().filter(basic -> BasicID.isPair(basic, ids.get(0))).collect(Collectors.toList());
+            if (pairIDs.size() != 2) {
+                System.err.println(pairIDs.size());
+                for (BasicID basic : pairIDs) System.err.println(basic);
+                System.err.println("Failed to find basicIDs for " + ids.get(0).getGlobalCMTID() + " " + ids.get(0).getObserver()
+                        + " " + ids.get(0).getSacComponent());
+            } else {
+                BasicID obsID = (pairIDs.get(0).getWaveformType() == WaveformType.OBS) ? pairIDs.get(0) : pairIDs.get(1);
+                BasicID synID = (pairIDs.get(0).getWaveformType() == WaveformType.SYN) ? pairIDs.get(0) : pairIDs.get(1);
+                basicFileName = BasicIDFile.getWaveformTxtFileName(obsID);
+                BasicIDFile.outputWaveformTxt(rayPath, obsID, synID);
+                wroteBasic = true;
+            }
+        }
 
-       GnuplotFile gnuplot = new GnuplotFile(rayPath.resolve(fileNameRoot + ".plt"));
+        GnuplotFile gnuplot = new GnuplotFile(rayPath.resolve(fileNameRoot + ".plt"));
 
-       GnuplotLineAppearance partialAppearance = new GnuplotLineAppearance(1, GnuplotColorName.dark_green, 1);
-       GnuplotLineAppearance resAppearance = new GnuplotLineAppearance(1, GnuplotColorName.skyblue, 1);
-       GnuplotLineAppearance zeroAppearance = new GnuplotLineAppearance(1, GnuplotColorName.light_gray, 1);
-       GnuplotLineAppearance usePhaseAppearance = new GnuplotLineAppearance(1, GnuplotColorName.turquoise, 1);
-       GnuplotLineAppearance avoidPhaseAppearance = new GnuplotLineAppearance(1, GnuplotColorName.violet, 1);
+        GnuplotLineAppearance partialAppearance = new GnuplotLineAppearance(1, GnuplotColorName.dark_green, 1);
+        GnuplotLineAppearance resAppearance = new GnuplotLineAppearance(1, GnuplotColorName.skyblue, 1);
+        GnuplotLineAppearance zeroAppearance = new GnuplotLineAppearance(1, GnuplotColorName.light_gray, 1);
+        GnuplotLineAppearance usePhaseAppearance = new GnuplotLineAppearance(1, GnuplotColorName.turquoise, 1);
+        GnuplotLineAppearance avoidPhaseAppearance = new GnuplotLineAppearance(1, GnuplotColorName.violet, 1);
 
-       gnuplot.setOutput("pdf", fileNameRoot + ".pdf", 21, 29.7, true);
-       gnuplot.setMarginH(15, 5);
-       gnuplot.setFont("Arial", 10, 8, 8, 8, 8);
-       gnuplot.setCommonKey(true, false, "top right");
+        gnuplot.setOutput("pdf", fileNameRoot + ".pdf", 21, 29.7, true);
+        gnuplot.setMarginH(15, 5);
+        gnuplot.setFont("Arial", 10, 8, 8, 8, 8);
+        gnuplot.setCommonKey(true, false, "top right");
 
-       int i;
-       for (i = 0; i < ids.size(); i++) {
-           PartialID id = ids.get(i);
+        int i;
+        for (i = 0; i < ids.size(); i++) {
+            PartialID id = ids.get(i);
 
-           // set xrange
-           gnuplot.setXrange(id.getStartTime() - FRONT_MARGIN, id.getStartTime() - FRONT_MARGIN + timeLength);
+            // set xrange
+            gnuplot.setXrange(id.getStartTime() - FRONT_MARGIN, id.getStartTime() - FRONT_MARGIN + timeLength);
 
-           // display data of time window
-           gnuplot.addLabel(id.getObserver().toPaddedInfoString() + " " + id.getSacComponent().toString(), "graph", 0.01, 0.95);
-           gnuplot.addLabel(id.getGlobalCMTID().toString(), "graph", 0.01, 0.85);
-           gnuplot.addLabel(id.getVoxelPosition().toString(), "graph", 0.01, 0.75);
+            // display data of time window
+            gnuplot.addLabel(id.getObserver().toPaddedInfoString() + " " + id.getSacComponent().toString(), "graph", 0.01, 0.95);
+            gnuplot.addLabel(id.getGlobalCMTID().toString(), "graph", 0.01, 0.85);
+            gnuplot.addLabel(id.getVoxelPosition().toString(), "graph", 0.01, 0.75);
 
-           // plot waveforms
-           gnuplot.addLine("0", zeroAppearance, "");
-           gnuplot.addLine(fileName, 1, i + 2, partialAppearance, "partial");
-           if (wroteBasic) gnuplot.addLine(basicFileName, "3:(($2-$4)/" + residualScale + ")", resAppearance, "residual/" + residualScale);
+            // plot waveforms
+            gnuplot.addLine("0", zeroAppearance, "");
+            gnuplot.addLine(fileName, 1, i + 2, partialAppearance, "partial");
+            if (wroteBasic) gnuplot.addLine(basicFileName, "3:(($2-$4)/" + residualScale + ")", resAppearance, "residual/" + residualScale);
 
-           // add vertical lines and labels of travel times
-           if (travelTimeInfoSet != null) {
-               travelTimeInfoSet.stream()
-                       .filter(info -> info.getEvent().equals(id.getGlobalCMTID()) && info.getObserver().equals(id.getObserver()))
-                       .forEach(info -> {
-                           Map<Phase, Double> usePhaseMap = info.getUsePhases();
-                           for (Map.Entry<Phase, Double> entry : usePhaseMap.entrySet()) {
-                               gnuplot.addArrow(entry.getValue(), usePhaseAppearance);
-                               gnuplot.addLabel(entry.getKey().toString(), "first", entry.getValue(), "graph", 0.95, GnuplotColorName.turquoise);
-                           }
-                           Map<Phase, Double> avoidPhaseMap = info.getAvoidPhases();
-                           for (Map.Entry<Phase, Double> entry : avoidPhaseMap.entrySet()) {
-                               gnuplot.addArrow(entry.getValue(), avoidPhaseAppearance);
-                               gnuplot.addLabel(entry.getKey().toString(), "first", entry.getValue(), "graph", 0.95, GnuplotColorName.violet);
-                           }
-                       });
-           }
+            // add vertical lines and labels of travel times
+            if (travelTimeInfoSet != null) {
+                travelTimeInfoSet.stream()
+                        .filter(info -> info.getEvent().equals(id.getGlobalCMTID()) && info.getObserver().equals(id.getObserver()))
+                        .forEach(info -> {
+                            Map<Phase, Double> usePhaseMap = info.getUsePhases();
+                            for (Map.Entry<Phase, Double> entry : usePhaseMap.entrySet()) {
+                                gnuplot.addArrow(entry.getValue(), usePhaseAppearance);
+                                gnuplot.addLabel(entry.getKey().toString(), "first", entry.getValue(), "graph", 0.95, GnuplotColorName.turquoise);
+                            }
+                            Map<Phase, Double> avoidPhaseMap = info.getAvoidPhases();
+                            for (Map.Entry<Phase, Double> entry : avoidPhaseMap.entrySet()) {
+                                gnuplot.addArrow(entry.getValue(), avoidPhaseAppearance);
+                                gnuplot.addLabel(entry.getKey().toString(), "first", entry.getValue(), "graph", 0.95, GnuplotColorName.violet);
+                            }
+                        });
+            }
 
-           // this is not done for the last obsID because we don't want an extra blank page to be created
-           if ((i + 1) < ids.size()) {
-               if ((i + 1) % NUM_PER_PAGE == 0) {
-                   gnuplot.nextPage();
-               } else {
-                   gnuplot.nextField();
-               }
-           }
+            // this is not done for the last obsID because we don't want an extra blank page to be created
+            if ((i + 1) < ids.size()) {
+                if ((i + 1) % NUM_PER_PAGE == 0) {
+                    gnuplot.nextPage();
+                } else {
+                    gnuplot.nextField();
+                }
+            }
 
-       }
-       // fill the last page with blank fields so that fields on the last page will get the same size as those on other pages
-       while(i % NUM_PER_PAGE != 0) {
-           i++;
-           gnuplot.nextField();
-       }
+        }
+        // fill the last page with blank fields so that fields on the last page will get the same size as those on other pages
+        while (i % NUM_PER_PAGE != 0) {
+            i++;
+            gnuplot.nextField();
+        }
 
-       gnuplot.write();
-       if (!gnuplot.execute()) System.err.println("gnuplot failed!!");
-   }
+        gnuplot.write();
+        if (!gnuplot.execute()) System.err.println("gnuplot failed!!");
+    }
 
-   /**
+    /**
      * @param outputPath (Path) Output text file
      * @param ids (PartialID[]) Partial IDs, must have same start time and sampling Hz.
      * @throws IOException
      */
     private static void outputWaveformTxt(Path outputPath, List<PartialID> ids) throws IOException {
-       double startTime = ids.get(0).getStartTime();
-       double samplingHz = ids.get(0).getSamplingHz();
-       List<double[]> dataList = ids.stream().map(PartialID::getData).collect(Collectors.toList());
+        double startTime = ids.get(0).getStartTime();
+        double samplingHz = ids.get(0).getSamplingHz();
+        List<double[]> dataList = ids.stream().map(PartialID::getData).collect(Collectors.toList());
 
-       try (PrintWriter pwTrace = new PrintWriter(Files.newBufferedWriter(outputPath))){
+        try (PrintWriter pwTrace = new PrintWriter(Files.newBufferedWriter(outputPath))) {
 
-           // each time step
-           for (int j = 0; j < dataList.get(0).length; j++) {
-               double time = startTime + j / samplingHz;
-               pwTrace.print(time);
+            // each time step
+            for (int j = 0; j < dataList.get(0).length; j++) {
+                double time = startTime + j / samplingHz;
+                pwTrace.print(time);
 
-               // each Partial ID
-               for (int k = 0; k < ids.size(); k++) {
-                   pwTrace.print(" " + dataList.get(k)[j]);
-               }
-               pwTrace.println();
-           }
-       }
-   }
+                // each Partial ID
+                for (int k = 0; k < ids.size(); k++) {
+                    pwTrace.print(" " + dataList.get(k)[j]);
+                }
+                pwTrace.println();
+            }
+        }
+    }
 
 }

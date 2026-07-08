@@ -12,7 +12,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
-
 import edu.sc.seis.TauP.TauModelException;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
@@ -300,7 +299,7 @@ public class RaypathMapper extends Operation {
 
         if (reusePath != null) {
             checkReusePath();
-        } else if (dataEntryPath != null){
+        } else if (dataEntryPath != null) {
             readAndOutput();
         } else {
             throw new IllegalStateException("Input folder or file not set");
@@ -329,12 +328,12 @@ public class RaypathMapper extends Operation {
     }
 
     private void checkReusePath() {
-        if (!Files.exists(reusePath.resolve(eventFileName)) || !Files.exists(reusePath.resolve(observerFileName))){
+        if (!Files.exists(reusePath.resolve(eventFileName)) || !Files.exists(reusePath.resolve(observerFileName))) {
             throw new IllegalStateException(reusePath + " is missing files.");
         }
         if (cutAtPiercePoint) {
             if (!Files.exists(reusePath.resolve(turningPointFileName)) || !Files.exists(reusePath.resolve(insideFileName))
-                    || !Files.exists(reusePath.resolve(outsideFileName))){
+                    || !Files.exists(reusePath.resolve(outsideFileName))) {
                 throw new IllegalStateException(reusePath + " is missing files.");
             }
         } else {
@@ -408,7 +407,7 @@ public class RaypathMapper extends Operation {
             insideSegments.stream().flatMap(segment -> segment.findTurningPoints(false, false, true, false).stream())
                     .forEach(pos -> diffStartPointLines.add(pos.toHorizontalPosition().toString()));
             insideSegments.stream().flatMap(segment -> segment.findTurningPoints(false, false, false, true).stream())
-            .forEach(pos -> diffEndPointLines.add(pos.toHorizontalPosition().toString()));
+                    .forEach(pos -> diffEndPointLines.add(pos.toHorizontalPosition().toString()));
             // add all raypath segments outside layer
             List<Raypath> outsideSegments = raypath.clipOutsideLayer(lowerPierceRadius, upperPierceRadius);
             outsideSegments.forEach(segment -> outsideLines.add(lineFor(raypath, segment)));
@@ -622,12 +621,23 @@ public class RaypathMapper extends Operation {
     private static int columnFor(int colorMode) {
         int binColumn;
         switch (colorMode) {
-        case COLOR_BY_PHASE: binColumn = 5; break;
-        case BIN_DISTANCE: binColumn = 6; break;
-        case BIN_SOURCE_AZIMUTH: binColumn = 7; break;
-        case BIN_BACK_AZIMUTH: binColumn = 8; break;
-        case BIN_TURNING_AZIMUTH: binColumn = 9; break;
-        default: throw new IllegalArgumentException("colorMode out of range");
+        case COLOR_BY_PHASE:
+            binColumn = 5;
+            break;
+        case BIN_DISTANCE:
+            binColumn = 6;
+            break;
+        case BIN_SOURCE_AZIMUTH:
+            binColumn = 7;
+            break;
+        case BIN_BACK_AZIMUTH:
+            binColumn = 8;
+            break;
+        case BIN_TURNING_AZIMUTH:
+            binColumn = 9;
+            break;
+        default:
+            throw new IllegalArgumentException("colorMode out of range");
         }
         return binColumn;
     }
@@ -635,12 +645,23 @@ public class RaypathMapper extends Operation {
     private static String headerFor(int colorMode) {
         String header;
         switch (colorMode) {
-        case COLOR_BY_PHASE: header = "Phase"; break;
-        case BIN_DISTANCE: header = "Distance"; break;
-        case BIN_SOURCE_AZIMUTH: header = "Azimuth"; break;
-        case BIN_BACK_AZIMUTH: header = "Back azimuth"; break;
-        case BIN_TURNING_AZIMUTH: header = "Azimuth"; break;
-        default: throw new IllegalArgumentException("colorMode out of range");
+        case COLOR_BY_PHASE:
+            header = "Phase";
+            break;
+        case BIN_DISTANCE:
+            header = "Distance";
+            break;
+        case BIN_SOURCE_AZIMUTH:
+            header = "Azimuth";
+            break;
+        case BIN_BACK_AZIMUTH:
+            header = "Back azimuth";
+            break;
+        case BIN_TURNING_AZIMUTH:
+            header = "Azimuth";
+            break;
+        default:
+            throw new IllegalArgumentException("colorMode out of range");
         }
         return header;
     }

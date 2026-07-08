@@ -1,10 +1,5 @@
 package io.github.kensuke1984.kibrary.external;
 
-import edu.sc.seis.TauP.Alert;
-import edu.sc.seis.TauP.TauModelException;
-import edu.sc.seis.TauP.TauPException;
-import io.github.kensuke1984.anisotime.Phase;
-
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -14,6 +9,10 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import edu.sc.seis.TauP.Alert;
+import edu.sc.seis.TauP.TauModelException;
+import edu.sc.seis.TauP.TauPException;
+import io.github.kensuke1984.anisotime.Phase;
 
 /**
  * successor of TauPTimeReader.
@@ -27,8 +26,7 @@ import java.util.stream.IntStream;
  * @see <a href='https://www.seis.sc.edu/taup/'>TauP</a>
  */
 public final class TauP_Time extends edu.sc.seis.TauP.TauP_Time {
-    private TauP_Time() {
-    }
+    private TauP_Time() {}
 
     /**
      * @param eventR             [km] radius of seismic source !!not depth from the surface!!

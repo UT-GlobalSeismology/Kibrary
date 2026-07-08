@@ -47,7 +47,7 @@ public class TauPPhase {
     private final String PURIST_NAME;
 
     TauPPhase(double distance, double depth, Phase phaseName, double travelTime, double rayParameter, double takeoff,
-              double incident, double puristDistance, String puristName) {
+            double incident, double puristDistance, String puristName) {
         DISTANCE = distance;
         DEPTH = depth;
         PHASE_NAME = phaseName;

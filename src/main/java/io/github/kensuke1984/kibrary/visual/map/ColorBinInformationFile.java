@@ -6,13 +6,11 @@ import java.nio.file.Files;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionGroup;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
-
 import io.github.kensuke1984.kibrary.Summon;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.InformationFileReader;
@@ -61,7 +59,7 @@ public class ColorBinInformationFile {
         values = new int[nSections + 1];
         colors = new String[nSections];
 
-        for (int i = 0 ; i < nSections + 1; i++) {
+        for (int i = 0; i < nSections + 1; i++) {
             values[i] = Integer.parseInt(reader.next());
             if (i == nSections) break;
             colors[i] = reader.next();

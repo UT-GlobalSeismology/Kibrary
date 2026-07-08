@@ -13,9 +13,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-
 import org.apache.commons.math3.util.Precision;
-
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.elastic.VariableType;
@@ -234,7 +232,7 @@ public class ModelStructurePlotter extends Operation {
             }
 
             // loop for each vector
-            for (String indexString : indexStrings){
+            for (String indexString : indexStrings) {
                 Path answerPath = methodPath.resolve(method.simpleName() + indexString + ".lst");
                 if (!Files.exists(answerPath)) {
                     System.err.println("!! Results for " + method.simpleName() + indexString + " do not exist, skipping.");
@@ -366,7 +364,7 @@ public class ModelStructurePlotter extends Operation {
             // plot models
             int i = 0;
             for (InverseMethodEnum method : inverseMethods) {
-                for (String indexString : indexStrings){
+                for (String indexString : indexStrings) {
                     String modelName = method.simpleName() + indexString;
                     pw.println("  \"../" + modelName + "/" + variable.toString().toLowerCase() + "Absolute.lst\" u 4:3 w l lw 2 "
                             + plotAid.lineTypeFor(1, i++, variable, 2) + " title '" + modelName + "', \\");

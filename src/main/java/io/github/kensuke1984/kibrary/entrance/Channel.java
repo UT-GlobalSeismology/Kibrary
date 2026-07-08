@@ -52,7 +52,7 @@ public class Channel {
     private final String[] CHANNELS;
 
     public Channel(String stationName, String networkName, LocalDateTime startTime, LocalDateTime endTime) {
-        this(stationName, networkName, startTime, endTime, new String[] { "BH?" });
+        this(stationName, networkName, startTime, endTime, new String[] {"BH?"});
     }
 
     public Channel(String stationName, String networkName, LocalDateTime startTime, LocalDateTime endTime,

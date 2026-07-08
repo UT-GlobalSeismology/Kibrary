@@ -10,7 +10,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.util.earth.Earth;
 
@@ -36,8 +35,7 @@ import io.github.kensuke1984.kibrary.util.earth.Earth;
  */
 public final class TauPTimeReader {
 
-    private TauPTimeReader() {
-    }
+    private TauPTimeReader() {}
 
     private static final String path = "taup_time";
 
@@ -133,7 +131,7 @@ public final class TauPTimeReader {
         double depth = Earth.EARTH_RADIUS - eventR;
         int iDepth = -1;
         for (int i = 0; i < depths.length - 1; i++) {
-            if (depth < depths[i+1] && depth >= depths[i])
+            if (depth < depths[i + 1] && depth >= depths[i])
                 iDepth = i;
         }
         if (iDepth != -1) {
@@ -143,8 +141,8 @@ public final class TauPTimeReader {
             phases.add(Phase.create("sS"));
 
             List<Double> traveltimes1 = toPhase(operateTauPTime(eventR, distance1, phases, model))
-                .stream().mapToDouble(p -> p.getTravelTime()).boxed()
-                .collect(Collectors.toList());
+                    .stream().mapToDouble(p -> p.getTravelTime()).boxed()
+                    .collect(Collectors.toList());
             List<Double> traveltimes2 = toPhase(operateTauPTime(eventR, distance2, phases, model))
                     .stream().mapToDouble(p -> p.getTravelTime()).boxed()
                     .collect(Collectors.toList());
@@ -155,7 +153,7 @@ public final class TauPTimeReader {
                 double firstArrival1 = traveltimes1.get(0);
                 double firstArrival2 = traveltimes2.get(0);
                 traveltime = (firstArrival2 - firstArrival1) / (distance2 - distance1)
-                    * (epicentralDistance - distance1) + firstArrival1;
+                        * (epicentralDistance - distance1) + firstArrival1;
             } catch (IndexOutOfBoundsException e) {
                 System.err.println("Error: " + eventR + " " + epicentralDistance + " " + depths[iDepth] + " " + distances[iDepth]);
                 e.printStackTrace();

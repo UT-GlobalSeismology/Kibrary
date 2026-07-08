@@ -31,8 +31,7 @@ public class GnuplotLineAppearance {
      *  linecolor black,
      *  linewidth 1
      */
-    public GnuplotLineAppearance() {
-    }
+    public GnuplotLineAppearance() {}
 
     public GnuplotLineAppearance(int dashtype, GnuplotColorName linecolor, double linewidth) {
         this.dashtype = dashtype;

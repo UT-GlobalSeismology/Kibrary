@@ -14,10 +14,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
-
 import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.RealVector;
-
 import edu.sc.seis.TauP.Arrival;
 import edu.sc.seis.TauP.TauModelException;
 import edu.sc.seis.TauP.TauP_Time;
@@ -607,15 +605,16 @@ public class BasicRecordSectionCreator extends Operation {
             //convert RAY_PARAMETER_INTERVAL (s/degree) to interval (s/rad)
             double interval = Math.toDegrees(RAY_PARAMETER_INTERVAL);
             //set up for anisotime
-            VelocityStructure structure = property.containsKey("structurePath") ?
-                    new io.github.kensuke1984.anisotime.PolynomialStructure(structurePath) : io.github.kensuke1984.anisotime.PolynomialStructure.of(structureName);
+            VelocityStructure structure = property.containsKey("structurePath")
+                    ? new io.github.kensuke1984.anisotime.PolynomialStructure(structurePath)
+                    : io.github.kensuke1984.anisotime.PolynomialStructure.of(structureName);
             double eventR = event.getEventData().getCmtPosition().getR();
             for (int p = 0; p < displayPhases.length; p++) {
                 String phaseName = displayPhases[p];
                 Phase phase = Phase.create(phaseName, computeSV);
                 PhasePart pp = ((GeneralPart) phase.getPassParts()[1]).getPhase();
                 double velocityAtHypocenter;
-                switch(pp) {
+                switch (pp) {
                 case P:
                 case K:
                 case I:

@@ -13,7 +13,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
@@ -380,7 +379,7 @@ public class BasicWaveformPlotter extends Operation {
             gnuplot.addLabel(obsID.getObserver().toPaddedInfoString() + " " + obsID.getSacComponent().toString(), "graph", 0.01, 0.95);
             gnuplot.addLabel(obsID.getGlobalCMTID().toString(), "graph", 0.01, 0.85);
             gnuplot.addLabel("dist: " + MathAid.roundToString(obsID.toDataEntry().computeEpicentralDistanceDeg(), 2)
-                + ", az: " + MathAid.roundToString(obsID.toDataEntry().computeAzimuthDeg(), 2), "graph", 0.01, 0.10);
+                    + ", az: " + MathAid.roundToString(obsID.toDataEntry().computeAzimuthDeg(), 2), "graph", 0.01, 0.10);
 
             // plot waveforms
             // Absolute paths are used here because relative paths are hard to construct when workPath != mainBasicPath.
@@ -451,7 +450,7 @@ public class BasicWaveformPlotter extends Operation {
             }
         }
         // fill the last page with blank fields so that fields on the last page will get the same size as those on other pages
-        while(i % NUM_PER_PAGE != 0) {
+        while (i % NUM_PER_PAGE != 0) {
             i++;
             gnuplot.nextField();
         }

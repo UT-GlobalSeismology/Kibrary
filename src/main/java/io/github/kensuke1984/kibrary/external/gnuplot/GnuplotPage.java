@@ -7,7 +7,7 @@ class GnuplotPage {
 
     private List<GnuplotField> fields = new ArrayList<GnuplotField>();
 
-    GnuplotPage(){
+    GnuplotPage() {
         // make first field
         fields.add(new GnuplotField());
     }

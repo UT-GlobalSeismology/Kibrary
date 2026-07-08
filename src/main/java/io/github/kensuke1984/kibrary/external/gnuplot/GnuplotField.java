@@ -16,8 +16,7 @@ class GnuplotField {
     private List<GnuplotLabel> labels = new ArrayList<>();
     private List<GnuplotArrow> arrows = new ArrayList<>();
 
-    GnuplotField(){
-    }
+    GnuplotField() {}
 
     // ----------line----------
 

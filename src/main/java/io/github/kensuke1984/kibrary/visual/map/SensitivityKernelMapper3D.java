@@ -14,7 +14,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
@@ -265,7 +264,7 @@ public class SensitivityKernelMapper3D extends Operation {
                                 && partial.getObserver().toString().equals(observerName))
                                 .collect(Collectors.toList());
                         if (partialsForEntry.size() == 0) continue;
-                        System.err.println("Working for " + component  + " " + variableType + " " + event + " " + observerName);
+                        System.err.println("Working for " + component + " " + variableType + " " + event + " " + observerName);
 
                         Path observerPath = outPath.resolve(event.toString() + "_" + observerName.toString());
                         Files.createDirectories(observerPath);
