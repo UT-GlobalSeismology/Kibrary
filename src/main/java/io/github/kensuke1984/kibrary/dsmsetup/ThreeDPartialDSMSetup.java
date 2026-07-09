@@ -52,9 +52,11 @@ import io.github.kensuke1984.kibrary.voxel.VoxelInformationFile;
  * By reusing the output folder, computation for events and observers that have already been computed for can be skipped.
  * When doing so, all computation settings (besides events and observers) should be kept the same.
  *
+ * @since 2016/1/25
  * @author Kensuke Konishi
- * @since a long time ago
- * @version 2021/12/24 renamed from InformationFileMaker to ThreeDPartialDSMSetup
+ *
+ * @version 2021/12/24 Renamed from dsminformation.InformationFileMaker to dsmsetup.ThreeDPartialDSMSetup.
+ * @author rei, otsuru
  */
 public class ThreeDPartialDSMSetup extends Operation {
 

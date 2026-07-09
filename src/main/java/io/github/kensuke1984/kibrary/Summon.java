@@ -5,7 +5,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
@@ -13,14 +12,13 @@ import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.lang3.StringUtils;
-
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 
 /**
  * A class for running {@link Brooklyn}s.
  *
- * @author otsuru
  * @since 2022/4/4
+ * @author otsuru
  */
 public final class Summon {
     private Summon() {}

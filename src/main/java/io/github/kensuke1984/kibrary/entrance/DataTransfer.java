@@ -26,8 +26,8 @@ import io.github.kensuke1984.kibrary.util.DatasetAid;
  * and eventDir/mseed created under it will include the downloaded mseed files.
  * TODO: OHP (Ocean Hemisphere network Project of ERI) will be prepared.
  *
+ * @since 2016/1/25
  * @author Kensuke Konishi
- * @since a long time ago
  */
 public final class DataTransfer {
     private DataTransfer() {}

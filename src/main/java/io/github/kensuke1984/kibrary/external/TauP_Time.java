@@ -21,9 +21,11 @@ import io.github.kensuke1984.anisotime.Phase;
  * </p>
  * PREM is used for travel times.
  *
- * @author Kensuke Konishi
- * @version 0.0.1
  * @see <a href='https://www.seis.sc.edu/taup/'>TauP</a>
+ *
+ * @since 2016/1/25
+ * @version 2018/3/23 Renamed from TaupTimeReader to TauP_Time.
+ * @author Kensuke Konishi
  */
 public final class TauP_Time extends edu.sc.seis.TauP.TauP_Time {
     private TauP_Time() {}

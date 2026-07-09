@@ -3,9 +3,9 @@ package io.github.kensuke1984.kibrary.elastic;
 /**
  * Parameters of elastic medium.
  *
- * @author otsuru
  * @since 2022/4/11
  * @version 2022/7/17 renamed & moved from util.earth.ParameterType to elastic.VariableType
+ * @author otsuru
  */
 
 public enum VariableType {

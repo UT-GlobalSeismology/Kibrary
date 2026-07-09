@@ -38,8 +38,8 @@ import java.util.Map;
  * <p>
  * CAUTION, this class is <b>NOT IMMUTABLE</b>.
  *
+ * @since 2022/4/11
  * @author otsuru
- * @since 2022//4/11
  */
 public class ElasticMedium implements Cloneable {
 

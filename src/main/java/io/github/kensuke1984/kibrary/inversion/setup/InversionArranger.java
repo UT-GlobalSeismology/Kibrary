@@ -7,10 +7,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.List;
-
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
-
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.inversion.WeightingHandler;
@@ -23,8 +21,8 @@ import io.github.kensuke1984.kibrary.voxel.UnknownParameterFile;
 /**
  * Operation for for assembling A<sup>T</sup>A and A<sup>T</sup>d.
  *
+ * @since 2022/7/4 created based on part of inversion.LetMeInvert.
  * @author otsuru
- * @since 2022/7/4 created based on part of inversion.LetMeInvert
  */
 public class InversionArranger extends Operation {
 

@@ -7,13 +7,11 @@ import java.nio.file.Paths;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionGroup;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
-
 import io.github.kensuke1984.kibrary.Summon;
 import io.github.kensuke1984.kibrary.elastic.VariableType;
 import io.github.kensuke1984.kibrary.perturbation.ScalarListFile;
@@ -25,9 +23,9 @@ import io.github.kensuke1984.kibrary.voxel.UnknownParameterFile;
 /**
  * Class to extract specified components of a matrix to get values for each {@link UnknownParameter}.
  *
- * @author otsuru
  * @since 2023/6/29
  * @version 2026/1/25 Renamed from DiagATAExtract to ExtractValuesFromMatrix.
+ * @author otsuru
  */
 public class ExtractValuesFromMatrix {
 

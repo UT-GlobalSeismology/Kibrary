@@ -36,8 +36,9 @@ import io.github.kensuke1984.kibrary.waveform.BasicID;
  *
  * CAUTION: {@link RealVector} is not immutable, so be careful when handing it over to other methods without deep-copying!
  *
+ * @since 2022/7/7 Created based on part of inversion.Dvector.
+ * @version 2023/5/13 created WeightingHandler based on inversion.setup.Weighting.
  * @author otsuru
- * @since 2023/5/13 created based on inversion.setup.Weighting, which was created based on part of inversion.Dvector
  */
 public class WeightingHandler {
 

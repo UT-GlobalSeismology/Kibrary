@@ -20,8 +20,8 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  * <p>
  * ω=2πfδt
  *
+ * @since 2016/1/25
  * @author Kensuke Konishi
- * @since a long time ago
  */
 public class BandPassFilter extends ButterworthFilter {
 

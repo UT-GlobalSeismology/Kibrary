@@ -3,24 +3,23 @@ package io.github.kensuke1984.kibrary;
 import java.awt.GraphicsEnvironment;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
 import javax.swing.GroupLayout;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.WindowConstants;
-
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
 
 /**
  * About Kibrary.
  *
- * @author Kensuke Konishi
- * @since a long time ago
- * @see <a href=https://github.com/kensuke1984/Kibrary>GitHub</a>
+ * @see <a href=https://github.com/UT-GlobalSeismology/Kibrary>GitHub</a>
  * @see <a href=https://kensuke1984.github.io/Kibrary>Javadoc</a>
+ *
+ * @since 2016/1/25
+ * @author Kensuke Konishi
  */
 public final class About extends javax.swing.JFrame {
     public static final String VERSION = "0.5.0.0";

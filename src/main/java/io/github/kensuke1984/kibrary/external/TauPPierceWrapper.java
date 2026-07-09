@@ -8,7 +8,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.DoubleStream;
-
 import edu.sc.seis.TauP.Arrival;
 import edu.sc.seis.TauP.TauModelException;
 import edu.sc.seis.TauP.TauP_Pierce;
@@ -28,9 +27,11 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
  *
  * @see <a href=http://www.seis.sc.edu/taup/>TauP</a>
  *
- * @author Kensuke Konishi
- * @since version 0.3.2.1
- * @version 2022/9/8 renamed from external.TauPPierceReader to external.TauPPierceWrapper
+ * @since 2017/8/30
+ * @author anpan
+ *
+ * @version 2022/9/8 renamed from external.TauPPierceReader to external.TauPPierceWrapper.
+ * @author otsuru
  */
 public final class TauPPierceWrapper {
 

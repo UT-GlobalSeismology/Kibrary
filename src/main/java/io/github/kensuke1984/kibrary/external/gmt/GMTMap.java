@@ -9,8 +9,8 @@ import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 /**
  * Helper for use of GMT
  *
+ * @since 2016/1/25
  * @author Kensuke Konishi
- * @version 0.0.3.6
  */
 public final class GMTMap {
 

@@ -9,9 +9,7 @@ import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
-
 import org.apache.commons.math3.linear.RealMatrix;
-
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.elastic.VariableType;
@@ -30,8 +28,8 @@ import io.github.kensuke1984.kibrary.voxel.UnknownParameterFile;
  * TODO when A~B and B~C (A~C may or may not be true)
  * TODO: only checked for 3D. May or may not work for 1D.
  *
- * @author otsuru
  * @since 2022/8/1
+ * @author otsuru
  */
 public class AdaptiveGridDesigner extends Operation {
 

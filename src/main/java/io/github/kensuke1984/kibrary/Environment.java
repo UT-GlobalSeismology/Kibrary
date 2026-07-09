@@ -9,15 +9,14 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Objects;
 import java.util.Properties;
-
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
 
 /**
- * Runtime environment
+ * Runtime environment.
  *
+ * @since 2016/1/25
  * @author Kensuke Konishi
- * @since a long time ago
  */
 public class Environment {
     private Environment() {}

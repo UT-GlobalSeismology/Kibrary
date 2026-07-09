@@ -20,10 +20,10 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
  * <p>
  * For OHP request, TTTT is now only one digit.
  *
+ * @see <a href=http://www.iris.edu/dms/nodes/dmc/manuals/breq_fast>official guide</a>
+ *
+ * @since 2016/1/25
  * @author Kensuke Konishi
- * @since a long time ago
- * @see <a href=http://www.iris.edu/dms/nodes/dmc/manuals/breq_fast>official
- * guide</a>
  */
 public class Channel {
 

@@ -5,7 +5,6 @@ import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
-
 import io.github.kensuke1984.kibrary.util.InformationFileReader;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 
@@ -14,8 +13,8 @@ import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
  *
  * TODO: coordinate rotation for regions near pole
  *
- * @author otsuru
  * @since 2026/2/6
+ * @author otsuru
  */
 public class CoordinateConverter {
 

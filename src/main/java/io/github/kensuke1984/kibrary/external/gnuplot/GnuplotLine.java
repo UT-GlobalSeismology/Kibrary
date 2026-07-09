@@ -3,8 +3,8 @@ package io.github.kensuke1984.kibrary.external.gnuplot;
 /**
  * Information about a line to be plotted in gnuplot.
  *
- * @author otsuru
  * @since 2021/12/06
+ * @author otsuru
  */
 class GnuplotLine {
 

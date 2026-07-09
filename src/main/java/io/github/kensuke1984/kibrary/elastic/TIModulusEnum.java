@@ -3,8 +3,8 @@ package io.github.kensuke1984.kibrary.elastic;
 /**
  * Enum for elements in modulus
  *
+ * @since 2016/1/25
  * @author Kensuke Konishi
- * @version 0.0.2
  */
 public enum TIModulusEnum {
     A, C, F, L, N, A_2N, ZERO;

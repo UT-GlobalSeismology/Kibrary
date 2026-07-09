@@ -8,10 +8,8 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 /**
  * .kml file for Google Earth.
  *
+ * @since 2017/04/21
  * @author Kensuke Konishi
- *         <p>
- *         Created by kensuke on 2017/04/21.
- * @version 0.0.1a
  */
 public class KeyHoleMarkupLanguage {
 

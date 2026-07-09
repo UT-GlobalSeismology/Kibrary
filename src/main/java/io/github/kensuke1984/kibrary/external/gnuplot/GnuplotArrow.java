@@ -3,8 +3,8 @@ package io.github.kensuke1984.kibrary.external.gnuplot;
 /**
  * Information about arrow to be displayed in gnuplot.
  *
- * @author otsuru
  * @since 2022/7/23
+ * @author otsuru
  */
 public class GnuplotArrow {
 

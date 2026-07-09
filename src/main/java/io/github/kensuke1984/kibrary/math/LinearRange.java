@@ -7,8 +7,8 @@ package io.github.kensuke1984.kibrary.math;
  * However, when the upper limit is the maximum allowed value, it is included, i.e. [lowerLimit:upperLimit].
  * (This is so that the maximum values, such as 90 in latitudes, can be included in one of the ranges.)
  *
- * @author otsuru
  * @since 2023/12/13
+ * @author otsuru
  */
 public class LinearRange {
 

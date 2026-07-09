@@ -13,8 +13,8 @@ import io.github.kensuke1984.kibrary.util.MathAid;
  * If you want to create a causal one, use {@link #setBackward(boolean)} and set
  * true.
  *
+ * @since 2016/1/25
  * @author Kensuke Konishi
- * @since a long time ago
  */
 public abstract class ButterworthFilter {
 

@@ -16,8 +16,11 @@ import java.time.format.DateTimeFormatter;
  * Class for RESP files, which allows us to download RESP files from IRIS DMC IRISWS RESP Web Service.
  * @see <a href=http://service.iris.edu/irisws/resp/1/> IRIS DMC IRISWS RESP Web Service Documentation
  *
- * @author Kenji Kawai
  * @since 2021/08/25
+ * @author Kenji Kawai
+ *
+ * @version 2021/10/5 Renamed from datarequest.RespDataIRIS to entrance.RespDataFile.
+ * @author otsuru
  */
 public class RespDataFile {
 

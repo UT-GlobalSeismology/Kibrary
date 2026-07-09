@@ -5,8 +5,8 @@ package io.github.kensuke1984.kibrary.elastic;
  * <p>
  * ijklのセットは何に属するか ijkl &rarr; 1, 2, 3
  *
+ * @since 2016/1/25
  * @author Kensuke Konishi
- * @version 0.0.2.1
  */
 public class ElasticModulus {
 

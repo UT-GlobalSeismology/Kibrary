@@ -3,6 +3,10 @@ package io.github.kensuke1984.kibrary.external.gnuplot;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * @since 2021/12/8
+ * @author otsuru
+ */
 class GnuplotField {
 
     private String xrange;

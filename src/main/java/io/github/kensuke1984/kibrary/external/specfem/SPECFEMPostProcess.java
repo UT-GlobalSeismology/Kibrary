@@ -4,21 +4,21 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionGroup;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
-
 import io.github.kensuke1984.kibrary.Summon;
 
 /**
  * Class to handle files produced by SPECFEM.
  *
+ * @since 2017/9/4
  * @author Anselme
- * @since a long time ago
- * @version 2024/11/4 Renamed from specfem.ProcessResult to external.specfem.SPECFEMPostProcess
+ *
+ * @version 2024/11/4 Renamed from specfem.ProcessResult to external.specfem.SPECFEMPostProcess.
+ * @author otsuru
  */
 public class SPECFEMPostProcess {
 

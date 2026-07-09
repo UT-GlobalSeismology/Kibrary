@@ -3,6 +3,12 @@ package io.github.kensuke1984.kibrary.entrance;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * List of URLs of each data center.
+ *
+ * @since 2026/6/12
+ * @author otsuru
+ */
 enum DataCenterEnum {
 
     IRIS("https://service.earthscope.org/fdsnws/dataselect/1/query?", "http://service.iris.edu/fdsnws/station/1/query?"),

@@ -14,14 +14,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.RealVector;
-
 import io.github.kensuke1984.kibrary.Summon;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.InformationFileReader;
@@ -41,8 +39,8 @@ import io.github.kensuke1984.kibrary.waveform.BasicIDFile;
  * <p>
  * Here, "station network latitude longitude" is for the observer.
  *
- * @author otsuru
  * @since 2024/3/22
+ * @author otsuru
  */
 public class EntryWeightListFile {
 

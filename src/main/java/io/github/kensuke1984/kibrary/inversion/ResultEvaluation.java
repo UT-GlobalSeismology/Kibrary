@@ -13,8 +13,8 @@ import io.github.kensuke1984.kibrary.util.MathAid;
 /**
  * Class that computes and writes variance and AIC for inversion results.
  *
- * @author otsuru
  * @since 2022/9/2
+ * @author otsuru
  */
 public class ResultEvaluation {
 

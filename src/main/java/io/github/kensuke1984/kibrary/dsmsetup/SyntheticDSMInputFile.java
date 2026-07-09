@@ -21,9 +21,11 @@ import io.github.kensuke1984.kibrary.util.spc.SPCMode;
 /**
  * Class for creating input files for TIPSV and TISH.
  *
+ * @since 2016/1/25
  * @author Kensuke Konishi
- * @since a long time ago
- * @version 2021/11/18 Renamed from dsminformation.DSMheader to dsmsetup.SyntheticDSMInputFile.
+ *
+ * @version 2021/11/18 Renamed from dsminformation.SyntheticDSMInfo to dsmsetup.SyntheticDSMInputFile.
+ * @author otsuru
  */
 public class SyntheticDSMInputFile extends DSMInputHeader {
 

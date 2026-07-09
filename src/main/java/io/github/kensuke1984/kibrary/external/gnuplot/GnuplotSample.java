@@ -6,8 +6,8 @@ import java.nio.file.Paths;
 /**
  * Sample of how to use {@link GnuplotFile}.
  *
- * @author otsuru
  * @since 2021/12/07
+ * @author otsuru
  */
 final class GnuplotSample {
 

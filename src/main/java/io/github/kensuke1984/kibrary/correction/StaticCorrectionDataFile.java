@@ -69,8 +69,11 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
  * When the main method of this class is executed,
  * the input binary-format file is output in ascii format in the standard output.
  *
+ * @since 2016/1/25
  * @author Kensuke Konishi
- * @since a long time ago
+ *
+ * @version 2021/11/3 Renamed from datacorrection.StaticCorrectionFile to correction.StaticCorrectionDataFile.
+ * @author otsuru
  */
 public final class StaticCorrectionDataFile {
     private StaticCorrectionDataFile() {}

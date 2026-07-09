@@ -2,7 +2,6 @@ package io.github.kensuke1984.kibrary.inversion.solve;
 
 import java.io.IOException;
 import java.nio.file.Path;
-
 import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.LUDecomposition;
 import org.apache.commons.math3.linear.MatrixUtils;
@@ -12,13 +11,13 @@ import org.apache.commons.math3.linear.RealVector;
 /**
  * Conjugate gradient method
  *
- *
- * @version 0.0.3.2
- * @author Kensuke Konishi
  * @see <a
  *      href=https://ja.wikipedia.org/wiki/%E5%85%B1%E5%BD%B9%E5%8B%BE%E9%85%8D%E6%B3%95>Japanese wiki</a> <a
  *      href=https://en.wikipedia.org/wiki/Conjugate_gradient_method>English
  *      wiki</a>
+ *
+ * @since 2020/10/14
+ * @author Anselme
  */
 public class PreconditionedConjugateGradientMethod extends InversionMethod {
 

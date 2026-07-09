@@ -8,16 +8,16 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-
 import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
-
 import io.github.kensuke1984.kibrary.math.ParallelizedMatrix;
 
 /**
- * @author Anselme
  * Implementation of the non negative least square algorithm of Stark and Parker (1993)
+ *
+ * @since 2020/10/14
+ * @author Anselme
  */
 public class NonNegativeLeastSquaresMethod extends InversionMethod {
 

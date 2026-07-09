@@ -6,8 +6,8 @@ import java.time.LocalDateTime;
  * Class for handling tasks related to the name of SAC files.
  * To be used in {@link EventProcessor}.
  *
+ * @since 2016/1/25
  * @author Kensuke Konishi
- * @since a long time ago
  */
 class SacFileName implements Comparable<SacFileName> {
 

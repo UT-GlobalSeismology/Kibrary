@@ -4,14 +4,13 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.NoSuchFileException;
-
 import io.github.kensuke1984.kibrary.external.ExternalProcess;
 
 /**
  * Class for operating Gnuplot in dialog mode.
  *
+ * @since 2016/1/25
  * @author Kensuke Konishi
- * @since version 0.0.2
  */
 public class Gnuplot extends ExternalProcess implements Closeable {
     private PrintWriter standardInput;

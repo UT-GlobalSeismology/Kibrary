@@ -11,7 +11,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
-
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
@@ -44,9 +43,11 @@ import io.github.kensuke1984.kibrary.util.spc.SPCMode;
  * </ul>
  * Then, the DSM input files will be created for the (event, observer) pairs that have been chosen.
  *
- * @author ?
- * @since a long time ago
- * @version 2021/11/2 renamed from SyntheticDSMInformationFileMaker
+ * @since 2016/1/25
+ * @author Kensuke Konishi
+ *
+ * @version 2021/11/18 renamed from dsminformation.SyntheticDSMInformationFileMaker to dsmsetup.SyntheticDSMSetup.
+ * @author otsuru
  */
 public class SyntheticDSMSetup extends Operation {
 

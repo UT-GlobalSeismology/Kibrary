@@ -1,20 +1,18 @@
 package io.github.kensuke1984.kibrary.math;
 
 import java.util.stream.IntStream;
-
 import org.apache.commons.math3.exception.DimensionMismatchException;
 import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.MatrixUtils;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
-
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 
 /**
  * Computations of matrix and vector
  *
+ * @since 2016/1/25
  * @author Kensuke Konishi
- * @since a long time ago
  */
 public class MatrixComputation {
 

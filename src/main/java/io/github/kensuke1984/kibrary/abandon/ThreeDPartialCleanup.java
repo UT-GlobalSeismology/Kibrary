@@ -7,13 +7,11 @@ import java.nio.file.Paths;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.io.FileUtils;
-
 import io.github.kensuke1984.kibrary.Summon;
 import io.github.kensuke1984.kibrary.util.FileAid;
 
@@ -23,8 +21,8 @@ import io.github.kensuke1984.kibrary.util.FileAid;
  * This also deletes all log files under FPpool/{@literal *}/ and BPpool/{@literal *}/.
  * Note that this class does not check the directory IDs, SPC file names, or log file names.
  *
- * @author otsuru
  * @since 2023/3/21
+ * @author otsuru
  */
 public class ThreeDPartialCleanup {
 

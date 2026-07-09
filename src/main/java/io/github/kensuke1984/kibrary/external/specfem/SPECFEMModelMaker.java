@@ -47,9 +47,11 @@ import io.github.kensuke1984.kibrary.util.earth.Longitude;
  * at a grid point that is to the southwest-up of that position.
  * So, in this program, we write perturbation values at a position half-a-grid northeast-down from a grid point.
  *
+ * @since 2017/8/30
  * @author Anselme
- * @since a long time ago
- * @version 2024/11/3 Renamed from specfem.Make3DModel to external.specfem.SPECFEMModelMaker
+ *
+ * @version 2024/11/3 Renamed from specfem.Make3DModel to external.specfem.SPECFEMModelMaker.
+ * @author otsuru
  */
 public class SPECFEMModelMaker {
 

@@ -25,8 +25,8 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTSearch;
  * Requests are made for events that satisfy specifications, and for stations included in networks specified by the user.
  * A gmail account is needed. The address must be set in the .property file in KIBRARY_HOME.
  *
+ * @since 2016/1/25
  * @author Kensuke Konishi
- * @since a long time ago
  */
 public class DataRequestor extends Operation {
 

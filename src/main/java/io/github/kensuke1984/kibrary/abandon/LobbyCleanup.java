@@ -9,13 +9,11 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
-
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.io.FileUtils;
-
 import io.github.kensuke1984.kibrary.Summon;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.EventFolder;
@@ -26,8 +24,8 @@ import io.github.kensuke1984.kibrary.util.EventFolder;
  * Alternatively, this can copy mseed/ and station/ folders to a specified directory.
  * All event directories under the current directory will be processed.
  *
- * @author otsuru
  * @since 2022/1/3
+ * @author otsuru
  */
 public class LobbyCleanup {
 

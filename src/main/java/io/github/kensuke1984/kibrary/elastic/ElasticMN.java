@@ -3,8 +3,8 @@ package io.github.kensuke1984.kibrary.elastic;
 /**
  * ID for elastic parameter C<sub>mn</sub>
  *
+ * @since 2016/1/25
  * @author Kensuke Konishi
- * @version 0.0.2.2
  */
 public enum ElasticMN {
     C11(11), C12(12), C13(13), C14(14), C15(15), C16(16), C21(21), C22(22), C23(23), C24(24), C25(25), C26(26), C31(31),

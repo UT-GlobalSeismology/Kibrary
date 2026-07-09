@@ -31,8 +31,8 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
  * <li> time shift data for the (event, observer)-pair, regardless of component and startTime, is included in the input static correction file </li>
  * </ul>
  *
- * @author otsuru
  * @since 2022/10/17
+ * @author otsuru
  */
 public class StaticCorrectionForger extends Operation {
 

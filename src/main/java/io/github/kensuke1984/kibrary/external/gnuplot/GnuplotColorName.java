@@ -3,8 +3,8 @@ package io.github.kensuke1984.kibrary.external.gnuplot;
 /**
  * Colors in gnuplot
  *
+ * @since 2016/1/25
  * @author Kensuke Konishi
- * @version 0.0.1.1
  */
 public enum GnuplotColorName {
     white, // #ffffff = 255 255 255

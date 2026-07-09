@@ -12,10 +12,8 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
-
 import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.RealVector;
-
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
@@ -31,8 +29,8 @@ import io.github.kensuke1984.kibrary.waveform.PartialIDFile;
  * by averaging partial waveforms of existing {@link PartialID}s.
  * The average is taken considering the volume of each voxel.
  *
- * @author otsuru
  * @since 2022/8/10
+ * @author otsuru
  */
 public class PartialsFuser extends Operation {
 

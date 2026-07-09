@@ -16,8 +16,14 @@ import io.github.kensuke1984.kibrary.util.sac.SACUtil;
 /**
  * Modification of SAC when running {@link EventProcessor}.
  *
+ * @since 2016/1/25
  * @author Kensuke Konishi
- * @since a long time ago
+ *
+ * @version 2021/8/24 Created SACModifierMSEED based on original SACModifier.
+ * @author Kenji Kawai
+ *
+ * @version 2021/10/9 Renamed from SACModifierMSEED to SacModifier.
+ * @author otsuru
  */
 class SacModifier {
 

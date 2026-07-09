@@ -34,8 +34,8 @@ import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
  *  <b>m</b> = (A<sup>T</sup>A + &lambda; T<sup>T</sup>T)<sup>-1</sup>
  *   (A<sup>T</sup><b>d</b> - &lambda; T<sup>T</sup><b>&eta;</b>)
  *
+ * @since 2016/4/16
  * @author Kensuke Konishi
- * @since a long time ago
  */
 public class LeastSquaresMethod extends InversionMethod {
 

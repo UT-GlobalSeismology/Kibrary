@@ -9,9 +9,11 @@ import org.apache.commons.math3.util.ArithmeticUtils;
  * <p>
  * This class is <b>IMMUTABLE</b>
  *
+ * @since 2016/1/25
  * @author Kensuke Konishi
- * @since a long time ago
+ *
  * @version 2021/11/18 Renamed from dsminformation.DSMheader to dsmsetup.DSMInputHeader.
+ * @author otsuru
  */
 class DSMInputHeader {
 

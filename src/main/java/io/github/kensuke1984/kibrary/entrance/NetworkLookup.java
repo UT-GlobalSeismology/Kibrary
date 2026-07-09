@@ -30,8 +30,8 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
  * A {@link DataEntryListFile} shall be given as the set of data for input.
  * Paths of {@link DataLobby} folders must be set to look up the network descriptions in stationXML files.
  *
- * @author otsuru
  * @since 2023/1/10
+ * @author otsuru
  */
 public class NetworkLookup extends Operation {
 

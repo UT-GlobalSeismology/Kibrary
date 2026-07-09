@@ -31,8 +31,8 @@ import io.github.kensuke1984.kibrary.util.sac.SACFileName;
  * <p>
  * Start time for identification is a start time in the given {@link TimeWindowDataFile}.
  *
+ * @since 2016/1/25
  * @author Kensuke Konishi
- * @since a long time ago
  */
 public class TakeuchiStaticCorrection extends Operation {
 

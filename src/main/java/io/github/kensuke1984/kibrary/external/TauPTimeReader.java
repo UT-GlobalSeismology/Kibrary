@@ -23,14 +23,14 @@ import io.github.kensuke1984.kibrary.util.earth.Earth;
  *
  * PREM is used for travel times.
  *
- * @version 0.3.2.1
  * @see <a href=http://www.seis.sc.edu/taup/>TauP</a>
  *
  *
  * TODO phase
  * TODO TauP のクラスから直接呼び出す
  *
- * @author Kensuke Konishi
+ * @since 2020/10/14 Recreated based on older TauPTimeReader (later renamed to TauP_Time).
+ * @author anpan
  * @deprecated use TauP_Time in the taup java library; it should be much faster
  */
 public final class TauPTimeReader {

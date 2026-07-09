@@ -9,17 +9,17 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
-
 import org.apache.commons.lang3.EnumUtils;
-
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 
 /**
  * Parent class of all operations in Kibrary that are executed given a {@link Property} file.
  *
+ * @since 2016/1/25
  * @author Kensuke Konishi
- * @since a long time ago
+ *
  * @version 2022/1/7 Recreated the original interface Operation into an abstract class.
+ * @author otsuru
  */
 public abstract class Operation {
 

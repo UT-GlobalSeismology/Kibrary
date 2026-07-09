@@ -8,13 +8,11 @@ import java.time.format.DateTimeFormatter;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
-
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionGroup;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
-
 import io.github.kensuke1984.kibrary.Summon;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.EventFolder;
@@ -46,8 +44,8 @@ import io.github.kensuke1984.kibrary.util.ThreadAid;
  * but before configuring (= the parallelized part).
  * </ul>
  *
- * @author otsuru
  * @since 2021/11/17
+ * @author otsuru
  */
 public class DataAligner {
 

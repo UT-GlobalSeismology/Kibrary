@@ -8,10 +8,13 @@ import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
 
 /**
- * 行列計算 parallelized Matrix
+ * Parallelized computation of matrices.
  *
+ * @since 2016/1/25
  * @author Kensuke Konishi
- * @since a long time ago
+ *
+ * @version 2022/7/20 Renamed from Matrix to ParallelizedMatrix.
+ * @author otsuru
  */
 public class ParallelizedMatrix extends Array2DRowRealMatrix {
 

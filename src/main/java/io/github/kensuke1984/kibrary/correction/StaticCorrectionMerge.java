@@ -10,7 +10,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
@@ -19,8 +18,8 @@ import io.github.kensuke1984.kibrary.util.MathAid;
 /**
  * Merges {@link StaticCorrectionDataFile}s.
  *
- * @author otsuru
  * @since 2023/8/16
+ * @author otsuru
  */
 public class StaticCorrectionMerge extends Operation {
 

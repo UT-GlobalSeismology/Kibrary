@@ -45,8 +45,14 @@ import io.github.kensuke1984.kibrary.util.sac.SACUtil;
  * <p>
  * TODO: The sac "cut b n" command in SacModifier fails if the sac version is too new (102.0 and later?).
  *
+ * @since 2016/1/25 Created SEEDFile & SeedSAC.
+ * @author Kensuke Konishi
+ *
+ * @version 2021/8/24 Created MSEEDFile & MseedSAC based on SEEDFile & SeedSAC.
+ * @author Kenji Kawai
+ *
+ * @version 2021/09/14 Created EventProcessor based on MSEEDFile & MseedSAC.
  * @author otsuru
- * @since 2021/09/14
  */
 class EventProcessor implements Runnable {
 

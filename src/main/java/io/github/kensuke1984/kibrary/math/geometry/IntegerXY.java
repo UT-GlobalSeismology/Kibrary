@@ -3,8 +3,8 @@ package io.github.kensuke1984.kibrary.math.geometry;
 /**
  * Coordinate (x, y), where x and y are integers.
  *
- * @author otsuru
  * @since 2026/2/5
+ * @author otsuru
  */
 public class IntegerXY {
     private final int x;

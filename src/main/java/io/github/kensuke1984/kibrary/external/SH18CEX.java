@@ -8,8 +8,8 @@ import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
 /**
  * Model SH18CEX by Nozomu Takeuchi
  *
+ * @since 2016/1/25
  * @author Kensuke Konishi
- * @version 0.0.2
  */
 public final class SH18CEX {
 

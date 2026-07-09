@@ -7,8 +7,8 @@ import io.github.kensuke1984.anisotime.Phase;
  * <p>
  * This class is <b>immutable</b>
  *
+ * @since 2016/1/25
  * @author Kensuke Konishi
- * @version 0.0.2.1.1
  */
 public class TauPPhase {
 

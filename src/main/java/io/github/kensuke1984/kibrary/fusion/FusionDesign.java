@@ -17,8 +17,8 @@ import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
  * A class that holds information of voxels that are changed before and after fusing voxels.
  * TODO this is currently only for 3D parameters
  *
- * @author otsuru
  * @since 2022/8/2
+ * @author otsuru
  */
 public class FusionDesign {
     private List<List<UnknownParameter>> originalParameters = new ArrayList<>();

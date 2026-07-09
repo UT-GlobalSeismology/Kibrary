@@ -17,8 +17,11 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTAccess;
  * <p>
  * This class is <b>immutable</b>
  *
+ * @since 2016/1/25
  * @author Kensuke Konishi
- * @since a long time ago
+ *
+ * @version 2021/12/24 Renamed from dsminformation.FPinfo to dsmsetup.FPInputFile.
+ * @author rei, otsuru
  */
 public class FPInputFile extends DSMInputHeader {
 

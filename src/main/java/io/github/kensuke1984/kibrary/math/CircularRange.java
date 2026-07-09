@@ -7,8 +7,8 @@ import io.github.kensuke1984.kibrary.util.MathAid;
  * Comparisons are done after normalizing all angle values into range [0:360).
  * The lower limit is included and the upper limit is excluded, i.e. [lowerLimit:upperLimit).
  *
- * @author otsuru
  * @since 2023/12/13
+ * @author otsuru
  */
 public class CircularRange {
 

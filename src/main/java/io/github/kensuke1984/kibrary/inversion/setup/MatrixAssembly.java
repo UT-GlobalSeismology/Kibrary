@@ -7,10 +7,8 @@ import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
-
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
-
 import io.github.kensuke1984.kibrary.inversion.WeightingHandler;
 import io.github.kensuke1984.kibrary.math.ParallelizedMatrix;
 import io.github.kensuke1984.kibrary.util.InformationFileReader;
@@ -27,8 +25,8 @@ import io.github.kensuke1984.kibrary.waveform.PartialIDFile;
  * The size of A matrix will be decided by the input {@DVectorBuilder} and the input List of {@UnknownParameter}s.
  * The input {@PartialID} array can have extra IDs, but all needed IDs must be included.
  *
- * @author otsuru
  * @since 2022/7/4
+ * @author otsuru
  */
 public class MatrixAssembly {
 
