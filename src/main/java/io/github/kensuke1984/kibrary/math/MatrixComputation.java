@@ -11,7 +11,7 @@ import io.github.kensuke1984.kibrary.util.GadgetAid;
 /**
  * Computations of matrix and vector
  *
- * @since 2016/1/25
+ * @since before 2016/1/25
  * @author Kensuke Konishi
  */
 public class MatrixComputation {

@@ -10,7 +10,7 @@ import org.apache.commons.math3.linear.RealVector;
 /**
  * Parallelized computation of matrices.
  *
- * @since 2016/1/25
+ * @since before 2016/1/25
  * @author Kensuke Konishi
  *
  * @version 2022/7/20 Renamed from Matrix to ParallelizedMatrix.

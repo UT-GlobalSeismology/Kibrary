@@ -19,8 +19,11 @@ import io.github.kensuke1984.kibrary.util.MathAid;
  * <p>
  * The radius is rounded off to the 6th decimal place.
  *
+ * @since before 2016/1/25
  * @author Kensuke Konishi
- * @since a long time ago
+ *
+ * @version 2021/11/20 Renamed & moved from util.Location to util.earth.FullPosition.
+ * @author otsuru
  */
 public final class FullPosition extends HorizontalPosition {
 

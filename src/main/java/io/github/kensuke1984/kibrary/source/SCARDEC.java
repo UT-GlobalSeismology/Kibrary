@@ -25,12 +25,10 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
-
 import org.apache.commons.io.input.CloseShieldInputStream;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.math3.complex.Complex;
 import org.apache.commons.math3.transform.TransformType;
-
 import io.github.kensuke1984.kibrary.Environment;
 import io.github.kensuke1984.kibrary.math.FourierTransform;
 import io.github.kensuke1984.kibrary.math.Trace;
@@ -46,10 +44,11 @@ import io.github.kensuke1984.kibrary.util.spc.SPCFileAid;
  * <p>
  * The database is as of 20161115.
  *
- * @author Kensuke Konishi
- * @version 0.1.5
  * @see <a href="http://scardec.projects.sismo.ipgp.fr/">SCARDEC</a>,
  * <a href="http://earthquake.usgs.gov/contactus/golden/neic.php">NEIC</a>
+ *
+ * @since 2016/7/18
+ * @author Kensuke Konishi
  */
 public class SCARDEC {
 

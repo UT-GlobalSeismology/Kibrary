@@ -31,8 +31,8 @@ import io.github.kensuke1984.kibrary.util.spc.SPCFileAid;
  * on <br>
  * Waveform in frequency domain: U[0].. U[NP], respectively. See {@link #convolve(Complex[])}
  *
+ * @since before 2016/1/25
  * @author Kensuke Konishi
- * @since a long time ago
  */
 public class SourceTimeFunction {
 

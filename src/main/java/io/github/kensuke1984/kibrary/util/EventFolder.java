@@ -7,7 +7,6 @@ import java.nio.file.Path;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
 
@@ -16,8 +15,8 @@ import io.github.kensuke1984.kibrary.util.sac.SACFileName;
  * <p>
  * Class File is Comparable, so this class is also Comparable.
  *
+ * @since before 2016/1/25
  * @author Kensuke Konishi
- * @since a long time ago
  */
 public class EventFolder extends File {
 

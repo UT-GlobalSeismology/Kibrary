@@ -6,8 +6,8 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 /**
  * Type of scalar values.
  *
- * @author otsuru
  * @since 2024/4/22
+ * @author otsuru
  */
 public enum ScalarType {
     ABSOLUTE("Absolute"),

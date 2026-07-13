@@ -49,7 +49,7 @@ import io.github.kensuke1984.kibrary.voxel.LayerInformationFile;
  * When working for TI parameters, DSM input files for SSHSH and SSHPSV will be generated.
  * SSHSH will work for the parameters PARL and PARN, and SSHPSV will work for PARA, PARC, PARF, PARL, and PARN.
  *
- * @since 2016/1/25
+ * @since before 2016/1/25
  * @author Kensuke Konishi
  *
  * @version 2021/12/24 Renamed from dsminformation.SshDSMInformationFileMaker to dsmsetup.OneDPartialDSMSetup.

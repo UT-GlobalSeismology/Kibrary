@@ -3,13 +3,11 @@ package io.github.kensuke1984.kibrary.util.globalcmt;
 import java.io.IOException;
 import java.time.format.DateTimeFormatter;
 import java.util.regex.Pattern;
-
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.lang3.StringUtils;
-
 import io.github.kensuke1984.kibrary.Summon;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderAccess;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
@@ -20,9 +18,10 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  * This class is <b>IMMUTABLE</b>.
  * When a set of GlobalCMTIDs is sorted, they will be in dictionary order, not order of event time.
  *
- * @author Kensuke Konishi
- * @since a long time ago
  * @see <a href=http://www.globalcmt.org/>Global CMT project official page</a>
+ *
+ * @since before 2016/1/25
+ * @author Kensuke Konishi
  */
 public final class GlobalCMTID implements Comparable<GlobalCMTID> {
 

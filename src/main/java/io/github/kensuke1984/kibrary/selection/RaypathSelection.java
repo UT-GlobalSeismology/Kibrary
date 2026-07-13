@@ -12,7 +12,6 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
-
 import edu.sc.seis.TauP.TauModelException;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
@@ -38,8 +37,8 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
  * For turning point position, checks whether there are any turning points (including diffraction start and end points) within the specified range.
  * For turning point azimuth, the first turning point of the phase that arrives first among the specified phases will be used.
  *
- * @author otsuru
  * @since 2022/1/4
+ * @author otsuru
  */
 public class RaypathSelection extends Operation {
 

@@ -25,8 +25,8 @@ import io.github.kensuke1984.kibrary.util.sac.SACFileName;
  * Operation for merging datasets of SAC files.
  * Event directories are created in outPath, and symbolic links to each SAC file is created in the event directories.
  *
- * @author otsuru
  * @since 2022/4/18
+ * @author otsuru
  */
 public class DatasetMerge extends Operation {
 

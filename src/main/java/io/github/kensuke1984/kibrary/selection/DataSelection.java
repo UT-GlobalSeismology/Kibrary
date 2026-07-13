@@ -63,8 +63,8 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  * <p>
  * Time windows with no phases will be written in standard output.
  *
+ * @since before 2016/1/25
  * @author Kensuke Konishi
- * @since a long time ago
  */
 public class DataSelection extends Operation {
     private static final Set<Phase> PSV_PHASES = Arrays.stream("p P Pdiff".split("\\s+")).map(Phase::create).collect(Collectors.toSet());

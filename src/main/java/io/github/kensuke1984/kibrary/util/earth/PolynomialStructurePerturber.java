@@ -24,8 +24,8 @@ import io.github.kensuke1984.kibrary.util.DatasetAid;
  * <p>
  * Perturbations can be added to a certain variable within a specified radius range.
  *
- * @author otsuru
  * @since 2022/8/25
+ * @author otsuru
  */
 public class PolynomialStructurePerturber extends Operation {
 

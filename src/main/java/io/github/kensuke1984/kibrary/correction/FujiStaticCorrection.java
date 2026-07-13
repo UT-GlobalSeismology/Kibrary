@@ -60,7 +60,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  * Static correction information is written in binary format in "staticCorrection*.dat".
  * See {@link StaticCorrectionDataFile}.
  *
- * @since 2016/1/25
+ * @since before 2016/1/25
  * @author Kensuke Konishi
  */
 public class FujiStaticCorrection extends Operation {

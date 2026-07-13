@@ -24,8 +24,8 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 /**
  * File of travel time data for an arbitrary number of phases, listed for each event-observer pair.
  *
- * @author otsuru
  * @since 2022/7/23
+ * @author otsuru
  */
 public class TravelTimeInformationFile {
 

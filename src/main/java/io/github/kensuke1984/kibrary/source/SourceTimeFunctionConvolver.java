@@ -37,8 +37,8 @@ import io.github.kensuke1984.kibrary.util.spc.SPC_SAC;
  * The (&omega; - i &omega;<sub>i</sub>)-domain used in DSM can be used instead of the regular &omega;-domain.
  * This will ensure that the resulting waveforms are identical to those directly convolved in {@link SPC_SAC}.
  *
- * @author otsuru
  * @since 2024/11/18
+ * @author otsuru
  */
 public class SourceTimeFunctionConvolver extends Operation {
 

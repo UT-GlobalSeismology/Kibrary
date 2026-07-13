@@ -21,7 +21,7 @@ import io.github.kensuke1984.kibrary.waveform.PartialID;
  * <p>
  * This class is <b>IMMUTABLE</b>.
  *
- * @since 2016/1/25
+ * @since before 2016/1/25
  * @author Kensuke Konishi
  *
  * @version 2022/7/6 Created inversion.setup.AMatrixBuilder based on inversion.ObservationEquation.

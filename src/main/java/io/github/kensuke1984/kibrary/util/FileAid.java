@@ -26,8 +26,8 @@ import org.apache.commons.io.IOUtils;
 /**
  * Utilities to handle files.
  *
+ * @since 2021/11/21 Created when util.Utilities was split up.
  * @author otsuru
- * @since 2021/11/21 - created when Utilities.java was split up.
  */
 public final class FileAid {
     private FileAid() {}

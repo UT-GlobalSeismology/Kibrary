@@ -3,16 +3,16 @@ package io.github.kensuke1984.kibrary.util.sac;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-
 import org.apache.commons.lang3.StringUtils;
 
 /**
  * Output stream for a SAC file
  *
- * @author Kensuke Konishi
- * @since a long time ago
  * @see <a href=http://ds.iris.edu/ds/nodes/dmc/forms/sac/>SAC</a>
  * @see <a href=https://ds.iris.edu/files/sac-manual/manual/file_format.html>SAC data format</a>
+ *
+ * @since before 2016/1/25
+ * @author Kensuke Konishi
  */
 final class SACOutputStream extends DataOutputStream {
 

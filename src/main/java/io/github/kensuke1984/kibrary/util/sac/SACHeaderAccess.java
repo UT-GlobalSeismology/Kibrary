@@ -14,9 +14,13 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
  * The SAC header is described
  * <A href=https://ds.iris.edu/files/sac-manual/manual/file_format.html>here</a>
  *
- * @author Kensuke Konishi
- * @since a long time ago
  * @see <a href=http://ds.iris.edu/ds/nodes/dmc/forms/sac/>SAC</a>
+ *
+ * @since before 2016/1/25
+ * @author Kensuke Konishi
+ *
+ * @version 2021/11/2 Renamed from SACHeaderData to SACHeaderAccess.
+ * @author otsuru
  */
 public interface SACHeaderAccess {
 

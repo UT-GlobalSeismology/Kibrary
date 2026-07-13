@@ -23,7 +23,7 @@ import io.github.kensuke1984.kibrary.util.spc.SPCType;
  *
  * TODO: add PAR0 (partial for density)
  *
- * @since 2016/1/25
+ * @since before 2016/1/25
  * @author Kensuke Konishi
  *
  * @version 2021/12/24 Renamed from dsminformation.SshDSMinfo to dsmsetup.OneDPartialDSMInputFile.

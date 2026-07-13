@@ -8,9 +8,9 @@ import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
  * Structures shall be defined as combinations of polynomial functions.
  * The radii used as the variable x in polynomial functions should be normalized to the planet radius.
  *
+ * @since 2022/2/5 Created PolynomialStructureData by extracting some parts of PolynomialStructure.
+ * @version 2022/6/17 Recreated & renamed from PolynomialStructureData to DefaultStructure.
  * @author otsuru
- * @since 2022/2/5 extracted some parts of PolynomialStructure
- * @version 2022/6/17 recreated & renamed from PolynomialStructureData to DefaultStructure
  */
 public class DefaultStructure {
     private DefaultStructure() {}
@@ -151,7 +151,7 @@ public class DefaultStructure {
         double[] rMin = new double[]{0, 862.1, 1217.5, 1418.4, 1821.1, 3079.4, 3431.7, 3479.5, 3631, 5561, 5611, 5711, 5961, 6161, 6251, 6336, 6351};
         double[] rMax = new double[]{862.1, 1217.5, 1418.4, 1821.1, 3079.4, 3431.7, 3479.5, 3631, 5561, 5611, 5711, 5961, 6161, 6251, 6336, 6351, 6371};
         double[][] rho = new double[][]{{13.012173, 0.001475, -8.404376, -0.526733}, {12.841046, 3.185282, -28.104289, 40.211890},
-        	    {12.897160, -6.265992, 20.257445, -43.069910}, {13.029723, -7.011688, 19.002089, -34.437841}, {12.593253, -1.768393, -1.768993, -7.253393},
+                {12.897160, -6.265992, 20.257445, -43.069910}, {13.029723, -7.011688, 19.002089, -34.437841}, {12.593253, -1.768393, -1.768993, -7.253393},
                 {13.040182, -4.395982, 3.370873, -10.59838}, {15.665638, -10.529477, 0.0, 0.0}, {-64.352361, 378.98392, -679.86815, 403.37632},
                 {6.847783, -1.792675, -1.019219, -0.069938}, {7.718253, -3.732505, 0.0, 0.0}, {7.7976, -3.822599, 0.0, 0.0},
                 {41.543535, -106.46975, 106.49094, -38.329067}, {-140.74385, 463.71838, -492.6921, 173.036891}, {16.700289, -23.41853, 10.02213, 0.0},

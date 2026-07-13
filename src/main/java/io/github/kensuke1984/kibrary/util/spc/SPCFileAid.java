@@ -13,8 +13,8 @@ import io.github.kensuke1984.kibrary.util.MathAid;
 /**
  * Utilities for collecting SPC files.
  *
+ * @since 2021/11/21 Created when util.Utilities was split up.
  * @author otsuru
- * @since 2021/11/21 - created when Utilities.java was split up.
  */
 public final class SPCFileAid {
     private SPCFileAid() {}

@@ -5,20 +5,18 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashSet;
 import java.util.Set;
-
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
-
 import io.github.kensuke1984.kibrary.Summon;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 
 /**
  * Extracts {@link DataEntry}s that exist in all input {@link DataEntryListFile}s.
  *
- * @author otsuru
  * @since 2023/10/30
+ * @author otsuru
  */
 public class DataEntryIntersection {
 

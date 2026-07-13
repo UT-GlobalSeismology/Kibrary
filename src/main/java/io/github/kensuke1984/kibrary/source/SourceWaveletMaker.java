@@ -39,8 +39,8 @@ import io.github.kensuke1984.kibrary.util.spc.SPCFileAid;
  *
  * CAUTION: Time windows shold be the same length for all records of the same event, taken for a single phase.
  *
- * @author otsuru
  * @since 2024/6/14
+ * @author otsuru
  */
 public class SourceWaveletMaker extends Operation {
 

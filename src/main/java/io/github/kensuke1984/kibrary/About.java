@@ -18,7 +18,7 @@ import org.apache.commons.cli.Options;
  * @see <a href=https://github.com/UT-GlobalSeismology/Kibrary>GitHub</a>
  * @see <a href=https://kensuke1984.github.io/Kibrary>Javadoc</a>
  *
- * @since 2016/1/25
+ * @since before 2016/1/25
  * @author Kensuke Konishi
  */
 public final class About extends javax.swing.JFrame {

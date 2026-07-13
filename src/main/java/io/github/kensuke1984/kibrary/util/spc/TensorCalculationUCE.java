@@ -8,8 +8,8 @@ import io.github.kensuke1984.kibrary.elastic.WeightingFactor;
  * Calculation of U<sub>j,q</sub> C<sub>jqrs</sub> &eta;<sub>ri,s</sub> in
  * Geller &amp; Hara (1993)
  *
+ * @since before 2016/1/25
  * @author Kensuke Konishi
- * @since a long time ago
  */
 class TensorCalculationUCE {
 

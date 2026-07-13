@@ -35,7 +35,7 @@ import io.github.kensuke1984.kibrary.util.ThreadAid;
  * See also {@link EventProcessor}.
  * <p>
  *
- * @since 2016/1/25 Java version of First handler ported from the perl software.
+ * @since before 2016/1/25 Java version of First handler ported from the perl software.
  * @author Kensuke Konishi
  *
  * @version 2021/09/14 Created DataKitchen as a modification of FirstHandler.

@@ -35,8 +35,11 @@ import io.github.kensuke1984.kibrary.waveform.BasicIDFile;
  * <p>
  * Each line: station code, network code, latitude, longitude.
  *
+ * @since before 2016/1/25
  * @author Kensuke Konishi
- * @since a long time ago
+ *
+ * @version 2022/4/22 Renamed & moved from inversion.StationInformationFile to util.data.ObserverListFile.
+ * @author otsuru
  */
 public final class ObserverListFile {
     private ObserverListFile() {}

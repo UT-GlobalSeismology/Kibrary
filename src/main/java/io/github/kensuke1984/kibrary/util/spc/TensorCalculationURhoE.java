@@ -8,8 +8,8 @@ import org.apache.commons.math3.util.FastMath;
  * Calculation of U<sub>j</sub> &rho;</sub> &eta;<sub>ji</sub> in
  * Geller &amp; Hara (1993)
  *
- * @author Rei Sato
  * @since 2022/01/10
+ * @author Rei Sato
  */
 public class TensorCalculationURhoE {
 

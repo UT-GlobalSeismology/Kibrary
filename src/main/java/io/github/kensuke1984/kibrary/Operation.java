@@ -15,7 +15,7 @@ import io.github.kensuke1984.kibrary.util.GadgetAid;
 /**
  * Parent class of all operations in Kibrary that are executed given a {@link Property} file.
  *
- * @since 2016/1/25
+ * @since before 2016/1/25
  * @author Kensuke Konishi
  *
  * @version 2022/1/7 Recreated the original interface Operation into an abstract class.

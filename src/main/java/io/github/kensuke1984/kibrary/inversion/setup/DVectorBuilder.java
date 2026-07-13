@@ -16,7 +16,7 @@ import io.github.kensuke1984.kibrary.waveform.BasicIDPairUp;
  * This class is substantially <b>IMMUTABLE</b>.
  * Caution: {@link RealVector} is not immutable, so don't hand it over without deep-copying!
  *
- * @since 2016/1/25
+ * @since before 2016/1/25
  * @author Kensuke Konishi
  *
  * @since 2022/7/5 Recreated inversion.setup.DVectorBuilder from inversion.Dvector.

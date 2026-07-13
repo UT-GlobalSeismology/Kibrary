@@ -31,7 +31,7 @@ import io.github.kensuke1984.kibrary.voxel.UnknownParameterFile;
  * (WA')<sup>T</sup>(WA')m = (WA')<sup>T</sup>Wd'<br>
  * where A = WA' is the weighted partial waveform matrix and d = Wd' is the weighted residual vector.
  *
- * @since 2016/1/25
+ * @since before 2016/1/25
  * @author Kensuke Konishi
  *
  * @version 2022/4/28 Recreated based on former inversion.LetMeInvert.

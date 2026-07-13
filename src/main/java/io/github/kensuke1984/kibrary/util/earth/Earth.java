@@ -9,8 +9,8 @@ import io.github.kensuke1984.kibrary.util.MathAid;
 /**
  * Earth utility.
  *
+ * @since before 2016/1/25
  * @author Kensuke Konishi
- * @since a long time ago
  */
 public final class Earth {
     private Earth() {}

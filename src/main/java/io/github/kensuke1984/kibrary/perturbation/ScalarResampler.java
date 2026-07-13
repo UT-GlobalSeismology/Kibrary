@@ -13,9 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-
 import org.apache.commons.math3.util.Precision;
-
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.elastic.VariableType;
@@ -35,8 +33,8 @@ import io.github.kensuke1984.kibrary.voxel.VoxelInformationFile;
  * This class assumes that the input grid can be recasted onto a curvilinear grid.
  * The resampling points are arbitrary.
  *
- * @author otsuru
  * @since 2026/2/5
+ * @author otsuru
  */
 public class ScalarResampler extends Operation {
 

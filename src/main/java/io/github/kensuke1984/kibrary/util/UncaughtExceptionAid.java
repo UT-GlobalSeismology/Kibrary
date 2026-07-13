@@ -9,8 +9,8 @@ import java.util.concurrent.ThreadFactory;
  * However, when using {@link ExecutorService#execute(Runnable)}, exceptions will be caught,
  * so this class should be unneeded.
  *
- * @author otsuru
  * @since 2021/11/12
+ * @author otsuru
  * @deprecated until this becomes needed for some reason.
  */
 public class UncaughtExceptionAid {

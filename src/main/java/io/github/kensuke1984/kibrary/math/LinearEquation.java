@@ -10,7 +10,7 @@ import org.apache.commons.math3.complex.Complex;
  * <p>
  * This class is <b>immutable</b>
  *
- * @since 2016/1/25
+ * @since before 2016/1/25
  * @author Kensuke Konishi
  */
 public class LinearEquation {

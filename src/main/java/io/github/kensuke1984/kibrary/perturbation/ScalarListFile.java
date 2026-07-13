@@ -24,8 +24,8 @@ import io.github.kensuke1984.kibrary.util.earth.FullPosition;
  * <p>
  * Each line: "latitude longitude radius value".
  *
- * @author otsuru
  * @since 2022/4/9
+ * @author otsuru
  */
 public class ScalarListFile {
 

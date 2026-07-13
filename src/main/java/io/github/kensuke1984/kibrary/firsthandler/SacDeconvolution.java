@@ -24,7 +24,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACUtil;
  * <p>
  * Information about instrument response can be found <a href=http://docs.fdsn.org/projects/stationxml/en/latest/response.html>here</a>.
  *
- * @since 2016/1/25
+ * @since before 2016/1/25
  * @author Kensuke Konishi
  */
 class SacDeconvolution {

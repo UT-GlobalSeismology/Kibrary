@@ -15,7 +15,7 @@ import io.github.kensuke1984.kibrary.util.GadgetAid;
 /**
  * Merging of SAC files.
  *
- * @since 2016/1/25
+ * @since before 2016/1/25
  * @author Kensuke Konishi
  *
  * @version 2021/10/4 Renamed from UnevenSACMerger to SegmentedSacMerger.

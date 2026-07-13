@@ -17,7 +17,7 @@ import io.github.kensuke1984.kibrary.util.MathAid;
  * <p>
  * Gnuplot version 5.0 or above must be in your PATH.
  *
- * @since 2016/1/25
+ * @since before 2016/1/25
  * @author Kensuke Konishi
  *
  * @version 2021/12/7 Renamed from external.gnuplot.PlotConfiguration to external.gnuplot.GnuplotFile.

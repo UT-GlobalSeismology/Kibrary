@@ -17,7 +17,7 @@ import io.github.kensuke1984.kibrary.math.MatrixFile;
  * @see <a href=https://ja.wikipedia.org/wiki/%E5%85%B1%E5%BD%B9%E5%8B%BE%E9%85%8D%E6%B3%95>Japanese wiki</a>,
  * <a href=https://en.wikipedia.org/wiki/Conjugate_gradient_method>English wiki</a>
  *
- * @since 2016/1/25
+ * @since before 2016/1/25
  * @author Kensuke Konishi
  */
 public class ConjugateGradientMethod extends InversionMethod {

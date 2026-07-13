@@ -10,7 +10,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.elastic.VariableType;
@@ -22,8 +21,8 @@ import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 /**
  * For now, this just averages the perturbations in the vertical direction.
  *
- * @author otsuru
  * @since 2022/11/21
+ * @author otsuru
  */
 public class ModelSmoothener extends Operation {
 

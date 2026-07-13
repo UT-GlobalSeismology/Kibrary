@@ -43,7 +43,7 @@ import io.github.kensuke1984.kibrary.util.spc.SPCMode;
  * </ul>
  * Then, the DSM input files will be created for the (event, observer) pairs that have been chosen.
  *
- * @since 2016/1/25
+ * @since before 2016/1/25
  * @author Kensuke Konishi
  *
  * @version 2021/11/18 renamed from dsminformation.SyntheticDSMInformationFileMaker to dsmsetup.SyntheticDSMSetup.

@@ -33,10 +33,12 @@ import io.github.kensuke1984.kibrary.util.MathAid;
  * When you try to get values on the radius of boundaries, you will get one in the
  * isShallower layer, i.e., the layer which has the radius as rmin.
  *
- * @author Kensuke Konishi, anselme
- * @since a long time ago
- * @version 2022/2/10 moved from package dsmsetup into util.earth
- * @version 2022/6/15 recreated this file to make this class actually immutable
+ * @since before 2016/1/25
+ * @author Kensuke Konishi
+ *
+ * @version 2022/2/10 Moved from package dsmsetup into util.earth.
+ * @version 2022/6/15 Recreated this file to make this class actually immutable.
+ * @author otsuru
  */
 public final class PolynomialStructure implements Serializable {
 

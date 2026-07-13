@@ -15,7 +15,7 @@ import java.util.List;
  * <p>
  * You may have to {@link #join()} after the external program finishes (ex. {@link ExternalProcess#waitFor()}).
  *
- * @since 2016/1/25
+ * @since before 2016/1/25
  * @author Kensuke Konishi
  */
 public class InputStreamThread extends Thread {

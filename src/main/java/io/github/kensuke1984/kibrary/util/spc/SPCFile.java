@@ -19,8 +19,11 @@ import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
  * <p>
  * Each file can contain information for multiple perturbation radii, but only for a single horizontal pixel.
  *
+ * @since 2017/12/13
  * @author Kensuke Konishi
- * @since a long time ago
+ *
+ * @version 2021/11/3 Renamed from Spectrum to SPCFile.
+ * @author otsuru
  */
 public class SPCFile implements SPCFileAccess {
 

@@ -37,7 +37,7 @@ import io.github.kensuke1984.kibrary.math.MatrixFile;
  * @see <a href=https://ja.wikipedia.org/wiki/%E7%89%B9%E7%95%B0%E5%80%A4%E5%88%86%E8%A7%A3>Japanese wiki</a>,
  * <a href=https://en.wikipedia.org/wiki/Singular_value_decomposition>English wiki</a>
  *
- * @since 2016/1/25
+ * @since before 2016/1/25
  * @author Kensuke Konishi
  */
 public class SingularValueDecomposition extends InversionMethod {

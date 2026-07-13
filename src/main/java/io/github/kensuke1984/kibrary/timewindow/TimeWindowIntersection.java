@@ -16,8 +16,8 @@ import io.github.kensuke1984.kibrary.util.GadgetAid;
 /**
  * Pick up time windows for the same events and observers of 2 specified time window files.
  *
- * @author Rei
  * @since 2022/10/6
+ * @author Rei
  */
 public class TimeWindowIntersection {
 

@@ -11,8 +11,8 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
  * <p>
  * ista に対応する
  *
+ * @since before 2016/1/25
  * @author Kensuke Konishi
- * @since a long time ago
  */
 public class SPCBody {
 

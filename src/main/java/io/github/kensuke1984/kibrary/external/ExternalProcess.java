@@ -14,7 +14,7 @@ import java.util.stream.Stream;
  * <p>
  * Bit bucket is /dev/null and nul for unix and windows system, respectively.
  *
- * @since 2016/1/25
+ * @since before 2016/1/25
  * @author Kensuke Konishi
  */
 public class ExternalProcess {

@@ -1,7 +1,6 @@
 package io.github.kensuke1984.kibrary.util.sac;
 
 import java.io.IOException;
-
 import io.github.kensuke1984.kibrary.filter.BandPassFilter;
 import io.github.kensuke1984.kibrary.filter.BandStopFilter;
 import io.github.kensuke1984.kibrary.filter.ButterworthFilter;
@@ -13,9 +12,10 @@ import io.github.kensuke1984.kibrary.filter.LowPassFilter;
  * <p>
  * This class is <b>immutable</b>
  *
- * @author Kensuke Konishi
- * @since a long time ago
  * @see <a href=http://ds.iris.edu/ds/nodes/dmc/forms/sac/>SAC</a>
+ *
+ * @since before 2016/1/25
+ * @author Kensuke Konishi
  */
 class SACFile extends SACHeader implements SACFileAccess {
 

@@ -23,7 +23,7 @@ import io.github.kensuke1984.anisotime.Phase;
  *
  * @see <a href='https://www.seis.sc.edu/taup/'>TauP</a>
  *
- * @since 2016/1/25
+ * @since before 2016/1/25
  * @version 2018/3/23 Renamed from TaupTimeReader to TauP_Time.
  * @author Kensuke Konishi
  */

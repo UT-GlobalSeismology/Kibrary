@@ -11,7 +11,7 @@ import java.util.List;
  */
 enum DataCenterEnum {
 
-    IRIS("https://service.earthscope.org/fdsnws/dataselect/1/query?", "http://service.iris.edu/fdsnws/station/1/query?"),
+    IRIS("https://service.earthscope.org/fdsnws/dataselect/1/query?", "https://service.earthscope.org/fdsnws/station/1/query?"),
     ORFEUS_FED("https://federator.orfeus-eu.org/fdsnws/dataselect/1/query?", "https://federator.orfeus-eu.org/fdsnws/station/1/query?"),
     ODC("https://www.orfeus-eu.org/fdsnws/dataselect/1/query?", "https://www.orfeus-eu.org/fdsnws/station/1/query?"),
     GFZ("https://geofon.gfz.de/fdsnws/dataselect/1/query?", "https://geofon.gfz.de/fdsnws/station/1/query?"),

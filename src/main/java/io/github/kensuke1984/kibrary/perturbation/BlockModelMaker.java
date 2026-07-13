@@ -37,8 +37,8 @@ import io.github.kensuke1984.kibrary.voxel.VoxelInformationFile;
  * At each voxel, each given {@link VariableType} is perturbed.
  * Then, the model parameter value for each {@link PartialType} is computed and exported as a {@link KnownParameterFile}.
  *
- * @author otsuru
  * @since 2022/10/11
+ * @author otsuru
  */
 public class BlockModelMaker extends Operation {
 

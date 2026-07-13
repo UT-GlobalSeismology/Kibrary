@@ -66,8 +66,8 @@ import io.github.kensuke1984.kibrary.util.sac.SACFileName;
  * Travel time information is written in "travelTime*.inf".
  * See {@link TimeWindowDataFile}.
  *
+ * @since before 2016/1/25
  * @author Kensuke Konishi
- * @since a long time ago
  */
 public class TimeWindowMaker extends Operation {
 

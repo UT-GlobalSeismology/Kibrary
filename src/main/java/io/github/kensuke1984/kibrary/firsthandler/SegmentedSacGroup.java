@@ -18,7 +18,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACUtil;
  * A group of SAC files with the same network, station, location, channel, and qualityID.
  * This means that they are supposed to compose part of the same waveform.
  *
- * @since 2016/1/25
+ * @since before 2016/1/25
  * @author Kensuke Konishi
  *
  * @version 2021/11/20 Renamed from SACGroup to SegmentedSacGroup.

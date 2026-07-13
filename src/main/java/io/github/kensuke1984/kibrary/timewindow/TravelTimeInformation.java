@@ -4,7 +4,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
 import edu.sc.seis.TauP.Arrival;
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.external.TauPPhase;
@@ -17,8 +16,8 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
  * This class is <b>IMMUTABLE</b>.
  * {@link TauPPhase} is immutable, so its Set can be cloned using the copy constructor of HashSet.
  *
- * @author otsuru
  * @since 2022/7/23
+ * @author otsuru
  */
 public final class TravelTimeInformation {
 

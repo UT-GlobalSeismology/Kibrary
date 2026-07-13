@@ -12,8 +12,8 @@ import org.apache.commons.math3.util.Precision;
  * <p>
  * This class is <b>IMMUTABLE</b>.
  *
+ * @since before 2016/1/25
  * @author Kensuke Konishi
- * @since version 0.0.6.3
  */
 public class MomentTensor {
 

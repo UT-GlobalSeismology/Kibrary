@@ -10,7 +10,6 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Stream;
-
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.timewindow.TimeWindowData;
 import io.github.kensuke1984.kibrary.util.InformationFileReader;
@@ -36,9 +35,11 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
  * <li> Ssyn/Nobs ratio </li>
  * </ul>
  *
- * @author ?
- * @since a long time ago
- * @version 2022/8/27 renamed from selection.DataSelectionInformationFile to selection.DataFeatureListFile
+ * @since 2017/4/13
+ * @author Anselme
+ *
+ * @version 2022/8/27 Renamed from selection.DataSelectionInformationFile to selection.DataFeatureListFile.
+ * @author otsuru
  */
 public class DataFeatureListFile {
     private DataFeatureListFile() {}

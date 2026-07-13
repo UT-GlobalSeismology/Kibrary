@@ -5,9 +5,7 @@ package io.github.kensuke1984.kibrary.util.spc;
 
 import java.util.ArrayList;
 import java.util.List;
-
 import org.apache.commons.math3.complex.Complex;
-
 import io.github.kensuke1984.kibrary.elastic.ElasticMedium;
 import io.github.kensuke1984.kibrary.elastic.VariableType;
 import io.github.kensuke1984.kibrary.util.earth.DefaultStructure;
@@ -21,8 +19,8 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
  * for &mu;<sub>0</sub> to Q<sub>&mu;</sub>(&ne;q) following Fuji <i>et al</i>.
  * (2010)
  *
- * @author Kensuke Konishi
- * @since a long time ago
+ * @since 2019/7/7
+ * @author Anselme
  */
 public final class VSConversion {
 

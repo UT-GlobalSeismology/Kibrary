@@ -3,7 +3,6 @@ package io.github.kensuke1984.kibrary.timewindow;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.data.DataEntry;
@@ -20,8 +19,11 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
  * <p>
  * This class is <b>IMMUTABLE</b>.
  *
+ * @since before 2016/1/25
  * @author Kensuke Konishi
- * @since a long time ago
+ *
+ * @version 2021/11/2 Renamed from TimewindowInformation to TimewindowData.
+ * @author otsuru
  */
 public class TimeWindowData extends TimeWindow {
 

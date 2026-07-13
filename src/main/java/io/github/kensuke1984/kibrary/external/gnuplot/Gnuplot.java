@@ -9,7 +9,7 @@ import io.github.kensuke1984.kibrary.external.ExternalProcess;
 /**
  * Class for operating Gnuplot in dialog mode.
  *
- * @since 2016/1/25
+ * @since before 2016/1/25
  * @author Kensuke Konishi
  */
 public class Gnuplot extends ExternalProcess implements Closeable {

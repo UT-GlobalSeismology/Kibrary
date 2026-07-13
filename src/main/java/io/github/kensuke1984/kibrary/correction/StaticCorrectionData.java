@@ -30,7 +30,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
  * <p>
  * To identify which time window of a waveform this corresponds to, {@link #synStartTime} is also used.
  *
- * @since 2016/1/25
+ * @since before 2016/1/25
  * @author Kensuke Konishi
  *
  * @version 2021/11/3 Renamed from datacorrection.StaticCorrection to correction.StaticCorrectionData.

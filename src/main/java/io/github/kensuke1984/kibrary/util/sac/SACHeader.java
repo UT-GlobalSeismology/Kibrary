@@ -6,9 +6,10 @@ import java.io.IOException;
  * Information in the header parts of a SAC file.
  * <p>This class is <b>IMMUTABLE</b></p>
  *
- * @author Kensuke Konishi
- * @since a long time ago
  * @see <a href=http://ds.iris.edu/ds/nodes/dmc/forms/sac/>SAC</a>
+ *
+ * @since before 2016/1/25
+ * @author Kensuke Konishi
  */
 class SACHeader implements SACHeaderAccess, Cloneable {
 

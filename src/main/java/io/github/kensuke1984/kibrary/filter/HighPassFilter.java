@@ -7,7 +7,7 @@ import org.apache.commons.math3.util.FastMath;
 /**
  * High pass filter.
  *
- * @since 2016/1/25
+ * @since before 2016/1/25
  * @author Kensuke Konishi
  */
 public class HighPassFilter extends ButterworthFilter {

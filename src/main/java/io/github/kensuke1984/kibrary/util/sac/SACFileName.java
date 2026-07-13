@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Path;
-
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 
@@ -23,9 +22,10 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
  * ObserverID takes the form "station_network", where station and network are String with 8 or less characters.
  * x, y, z are also String.
  *
- * @author Kensuke Konishi
- * @since a long time ago
  * @see <a href=http://ds.iris.edu/ds/nodes/dmc/forms/sac/>SAC</a>
+ *
+ * @since before 2016/1/25
+ * @author Kensuke Konishi
  */
 public class SACFileName extends File {
 

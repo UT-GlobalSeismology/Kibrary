@@ -8,7 +8,7 @@ import java.nio.file.NoSuchFileException;
 /**
  * Sac process made by SACLauncher
  *
- * @since 2016/1/25
+ * @since before 2016/1/25
  * @author Kensuke Konishi
  */
 public class SAC extends ExternalProcess implements Closeable {

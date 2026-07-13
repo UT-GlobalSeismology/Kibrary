@@ -5,12 +5,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.util.Set;
-
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
-
 import io.github.kensuke1984.kibrary.Summon;
 import io.github.kensuke1984.kibrary.math.CircularRange;
 import io.github.kensuke1984.kibrary.math.LinearRange;
@@ -21,8 +19,8 @@ import io.github.kensuke1984.kibrary.util.data.EventListFile;
 /**
  * List up {@link GlobalCMTID}s that satisfy certain criteria.
  *
- * @author otsuru
  * @since 2023/12/1
+ * @author otsuru
  */
 public class GlobalCMTListup {
     private GlobalCMTListup() {}

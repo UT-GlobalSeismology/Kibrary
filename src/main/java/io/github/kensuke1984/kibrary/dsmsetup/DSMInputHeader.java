@@ -9,7 +9,7 @@ import org.apache.commons.math3.util.ArithmeticUtils;
  * <p>
  * This class is <b>IMMUTABLE</b>
  *
- * @since 2016/1/25
+ * @since before 2016/1/25
  * @author Kensuke Konishi
  *
  * @version 2021/11/18 Renamed from dsminformation.DSMheader to dsmsetup.DSMInputHeader.

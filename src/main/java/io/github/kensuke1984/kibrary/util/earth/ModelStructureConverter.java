@@ -11,9 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-
 import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
-
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.elastic.VariableType;
@@ -27,8 +25,8 @@ import io.github.kensuke1984.kibrary.voxel.KnownParameterFile;
 /**
  * Operation that converts a 1-D model to a {@link PolynomialStructure}.
  *
- * @author otsuru
  * @since 2023/7/17
+ * @author otsuru
  */
 public class ModelStructureConverter extends Operation {
 

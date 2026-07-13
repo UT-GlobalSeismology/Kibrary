@@ -5,8 +5,9 @@ import io.github.kensuke1984.kibrary.elastic.VariableType;
 /**
  * Types of {@link SPCFile}s.
  *
+ * @since before 2016/1/25
+ * @version 2017/12/14 Renamed from SpcFileType to SPCType.
  * @author Kensuke Konishi
- * @since a long time ago
  */
 public enum SPCType {
     RHO1D, LAMBDA1D, MU1D, A1D, C1D, F1D, L1D, N1D, VS1D, Q1D,

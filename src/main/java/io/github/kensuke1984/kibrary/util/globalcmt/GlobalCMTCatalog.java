@@ -22,13 +22,13 @@ import io.github.kensuke1984.kibrary.util.GadgetAid;
  * Catalog of global CMT solutions.
  * <p>
  * The catalog can be updated using {@link GlobalCMTCatalogUpdate}.
- * Virtual events can be added to the custom catalog file using {@link }. TODO
+ * Virtual events can be added to the custom catalog file using {@link VirtualEventRegistration}.
  * <p>
  * When no catalog can be found, a default catalog that contains a list of events
  * from <b>1976 January - 2017 September</b> is downloaded.
  *
+ * @since before 2016/1/25
  * @author Kensuke Konishi
- * @since a long time ago
  */
 public final class GlobalCMTCatalog {
     private GlobalCMTCatalog() {}

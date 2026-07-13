@@ -41,7 +41,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  * <p>
  * The lower and upper period limits of the filter will be written in headers USER0 and USER1 of resulting SAC files.
  *
- * @since 2016/1/25
+ * @since before 2016/1/25
  * @author Kensuke Konishi
  *
  * @version 2021/11/18 moved from selection.FilterDivider to filter.FilterDivider.

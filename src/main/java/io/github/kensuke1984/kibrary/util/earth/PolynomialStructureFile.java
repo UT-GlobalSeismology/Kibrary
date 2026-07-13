@@ -21,8 +21,8 @@ import io.github.kensuke1984.kibrary.util.InformationFileReader;
  * In each layer, 6 variables (RHO, Vpv, Vph, Vsv, Vsh, ETA) are defined using a degree-4 polynomial function,
  * and 2 variables (Qkappa, Qmu) are defined as constants.
  *
+ * @since 2022/6/15 Created by extracting some parts of PolynomialStructure.
  * @author otsuru
- * @since 2022/6/15 Extracted some parts of PolynomialStructure.
  */
 public class PolynomialStructureFile {
     private PolynomialStructureFile() {}

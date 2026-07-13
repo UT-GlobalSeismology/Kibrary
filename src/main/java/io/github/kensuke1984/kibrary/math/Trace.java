@@ -28,7 +28,7 @@ import io.github.kensuke1984.kibrary.util.MathAid;
  * </p>
  * TODO sorted
  *
- * @since 2016/1/25
+ * @since before 2016/1/25
  * @author Kensuke Konishi
  *
  * @version 2023/3/13 Moved from util.Trace to math.Trace.

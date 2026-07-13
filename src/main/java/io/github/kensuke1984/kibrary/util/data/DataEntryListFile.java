@@ -15,13 +15,11 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
-
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionGroup;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
-
 import io.github.kensuke1984.kibrary.Summon;
 import io.github.kensuke1984.kibrary.timewindow.TimeWindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimeWindowDataFile;
@@ -43,8 +41,8 @@ import io.github.kensuke1984.kibrary.waveform.BasicIDFile;
  * <p>
  * Here, "station network latitude longitude" is for the observer.
  *
- * @author otsuru
  * @since 2022/5/25
+ * @author otsuru
  */
 public class DataEntryListFile {
 

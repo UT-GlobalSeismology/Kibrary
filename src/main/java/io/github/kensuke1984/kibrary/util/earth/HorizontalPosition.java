@@ -1,10 +1,8 @@
 package io.github.kensuke1984.kibrary.util.earth;
 
 import java.util.Collection;
-
 import org.apache.commons.math3.util.FastMath;
 import org.apache.commons.math3.util.Precision;
-
 import io.github.kensuke1984.kibrary.math.CircularRange;
 import io.github.kensuke1984.kibrary.math.LinearRange;
 import io.github.kensuke1984.kibrary.math.geometry.Ellipse;
@@ -19,8 +17,8 @@ import io.github.kensuke1984.kibrary.math.geometry.XYZ;
  * This class is <b>almost IMMUTABLE</b> (expect that it is not a final class).
  * Classes that extend this class must be <b>IMMUTABLE</b>.
  *
+ * @since before 2016/1/25
  * @author Kensuke Konishi
- * @since a long time ago
  */
 public class HorizontalPosition implements Comparable<HorizontalPosition> {
 

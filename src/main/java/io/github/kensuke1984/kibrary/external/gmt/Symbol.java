@@ -3,7 +3,7 @@ package io.github.kensuke1984.kibrary.external.gmt;
 /**
  * Symbols in GMT
  *
- * @since 2016/1/25
+ * @since before 2016/1/25
  * @author Kensuke Konishi
  */
 public enum Symbol {

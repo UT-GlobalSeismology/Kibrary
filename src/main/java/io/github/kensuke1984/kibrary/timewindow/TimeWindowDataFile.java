@@ -69,9 +69,11 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
  * When the main method of this class is executed,
  * the input binary-format file is output in ascii format.
  *
+ * @since before 2016/1/25
  * @author Kensuke Konishi
- * @since a long time ago
- * @version 2021/11/2 Renamed from timewindow.TimewindowInformationFile to timewindow.TimewindowDataFile.
+ *
+ * @version 2021/11/2 Renamed from TimewindowInformationFile to TimewindowDataFile.
+ * @author otsuru
  */
 public final class TimeWindowDataFile {
     private TimeWindowDataFile() {}

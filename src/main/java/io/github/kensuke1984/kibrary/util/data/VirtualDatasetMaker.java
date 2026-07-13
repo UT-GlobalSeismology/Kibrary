@@ -10,9 +10,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
-
 import org.apache.commons.math3.util.Precision;
-
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.math.LinearRange;
@@ -32,8 +30,8 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
  * A virtual observer set will be created in specified ranges.
  * Their network and station names will be the latitude and longitude, respectively (with "P" and "N" for "+" and "-").
  *
- * @author otsuru
  * @since 2023/5/23
+ * @author otsuru
  */
 public class VirtualDatasetMaker extends Operation {
 

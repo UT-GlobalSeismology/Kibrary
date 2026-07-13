@@ -3,7 +3,7 @@ package io.github.kensuke1984.kibrary.elastic;
 /**
  * 偏微分係数波形を計算するためのCijklを作る
  *
- * @since 2016/1/25
+ * @since before 2016/1/25
  * @author Kensuke Konishi
  */
 public class ElasticModuli {

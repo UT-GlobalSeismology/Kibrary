@@ -28,9 +28,10 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  * SPC file name must be "station.eventID(PSV, SH).spc".
  * If the eventID is included in Global CMT catalog, the information for the event is written in SAC.
  *
- * @author Kensuke Konishi
- * @since a long time ago
  * @see <a href=http://ds.iris.edu/ds/nodes/dmc/forms/sac/>SAC</a>
+ *
+ * @since before 2016/1/25
+ * @author Kensuke Konishi
  */
 public class SACMaker implements Runnable {
 

@@ -1,7 +1,6 @@
 package io.github.kensuke1984.kibrary.util;
 
 import java.time.LocalDate;
-
 import org.apache.commons.math3.linear.RealVector;
 import org.apache.commons.math3.util.FastMath;
 import org.apache.commons.math3.util.Precision;
@@ -9,8 +8,8 @@ import org.apache.commons.math3.util.Precision;
 /**
  * Some calculation utilities.
  *
+ * @since 2021/11/21 Created when util.Utilities was split up.
  * @author otsuru
- * @since 2021/11/21 - created when Utilities.java was split up.
  */
 public final class MathAid {
     private MathAid() {}

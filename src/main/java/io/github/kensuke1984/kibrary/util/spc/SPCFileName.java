@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Path;
-
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 
@@ -20,8 +19,11 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
  * In synthetic files, 'station' and 'network' must be 8 or less letters.
  * 'PSV', 'SH' must be upper case.
  *
+ * @since 2017/12/13
  * @author Kensuke Konishi
- * @since a long time ago
+ *
+ * @version 2021/10/28 Renamed from SPCFile to SPCFileName.
+ * @author otsuru
  */
 public abstract class SPCFileName extends File {
 
