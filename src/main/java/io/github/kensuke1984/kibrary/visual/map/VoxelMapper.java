@@ -21,8 +21,8 @@ import io.github.kensuke1984.kibrary.voxel.VoxelInformationFile;
 /**
  * Class to map voxel positions.
  *
- * @author otsuru
  * @since 2023/3/13
+ * @author otsuru
  */
 public class VoxelMapper {
 

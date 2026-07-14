@@ -17,9 +17,10 @@ import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 /**
  * Class to generate shellscript files that are to be used to map horizontal slices of perturbations using GMT.
  *
- * @author otsuru
  * @since 2022/4/12
- * @version 2022/7/17 renamed from MapperShellscript to PerturbationMapShellscript
+ * @version 2022/7/17 Renamed from MapperShellscript to PerturbationMapShellscript.
+ * @version 2024/4/22 Renamed from PerturbationMapShellscript to ScalarMapShellscript.
+ * @author otsuru
  */
 public class ScalarMapShellscript {
 

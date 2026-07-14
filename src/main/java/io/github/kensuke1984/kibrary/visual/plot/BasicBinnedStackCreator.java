@@ -56,8 +56,8 @@ import io.github.kensuke1984.kibrary.waveform.BasicIDPairUp;
  * Text files of stacked waveform data for each bin will be created in event folders under the output folder,
  * along with output pdf files and their corresponding plt files.
  *
+ * @since 2022/7/27 Divided from visual.RecordSectionCreater.
  * @author otsuru
- * @since 2022/7/27 divided from visual.RecordSectionCreater
  */
 public class BasicBinnedStackCreator extends Operation {
 

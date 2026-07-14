@@ -45,8 +45,8 @@ import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
  * <p>
  * Caution: A PartialID instance may or may not hold waveform data, dependeing on whether it has already been set.
  *
+ * @since before 2016/1/25
  * @author Kensuke Konishi
- * @since a long time ago
  */
 public class PartialID extends BasicID {
 

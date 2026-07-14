@@ -10,7 +10,6 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
-
 import edu.sc.seis.TauP.TauModelException;
 import edu.sc.seis.TauP.TauP_Time;
 import io.github.kensuke1984.kibrary.Operation;
@@ -37,8 +36,9 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  * A root folder containing SAC files is required as input.
  * Additional folders containing SAC files can be given when plotting multiple synthetic seismograms or resudual seismograms.
  *
- * @author rei
  * @since 2023/06/27
+ * @version 2023/11/12 Renamed from SyntheticRecordSectionCreator to SacRecordSectionCreator.
+ * @author rei
  */
 public class SacRecordSectionCreator extends Operation {
 

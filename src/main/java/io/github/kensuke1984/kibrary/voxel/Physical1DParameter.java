@@ -10,8 +10,9 @@ import io.github.kensuke1984.kibrary.util.earth.FullPosition;
  * <p>
  * This class is <b>IMMUTABLE</b>
  *
+ * @since before 2016/1/25
+ * @version 2016/2/17 Renamed from Elastic1DParameter to Physical1DParameter.
  * @author Kensuke Konishi
- * @since a long time ago
  */
 public class Physical1DParameter implements UnknownParameter {
     private static final ParameterType PARAMETER_TYPE = ParameterType.LAYER;

@@ -8,7 +8,6 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.HashSet;
 import java.util.Set;
-
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
@@ -17,19 +16,10 @@ import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 /**
  * Operation that plots a great arc on a map.
  *
- * @author otsuru
  * @since 2023/3/31
+ * @author otsuru
  */
 public class GreatArcMapper extends Operation {
-
-    /**
-     * The interval of deciding map size.
-     */
-    private static final int INTERVAL = 5;
-    /**
-     * How much space to provide at the rim of the map.
-     */
-    private static final int MAP_RIM = 5;
 
     private final Property property;
     /**

@@ -14,9 +14,7 @@ import java.util.Random;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-
 import org.apache.commons.math3.util.Precision;
-
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
@@ -34,8 +32,8 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
  * To select BasicIDs of certain raypaths, supply with a {@link DataEntryListFile} including a list of raypaths to be selected.
  * Time windows may be also selected by the phases that they must include.
  *
- * @author otsuru
  * @since 2022/7/13
+ * @author otsuru
  */
 public class BasicIDRebuilder extends Operation {
 

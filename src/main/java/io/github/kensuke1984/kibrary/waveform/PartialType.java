@@ -1,7 +1,6 @@
 package io.github.kensuke1984.kibrary.waveform;
 
 import java.util.Arrays;
-
 import io.github.kensuke1984.kibrary.elastic.VariableType;
 import io.github.kensuke1984.kibrary.voxel.ParameterType;
 
@@ -10,8 +9,8 @@ import io.github.kensuke1984.kibrary.voxel.ParameterType;
  *
  * CAUTION: values must be in -128~127 (range of byte)!! (The value is written into files as byte; see {@link WaveformDataWriter}.)
  *
+ * @since before 2016/1/25
  * @author Kensuke Konishi
- * @since a long time ago
  */
 enum PartialType {
 

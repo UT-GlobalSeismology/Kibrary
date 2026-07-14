@@ -8,12 +8,10 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Set;
 import java.util.stream.Collectors;
-
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
-
 import io.github.kensuke1984.kibrary.Summon;
 import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
@@ -23,8 +21,10 @@ import io.github.kensuke1984.kibrary.util.data.DataEntryListFile;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 
 /**
- * @author otsuru
+ * Plots number of records in {@link DataEntryListFile} by year.
+ *
  * @since 2025/10/14
+ * @author otsuru
  */
 public class RecordNumberPlot {
 

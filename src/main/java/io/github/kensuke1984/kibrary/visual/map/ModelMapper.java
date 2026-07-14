@@ -11,7 +11,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.elastic.VariableType;
@@ -33,8 +32,9 @@ import io.github.kensuke1984.kibrary.voxel.KnownParameterFile;
  * Creates shellscripts to map {@link KnownParameterFile}.
  *
  * @see Interpolation#inEachMapLayer(Map, double, double, boolean, double, boolean, boolean)
- * @author otsuru
+ *
  * @since 2022/7/17
+ * @author otsuru
  */
 public class ModelMapper extends Operation {
 

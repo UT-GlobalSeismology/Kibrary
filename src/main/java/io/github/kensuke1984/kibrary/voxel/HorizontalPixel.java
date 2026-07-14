@@ -8,8 +8,9 @@ import io.github.kensuke1984.kibrary.util.earth.Longitude;
 /**
  * A rectangular pixel on a sphere.
  *
- * @author otsuru
  * @since 2022/9/12
+ * @version 2022/12/2 Renamed from HorizontalPiece to HorizontalPixel.
+ * @author otsuru
  */
 public class HorizontalPixel {
     private HorizontalPosition position;

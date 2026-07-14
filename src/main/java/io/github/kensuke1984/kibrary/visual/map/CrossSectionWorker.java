@@ -25,8 +25,8 @@ import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 /**
  * Class to create cross sections.
  *
- * @author otsuru
  * @since 2023/6/10 Separated from visual.map.CrossSectionCreator.
+ * @author otsuru
  */
 public class CrossSectionWorker {
 

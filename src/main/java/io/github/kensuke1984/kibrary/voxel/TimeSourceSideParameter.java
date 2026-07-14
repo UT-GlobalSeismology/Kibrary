@@ -10,8 +10,8 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
  * <p>
  * sideにイベントを入れる
  *
- * @author ?
- * @since a long time ago
+ * @since 2020/10/14
+ * @author Anselme
  */
 public class TimeSourceSideParameter implements UnknownParameter {
     private static final ParameterType PARAMETER_TYPE = ParameterType.SOURCE;

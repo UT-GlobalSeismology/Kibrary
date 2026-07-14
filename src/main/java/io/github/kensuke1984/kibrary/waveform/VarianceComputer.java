@@ -23,8 +23,8 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 /**
  * Computes variance of {@link BasicIDFile}s, with the specified weighting.
  *
- * @author otsuru
  * @since 2022/7/22
+ * @author otsuru
  */
 public class VarianceComputer {
 

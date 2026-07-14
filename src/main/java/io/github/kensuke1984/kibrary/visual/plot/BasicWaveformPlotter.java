@@ -46,8 +46,9 @@ import io.github.kensuke1984.kibrary.waveform.BasicIDPairUp;
  * Text files of waveform data will be created in event folders under their corresponding basic waveform folders.
  * Output pdf files and their corresponding plt files will be created in event directories under workPath.
  *
- * @author otsuru
  * @since 2021/12/10
+ * @version 2022/7/25 Renamed from WaveformPlotCreater to BasicWaveformPlotter.
+ * @author otsuru
  */
 public class BasicWaveformPlotter extends Operation {
 

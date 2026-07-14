@@ -8,7 +8,6 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.List;
-
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
@@ -22,8 +21,8 @@ import io.github.kensuke1984.kibrary.voxel.UnknownParameterFile;
  * Operation to sum up the values of {@link OrthogonalityTest}
  * when it has been done for multiple separate parts of the dataset (i.e. in case the dataset is too large).
  *
- * @author otsuru
  * @since 2024/7/31
+ * @author otsuru
  */
 public class OrthogonalitySumUp extends Operation {
 

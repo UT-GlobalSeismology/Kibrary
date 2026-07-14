@@ -14,7 +14,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
@@ -41,8 +40,8 @@ import io.github.kensuke1984.kibrary.waveform.PartialIDFile;
  * <p>
  * NOTE: the voxel volume is NOT multiplied.
  *
- * @author otsuru
  * @since 2023/5/29
+ * @author otsuru
  */
 public class PartialsMovieMaker extends Operation {
 

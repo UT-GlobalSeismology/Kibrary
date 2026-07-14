@@ -62,8 +62,8 @@ import io.github.kensuke1984.kibrary.waveform.BasicIDPairUp;
  * normalized variance, amplitude ratio, and cross correlation values will be computed within those windows.
  * Otherwise, they will be computed for the whole length included in the {@link BasicIDFile}.
  *
- * @author otsuru
  * @since 2022/8/27
+ * @author otsuru
  */
 public class DataFeatureHistogram extends Operation {
 

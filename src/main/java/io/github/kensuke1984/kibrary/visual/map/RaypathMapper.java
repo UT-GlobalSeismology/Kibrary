@@ -47,9 +47,11 @@ import io.github.kensuke1984.kibrary.voxel.VoxelInformationFile;
  * By reusing the output folder, computation of pierce points can be omitted.
  * When you want to change the raypaths that are mapped, do not reuse the output folder.
  *
+ * @since before 2016/1/25
  * @author Kensuke Konishi
- * @since a long time ago
- * @version 2022/4/24 moved and renamed from external.gmt.RaypathDistribution
+ *
+ * @version 2022/4/24 Moved and renamed from external.gmt.RaypathDistribution to visual.RaypathMapper.
+ * @author otsuru
  */
 public class RaypathMapper extends Operation {
 

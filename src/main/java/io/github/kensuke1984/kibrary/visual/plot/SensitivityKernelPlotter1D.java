@@ -36,8 +36,8 @@ import io.github.kensuke1984.kibrary.waveform.PartialIDFile;
  * <p>
  * NOTE: the layer volume is NOT multiplied.
  *
- * @author otsuru
  * @since 2025/3/9
+ * @author otsuru
  */
 public class SensitivityKernelPlotter1D extends Operation {
 

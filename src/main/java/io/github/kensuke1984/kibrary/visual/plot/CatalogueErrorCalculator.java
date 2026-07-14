@@ -27,8 +27,8 @@ import io.github.kensuke1984.kibrary.waveform.PartialIDFile;
 
 /**
  *
+ * @since 2022/10/13
  * @author rei
- * @since 2022/10/22
  */
 public class CatalogueErrorCalculator extends Operation {
 

@@ -1,12 +1,10 @@
 package io.github.kensuke1984.kibrary.waveform;
 
 import java.util.Arrays;
-
 import org.apache.commons.math3.complex.Complex;
 import org.apache.commons.math3.transform.DftNormalization;
 import org.apache.commons.math3.transform.FastFourierTransformer;
 import org.apache.commons.math3.transform.TransformType;
-
 import io.github.kensuke1984.kibrary.math.Trace;
 
 /**
@@ -14,8 +12,8 @@ import io.github.kensuke1984.kibrary.math.Trace;
  * <p>
  * １、samplingHzとtlenとnpを設定 ２、周波数空間でランダム波形作成 ３、実空間に戻す
  *
- * @author Kensuke Konishi
- * @since a long time ago
+ * @since 2020/10/14
+ * @author Anselme
  */
 public final class RandomNoiseMaker {
     private RandomNoiseMaker() {}

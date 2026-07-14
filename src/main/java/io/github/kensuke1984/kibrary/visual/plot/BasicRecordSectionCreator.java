@@ -55,9 +55,9 @@ import io.github.kensuke1984.kibrary.waveform.BasicIDPairUp;
  * Text files of waveform data will be created in event folders under their corresponding basic waveform folders.
  * Output pdf files and their corresponding plt files will be created in event directories under workPath.
  *
- * @author otsuru
  * @since 2021/12/11
- * @version 2022/7/27 renamed from visual.RecordSectionCreater to visual.BasicRecordSectionCreator and separated visual.BasicBinnedStackCreator
+ * @version 2022/7/27 Renamed from visual.RecordSectionCreater to visual.BasicRecordSectionCreator and separated visual.BasicBinnedStackCreator.
+ * @author otsuru
  */
 public class BasicRecordSectionCreator extends Operation {
 

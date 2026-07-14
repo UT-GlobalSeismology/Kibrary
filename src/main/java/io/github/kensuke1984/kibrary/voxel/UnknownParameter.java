@@ -10,8 +10,8 @@ import io.github.kensuke1984.kibrary.util.earth.FullPosition;
  * <p>
  * The class implementing this must be <b>IMMUTABLE</b>.
  *
+ * @since before 2016/1/25
  * @author Kensuke Konishi
- * @since a long time ago
  */
 public interface UnknownParameter {
 

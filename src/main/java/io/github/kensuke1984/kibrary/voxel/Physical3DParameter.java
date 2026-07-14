@@ -2,9 +2,7 @@ package io.github.kensuke1984.kibrary.voxel;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
-
 import org.apache.commons.lang3.StringUtils;
-
 import io.github.kensuke1984.kibrary.elastic.VariableType;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 
@@ -15,8 +13,9 @@ import io.github.kensuke1984.kibrary.util.earth.FullPosition;
  * <p>
  * This class is <b>IMMUTABLE</b>
  *
+ * @since before 2016/1/25
+ * @version 2016/2/17 Renamed from ElasticParameter to Physical3DParameter.
  * @author Kensuke Konishi
- * @since a long time ago
  */
 public class Physical3DParameter implements UnknownParameter {
     public static final int oneUnknownByte = 42;

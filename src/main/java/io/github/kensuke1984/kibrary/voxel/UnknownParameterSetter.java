@@ -12,13 +12,11 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionGroup;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
-
 import io.github.kensuke1984.kibrary.Summon;
 import io.github.kensuke1984.kibrary.elastic.VariableType;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
@@ -29,9 +27,11 @@ import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 /**
  * Class to create an {@link UnknownParameterFile}.
  *
- * @author ?
- * @since a long time ago
- * @version 2022/2/12 moved & renamed from inversion.addons.MakeUnknownParameterFile to voxel.UnknownParameterSetter.
+ * @since 2020/10/14
+ * @author Anselme
+ *
+ * @version 2022/2/12 Moved & renamed from inversion.addons.MakeUnknownParameterFile to voxel.UnknownParameterSetter.
+ * @author otsuru
  */
 public class UnknownParameterSetter {
 

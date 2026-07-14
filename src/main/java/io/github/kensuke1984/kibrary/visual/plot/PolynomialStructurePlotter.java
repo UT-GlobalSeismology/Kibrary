@@ -26,8 +26,8 @@ import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
  * 6 variables (RHO, Vpv, Vph, Vsv, Vsh, ETA) can be plotted on a single graph.
  * Multiple {@link PolynomialStructure}s can be overlaid on the same graph.
  *
- * @author otsuru
  * @since 2022/8/30
+ * @author otsuru
  */
 public class PolynomialStructurePlotter extends Operation {
 

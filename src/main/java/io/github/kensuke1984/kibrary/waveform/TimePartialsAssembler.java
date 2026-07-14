@@ -36,8 +36,8 @@ import io.github.kensuke1984.kibrary.util.sac.SACFileName;
 import io.github.kensuke1984.kibrary.voxel.ParameterType;
 
 /**
+ * @since 2023/3/18 Extracted time partial part from PartialWaveformAssembler3D.
  * @author otsuru
- * @since 2023/3/18 Extracted time partial part from PartialWaveformAssembler3D
  * TODO This class has been created just by extracting parts that seem to be related to time partials. No testing has been done!
  */
 public class TimePartialsAssembler extends Operation {

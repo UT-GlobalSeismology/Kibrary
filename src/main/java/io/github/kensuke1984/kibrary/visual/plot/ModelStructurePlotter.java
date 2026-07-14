@@ -36,8 +36,8 @@ import io.github.kensuke1984.kibrary.voxel.KnownParameterFile;
  * The models should be provided as {@link KnownParameterFile}s with path 'resultPath/method/{method}{vectorNum}.lst'.
  * 8 types of variables (RHO, Vp, Vpv, Vph, Vs, Vsv, Vsh, ETA) can be plotted.
  *
- * @author otsuru
  * @since 2023/7/12
+ * @author otsuru
  */
 public class ModelStructurePlotter extends Operation {
 

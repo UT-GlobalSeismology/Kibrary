@@ -37,8 +37,10 @@ import io.github.kensuke1984.kibrary.waveform.PartialIDFile;
  * NOTE: the voxel volume is NOT multiplied.
  *
  * @see Interpolation#inEachMapLayer(Map, double, double, boolean, double, boolean, boolean)
- * @author otsuru
+ *
  * @since 2022/4/14
+ * @version 2025/3/30 Renamed from SensitivityKernelMapper to SensitivityKernelMapper3D.
+ * @author otsuru
  */
 public class SensitivityKernelMapper3D extends Operation {
 

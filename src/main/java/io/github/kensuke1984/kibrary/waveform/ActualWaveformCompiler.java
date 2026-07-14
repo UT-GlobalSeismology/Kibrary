@@ -73,9 +73,11 @@ import io.github.kensuke1984.kibrary.util.sac.WaveformType;
  * <p>
  * This class does not apply a digital filter, but extracts information about the passband written in SAC files.
  *
+ * @since before 2016/1/25
  * @author Kensuke Konishi
- * @since a long time ago
- * @version 2021/11/3 renamed from waveformdata.ObservedSyntheticDatasetMaker to waveform.ActualWaveformCompiler
+ *
+ * @version 2021/11/18 Renamed from waveformdata.ObservedSyntheticDatasetMaker to waveform.ActualWaveformCompiler.
+ * @author otsuru
  */
 public class ActualWaveformCompiler extends Operation {
 

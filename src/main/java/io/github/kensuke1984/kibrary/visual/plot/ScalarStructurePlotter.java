@@ -24,8 +24,8 @@ import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
 /**
  * Plot 1D profiles from {@link ScalarListFile}, using its its reference {@link PolynomialStructure}.
  *
- * @author otsuru
  * @since 2024/11/6
+ * @author otsuru
  */
 public class ScalarStructurePlotter extends Operation {
 

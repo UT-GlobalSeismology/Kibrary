@@ -8,6 +8,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
@@ -20,6 +21,7 @@ import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.ThreadAid;
+import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 
 /**
  * Operation to process downloaded SAC (and RESP) files so that they can be used in the inversion process.
@@ -196,6 +198,7 @@ public class DataKitchen extends Operation {
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         // create processors for each event
+        Set<GlobalCMTID> failedSetupEvents = new HashSet<>();
         Set<EventProcessor> eps = eventDirs.stream().map(eventDir -> {
             try {
                 return new EventProcessor(eventDir, outPath);
@@ -203,6 +206,7 @@ public class DataKitchen extends Operation {
                 // If there is something wrong, skip the event (suppress exceptions).
                 try {
                     System.err.println("!!! " + eventDir + " has problems. ");
+                    failedSetupEvents.add(eventDir.getGlobalCMTID());
                     e.printStackTrace();
                 } catch (Exception e1) {
                     e1.printStackTrace();
@@ -225,6 +229,12 @@ public class DataKitchen extends Operation {
         // print overall result
         boolean success = true;
         System.err.println("Overall result:");
+        if (failedSetupEvents.size() != 0) {
+            success = false;
+            for (GlobalCMTID event : failedSetupEvents) {
+                System.err.println("! " + event + " failed during setup.");
+            }
+        }
         for (EventProcessor processor : eps) {
             if (!processor.hasRun()) {
                 System.err.println("! " + processor.getEventID() + " failed.");

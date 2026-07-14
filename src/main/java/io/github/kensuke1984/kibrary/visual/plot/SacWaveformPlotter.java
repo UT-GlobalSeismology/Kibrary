@@ -13,7 +13,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
-
 import edu.sc.seis.TauP.Arrival;
 import edu.sc.seis.TauP.TauModelException;
 import edu.sc.seis.TauP.TauP_Time;
@@ -43,8 +42,9 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  * Text files of waveform data will be created in event folders under their the input root folders.
  * Output pdf files and their corresponding plt files will be created in event directories under workPath.
  *
- * @author rei
  * @since 2023/07/07
+ * @version 2023/11/12 Renamed from SyntheticWaveformPlotter to SacWaveformPlotter.
+ * @author rei
  */
 public class SacWaveformPlotter extends Operation {
 

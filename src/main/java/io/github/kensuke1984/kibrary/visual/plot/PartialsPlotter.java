@@ -35,8 +35,9 @@ import io.github.kensuke1984.kibrary.waveform.PartialIDFile;
 /**
  * Plots partial waveforms.
  *
- * @author otsuru
  * @since 2022/7/24
+ * @version 2024/4/21 Renamed from PartialWaveformPlotter to PartialsPlotter.
+ * @author otsuru
  */
 public class PartialsPlotter extends Operation {
 

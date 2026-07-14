@@ -21,8 +21,8 @@ import io.github.kensuke1984.kibrary.util.InformationFileReader;
  * Odd lines: (int) value of limit of interval.
  * Even lines: name of color.
  *
- * @author otsuru
  * @since 2022/6/24
+ * @author otsuru
  */
 public class ColorBinInformationFile {
 

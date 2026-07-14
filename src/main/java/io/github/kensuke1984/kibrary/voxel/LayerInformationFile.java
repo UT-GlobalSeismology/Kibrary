@@ -7,12 +7,10 @@ import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
-
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
-
 import io.github.kensuke1984.kibrary.Summon;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.InformationFileReader;
@@ -27,8 +25,8 @@ import io.github.kensuke1984.kibrary.util.MathAid;
  * <p>
  * This class is <b>IMMUTABLE</b>.
  *
- * @author otsuru
  * @since 2023/4/12
+ * @author otsuru
  */
 public class LayerInformationFile {
 

@@ -36,8 +36,8 @@ import io.github.kensuke1984.kibrary.voxel.VoxelInformationFile;
  * Operation to make partial derivative waveforms more accurate for each voxel.
  * This conducts a pseudo-integration of partial derivative waveforms across the voxel volume.
  *
- * @author otsuru
  * @since 2025/8/18
+ * @author otsuru
  */
 public class PartialsRefiner extends Operation {
 

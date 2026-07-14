@@ -24,8 +24,8 @@ import io.github.kensuke1984.kibrary.util.sac.WaveformType;
  * <p>
  * This class creates a new set of ID and waveform files in binary-format.
  *
+ * @since before 2016/1/25
  * @author Kensuke Konishi
- * @since a long time ago
  */
 public class WaveformDataWriter implements Closeable, Flushable {
 

@@ -32,8 +32,8 @@ import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
  * <p>
  * This class is <b>IMMUTABLE</b>.
  *
- * @author otsuru
  * @since 2022/2/11
+ * @author otsuru
  */
 public class VoxelInformationFile {
 

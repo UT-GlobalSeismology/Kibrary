@@ -11,8 +11,8 @@ import java.util.List;
  * and thus {@code Map<UnknownParameter, Double>} cannot be sorted.
  * (Map mixes up the order. Even with LinkedHashMap, keySet() cannot get the keys in order.)
  *
- * @author otsuru
  * @since 2022/7/2
+ * @author otsuru
  */
 public class KnownParameter {
 

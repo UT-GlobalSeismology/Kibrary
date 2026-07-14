@@ -7,12 +7,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Set;
-
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
-
 import io.github.kensuke1984.kibrary.Summon;
 import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
@@ -26,8 +24,8 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
  * Creates histogram of events, classified by depth and magnitude.
  * An {@link EventListFile} is used as input.
  *
- * @author otsuru
  * @since 2024/11/1
+ * @author otsuru
  */
 public class EventHistogram {
 
