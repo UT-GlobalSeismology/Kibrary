@@ -27,7 +27,7 @@ import io.github.kensuke1984.kibrary.util.data.DataEntryListFile;
 import io.github.kensuke1984.kibrary.util.data.EventListFile;
 import io.github.kensuke1984.kibrary.util.data.ObserverListFile;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructureFile;
-import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTCatalogUpToLatest;
+import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTCatalogUpdate;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTListup;
 import io.github.kensuke1984.kibrary.util.sac.SACFileAccess;
@@ -60,7 +60,7 @@ enum Brooklyn {
     // Environment & General 00
     About(0, About.class),
     Environment(1, Environment.class),
-    GlobalCMTCatalogUpToLatest(2, GlobalCMTCatalogUpToLatest.class),
+    GlobalCMTCatalogUpdate(2, GlobalCMTCatalogUpdate.class),
     PolynomialStructureFile(3, PolynomialStructureFile.class),
     EventListFile(4, EventListFile.class),
     ObserverListFile(5, ObserverListFile.class),
