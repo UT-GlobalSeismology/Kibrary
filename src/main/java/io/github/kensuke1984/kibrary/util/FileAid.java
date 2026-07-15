@@ -1,5 +1,6 @@
 package io.github.kensuke1984.kibrary.util;
 
+import java.awt.AWTError;
 import java.awt.GraphicsEnvironment;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -149,16 +150,21 @@ public final class FileAid {
         long fileSize = httpConnection.getContentLength();
         JProgressBar bar = null;
         JFrame frame = null;
-        if (0 < fileSize && !GraphicsEnvironment.isHeadless()) {
-            bar = new JProgressBar(0, (int) fileSize);
-            frame = new JFrame("Downloading a file");
-            frame.setResizable(false);
-            frame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
-            frame.setSize(300, 70);
-            frame.add(bar);
-            frame.setLocationRelativeTo(null);
-            frame.setVisible(true);
+        try {
+            if (0 < fileSize && !GraphicsEnvironment.isHeadless()) {
+                bar = new JProgressBar(0, (int) fileSize);
+                frame = new JFrame("Downloading a file");
+                frame.setResizable(false);
+                frame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
+                frame.setSize(300, 70);
+                frame.add(bar);
+                frame.setLocationRelativeTo(null);
+                frame.setVisible(true);
+            }
+        } catch (AWTError e) {
+            System.err.println("AWTError");
         }
+
         try (BufferedInputStream bufferedInputStream = new BufferedInputStream(url.openStream());
                 FileOutputStream fos = new FileOutputStream(outPath.toFile())) {
             byte[] buf = new byte[8192];
