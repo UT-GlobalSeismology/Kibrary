@@ -5,13 +5,16 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.nio.file.StandardOpenOption;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.Map;
 
 import io.github.kensuke1984.kibrary.external.ExternalProcess;
@@ -46,8 +49,6 @@ import io.github.kensuke1984.kibrary.util.sac.SACUtil;
  */
 class EventDataPreparer {
 
-    private static final String DATASELECT_URL_IRIS = "https://service.earthscope.org/fdsnws/dataselect/1/query?";
-    private static final String DATASELECT_URL_ORFEUS = "http://www.orfeus-eu.org/fdsnws/dataselect/1/query?";
     /**
      * [s] delta for SAC files. SAC files with different delta will be interpolated
      * or downsampled.
@@ -83,53 +84,85 @@ class EventDataPreparer {
 
     /**
      * Downloads Mseed file from FDSNWS using specified parameters.
-     * @param datacenter (String) The name of the datacenter to download from.
+     * @param dataCenter (String) The name of the data center to download from.
      * @param networks (String) Network names for request, listed using commas. Wildcards (*, ?) allowed. Virtual networks are unsupported.
      * @param channels (String) Channels to be requested, listed using commas. Wildcards (*, ?) allowed.
      * @param headAdjustment (int) [min] The starting time of request with respect to event time.
      * @param footAdjustment (int) [min] The ending time of request with respect to event time.
-     * @param mseedFileName (String) Name of output mseed file
-     * @return (boolean) whether an mseed file was downloaded
+     * @return (int) Status of download (-1: no attempts; 0: attempted but did not exist; 1: download success; 99: download failed).
      * @throws IOException
      */
-    boolean downloadMseed(String datacenter, String networks, String channels, int headAdjustment, int footAdjustment, String mseedFileName)
+    int downloadMseeds(String dataCenter, String networks, String channels, int headAdjustment, int footAdjustment)
             throws IOException {
 
         LocalDateTime cmtTime = eventData.getCMTTime();
         LocalDateTime startTime = cmtTime.plus(headAdjustment, ChronoUnit.MINUTES);
         LocalDateTime endTime = cmtTime.plus(footAdjustment, ChronoUnit.MINUTES);
 
-        String urlString;
-        switch (datacenter) {
-        case "IRIS":
-            urlString = DATASELECT_URL_IRIS;
-            break;
-        case "ORFEUS":
-            urlString = DATASELECT_URL_ORFEUS;
-            break;
-        default:
-            throw new IllegalArgumentException("Invalid datacenter name.");
+        Files.createDirectories(mseedSetPath);
+
+        // get list of data centers to collect data from
+        List<DataCenterEnum> dataCenterList = DataCenterEnum.listForMseed(dataCenter);
+
+        // download from each data center in list
+        int downloadStatus = -1;
+        for (DataCenterEnum dataCenterCode : dataCenterList) {
+            Path mseedPath = mseedSetPath.resolve(eventData + "." + dataCenterCode + ".mseed");
+            Path infPath = mseedSetPath.resolve(eventData + "." + dataCenterCode + ".inf");
+
+            if (Files.exists(mseedPath) || Files.exists(infPath)) continue;
+
+            try {
+                if (downloadStatus < 0) downloadStatus = 0;
+                if (downloadMseedEach(dataCenterCode, networks, channels, startTime, endTime, mseedPath, infPath)) {
+                    // if any file was downloaded, status will be 1
+                    if (downloadStatus < 1) downloadStatus = 1;
+                }
+            } catch (IOException e) {
+                // if any of the downloads failed, status will be 99
+                // suppress exceptions for files that failed, and move on to the next file
+                downloadStatus = 99;
+            }
         }
-        urlString = urlString + "net=" + networks + "&sta=*&loc=*&cha=" + channels +
+
+        // return download status
+        return downloadStatus;
+    }
+
+    private boolean downloadMseedEach(DataCenterEnum dataCenterCode, String networks, String channels,
+            LocalDateTime startTime, LocalDateTime endTime, Path mseedPath, Path infPath) throws IOException {
+
+        String urlString = dataCenterCode.getDataSelectUrl() + "net=" + networks + "&sta=*&loc=*&cha=" + channels +
                 "&starttime=" + toLine(startTime) + "&endtime=" + toLine(endTime) + "&format=miniseed&nodata=404";
         URL url = new URL(urlString);
 
         // leave this for redirect validation
         //followingRedirects(url);
 
-        Files.createDirectories(mseedSetPath);
-        Path mseedPath = mseedSetPath.resolve(mseedFileName);
-
-        System.err.print(" ~ Downloading mseed file ...");
+        System.err.print(" ~ Downloading mseed file from " + dataCenterCode + "...");
         try (InputStream inputStream = url.openStream()) {
             double sizeMiB = (double) Files.copy(inputStream, mseedPath, StandardCopyOption.REPLACE_EXISTING) / 1024 / 1024;
-            System.err.println("\r ~ Downloaded : " + eventData + " - " + MathAid.roundToString(sizeMiB, 3) + " MiB  "
+            System.err.println("\r ~ Downloaded from " + dataCenterCode + " : " + MathAid.roundToString(sizeMiB, 3) + " MiB  "
                     + DateTimeFormatter.ofPattern("<yyyy/MM/dd HH:mm:ss>").format(LocalDateTime.now()));
+            return true;
+
         } catch (FileNotFoundException e) {
             // if there is no available data for this request, return false
+            System.err.println("\r ! Data not found on " + dataCenterCode + ", skipping.");
+
+            List<String> lines = List.of("Data not found on " + dataCenterCode);
+            Files.write(infPath, lines, StandardCharsets.UTF_8, StandardOpenOption.CREATE);
             return false;
+
+        } catch (IOException e) {
+            // print exceptions and rethrow
+            System.err.println("\r!!! Download from " + dataCenterCode + " failed, skipping.");
+            e.printStackTrace();
+
+            Files.deleteIfExists(mseedPath);
+
+            throw e;
         }
-        return true;
     }
 
     /**
@@ -188,7 +221,7 @@ class EventDataPreparer {
      * @throws IOException
      */
     private boolean mseed2sac(String mseedFileName) throws IOException {
-        String command = "mseed2sac " + mseedFileName;
+        String command = "mseed2sac -O " + mseedFileName;
         ExternalProcess xProcess = ExternalProcess.launch(command, mseedSetPath);
         return xProcess.waitFor() == 0;
     }
@@ -339,6 +372,8 @@ class EventDataPreparer {
             return;
         }
 
+        String urlHeader = DataCenterEnum.forStationXML(datacenter).getStationUrl();
+
         Files.createDirectories(stationSetPath);
         System.err.println(" ~ Downloading XML files ...");
 
@@ -354,7 +389,8 @@ class EventDataPreparer {
 
                 StationXmlFile stationInfo = new StationXmlFile(network, station, location, channel, stationSetPath);
                 if (!Files.exists(stationInfo.getXmlPath()) || redo) {
-                    stationInfo.setRequest(datacenter, eventData.getCMTTime(), eventData.getCMTTime());
+                    // Here, "plusSeconds(1)" is to avoid error on ORFEUS Federator.
+                    stationInfo.setRequest(urlHeader, eventData.getCMTTime(), eventData.getCMTTime().plusSeconds(1));
                     stationInfo.downloadStationXml();
                 }
             }
