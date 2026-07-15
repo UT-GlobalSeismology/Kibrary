@@ -16,13 +16,11 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 import java.util.List;
 import java.util.Locale;
-
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.math3.util.Precision;
-
 import io.github.kensuke1984.kibrary.Environment;
 import io.github.kensuke1984.kibrary.Summon;
 import io.github.kensuke1984.kibrary.util.FileAid;
@@ -31,13 +29,17 @@ import io.github.kensuke1984.kibrary.util.FileAid;
  * Updating the catalog of Global CMT solutions.
  * <p>
  * The specified version of the catalog will be downloaded if it does not already exist.
+ * Recent monthly catalogs can be downloaded and merged into the master catalog.
  * The active version of the catalog will be set to the one specified.
  * <p>
  * Available versions of catalogs can be checked at
  * <a href="https://www.globalcmt.org/CMTfiles.html">https://www.globalcmt.org/CMTfiles.html</a>.
  *
+ * @since 2021/8/25
+ * @author otsuru
+ *
+ * @version 2026/7/15 Replaced with contents of GlobalCMTCatalogUpToLatest, which was created based on GlobalCMTCatalogUpdate.
  * @author kataoka
- * @since 2026/3/23
  */
 public final class GlobalCMTCatalogUpdate {
     private GlobalCMTCatalogUpdate() {}
@@ -58,11 +60,11 @@ public final class GlobalCMTCatalogUpdate {
     private static final String LAST_MONTH_OPTION = "M";
 
     /**
-     * Upadate the catalog of global CMT solutions
+     * Upadate the catalog of Global CMT solutions.
      * @param args Options.
      * @throws IOExpetion if any
      */
-    public static void main(String[] args) throws IOException{
+    public static void main(String[] args) throws IOException {
         Options options = defineOptions();
         try {
             run(Summon.parseArgs(options, args));
@@ -83,7 +85,7 @@ public final class GlobalCMTCatalogUpdate {
                         + "with mmm as the first three letters of the name of the month (lower case), "
                         + "and YY as the lower two digits of the year.").build());
         options.addOption(Option.builder(LAST_MONTH_OPTION).longOpt("lastMonth").hasArg().argName("mmmYY")
-                .desc("The last month and year in monthly catalog is up to, "
+                .desc("The last month and year of monthly catalog to use, "
                         + "with mmm as the first three letters of the name of the month (lower case), "
                         + "and YY as the lower two digits of the year.").build());
         return options;
@@ -95,7 +97,7 @@ public final class GlobalCMTCatalogUpdate {
      * @throws IOException
      */
     public static void run(CommandLine cmdLine) throws IOException {
-    switchCatalog(cmdLine.getOptionValue(VERSION_OPTION), cmdLine.getOptionValue(LAST_MONTH_OPTION));
+        switchCatalog(cmdLine.getOptionValue(VERSION_OPTION), cmdLine.getOptionValue(LAST_MONTH_OPTION));
     }
 
     private static void switchCatalog(String version, String lastMonth) throws IOException {
@@ -118,14 +120,14 @@ public final class GlobalCMTCatalogUpdate {
             // check whether "monthlyMonth" is after "allEventsMonth"
             YearMonth monthlyMonth = parseVersion(lastMonth);
             if (!monthlyMonth.isAfter(allEventsMonth)) {
-                throw new IllegalArgumentException("The last month of monthly catalog must be after the version of AllEvents cartalog.");
+                throw new IllegalArgumentException("The last month of monthly catalog must be after the version of AllEvents catalog.");
             }
             // download ndk files from "monthly"
             DateTimeFormatter catalogMonthFormatter = DateTimeFormatter.ofPattern("MMMyy", Locale.ENGLISH);
             YearMonth firstMonth = allEventsMonth.plusMonths(1);
             for (YearMonth eventMonth = firstMonth; !eventMonth.isAfter(monthlyMonth); eventMonth = eventMonth.plusMonths(1)) {
                 String eventURL =
-                        "https://www.ldeo.columbia.edu/~gcmt/projects/CMT/catalog/NEW_MONTHLY/" + eventMonth.getYear() +  "/";
+                        "https://www.ldeo.columbia.edu/~gcmt/projects/CMT/catalog/NEW_MONTHLY/" + eventMonth.getYear() + "/";
                 String ndkFile = eventMonth.format(catalogMonthFormatter).toLowerCase(Locale.ENGLISH) + ".ndk";
                 String fullURL = eventURL + ndkFile;
                 downloadCatalog(ndkFile, fullURL);
@@ -148,10 +150,10 @@ public final class GlobalCMTCatalogUpdate {
         System.err.println("The referenced catalog is set to " + targetCatalogName);
     }
 
-    //~Method to Convert a string in mmmYY to a YearMonth object ~//
+    //~Method to convert a string in mmmYY to a YearMonth object ~//
     private static YearMonth parseVersion(String value) {
         if (!value.matches("[a-z]{3}\\d{2}")) {
-            throw new IllegalArgumentException("Invalid catalog month: "+ value + " Expected format: mmmYY.");
+            throw new IllegalArgumentException("Invalid catalog month: " + value + " Expected format: mmmYY.");
         }
         String monthString = value.substring(0, 3);
         int year = 2000 + Integer.parseInt(value.substring(3, 5));
@@ -159,7 +161,7 @@ public final class GlobalCMTCatalogUpdate {
 
         try {
             Month month = Month.from(inputCatalogMonthFormatter.parse(monthString));
-            return YearMonth.of(year,month);
+            return YearMonth.of(year, month);
         } catch (DateTimeException e) {
             throw new IllegalArgumentException("Invalid month: " + monthString, e);
         }
@@ -188,27 +190,28 @@ public final class GlobalCMTCatalogUpdate {
     }
 
     //~Method to merge all ndk files into one
-    private static void mergeCatalog(Path oldCatalog, Path mergedCatalogPath, String mergedCatalogName, YearMonth allEventMonth, YearMonth monthlyMonth) throws IOException {
+    private static void mergeCatalog(Path oldCatalog, Path mergedCatalogPath, String mergedCatalogName,
+            YearMonth allEventMonth, YearMonth monthlyMonth) throws IOException {
         DateTimeFormatter catalogMonthFormatter = DateTimeFormatter.ofPattern("MMMyy", Locale.ENGLISH);
         try (BufferedWriter writer = Files.newBufferedWriter(mergedCatalogPath)) {
-          //~Write ndk files from "all events"~//
-          for (String line : Files.readAllLines(oldCatalog)) {
-              writer.write(line);
-              writer.newLine();
-          }
-          //~Write ndk files from "monthly"~//
-          YearMonth firstMonth = allEventMonth.plusMonths(1);
-          for (YearMonth eventMonth = firstMonth;!eventMonth.isAfter(monthlyMonth); eventMonth = eventMonth.plusMonths(1)) {
-              String ndkFile = eventMonth.format(catalogMonthFormatter).toLowerCase(Locale.ENGLISH) + ".ndk";
-              Path monthlyCatalogPath = CATALOG_DIRECTORY_PATH.resolve(ndkFile);
+            //~Write ndk files from "all events"~//
+            for (String line : Files.readAllLines(oldCatalog)) {
+                writer.write(line);
+                writer.newLine();
+            }
+            //~Write ndk files from "monthly"~//
+            YearMonth firstMonth = allEventMonth.plusMonths(1);
+            for (YearMonth eventMonth = firstMonth; !eventMonth.isAfter(monthlyMonth); eventMonth = eventMonth.plusMonths(1)) {
+                String ndkFile = eventMonth.format(catalogMonthFormatter).toLowerCase(Locale.ENGLISH) + ".ndk";
+                Path monthlyCatalogPath = CATALOG_DIRECTORY_PATH.resolve(ndkFile);
 
-              for (String line : Files.readAllLines(monthlyCatalogPath)) {
-                  writer.write(line);
-                  writer.newLine();
-              }
-          }
-          System.err.println("All catalogs are merged to " + mergedCatalogName);
-      }
+                for (String line : Files.readAllLines(monthlyCatalogPath)) {
+                    writer.write(line);
+                    writer.newLine();
+                }
+            }
+            System.err.println("All catalogs are merged to " + mergedCatalogName);
+        }
     }
 
     //~Method to fix catalog if there are any errors
@@ -252,7 +255,7 @@ public final class GlobalCMTCatalogUpdate {
             if (halfdurationLine.contains("TRIHD:") && !halfdurationLine.contains("TRIHD: ")) {
                 // get position of half duration
                 int indexHD = halfdurationLine.indexOf("TRIHD:");
-                //add a space
+                // add a space
                 StringBuilder fixer = new StringBuilder(halfdurationLine);
                 fixer.insert(indexHD + 6, " ");
                 // overwrite the line
@@ -262,7 +265,7 @@ public final class GlobalCMTCatalogUpdate {
                 // get position of half duration
                 int indexHD = halfdurationLine.indexOf("BOXHD:");
                 StringBuilder fixer = new StringBuilder(halfdurationLine);
-                //add a space
+                // add a space
                 fixer.insert(indexHD + 6, " ");
                 // overwrite the line
                 lines.set(n * 5 + 1, fixer.toString());
