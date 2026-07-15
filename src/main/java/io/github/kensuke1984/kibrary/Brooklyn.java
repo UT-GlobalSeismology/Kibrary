@@ -77,7 +77,7 @@ enum Brooklyn {
     SACFileAccess(21, SACFileAccess.class),
     SourceTimeFunction(22, SourceTimeFunction.class),
     // Filtered 30
-    TimewWindowDataFile(31, TimeWindowDataFile.class),
+    TimeWindowDataFile(31, TimeWindowDataFile.class),
     StaticCorrectionDataFile(32, StaticCorrectionDataFile.class),
     TimeWindowSubtract(37, TimeWindowSubtract.class),
     // Compiled 40
