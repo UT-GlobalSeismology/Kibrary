@@ -30,7 +30,7 @@ public final class About extends javax.swing.JFrame {
 
     /**
      * Shows information about this package.
-     * @param args will be ignored
+     * @param args (String[]) - will be ignored.
      */
     public static void main(String[] args) {
         run(null);
@@ -38,7 +38,7 @@ public final class About extends javax.swing.JFrame {
 
     /**
      * To be called from {@link Summon}.
-     * @return options
+     * @return (Options) Options that can be specified by user.
      */
     public static Options defineOptions() {
         return null;
@@ -46,7 +46,7 @@ public final class About extends javax.swing.JFrame {
 
     /**
      * To be called from {@link Summon}.
-     * @param cmdLine options
+     * @param cmdLine (CommandLine) - will be ignored.
      */
     public static void run(CommandLine cmdLine) {
         try {

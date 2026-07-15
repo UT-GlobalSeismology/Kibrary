@@ -25,8 +25,8 @@ public class TimeWindowSubtract {
 
     /**
      * Removes time windows of a time window file from those of another.
-     * @param args Options.
-     * @throws IOException if an I/O error occurs
+     * @param args (String[]) Options.
+     * @throws IOException
      */
     public static void main(String[] args) throws IOException {
         Options options = defineOptions();
@@ -39,7 +39,7 @@ public class TimeWindowSubtract {
 
     /**
      * To be called from {@link Summon}.
-     * @return options
+     * @return (Options) Options that can be specified by user.
      */
     public static Options defineOptions() {
         Options options = Summon.defaultOptions();
@@ -58,7 +58,7 @@ public class TimeWindowSubtract {
 
     /**
      * To be called from {@link Summon}.
-     * @param cmdLine options
+     * @param cmdLine (CommandLine) Options specified by user.
      * @throws IOException
      */
     public static void run(CommandLine cmdLine) throws IOException {

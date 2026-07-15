@@ -265,8 +265,8 @@ public interface SACFileAccess extends SACHeaderAccess {
 
     /**
      * SAC files in binary format will be read and output in ascii format.
-     * @param args Options.
-     * @throws IOException if an I/O error occurs
+     * @param args (String[]) Options.
+     * @throws IOException
      */
     public static void main(String[] args) throws IOException {
         Options options = defineOptions();
@@ -279,7 +279,7 @@ public interface SACFileAccess extends SACHeaderAccess {
 
     /**
      * To be called from {@link Summon}.
-     * @return options
+     * @return (Options) Options that can be specified by user.
      */
     public static Options defineOptions() {
         Options options = Summon.defaultOptions();
@@ -294,7 +294,7 @@ public interface SACFileAccess extends SACHeaderAccess {
 
     /**
      * To be called from {@link Summon}.
-     * @param cmdLine options
+     * @param cmdLine (CommandLine) Options specified by user.
      * @throws IOException
      */
     public static void run(CommandLine cmdLine) throws IOException {

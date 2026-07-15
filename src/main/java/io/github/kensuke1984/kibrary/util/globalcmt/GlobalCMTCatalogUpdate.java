@@ -61,8 +61,8 @@ public final class GlobalCMTCatalogUpdate {
 
     /**
      * Upadate the catalog of Global CMT solutions.
-     * @param args Options.
-     * @throws IOExpetion if any
+     * @param args (String[]) Options.
+     * @throws IOException
      */
     public static void main(String[] args) throws IOException {
         Options options = defineOptions();
@@ -75,7 +75,7 @@ public final class GlobalCMTCatalogUpdate {
 
     /**
      * To be called from {@link Summon}.
-     * @return options
+     * @return (Options) Options that can be specified by user.
      */
     public static Options defineOptions() {
         Options options = Summon.defaultOptions();
@@ -93,7 +93,7 @@ public final class GlobalCMTCatalogUpdate {
 
     /**
      * To be called from {@link Summon}.
-     * @param cmdLine options
+     * @param cmdLine (CommandLine) Options specified by user.
      * @throws IOException
      */
     public static void run(CommandLine cmdLine) throws IOException {
