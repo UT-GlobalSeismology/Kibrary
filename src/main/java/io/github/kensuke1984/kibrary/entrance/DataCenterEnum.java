@@ -11,7 +11,7 @@ import java.util.List;
  */
 enum DataCenterEnum {
 
-    IRIS("https://service.earthscope.org/fdsnws/dataselect/1/query?", "https://service.earthscope.org/fdsnws/station/1/query?"),
+    EarthScope("https://service.earthscope.org/fdsnws/dataselect/1/query?", "https://service.earthscope.org/fdsnws/station/1/query?"),
     ORFEUS_FED("https://federator.orfeus-eu.org/fdsnws/dataselect/1/query?", "https://federator.orfeus-eu.org/fdsnws/station/1/query?"),
     ODC("https://www.orfeus-eu.org/fdsnws/dataselect/1/query?", "https://www.orfeus-eu.org/fdsnws/station/1/query?"),
     GFZ("https://geofon.gfz.de/fdsnws/dataselect/1/query?", "https://geofon.gfz.de/fdsnws/station/1/query?"),
@@ -40,8 +40,9 @@ enum DataCenterEnum {
         List<DataCenterEnum> dataCenterList = new ArrayList<>();
 
         switch (dataCenter) {
+        case "EarthScope":
         case "IRIS":
-            dataCenterList.add(IRIS);
+            dataCenterList.add(EarthScope);
             break;
         case "ORFEUS":
         case "ORFEUS_EACH":
@@ -63,21 +64,22 @@ enum DataCenterEnum {
             dataCenterList.add(ORFEUS_FED);
             break;
         default:
-            throw new IllegalArgumentException("Invalid datacenter name.");
+            throw new IllegalArgumentException("Invalid data center name.");
         }
         return dataCenterList;
     }
 
     static DataCenterEnum forStationXML(String dataCenter) {
         switch (dataCenter) {
+        case "EarthScope":
         case "IRIS":
-            return IRIS;
+            return EarthScope;
         case "ORFEUS":
         case "ORFEUS_FED":
             return ORFEUS_FED;
         case "ORFEUS_EACH":
         default:
-            throw new IllegalArgumentException("Invalid datacenter name.");
+            throw new IllegalArgumentException("Invalid data center name.");
         }
     }
 

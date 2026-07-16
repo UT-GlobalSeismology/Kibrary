@@ -6,9 +6,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
-
 import org.apache.commons.math3.util.Precision;
-
 import edu.sc.seis.TauP.TauModelException;
 import io.github.kensuke1984.kibrary.util.earth.Earth;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
@@ -62,5 +60,11 @@ public class Test_temp {
             return property.parsePath("timewindowPath", null, true, workPath);
         else
             return property.parsePath("timeWindowPath", null, true, workPath);
+    }
+    public static String getDataCenter_temp(Property property) throws IOException {
+        if (property.containsKey("datacenter"))
+            return property.parseStringSingle("datacenter", "EarthScope");
+        else
+            return property.parseStringSingle("dataCenter", "EarthScope");
     }
 }

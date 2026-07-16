@@ -7,9 +7,13 @@ import java.net.URL;
 import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
 import java.nio.channels.ReadableByteChannel;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
@@ -20,7 +24,9 @@ import org.xml.sax.helpers.DefaultHandler;
 
 /**
  * Class for downloading and reading StationXML files.
- * @see <a href=http://service.iris.edu/fdsnws/station/1/>IRIS DMC FDSNWS station Web Service</a>
+ * @see <a href=https://www.fdsn.org/webservices/>FDSNWS Web Services</a>
+ * @see <a href=https://service.earthscope.org/fdsnws/station/1/>EarthScope FDSNWS station Web Service</a>
+ * @see <a href=https://www.orfeus-eu.org/data/eida/webservices/station/>ORFUES FDSNWS station Web Service</a>
  *
  * @since 2021/11/15
  * @author otsuru
@@ -31,6 +37,7 @@ class StationXmlFile {
 
     private final String xmlFileName;
     private final Path xmlPath;
+    private final Path infPath;
 
     private String network = "";
     private String station = "";
@@ -47,7 +54,7 @@ class StationXmlFile {
     private String doi = "";
 
     /**
-     * Constructor with options to be used in IRIS DMC FDSNWS STATION Web Service.
+     * Constructor with options to be used in FDSNWS STATION Web Service.
      *
      * @param network  (String) Regular network (ex. IU).
      * @param station  (String) Station code.
@@ -65,11 +72,20 @@ class StationXmlFile {
         // file name is "station.II.PFO.00.BHE.xml" or "station.IU.INU..BHE.xml"
         xmlFileName = "station." + network + "." + station + "." + location + "." + channel + ".xml";
         xmlPath = parentPath.resolve(xmlFileName);
+
+        // inf file name is same as XML file but replacing ".xml" with ".inf"
+        String infFileName = xmlFileName.substring(0, xmlFileName.lastIndexOf('.')) + ".inf";
+        infPath = parentPath.resolve(infFileName);
     }
 
     StationXmlFile(Path xmlPath) {
         this.xmlPath = xmlPath;
         this.xmlFileName = xmlPath.getFileName().toString();
+
+        // inf file name is same as XML file but replacing ".xml" with ".inf"
+        String infFileName = xmlFileName.substring(0, xmlFileName.lastIndexOf('.')) + ".inf";
+        infPath = xmlPath.getParent().resolve(infFileName);
+
         String[] parts = xmlFileName.split("\\.");
         network = parts[1];
         station = parts[2];
@@ -80,9 +96,11 @@ class StationXmlFile {
     /**
      * Sets the URL to be used in FDSNWS STATION Web Service.
      *
-     * @see <a href=http://service.iris.edu/irisws/station/1/> IRIS DMC FDSNWS STATION Web
-     *      Service Documentation</a>
-     * @param urlHeader (String) Datacenter-dependent part of the URL.
+     * @see <a href=https://www.fdsn.org/webservices/>FDSNWS Web Services</a>
+     * @see <a href=https://service.earthscope.org/fdsnws/station/1/>EarthScope FDSNWS station Web Service</a>
+     * @see <a href=https://www.orfeus-eu.org/data/eida/webservices/station/>ORFUES FDSNWS station Web Service</a>
+     *
+     * @param urlHeader (String) Data-center-dependent part of the URL.
      * @param startTime (LocalDateTime) Start of time interval to find the response.
      * @param endTime (LocalDateTime) End of time interval to find the response.
      */
@@ -102,31 +120,36 @@ class StationXmlFile {
     }
 
     /**
-     * Method downloading the Station information from IRIS/WS.
+     * Method downloading station information from FDSNWS STATION Web Service.
      * The downloaded file name will take the form "station.II.PFO.00.BHE.xml" or "station.IU.INU..BHE.xml".
-     * @return (boolean) true if download succeeded
+     * @return (boolean) true if download succeeded or if file not found ; false if download failed.
+     * @throws IOException
      */
-    boolean downloadStationXml() {
+    boolean downloadStationXml() throws IOException {
         try (ReadableByteChannel readChannel = Channels.newChannel(url.openStream());
                 FileOutputStream fos = new FileOutputStream(xmlPath.toFile());
                 FileChannel outChannel = fos.getChannel()) {
             outChannel.transferFrom(readChannel, 0, Long.MAX_VALUE);
+            return true;
+
         } catch (FileNotFoundException e) {
-            // If stationXML file not found, return false.
+            // If stationXML file not found, return true.
             System.err.println("  ! File not found for " + network + " " + station + " " + location + " " + channel);
-            return false;
+            List<String> lines = List.of("File not found for " + network + " " + station + " " + location + " " + channel);
+            Files.write(infPath, lines, StandardCharsets.UTF_8, StandardOpenOption.CREATE);
+            return true;
+
         } catch (IOException e) {
             // If stationXML file cannot be downloaded, return false.
             System.err.println("!! Failed to download stationXML file.");
             System.err.println(e.toString());
             return false;
         }
-        return true;
     }
 
     /**
      * Method to read a stationXML file.
-     * @return (boolean) true if read succeeded
+     * @return (boolean) Whether reading succeeded.
      */
     boolean readStationXml() {
         try {
@@ -141,7 +164,7 @@ class StationXmlFile {
 
         } catch (FileNotFoundException e) {
             // If stationXML file not found, return false.
-            System.err.println("  ! File not found for " + network + " " + station + " " + location + " " + channel);
+            System.err.println("!! File not found for " + network + " " + station + " " + location + " " + channel);
             return false;
         } catch (SAXException | ParserConfigurationException | IOException e) {
             // If stationXML file cannot be read, return false.
@@ -154,9 +177,9 @@ class StationXmlFile {
     /**
      * Checks whether latitude, longitude, dip, and azimuth has been properly set.
      * Their individual values are not checked.
-     * @return (boolean) true if the 4 values are set
+     * @return (boolean) Whether the 4 values are set.
      */
-    boolean check() {
+    private boolean check() {
         if (latitude.isEmpty()) {
             System.err.println("!! Latitude empty: " + xmlFileName);
             return false;
@@ -179,12 +202,16 @@ class StationXmlFile {
         return true;
     }
 
-    String getXmlFile() {
+    String getXmlFileName() {
         return xmlFileName;
     }
 
     Path getXmlPath() {
         return xmlPath;
+    }
+
+    Path getInfPath() {
+        return infPath;
     }
 
     String getNetwork() {
