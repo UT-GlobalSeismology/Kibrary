@@ -39,7 +39,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACUtil;
  * Selection for the station coordinate and epicentral distance will be done based on the user's specifications.
  * <p>
  * This class requires that evalresp and sac exists in your PATH.
- * The software
+ * The softwares
  * <a href=https://ds.iris.edu/ds/nodes/dmc/software/downloads/evalresp/>evalresp</a> and
  * <a href=https://ds.iris.edu/ds/nodes/dmc/software/downloads/sac/>SAC</a> can be found at IRIS.
  * <p>

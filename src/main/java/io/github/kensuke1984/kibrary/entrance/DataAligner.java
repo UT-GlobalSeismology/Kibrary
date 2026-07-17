@@ -5,6 +5,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -19,6 +21,7 @@ import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.ThreadAid;
+import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 
 /**
  * Constructs the dataset from downloaded mseed or seed files.
@@ -27,8 +30,8 @@ import io.github.kensuke1984.kibrary.util.ThreadAid;
  * SAC file names will be formatted, and information of the event and station will be written in SAC file headers.
  * <p>
  * The input mseed files must be in "eventDir/mseed/" and seed files in "eventDir/seed/" under the current directory.
- * All mseed files must be for the same datacenter.
- * Output SAC, StationXML, and RESP files will each be placed in "eventDir/sa/c", "eventDir/station/", and "eventDir/resp/".
+ * All mseed files must be for the same data center.
+ * Output SAC, StationXML, and RESP files will each be placed in "eventDir/sac/", "eventDir/station/", and "eventDir/resp/".
  * <p>
  * <ul>
  * <li>
@@ -50,7 +53,7 @@ import io.github.kensuke1984.kibrary.util.ThreadAid;
 public class DataAligner {
 
     private final boolean forSeed;
-    private final String datacenter;
+    private final String dataCenter;
     private final boolean fromDownload;
     private final boolean fromConfigure;
 
@@ -83,15 +86,16 @@ public class DataAligner {
         // input
         OptionGroup inputOption = new OptionGroup();
         inputOption.setRequired(true);
-        inputOption.addOption(Option.builder("m").longOpt("mseed").hasArg().argName("datacenter")
-                .desc("Operate for mseed files, and download from the specified datacenter, chosen from {IRIS, ORFEUS}.").build());
+        inputOption.addOption(Option.builder("m").longOpt("mseed").hasArg().argName("dataCenter")
+                .desc("Operate for mseed files, and download from the specified data center, chosen from {EarthScope, ORFEUS}.").build());
         inputOption.addOption(Option.builder("s").longOpt("seed")
                 .desc("Operate for seed files.").build());
         options.addOptionGroup(inputOption);
 
         // option
         options.addOption(Option.builder("d").longOpt("fromDownload")
-                .desc("Redo from stationXML downloads for all unconfigured SACs, without opening mseed. Only for mseed mode.").build());
+                .desc("Redo from stationXML downloads for all unconfigured SACs, without opening mseed. "
+                        + "Even existing stationXML files are downloaded again. Only for mseed mode.").build());
         options.addOption(Option.builder("c").longOpt("fromConfigure")
                 .desc("Redo from SAC configuration, without opening seed/mseed or downloading stationXMLs.").build());
 
@@ -105,12 +109,12 @@ public class DataAligner {
      */
     public static void run(CommandLine cmdLine) throws IOException {
         boolean forSeed = false;
-        String datacenter = "";
+        String dataCenter = "";
 
         if (cmdLine.hasOption("s")) {
             forSeed = true;
         } else if (cmdLine.hasOption("m")) {
-            datacenter = cmdLine.getOptionValue("m");
+            dataCenter = cmdLine.getOptionValue("m");
         } else {
             throw new IllegalArgumentException("Invalid arguments.");
         }
@@ -123,19 +127,21 @@ public class DataAligner {
         }
         boolean fromConfigure = cmdLine.hasOption("c");
 
-        DataAligner aligner = new DataAligner(forSeed, datacenter, fromDownload, fromConfigure);
+        DataAligner aligner = new DataAligner(forSeed, dataCenter, fromDownload, fromConfigure);
         aligner.align();
     }
 
-    private DataAligner(boolean forSeed, String datacenter, boolean fromDownload, boolean fromConfigure) {
+    private DataAligner(boolean forSeed, String dataCenter, boolean fromDownload, boolean fromConfigure) {
         this.forSeed = forSeed;
-        this.datacenter = datacenter;
+        this.dataCenter = dataCenter;
         this.fromDownload = fromDownload;
         this.fromConfigure = fromConfigure;
     }
 
     private void align() throws IOException {
         long startTime = System.nanoTime();
+        List<GlobalCMTID> failedOpenEvents = new ArrayList<>();
+        List<GlobalCMTID> failedXmlDownloadEvents = new ArrayList<>();
 
         // working directory is set to current directory
         Path workPath = Paths.get(".");
@@ -161,22 +167,28 @@ public class DataAligner {
 
                     if (forSeed) {
                         if (!edp.openSeeds()) {
-                            // if open fails, skip the event
+                            // if no seed files exist, skip the event
+                            System.err.println("!!! No seed files found.");
                             return;
                         }
                     } else {
                         if (!fromDownload) {
                             if (!edp.openMseeds()) {
-                                // if open fails, skip the event
+                                // if no mseed files exist, skip the event
+                                System.err.println("!!! No mseed files found.");
                                 return;
                             }
                         }
-                        edp.downloadXmlMseed(datacenter, fromDownload);
+                        if (!edp.downloadXmlMseed(dataCenter, fromDownload)) {
+                            // if any of the downloads failed, record that event, but continue processing files that succeeded
+                            failedXmlDownloadEvents.add(eventDir.getGlobalCMTID());
+                        }
                     }
                 } catch (IOException e) {
                     // Here, suppress exceptions for events that failed, and move on to the next event.
                     System.err.println("!!! Operation for " + eventDir + " failed, skipping.");
                     e.printStackTrace();
+                    failedOpenEvents.add(eventDir.getGlobalCMTID());
                 }
             });
         }
@@ -191,6 +203,19 @@ public class DataAligner {
             ThreadAid.sleep(100);
         }
         System.err.println("\r Finished handling all events.");
+
+        if (failedOpenEvents.size() > 0) {
+            System.err.println("Opening seed/mseed of following events failed:");
+            for (GlobalCMTID event : failedOpenEvents) {
+                System.err.println(" " + event);
+            }
+        }
+        if (failedXmlDownloadEvents.size() > 0) {
+            System.err.println("The following events contain stationXML download failure:");
+            for (GlobalCMTID event : failedXmlDownloadEvents) {
+                System.err.println(" " + event);
+            }
+        }
 
         // display duration
         System.err.println("Duration: " + GadgetAid.toTimeString(System.nanoTime() - startTime) + " "

@@ -41,7 +41,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACUtil;
  * <p>
  * Additionally, xml2resp (which is included in the evalresp package) may also be needed in your PATH.
  * <p>
- * (memo: this class does not hold "datacenter" beacuse it is not needed for seed files that already exist.)
+ * (memo: this class does not hold "dataCenter" beacuse it is not needed for seed files that already exist.)
  *
  * @since 2021/09/14
  * @author otsuru
@@ -165,9 +165,9 @@ class EventDataPreparer {
     }
 
     /**
-     * Turns a date and time into a format accepted by FDSNWS
-     * @param time (LocalDateTime)
-     * @return (String) time in the format accepted by FDSNWS
+     * Turns a date and time into a format accepted by FDSNWS.
+     * @param time (LocalDateTime) Date and time to format.
+     * @return (String) Date and time in the format accepted by FDSNWS.
      */
     private String toLine(LocalDateTime time) {
         return time.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
@@ -175,8 +175,8 @@ class EventDataPreparer {
 
     /**
      * Opens all mseed files under "mseed" using mseed2sac.
-     * @return (boolean) true if success; false if mseed2sac failed or if no mseed files are found.
-     * @throws IOException
+     * @return (boolean) true if success; false if no mseed files are found.
+     * @throws IOException if mseed2sac failed.
      */
     boolean openMseeds() throws IOException {
         boolean flag = false;
@@ -190,33 +190,27 @@ class EventDataPreparer {
                 }
             }
 
-            // open all mseeds, though there is probably only one
+            // open all mseeds
             try (DirectoryStream<Path> mseedPaths = Files.newDirectoryStream(mseedSetPath, "*.mseed")) {
                 for (Path mseedPath : mseedPaths) {
                     flag = true;
                     System.err.println(" ~ Opening " + mseedPath + " ...");
                     // expand mseed file
                     if (!mseed2sac(mseedPath.getFileName().toString())) {
-                        System.err.println("!!! mseed2sac for " + mseedPath + " failed.");
-                        return false;
+                        throw new IOException("mseed2sac for " + mseedPath + " failed.");
                     }
                 }
             }
         }
 
-        if (flag) {
-            return true;
-        } else {
-            System.err.println("!!! No mseed files found.");
-            return false;
-        }
+        return flag;
     }
 
     /**
      * Runs mseed2sac to extract SAC files from mseed: "mseed2sac [mseedfile]".
      * The mseed file must be placed under "eventDir/mseed".
-     * @param mseedFileName (String) Name of mseedFile
-     * @return (boolean) true if mseed2sac succeeds
+     * @param mseedFileName (String) Name of mseedFile.
+     * @return (boolean) Whether mseed2sac succeeded.
      * @throws IOException
      */
     private boolean mseed2sac(String mseedFileName) throws IOException {
@@ -227,8 +221,8 @@ class EventDataPreparer {
 
     /**
      * Opens all seed files under "seed" using rdseed.
-     * @return (boolean) true if success; false if rdseed failed or if no seed files are found.
-     * @throws IOException
+     * @return (boolean) true if success; false if no seed files are found.
+     * @throws IOException if rdseed failed.
      */
     boolean openSeeds() throws IOException {
         boolean flag = false;
@@ -242,33 +236,27 @@ class EventDataPreparer {
                 }
             }
 
-            // open all seeds, though there is probably only one
+            // open all seeds
             try (DirectoryStream<Path> seedPaths = Files.newDirectoryStream(seedSetPath, "*.seed")) {
                 for (Path seedPath : seedPaths) {
                     flag = true;
                     System.err.println(" ~ Opening " + seedPath + " ...");
                     // expand seed file
                     if (!rdseed(seedPath.getFileName().toString())) {
-                        System.err.println("!!! rdseed for " + seedPath + " failed.");
-                        return false;
+                        throw new IOException("rdseed for " + seedPath + " failed.");
                     }
                 }
             }
         }
 
-        if (flag) {
-            return true;
-        } else {
-            System.err.println("!!! No seed files found.");
-            return false;
-        }
+        return flag;
     }
 
     /**
-     * Runs rdseed to extract SAC files and RESP files from full seed: "rdseed -fRd [seedfile]"
+     * Runs rdseed to extract SAC files and RESP files from full seed: "rdseed -fRd [seedfile]".
      * The seed file must be placed under "eventDir/seed".
-     * @param seedFileName (String) Name of seedFile
-     * @return (boolean) true if rdseed succeeds
+     * @param seedFileName (String) Name of seedFile.
+     * @return (boolean) Whether rdseed succeeded.
      * @throws IOException
      */
     private boolean rdseed(String seedFileName) throws IOException {
@@ -278,15 +266,15 @@ class EventDataPreparer {
     }
 
     /**
-     * Runs xml2resp to create RESP file from xml file: "xml2resp -o [outputfile] [inputfile]"
-     * @param xmlFile (StationXmlFile) Name of input XML file
-     * @param respFile (RespDataFile) Name of output RESP file
-     * @return (boolean) true if rdseed succeeds
+     * Runs xml2resp to create RESP file from xml file: "xml2resp -o [outputfile] [inputfile]".
+     * @param xmlFile (StationXmlFile) Name of input XML file.
+     * @param respFile (RespDataFile) Name of output RESP file.
+     * @return (boolean) Whether xml2resp succeeded.
      * @throws IOException
      */
     private boolean xml2resp(StationXmlFile xmlFile, RespDataFile respFile) throws IOException {
         String command = "xml2resp -o " + respSetPath.getFileName().resolve(respFile.getRespName())
-                + " " + stationSetPath.getFileName().resolve(xmlFile.getXmlFile());
+                + " " + stationSetPath.getFileName().resolve(xmlFile.getXmlFileName());
         //System.err.println(command);
         ExternalProcess xProcess = ExternalProcess.launch(command, eventDir.toPath());
         return xProcess.waitFor() == 0;
@@ -362,20 +350,22 @@ class EventDataPreparer {
     /**
      * Downloads StationXML files for the event into "eventDir/station/", given a set of SAC files.
      * The downloads might be skipped if the SAC file name is not in mseed-style.
-     * @param datacenter (String) The name of the datacenter to download from.
+     * @param dataCenter (String) The name of the data center to download from.
      * @param redo (boolean) Whether to download existing stationXml files again.
+     * @return (boolean) Whether all downloads succeeded (false if any of the downloads failed).
      * @throws IOException
      */
-    void downloadXmlMseed(String datacenter, boolean redo) throws IOException {
+    boolean downloadXmlMseed(String dataCenter, boolean redo) throws IOException {
         if (!Files.exists(mseedSetPath)) {
-            return;
+            return true;
         }
 
-        String urlHeader = DataCenterEnum.forStationXML(datacenter).getStationUrl();
+        String urlHeader = DataCenterEnum.forStationXML(dataCenter).getStationUrl();
 
         Files.createDirectories(stationSetPath);
         System.err.println(" ~ Downloading XML files ...");
 
+        boolean flag = true;
         try (DirectoryStream<Path> sacPaths = Files.newDirectoryStream(mseedSetPath, "*.SAC")) {
             for (Path sacPath : sacPaths) {
 
@@ -387,13 +377,16 @@ class EventDataPreparer {
                 String channel = sacFile.getChannel();
 
                 StationXmlFile stationInfo = new StationXmlFile(network, station, location, channel, stationSetPath);
-                if (!Files.exists(stationInfo.getXmlPath()) || redo) {
+                if ((!Files.exists(stationInfo.getXmlPath()) || redo) && !Files.exists(stationInfo.getInfPath())) {
                     // Here, "plusSeconds(1)" is to avoid error on ORFEUS Federator.
                     stationInfo.setRequest(urlHeader, eventData.getCMTTime(), eventData.getCMTTime().plusSeconds(1));
-                    stationInfo.downloadStationXml();
+                    if (!stationInfo.downloadStationXml()) {
+                        flag = false;
+                    }
                 }
             }
         }
+        return flag;
     }
 
     /**
@@ -424,9 +417,14 @@ class EventDataPreparer {
 
                 // read stationXML file
                 StationXmlFile stationInfo = new StationXmlFile(network, station, location, channel, stationSetPath);
+                if (Files.exists(stationInfo.getInfPath())) {
+                    // if we know the stationXML file does not exist, skip without exception log
+                    continue;
+                }
                 if (!stationInfo.readStationXml()) {
                     // if the read fails, skip the SAC file
-                    // exception log is written inside the method
+                    // Exception log is written inside the method.
+                    // This is not counted in final report of DataAligner because there is usually nothing we can do about it.
                     continue;
                 }
 

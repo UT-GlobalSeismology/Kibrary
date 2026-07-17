@@ -16,6 +16,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
+import io.github.kensuke1984.kibrary.Test_temp;
 import io.github.kensuke1984.kibrary.math.CircularRange;
 import io.github.kensuke1984.kibrary.math.LinearRange;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
@@ -63,7 +64,7 @@ public class DataLobby extends Operation {
      */
     private boolean appendFolderDate;
 
-    private String datacenter;
+    private String dataCenter;
     private String networks;
     private String channels;
     private int headAdjustment;
@@ -111,8 +112,8 @@ public class DataLobby extends Operation {
             pw.println("#folderTag ");
             pw.println("##(boolean) Whether to append date string at end of output folder name. (true)");
             pw.println("#appendFolderDate false");
-            pw.println("##Datacenter to send request, from {IRIS, ORFEUS}. (IRIS)");
-            pw.println("#datacenter ");
+            pw.println("##Data center to send request, from {EarthScope, ORFEUS}. (EarthScope)");
+            pw.println("#dataCenter ");
             pw.println("##Network names for request, listed using commas, must be set.");
             pw.println("##  Wildcards (*, ?) are allowed. Virtual networks are currently not supported.");
             pw.println("##  Note that a request will be made for all stations in the networks.");
@@ -159,7 +160,8 @@ public class DataLobby extends Operation {
         if (property.containsKey("folderTag")) folderTag = property.parseStringSingle("folderTag", null);
         appendFolderDate = property.parseBoolean("appendFolderDate", "true");
 
-        datacenter = property.parseStringSingle("datacenter", "IRIS");
+        dataCenter = Test_temp.getDataCenter_temp(property);  //TODO delete (This is here for backward compatibility.)
+//        dataCenter = property.parseStringSingle("dataCenter", "EarthScope");
         networks = property.parseStringSingle("networks", null);
         channels = property.parseStringSingle("channels", "BH?");
         headAdjustment = property.parseInt("headAdjustment", null);
@@ -203,7 +205,7 @@ public class DataLobby extends Operation {
             property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
         }
 
-        System.err.println("Downloading from " + datacenter);
+        System.err.println("Downloading from " + dataCenter);
 
         // loop for each event
         int n = 0;
@@ -226,12 +228,12 @@ public class DataLobby extends Operation {
 
             // download by EventDataPreparer
             EventDataPreparer edp = new EventDataPreparer(ef);
-            int downloadStatus = edp.downloadMseeds(datacenter, networks, channels, headAdjustment, footAdjustment);
+            int downloadStatus = edp.downloadMseeds(dataCenter, networks, channels, headAdjustment, footAdjustment);
             switch (downloadStatus) {
             case -1:  // no attempt
                 break;
             case 0:  // attempted but did not exist
-                // wait 2 minutes befere moving on to the next event, so that the Datacenter has some time to rest
+                // wait 2 minutes befere moving on to the next event, so that the data center has some time to rest
                 if (n < nTotal) {
                     System.err.println(" ~ Resting for 2 minutes ...");
                     ThreadAid.sleep(1000 * 60 * 2);

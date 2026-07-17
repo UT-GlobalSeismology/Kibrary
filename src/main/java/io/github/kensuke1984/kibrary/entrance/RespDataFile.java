@@ -13,8 +13,10 @@ import java.time.format.DateTimeFormatter;
 
 
 /**
- * Class for RESP files, which allows us to download RESP files from IRIS DMC IRISWS RESP Web Service.
- * @see <a href=http://service.iris.edu/irisws/resp/1/> IRIS DMC IRISWS RESP Web Service Documentation
+ * Class for RESP files.
+ * <p>
+ * RESP files can be download from IRIS DMC IRISWS RESP Web Service.
+ * @see <a href=http://service.iris.edu/irisws/resp/1/>IRIS DMC IRISWS RESP Web Service Documentation</a>
  *
  * @since 2021/08/25
  * @author Kenji Kawai
@@ -37,8 +39,7 @@ public class RespDataFile {
     /**
      * Constructor with options for IRIS DMC IRISWS RESP Web Service
      *
-     * @see <a href=http://service.iris.edu/irisws/resp/1/> IRIS DMC IRISWS RESP Web
-     *      Service Documentation
+     * @see <a href=http://service.iris.edu/irisws/resp/1/>IRIS DMC IRISWS RESP Web Service Documentation</a>
      * @param network  (String) Regular network (ex. IU) or virtual network (ex. _FDSN).
      * @param station  (String) Station code.
      * @param location (String) Location code. Set "" if blank.
@@ -60,8 +61,7 @@ public class RespDataFile {
     /**
      * Set the URL to be used in IRIS DMC IRISWS RESP Web Service
      *
-     * @see <a href=http://service.iris.edu/irisws/resp/1/> IRIS DMC IRISWS RESP Web
-     *      Service Documentation
+     * @see <a href=http://service.iris.edu/irisws/resp/1/>IRIS DMC IRISWS RESP Web Service Documentation</a>
      * @param time     (LocalDateTime) Find the response for the given time.
      */
     public void setRequest(LocalDateTime time) throws IOException {
