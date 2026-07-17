@@ -2,9 +2,7 @@ package io.github.kensuke1984.kibrary.util.data;
 
 
 import java.nio.ByteBuffer;
-
 import org.apache.commons.lang3.StringUtils;
-
 import io.github.kensuke1984.kibrary.correction.StaticCorrectionDataFile;
 import io.github.kensuke1984.kibrary.timewindow.TimeWindowDataFile;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
@@ -38,8 +36,11 @@ import io.github.kensuke1984.kibrary.waveform.PartialIDFile;
  * Only inside folders of a single event can files be named using just network and station code
  * (because a single event means a single time moment).
  *
+ * @since before 2016/1/25
  * @author Kensuke Konishi
- * @since a long time ago
+ *
+ * @version 2021/11/21 Renamed & moved from util.Station to util.data.Observer.
+ * @author otsuru
  */
 public final class Observer implements Comparable<Observer> {
 

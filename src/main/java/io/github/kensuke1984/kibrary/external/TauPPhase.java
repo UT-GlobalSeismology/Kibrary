@@ -7,8 +7,8 @@ import io.github.kensuke1984.anisotime.Phase;
  * <p>
  * This class is <b>immutable</b>
  *
+ * @since before 2016/1/25
  * @author Kensuke Konishi
- * @version 0.0.2.1.1
  */
 public class TauPPhase {
 
@@ -47,7 +47,7 @@ public class TauPPhase {
     private final String PURIST_NAME;
 
     TauPPhase(double distance, double depth, Phase phaseName, double travelTime, double rayParameter, double takeoff,
-              double incident, double puristDistance, String puristName) {
+            double incident, double puristDistance, String puristName) {
         DISTANCE = distance;
         DEPTH = depth;
         PHASE_NAME = phaseName;

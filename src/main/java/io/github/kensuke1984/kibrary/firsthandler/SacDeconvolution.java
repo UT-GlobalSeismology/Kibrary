@@ -7,12 +7,10 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.IntStream;
-
 import org.apache.commons.math3.complex.Complex;
 import org.apache.commons.math3.transform.DftNormalization;
 import org.apache.commons.math3.transform.FastFourierTransformer;
 import org.apache.commons.math3.transform.TransformType;
-
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
 import io.github.kensuke1984.kibrary.util.sac.SACUtil;
 
@@ -26,8 +24,8 @@ import io.github.kensuke1984.kibrary.util.sac.SACUtil;
  * <p>
  * Information about instrument response can be found <a href=http://docs.fdsn.org/projects/stationxml/en/latest/response.html>here</a>.
  *
+ * @since before 2016/1/25
  * @author Kensuke Konishi
- * @since a long time ago
  */
 class SacDeconvolution {
     /**
@@ -129,9 +127,9 @@ class SacDeconvolution {
         int taperArea = npts / 100 * taperAreaRatio;
         double angle = Math.PI / taperArea / 2;
 
-        double[] taper = taperType == 1 ?
-                IntStream.range(0, taperArea + 1).mapToDouble(i -> i * angle).map(Math::sin).toArray() :
-                IntStream.range(0, taperArea + 1).mapToDouble(i -> i * angle)
+        double[] taper = (taperType == 1)
+                ? IntStream.range(0, taperArea + 1).mapToDouble(i -> i * angle).map(Math::sin).toArray()
+                : IntStream.range(0, taperArea + 1).mapToDouble(i -> i * angle)
                         .map(theta -> Math.sin(theta) * Math.sin(theta)).toArray();
         IntStream.range(0, taperArea + 1).forEach(i -> {
             wavedata[i] *= taper[i];

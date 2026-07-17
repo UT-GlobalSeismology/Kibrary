@@ -10,10 +10,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
-
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
-
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.inversion.ResultEvaluation;
@@ -28,8 +26,8 @@ import io.github.kensuke1984.kibrary.voxel.UnknownParameterFile;
 /**
  * Operation to solve inverse problem.
  *
+ * @since 2022/7/7 created based on part of inversion.LetMeInvert.
  * @author otsuru
- * @since 2022/7/7 created based on part of inversion.LetMeInvert
  */
 public class InversionSolver extends Operation {
 

@@ -10,14 +10,12 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.IntStream;
-
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionGroup;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.math3.complex.Complex;
-
 import io.github.kensuke1984.kibrary.Summon;
 import io.github.kensuke1984.kibrary.math.FourierTransform;
 import io.github.kensuke1984.kibrary.math.Trace;
@@ -33,8 +31,8 @@ import io.github.kensuke1984.kibrary.util.spc.SPCFileAid;
  * on <br>
  * Waveform in frequency domain: U[0].. U[NP], respectively. See {@link #convolve(Complex[])}
  *
+ * @since before 2016/1/25
  * @author Kensuke Konishi
- * @since a long time ago
  */
 public class SourceTimeFunction {
 
@@ -96,8 +94,8 @@ public class SourceTimeFunction {
         for (int i = 0; i < np + 1; i++) {
             // TODO check the correctness
             double omegaTau = i * constant;
-            double coef1 = 0.5 * Math.exp( -1.0 * Math.pow(omegaTau + Math.PI, 2.0) / 72.0);
-            double coef2 = 0.5 * Math.exp( -1.0 * Math.pow(omegaTau - Math.PI, 2.0) / 72.0);
+            double coef1 = 0.5 * Math.exp(-1.0 * Math.pow(omegaTau + Math.PI, 2.0) / 72.0);
+            double coef2 = 0.5 * Math.exp(-1.0 * Math.pow(omegaTau - Math.PI, 2.0) / 72.0);
             sourceTimeFunction.sourceTimeFunction[i] =
                     new Complex(coef1 * Math.sin(0.5 * (omegaTau + Math.PI)) - coef2 * Math.sin(0.5 * (omegaTau - Math.PI)),
                             coef1 * Math.cos(0.5 * (omegaTau + Math.PI)) - coef2 * Math.cos(0.5 * (omegaTau - Math.PI)));
@@ -131,10 +129,10 @@ public class SourceTimeFunction {
         double h = 2.0 / (halfDuration1 + halfDuration2);
         sourceTimeFunction.sourceTimeFunction[0] = Complex.ONE;
         for (int i = 1; i < np + 1; i++) {
-             double omega = i * 2.0 * Math.PI * deltaF;
-             sourceTimeFunction.sourceTimeFunction[i] = new Complex(
-                     h/omega/omega*(1.0/halfDuration1 + 1.0/halfDuration2 - Math.cos(omega*halfDuration1)/halfDuration1 - Math.cos(omega*halfDuration2)/halfDuration2),
-                     -h/omega/omega*(Math.sin(omega*halfDuration1)/halfDuration1 - Math.sin(omega*halfDuration2)/halfDuration2));
+            double omega = i * 2.0 * Math.PI * deltaF;
+            sourceTimeFunction.sourceTimeFunction[i] = new Complex(
+                    h / omega / omega * (1.0 / halfDuration1 + 1.0 / halfDuration2 - Math.cos(omega * halfDuration1) / halfDuration1 - Math.cos(omega * halfDuration2) / halfDuration2),
+                    -h / omega / omega * (Math.sin(omega * halfDuration1) / halfDuration1 - Math.sin(omega * halfDuration2) / halfDuration2));
         }
         return sourceTimeFunction;
     }
@@ -314,7 +312,7 @@ public class SourceTimeFunction {
 
     /**
      * Create a source time function file under the working folder.
-     * @param args Options.
+     * @param args (String[]) Options.
      * @throws IOException
      */
     public static void main(String[] args) throws IOException {
@@ -328,7 +326,7 @@ public class SourceTimeFunction {
 
     /**
      * To be called from {@link Summon}.
-     * @return options
+     * @return (Options) Options that can be specified by user.
      */
     public static Options defineOptions() {
         Options options = Summon.defaultOptions();
@@ -362,15 +360,16 @@ public class SourceTimeFunction {
 
     /**
      * To be called from {@link Summon}.
-     * @param cmdLine options
+     * @param cmdLine (CommandLine) Options specified by user.
      * @throws IOException
      */
     public static void run(CommandLine cmdLine) throws IOException {
         String fileTag = cmdLine.hasOption("T") ? cmdLine.getOptionValue("T") : null;
         boolean appendFileDate = !cmdLine.hasOption("O");
 
-        SourceTimeFunctionType type = cmdLine.hasOption("f") ?
-                SourceTimeFunctionType.ofNumber(Integer.parseInt(cmdLine.getOptionValue("f"))) : SourceTimeFunctionType.AUTO;
+        SourceTimeFunctionType type = cmdLine.hasOption("f")
+                ? SourceTimeFunctionType.ofNumber(Integer.parseInt(cmdLine.getOptionValue("f")))
+                : SourceTimeFunctionType.AUTO;
         int np = cmdLine.hasOption("n") ? Integer.parseInt(cmdLine.getOptionValue("n")) : 512;
         double tlen = cmdLine.hasOption("t") ? Double.parseDouble(cmdLine.getOptionValue("t")) : 3276.8;
 

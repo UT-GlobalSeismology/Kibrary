@@ -10,14 +10,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionGroup;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.math3.util.Precision;
-
 import io.github.kensuke1984.kibrary.Summon;
 import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotFile;
 import io.github.kensuke1984.kibrary.inversion.EntryWeightListFile;
@@ -36,16 +34,18 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
  * <p>
  * Weights for each bin can be decided in "weighting" mode. The weights will be exported in {@link EntryWeightListFile}.
  *
- * @author ?
- * @since a long time ago
- * @version 2022/8/12 renamed and moved from util.statistics.Histogram to visual.DistanceHistogram
+ * @since 2017/4/13
+ * @author Anselme
+ *
+ * @version 2022/8/12 Renamed and moved from util.statistics.Histogram to visual.DistanceHistogram.
+ * @author otsuru
  */
 public class DistanceHistogram {
 
     /**
      * Creates histogram of epicentral distance based on a {@link DataEntryListFile}.
-     * @param args Options.
-     * @throws IOException if an I/O error occurs
+     * @param args (String[]) Options.
+     * @throws IOException
      */
     public static void main(String[] args) throws IOException {
         Options options = defineOptions();
@@ -58,7 +58,7 @@ public class DistanceHistogram {
 
     /**
      * To be called from {@link Summon}.
-     * @return options
+     * @return (Options) Options that can be specified by user.
      */
     public static Options defineOptions() {
         Options options = Summon.defaultOptions();
@@ -99,7 +99,7 @@ public class DistanceHistogram {
 
     /**
      * To be called from {@link Summon}.
-     * @param cmdLine options
+     * @param cmdLine (CommandLine) Options specified by user.
      * @throws IOException
      */
     public static void run(CommandLine cmdLine) throws IOException {

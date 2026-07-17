@@ -6,9 +6,10 @@ import java.io.IOException;
  * Information in the header parts of a SAC file.
  * <p>This class is <b>IMMUTABLE</b></p>
  *
- * @author Kensuke Konishi
- * @since a long time ago
  * @see <a href=http://ds.iris.edu/ds/nodes/dmc/forms/sac/>SAC</a>
+ *
+ * @since before 2016/1/25
+ * @author Kensuke Konishi
  */
 class SACHeader implements SACHeaderAccess, Cloneable {
 
@@ -329,18 +330,18 @@ class SACHeader implements SACHeaderAccess, Cloneable {
         if (sacHeaderEnum.getType() != 3) throw new IllegalArgumentException(sacHeaderEnum + " is not boolean.");
 
         switch (sacHeaderEnum) {
-            case LEVEN:
-                return leven;
-            case LPSPOL:
-                return lpspol;
-            case LOVROK:
-                return lovrok;
-            case LCALDA:
-                return lcalda;
-            // case num109:
-            // return num109;
-            default:
-                throw new IllegalArgumentException("Unexpected sacHeaderEnum " + sacHeaderEnum);
+        case LEVEN:
+            return leven;
+        case LPSPOL:
+            return lpspol;
+        case LOVROK:
+            return lovrok;
+        case LCALDA:
+            return lcalda;
+        // case num109:
+        // return num109;
+        default:
+            throw new IllegalArgumentException("Unexpected sacHeaderEnum " + sacHeaderEnum);
         }
     }
 
@@ -350,38 +351,38 @@ class SACHeader implements SACHeaderAccess, Cloneable {
         if (sacHeaderEnum.getType() != 1) throw new IllegalArgumentException(sacHeaderEnum + " is not integer.");
 
         switch (sacHeaderEnum) {
-            case NZYEAR:
-                return nzyear;
-            case NZJDAY:
-                return nzjday;
-            case NZHOUR:
-                return nzhour;
-            case NZMIN:
-                return nzmin;
-            case NZSEC:
-                return nzsec;
-            case NZMSEC:
-                return nzmsec;
-            case NVHDR:
-                return nvhdr;
-            case NORID:
-                return norid;
-            case NEVID:
-                return nevid;
-            case NPTS:
-                return npts;
-            case NWFID:
-                return nwfid;
-            case NXSIZE:
-                return nxsize;
-            case NYSIZE:
-                return nysize;
-            // case num80:
-            // return num80;
-            // case num84:
-            // return num84;
-            default:
-                throw new IllegalArgumentException("Unexpected sacHeaderEnum " + sacHeaderEnum);
+        case NZYEAR:
+            return nzyear;
+        case NZJDAY:
+            return nzjday;
+        case NZHOUR:
+            return nzhour;
+        case NZMIN:
+            return nzmin;
+        case NZSEC:
+            return nzsec;
+        case NZMSEC:
+            return nzmsec;
+        case NVHDR:
+            return nvhdr;
+        case NORID:
+            return norid;
+        case NEVID:
+            return nevid;
+        case NPTS:
+            return npts;
+        case NWFID:
+            return nwfid;
+        case NXSIZE:
+            return nxsize;
+        case NYSIZE:
+            return nysize;
+        // case num80:
+        // return num80;
+        // case num84:
+        // return num84;
+        default:
+            throw new IllegalArgumentException("Unexpected sacHeaderEnum " + sacHeaderEnum);
         }
     }
 
@@ -391,48 +392,48 @@ class SACHeader implements SACHeaderAccess, Cloneable {
         if (sacHeaderEnum.getType() != 2) throw new IllegalArgumentException(sacHeaderEnum + " is not enumerated.");
 
         switch (sacHeaderEnum) {
-            case IFTYPE:
-                return iftype;
-            case IDEP:
-                return idep;
-            case IZTYPE:
-                return iztype;
-            case IINST:
-                return iinst;
-            case ISTREG:
-                return istreg;
-            case IEVREG:
-                return ievreg;
-            case IEVTYP:
-                return ievtyp;
-            case IQUAL:
-                return iqual;
-            case ISYNTH:
-                return isynth;
-            case IMAGTYP:
-                return imagtyp;
-            case IMAGSRC:
-                return imagsrc;
-            // case num88:
-            // return num88;
-            // case num97:
-            // return num97;
-            // case num98:
-            // return num98;
-            // case num99:
-            // return num99;
-            // case num100:
-            // return num100;
-            // case num101:
-            // return num101;
-            // case num102:
-            // return num102;
-            // case num103:
-            // return num103;
-            // case num104:
-            // return num104;
-            default:
-                throw new IllegalArgumentException("Unexpected sacHeaderEnum " + sacHeaderEnum);
+        case IFTYPE:
+            return iftype;
+        case IDEP:
+            return idep;
+        case IZTYPE:
+            return iztype;
+        case IINST:
+            return iinst;
+        case ISTREG:
+            return istreg;
+        case IEVREG:
+            return ievreg;
+        case IEVTYP:
+            return ievtyp;
+        case IQUAL:
+            return iqual;
+        case ISYNTH:
+            return isynth;
+        case IMAGTYP:
+            return imagtyp;
+        case IMAGSRC:
+            return imagsrc;
+        // case num88:
+        // return num88;
+        // case num97:
+        // return num97;
+        // case num98:
+        // return num98;
+        // case num99:
+        // return num99;
+        // case num100:
+        // return num100;
+        // case num101:
+        // return num101;
+        // case num102:
+        // return num102;
+        // case num103:
+        // return num103;
+        // case num104:
+        // return num104;
+        default:
+            throw new IllegalArgumentException("Unexpected sacHeaderEnum " + sacHeaderEnum);
         }
     }
 
@@ -442,148 +443,148 @@ class SACHeader implements SACHeaderAccess, Cloneable {
         else if (sacHeaderEnum.getType() != 0) throw new IllegalArgumentException(sacHeaderEnum + " is not float.");
 
         switch (sacHeaderEnum) {
-            case DELTA:
-                return delta;
-            case DEPMIN:
-                return depmin;
-            case DEPMAX:
-                return depmax;
-            case SCALE:
-                return scale;
-            case ODELTA:
-                return odelta;
-            case B:
-                return b;
-            case E:
-                return e;
-            case O:
-                return o;
-            case A:
-                return a;
-            case T0:
-                return t0;
-            case T1:
-                return t1;
-            case T2:
-                return t2;
-            case T3:
-                return t3;
-            case T4:
-                return t4;
-            case T5:
-                return t5;
-            case T6:
-                return t6;
-            case T7:
-                return t7;
-            case T8:
-                return t8;
-            case T9:
-                return t9;
-            case F:
-                return f;
-            case RESP0:
-                return resp0;
-            case RESP1:
-                return resp1;
-            case RESP2:
-                return resp2;
-            case RESP3:
-                return resp3;
-            case RESP4:
-                return resp4;
-            case RESP5:
-                return resp5;
-            case RESP6:
-                return resp6;
-            case RESP7:
-                return resp7;
-            case RESP8:
-                return resp8;
-            case RESP9:
-                return resp9;
-            case STLA:
-                return stla;
-            case STLO:
-                return stlo;
-            case STEL:
-                return stel;
-            case STDP:
-                return stdp;
-            case EVLA:
-                return evla;
-            case EVLO:
-                return evlo;
-            case EVEL:
-                return evel;
-            case EVDP:
-                return evdp;
-            case MAG:
-                return mag;
-            case USER0:
-                return user0;
-            case USER1:
-                return user1;
-            case USER2:
-                return user2;
-            case USER3:
-                return user3;
-            case USER4:
-                return user4;
-            case USER5:
-                return user5;
-            case USER6:
-                return user6;
-            case USER7:
-                return user7;
-            case USER8:
-                return user8;
-            case USER9:
-                return user9;
-            case DIST:
-                return dist;
-            case AZ:
-                return az;
-            case BAZ:
-                return baz;
-            case GCARC:
-                return gcarc;
-            case DEPMEN:
-                return depmen;
-            case CMPAZ:
-                return cmpaz;
-            case CMPINC:
-                return cmpinc;
-            case XMINIMUM:
-                return xminimum;
-            case XMAXIMUM:
-                return xmaximum;
-            case YMINIMUM:
-                return yminimum;
-            case YMAXIMUM:
-                return ymaximum;
-            // case num63:
-            // return num63;
-            // case num64:
-            // return num64;
-            // case num65:
-            // return num65;
-            // case num66:
-            // return num66;
-            // case num67:
-            // return num67;
-            // case num68:
-            // return num68;
-            // case num69:
-            // return num69;
-            // case num9:
-            // return num9;
-            // case num54:
-            // return num54;
-            // case num55:
-            // return num55;
-            default:
-                throw new IllegalArgumentException("Unexpected sacHeaderEnum " + sacHeaderEnum);
+        case DELTA:
+            return delta;
+        case DEPMIN:
+            return depmin;
+        case DEPMAX:
+            return depmax;
+        case SCALE:
+            return scale;
+        case ODELTA:
+            return odelta;
+        case B:
+            return b;
+        case E:
+            return e;
+        case O:
+            return o;
+        case A:
+            return a;
+        case T0:
+            return t0;
+        case T1:
+            return t1;
+        case T2:
+            return t2;
+        case T3:
+            return t3;
+        case T4:
+            return t4;
+        case T5:
+            return t5;
+        case T6:
+            return t6;
+        case T7:
+            return t7;
+        case T8:
+            return t8;
+        case T9:
+            return t9;
+        case F:
+            return f;
+        case RESP0:
+            return resp0;
+        case RESP1:
+            return resp1;
+        case RESP2:
+            return resp2;
+        case RESP3:
+            return resp3;
+        case RESP4:
+            return resp4;
+        case RESP5:
+            return resp5;
+        case RESP6:
+            return resp6;
+        case RESP7:
+            return resp7;
+        case RESP8:
+            return resp8;
+        case RESP9:
+            return resp9;
+        case STLA:
+            return stla;
+        case STLO:
+            return stlo;
+        case STEL:
+            return stel;
+        case STDP:
+            return stdp;
+        case EVLA:
+            return evla;
+        case EVLO:
+            return evlo;
+        case EVEL:
+            return evel;
+        case EVDP:
+            return evdp;
+        case MAG:
+            return mag;
+        case USER0:
+            return user0;
+        case USER1:
+            return user1;
+        case USER2:
+            return user2;
+        case USER3:
+            return user3;
+        case USER4:
+            return user4;
+        case USER5:
+            return user5;
+        case USER6:
+            return user6;
+        case USER7:
+            return user7;
+        case USER8:
+            return user8;
+        case USER9:
+            return user9;
+        case DIST:
+            return dist;
+        case AZ:
+            return az;
+        case BAZ:
+            return baz;
+        case GCARC:
+            return gcarc;
+        case DEPMEN:
+            return depmen;
+        case CMPAZ:
+            return cmpaz;
+        case CMPINC:
+            return cmpinc;
+        case XMINIMUM:
+            return xminimum;
+        case XMAXIMUM:
+            return xmaximum;
+        case YMINIMUM:
+            return yminimum;
+        case YMAXIMUM:
+            return ymaximum;
+        // case num63:
+        // return num63;
+        // case num64:
+        // return num64;
+        // case num65:
+        // return num65;
+        // case num66:
+        // return num66;
+        // case num67:
+        // return num67;
+        // case num68:
+        // return num68;
+        // case num69:
+        // return num69;
+        // case num9:
+        // return num9;
+        // case num54:
+        // return num54;
+        // case num55:
+        // return num55;
+        default:
+            throw new IllegalArgumentException("Unexpected sacHeaderEnum " + sacHeaderEnum);
         }
     }
 
@@ -593,54 +594,54 @@ class SACHeader implements SACHeaderAccess, Cloneable {
             throw new IllegalArgumentException(sacHeaderEnum + " is not String.");
 
         switch (sacHeaderEnum) {
-            case KSTNM:
-                return kstnm;
-            case KEVNM:
-                return kevnm;
-            case KHOLE:
-                return khole;
-            case KO:
-                return ko;
-            case KA:
-                return ka;
-            case KT0:
-                return kt0;
-            case KT1:
-                return kt1;
-            case KT2:
-                return kt2;
-            case KT3:
-                return kt3;
-            case KT4:
-                return kt4;
-            case KT5:
-                return kt5;
-            case KT6:
-                return kt6;
-            case KT7:
-                return kt7;
-            case KT8:
-                return kt8;
-            case KT9:
-                return kt9;
-            case KF:
-                return kf;
-            case KUSER0:
-                return kuser0;
-            case KUSER1:
-                return kuser1;
-            case KUSER2:
-                return kuser2;
-            case KCMPNM:
-                return kcmpnm;
-            case KNETWK:
-                return knetwk;
-            case KDATRD:
-                return kdatrd;
-            case KINST:
-                return kinst;
-            default:
-                throw new IllegalArgumentException("Unexpected sacHeaderEnum " + sacHeaderEnum);
+        case KSTNM:
+            return kstnm;
+        case KEVNM:
+            return kevnm;
+        case KHOLE:
+            return khole;
+        case KO:
+            return ko;
+        case KA:
+            return ka;
+        case KT0:
+            return kt0;
+        case KT1:
+            return kt1;
+        case KT2:
+            return kt2;
+        case KT3:
+            return kt3;
+        case KT4:
+            return kt4;
+        case KT5:
+            return kt5;
+        case KT6:
+            return kt6;
+        case KT7:
+            return kt7;
+        case KT8:
+            return kt8;
+        case KT9:
+            return kt9;
+        case KF:
+            return kf;
+        case KUSER0:
+            return kuser0;
+        case KUSER1:
+            return kuser1;
+        case KUSER2:
+            return kuser2;
+        case KCMPNM:
+            return kcmpnm;
+        case KNETWK:
+            return knetwk;
+        case KDATRD:
+            return kdatrd;
+        case KINST:
+            return kinst;
+        default:
+            throw new IllegalArgumentException("Unexpected sacHeaderEnum " + sacHeaderEnum);
         }
     }
 
@@ -654,10 +655,10 @@ class SACHeader implements SACHeaderAccess, Cloneable {
             throw new IllegalArgumentException(sacHeaderEnum + " is not Special boolean.");
 
         switch (sacHeaderEnum) {
-            case num109:
-                return num109;
-            default:
-                throw new IllegalArgumentException("Unexpected sacHeaderEnum " + sacHeaderEnum);
+        case num109:
+            return num109;
+        default:
+            throw new IllegalArgumentException("Unexpected sacHeaderEnum " + sacHeaderEnum);
         }
     }
 
@@ -671,12 +672,12 @@ class SACHeader implements SACHeaderAccess, Cloneable {
             throw new RuntimeException(sacHeaderEnum + " is not Special int.");
 
         switch (sacHeaderEnum) {
-            case num80:
-                return num80;
-            case num84:
-                return num84;
-            default:
-                throw new IllegalArgumentException("Unexpected sacHeaderEnum " + sacHeaderEnum);
+        case num80:
+            return num80;
+        case num84:
+            return num84;
+        default:
+            throw new IllegalArgumentException("Unexpected sacHeaderEnum " + sacHeaderEnum);
         }
     }
 
@@ -690,26 +691,26 @@ class SACHeader implements SACHeaderAccess, Cloneable {
             throw new IllegalArgumentException(sacHeaderEnum + " is not Special enumerated.");
 
         switch (sacHeaderEnum) {
-            case num88:
-                return num88;
-            case num97:
-                return num97;
-            case num98:
-                return num98;
-            case num99:
-                return num99;
-            case num100:
-                return num100;
-            case num101:
-                return num101;
-            case num102:
-                return num102;
-            case num103:
-                return num103;
-            case num104:
-                return num104;
-            default:
-                throw new IllegalArgumentException("Unexpected sacHeaderEnum " + sacHeaderEnum);
+        case num88:
+            return num88;
+        case num97:
+            return num97;
+        case num98:
+            return num98;
+        case num99:
+            return num99;
+        case num100:
+            return num100;
+        case num101:
+            return num101;
+        case num102:
+            return num102;
+        case num103:
+            return num103;
+        case num104:
+            return num104;
+        default:
+            throw new IllegalArgumentException("Unexpected sacHeaderEnum " + sacHeaderEnum);
         }
     }
 
@@ -722,28 +723,28 @@ class SACHeader implements SACHeaderAccess, Cloneable {
         if (sacHeaderEnum.getType() != -1 && sacHeaderEnum.getType() != 99)
             throw new RuntimeException(sacHeaderEnum + " is not Special value.");
         switch (sacHeaderEnum) {
-            case num54:
-                return num54;
-            case num55:
-                return num55;
-            case num63:
-                return num63;
-            case num64:
-                return num64;
-            case num65:
-                return num65;
-            case num66:
-                return num66;
-            case num67:
-                return num67;
-            case num68:
-                return num68;
-            case num69:
-                return num69;
-            case num9:
-                return num9;
-            default:
-                throw new IllegalArgumentException("Unexpected sacHeaderEnum " + sacHeaderEnum);
+        case num54:
+            return num54;
+        case num55:
+            return num55;
+        case num63:
+            return num63;
+        case num64:
+            return num64;
+        case num65:
+            return num65;
+        case num66:
+            return num66;
+        case num67:
+            return num67;
+        case num68:
+            return num68;
+        case num69:
+            return num69;
+        case num9:
+            return num9;
+        default:
+            throw new IllegalArgumentException("Unexpected sacHeaderEnum " + sacHeaderEnum);
         }
     }
 
@@ -753,22 +754,22 @@ class SACHeader implements SACHeaderAccess, Cloneable {
 
         SACHeader sh = clone();
         switch (sacHeaderEnum) {
-            case LEVEN:
-                sh.leven = bool;
-                return sh;
-            case LPSPOL:
-                sh.lpspol = bool;
-                return sh;
-            case LOVROK:
-                sh.lovrok = bool;
-                return sh;
-            case LCALDA:
-                sh.lcalda = bool;
-                return sh;
-            // case num109:
-            // return num109;
-            default:
-                throw new IllegalArgumentException("Unexpected sacHeaderEnum " + sacHeaderEnum);
+        case LEVEN:
+            sh.leven = bool;
+            return sh;
+        case LPSPOL:
+            sh.lpspol = bool;
+            return sh;
+        case LOVROK:
+            sh.lovrok = bool;
+            return sh;
+        case LCALDA:
+            sh.lcalda = bool;
+            return sh;
+        // case num109:
+        // return num109;
+        default:
+            throw new IllegalArgumentException("Unexpected sacHeaderEnum " + sacHeaderEnum);
         }
     }
 
@@ -778,47 +779,47 @@ class SACHeader implements SACHeaderAccess, Cloneable {
 
         SACHeader sh = clone();
         switch (sacHeaderEnum) {
-            case NZYEAR:
-                sh.nzyear = value;
-                return sh;
-            case NZJDAY:
-                sh.nzjday = value;
-                return sh;
-            case NZHOUR:
-                sh.nzhour = value;
-                return sh;
-            case NZMIN:
-                sh.nzmin = value;
-                return sh;
-            case NZSEC:
-                sh.nzsec = value;
-                return sh;
-            case NZMSEC:
-                sh.nzmsec = value;
-                return sh;
-            case NVHDR:
-                sh.nvhdr = value;
-                return sh;
-            case NORID:
-                sh.norid = value;
-                return sh;
-            case NEVID:
-                sh.nevid = value;
-                return sh;
-            case NPTS:
-                sh.npts = value;
-                return sh;
-            case NWFID:
-                sh.nwfid = value;
-                return sh;
-            case NXSIZE:
-                sh.nxsize = value;
-                return sh;
-            case NYSIZE:
-                sh.nysize = value;
-                return sh;
-            default:
-                throw new IllegalArgumentException("Unexpected sacHeaderEnum " + sacHeaderEnum);
+        case NZYEAR:
+            sh.nzyear = value;
+            return sh;
+        case NZJDAY:
+            sh.nzjday = value;
+            return sh;
+        case NZHOUR:
+            sh.nzhour = value;
+            return sh;
+        case NZMIN:
+            sh.nzmin = value;
+            return sh;
+        case NZSEC:
+            sh.nzsec = value;
+            return sh;
+        case NZMSEC:
+            sh.nzmsec = value;
+            return sh;
+        case NVHDR:
+            sh.nvhdr = value;
+            return sh;
+        case NORID:
+            sh.norid = value;
+            return sh;
+        case NEVID:
+            sh.nevid = value;
+            return sh;
+        case NPTS:
+            sh.npts = value;
+            return sh;
+        case NWFID:
+            sh.nwfid = value;
+            return sh;
+        case NXSIZE:
+            sh.nxsize = value;
+            return sh;
+        case NYSIZE:
+            sh.nysize = value;
+            return sh;
+        default:
+            throw new IllegalArgumentException("Unexpected sacHeaderEnum " + sacHeaderEnum);
         }
     }
 
@@ -828,68 +829,68 @@ class SACHeader implements SACHeaderAccess, Cloneable {
 
         SACHeader sh = clone();
         switch (sacHeaderEnum) {
-            case IFTYPE:
-                sh.iftype = value;
-                return sh;
-            case IDEP:
-                sh.idep = value;
-                return sh;
-            case IZTYPE:
-                sh.iztype = value;
-                return sh;
-            case IINST:
-                sh.iinst = value;
-                return sh;
-            case ISTREG:
-                sh.istreg = value;
-                return sh;
-            case IEVREG:
-                sh.ievreg = value;
-                return sh;
-            case IEVTYP:
-                sh.ievtyp = value;
-                return sh;
-            case IQUAL:
-                sh.iqual = value;
-                return sh;
-            case ISYNTH:
-                sh.isynth = value;
-                return sh;
-            case IMAGTYP:
-                sh.imagtyp = value;
-                return sh;
-            case IMAGSRC:
-                sh.imagsrc = value;
-                return sh;
-            // case num88:
-            // num88 = value;
-            // return;
-            // case num97:
-            // num97 = value;
-            // return;
-            // case num98:
-            // num98 = value;
-            // return;
-            // case num99:
-            // num99 = value;
-            // return;
-            // case num100:
-            // num100 = value;
-            // return;
-            // case num101:
-            // num101 = value;
-            // return;
-            // case num102:
-            // num102 = value;
-            // return;
-            // case num103:
-            // num103 = value;
-            // return;
-            // case num104:
-            // num104 = value;
-            // return;
-            default:
-                throw new IllegalArgumentException("Unexpected sacHeaderEnum " + sacHeaderEnum);
+        case IFTYPE:
+            sh.iftype = value;
+            return sh;
+        case IDEP:
+            sh.idep = value;
+            return sh;
+        case IZTYPE:
+            sh.iztype = value;
+            return sh;
+        case IINST:
+            sh.iinst = value;
+            return sh;
+        case ISTREG:
+            sh.istreg = value;
+            return sh;
+        case IEVREG:
+            sh.ievreg = value;
+            return sh;
+        case IEVTYP:
+            sh.ievtyp = value;
+            return sh;
+        case IQUAL:
+            sh.iqual = value;
+            return sh;
+        case ISYNTH:
+            sh.isynth = value;
+            return sh;
+        case IMAGTYP:
+            sh.imagtyp = value;
+            return sh;
+        case IMAGSRC:
+            sh.imagsrc = value;
+            return sh;
+        // case num88:
+        // num88 = value;
+        // return;
+        // case num97:
+        // num97 = value;
+        // return;
+        // case num98:
+        // num98 = value;
+        // return;
+        // case num99:
+        // num99 = value;
+        // return;
+        // case num100:
+        // num100 = value;
+        // return;
+        // case num101:
+        // num101 = value;
+        // return;
+        // case num102:
+        // num102 = value;
+        // return;
+        // case num103:
+        // num103 = value;
+        // return;
+        // case num104:
+        // num104 = value;
+        // return;
+        default:
+            throw new IllegalArgumentException("Unexpected sacHeaderEnum " + sacHeaderEnum);
         }
     }
 
@@ -899,208 +900,208 @@ class SACHeader implements SACHeaderAccess, Cloneable {
 
         SACHeader sh = clone();
         switch (sacHeaderEnum) {
-            case DELTA:
-                sh.delta = value;
-                return sh;
-            case DEPMIN:
-                sh.depmin = value;
-                return sh;
-            case DEPMAX:
-                sh.depmax = value;
-                return sh;
-            case SCALE:
-                sh.scale = value;
-                return sh;
-            case ODELTA:
-                sh.odelta = value;
-                return sh;
-            case B:
-                sh.b = value;
-                return sh;
-            case E:
-                sh.e = value;
-                return sh;
-            case O:
-                sh.o = value;
-                return sh;
-            case A:
-                sh.a = value;
-                return sh;
-            case T0:
-                sh.t0 = value;
-                return sh;
-            case T1:
-                sh.t1 = value;
-                return sh;
-            case T2:
-                sh.t2 = value;
-                return sh;
-            case T3:
-                sh.t3 = value;
-                return sh;
-            case T4:
-                sh.t4 = value;
-                return sh;
-            case T5:
-                sh.t5 = value;
-                return sh;
-            case T6:
-                sh.t6 = value;
-                return sh;
-            case T7:
-                sh.t7 = value;
-                return sh;
-            case T8:
-                sh.t8 = value;
-                return sh;
-            case T9:
-                sh.t9 = value;
-                return sh;
-            case F:
-                sh.f = value;
-                return sh;
-            case RESP0:
-                sh.resp0 = value;
-                return sh;
-            case RESP1:
-                sh.resp1 = value;
-                return sh;
-            case RESP2:
-                sh.resp2 = value;
-                return sh;
-            case RESP3:
-                sh.resp3 = value;
-                return sh;
-            case RESP4:
-                sh.resp4 = value;
-                return sh;
-            case RESP5:
-                sh.resp5 = value;
-                return sh;
-            case RESP6:
-                sh.resp6 = value;
-                return sh;
-            case RESP7:
-                sh.resp7 = value;
-                return sh;
-            case RESP8:
-                sh.resp8 = value;
-                return sh;
-            case RESP9:
-                sh.resp9 = value;
-                return sh;
-            case STLA:
-                sh.stla = value;
-                return sh;
-            case STLO:
-                sh.stlo = value;
-                return sh;
-            case STEL:
-                sh.stel = value;
-                return sh;
-            case STDP:
-                sh.stdp = value;
-                return sh;
-            case EVLA:
-                sh.evla = value;
-                return sh;
-            case EVLO:
-                sh.evlo = value;
-                return sh;
-            case EVEL:
-                sh.evel = value;
-                return sh;
-            case EVDP:
-                sh.evdp = value;
-                return sh;
-            case MAG:
-                sh.mag = value;
-                return sh;
-            case USER0:
-                sh.user0 = value;
-                return sh;
-            case USER1:
-                sh.user1 = value;
-                return sh;
-            case USER2:
-                sh.user2 = value;
-                return sh;
-            case USER3:
-                sh.user3 = value;
-                return sh;
-            case USER4:
-                sh.user4 = value;
-                return sh;
-            case USER5:
-                sh.user5 = value;
-                return sh;
-            case USER6:
-                sh.user6 = value;
-                return sh;
-            case USER7:
-                sh.user7 = value;
-                return sh;
-            case USER8:
-                sh.user8 = value;
-                return sh;
-            case USER9:
-                sh.user9 = value;
-                return sh;
-            case DIST:
-                sh.dist = value;
-                return sh;
-            case AZ:
-                sh.az = value;
-                return sh;
-            case BAZ:
-                sh.baz = value;
-                return sh;
-            case GCARC:
-                sh.gcarc = value;
-                return sh;
-            case DEPMEN:
-                sh.depmen = value;
-                return sh;
-            case CMPAZ:
-                sh.cmpaz = value;
-                return sh;
-            case CMPINC:
-                sh.cmpinc = value;
-                return sh;
-            case XMINIMUM:
-                sh.xminimum = value;
-                return sh;
-            case XMAXIMUM:
-                sh.xmaximum = value;
-                return sh;
-            case YMINIMUM:
-                sh.yminimum = value;
-                return sh;
-            case YMAXIMUM:
-                sh.ymaximum = value;
-                return sh;
-            // case num63:
-            // // return num63;
-            // case num64:
-            // // return num64;
-            // case num65:
-            // // return num65;
-            // case num66:
-            // // return num66;
-            // case num67:
-            // // return num67;
-            // case num68:
-            // // return num68;
-            // case num69:
-            // // return num69;
-            // case num9:
-            // // return num9;
-            // case num54:
-            // // return num54;
-            // case num55:
-            // // return num55;
-            default:
-                throw new IllegalArgumentException("Unexpected sacHeaderEnum " + sacHeaderEnum);
+        case DELTA:
+            sh.delta = value;
+            return sh;
+        case DEPMIN:
+            sh.depmin = value;
+            return sh;
+        case DEPMAX:
+            sh.depmax = value;
+            return sh;
+        case SCALE:
+            sh.scale = value;
+            return sh;
+        case ODELTA:
+            sh.odelta = value;
+            return sh;
+        case B:
+            sh.b = value;
+            return sh;
+        case E:
+            sh.e = value;
+            return sh;
+        case O:
+            sh.o = value;
+            return sh;
+        case A:
+            sh.a = value;
+            return sh;
+        case T0:
+            sh.t0 = value;
+            return sh;
+        case T1:
+            sh.t1 = value;
+            return sh;
+        case T2:
+            sh.t2 = value;
+            return sh;
+        case T3:
+            sh.t3 = value;
+            return sh;
+        case T4:
+            sh.t4 = value;
+            return sh;
+        case T5:
+            sh.t5 = value;
+            return sh;
+        case T6:
+            sh.t6 = value;
+            return sh;
+        case T7:
+            sh.t7 = value;
+            return sh;
+        case T8:
+            sh.t8 = value;
+            return sh;
+        case T9:
+            sh.t9 = value;
+            return sh;
+        case F:
+            sh.f = value;
+            return sh;
+        case RESP0:
+            sh.resp0 = value;
+            return sh;
+        case RESP1:
+            sh.resp1 = value;
+            return sh;
+        case RESP2:
+            sh.resp2 = value;
+            return sh;
+        case RESP3:
+            sh.resp3 = value;
+            return sh;
+        case RESP4:
+            sh.resp4 = value;
+            return sh;
+        case RESP5:
+            sh.resp5 = value;
+            return sh;
+        case RESP6:
+            sh.resp6 = value;
+            return sh;
+        case RESP7:
+            sh.resp7 = value;
+            return sh;
+        case RESP8:
+            sh.resp8 = value;
+            return sh;
+        case RESP9:
+            sh.resp9 = value;
+            return sh;
+        case STLA:
+            sh.stla = value;
+            return sh;
+        case STLO:
+            sh.stlo = value;
+            return sh;
+        case STEL:
+            sh.stel = value;
+            return sh;
+        case STDP:
+            sh.stdp = value;
+            return sh;
+        case EVLA:
+            sh.evla = value;
+            return sh;
+        case EVLO:
+            sh.evlo = value;
+            return sh;
+        case EVEL:
+            sh.evel = value;
+            return sh;
+        case EVDP:
+            sh.evdp = value;
+            return sh;
+        case MAG:
+            sh.mag = value;
+            return sh;
+        case USER0:
+            sh.user0 = value;
+            return sh;
+        case USER1:
+            sh.user1 = value;
+            return sh;
+        case USER2:
+            sh.user2 = value;
+            return sh;
+        case USER3:
+            sh.user3 = value;
+            return sh;
+        case USER4:
+            sh.user4 = value;
+            return sh;
+        case USER5:
+            sh.user5 = value;
+            return sh;
+        case USER6:
+            sh.user6 = value;
+            return sh;
+        case USER7:
+            sh.user7 = value;
+            return sh;
+        case USER8:
+            sh.user8 = value;
+            return sh;
+        case USER9:
+            sh.user9 = value;
+            return sh;
+        case DIST:
+            sh.dist = value;
+            return sh;
+        case AZ:
+            sh.az = value;
+            return sh;
+        case BAZ:
+            sh.baz = value;
+            return sh;
+        case GCARC:
+            sh.gcarc = value;
+            return sh;
+        case DEPMEN:
+            sh.depmen = value;
+            return sh;
+        case CMPAZ:
+            sh.cmpaz = value;
+            return sh;
+        case CMPINC:
+            sh.cmpinc = value;
+            return sh;
+        case XMINIMUM:
+            sh.xminimum = value;
+            return sh;
+        case XMAXIMUM:
+            sh.xmaximum = value;
+            return sh;
+        case YMINIMUM:
+            sh.yminimum = value;
+            return sh;
+        case YMAXIMUM:
+            sh.ymaximum = value;
+            return sh;
+        // case num63:
+        // // return num63;
+        // case num64:
+        // // return num64;
+        // case num65:
+        // // return num65;
+        // case num66:
+        // // return num66;
+        // case num67:
+        // // return num67;
+        // case num68:
+        // // return num68;
+        // case num69:
+        // // return num69;
+        // case num9:
+        // // return num9;
+        // case num54:
+        // // return num54;
+        // case num55:
+        // // return num55;
+        default:
+            throw new IllegalArgumentException("Unexpected sacHeaderEnum " + sacHeaderEnum);
         }
     }
 
@@ -1112,77 +1113,77 @@ class SACHeader implements SACHeaderAccess, Cloneable {
 
         SACHeader sh = clone();
         switch (sacHeaderEnum) {
-            case KSTNM:
-                sh.kstnm = string;
-                return sh;
-            case KEVNM:
-                sh.kevnm = string;
-                return sh;
-            case KHOLE:
-                sh.khole = string;
-                return sh;
-            case KO:
-                sh.ko = string;
-                return sh;
-            case KA:
-                sh.ka = string;
-                return sh;
-            case KT0:
-                sh.kt0 = string;
-                return sh;
-            case KT1:
-                sh.kt1 = string;
-                return sh;
-            case KT2:
-                sh.kt2 = string;
-                return sh;
-            case KT3:
-                sh.kt3 = string;
-                return sh;
-            case KT4:
-                sh.kt4 = string;
-                return sh;
-            case KT5:
-                sh.kt5 = string;
-                return sh;
-            case KT6:
-                sh.kt6 = string;
-                return sh;
-            case KT7:
-                sh.kt7 = string;
-                return sh;
-            case KT8:
-                sh.kt8 = string;
-                return sh;
-            case KT9:
-                sh.kt9 = string;
-                return sh;
-            case KF:
-                sh.kf = string;
-                return sh;
-            case KUSER0:
-                sh.kuser0 = string;
-                return sh;
-            case KUSER1:
-                sh.kuser1 = string;
-                return sh;
-            case KUSER2:
-                sh.kuser2 = string;
-                return sh;
-            case KCMPNM:
-                sh.kcmpnm = string;
-                return sh;
-            case KNETWK:
-                sh.knetwk = string;
-                return sh;
-            case KDATRD:
-                sh.kdatrd = string;
-                return sh;
-            case KINST:
-                sh.kinst = string;
-                return sh;
-            default:
-                throw new IllegalArgumentException("Unexpected sacHeaderEnum " + sacHeaderEnum);
+        case KSTNM:
+            sh.kstnm = string;
+            return sh;
+        case KEVNM:
+            sh.kevnm = string;
+            return sh;
+        case KHOLE:
+            sh.khole = string;
+            return sh;
+        case KO:
+            sh.ko = string;
+            return sh;
+        case KA:
+            sh.ka = string;
+            return sh;
+        case KT0:
+            sh.kt0 = string;
+            return sh;
+        case KT1:
+            sh.kt1 = string;
+            return sh;
+        case KT2:
+            sh.kt2 = string;
+            return sh;
+        case KT3:
+            sh.kt3 = string;
+            return sh;
+        case KT4:
+            sh.kt4 = string;
+            return sh;
+        case KT5:
+            sh.kt5 = string;
+            return sh;
+        case KT6:
+            sh.kt6 = string;
+            return sh;
+        case KT7:
+            sh.kt7 = string;
+            return sh;
+        case KT8:
+            sh.kt8 = string;
+            return sh;
+        case KT9:
+            sh.kt9 = string;
+            return sh;
+        case KF:
+            sh.kf = string;
+            return sh;
+        case KUSER0:
+            sh.kuser0 = string;
+            return sh;
+        case KUSER1:
+            sh.kuser1 = string;
+            return sh;
+        case KUSER2:
+            sh.kuser2 = string;
+            return sh;
+        case KCMPNM:
+            sh.kcmpnm = string;
+            return sh;
+        case KNETWK:
+            sh.knetwk = string;
+            return sh;
+        case KDATRD:
+            sh.kdatrd = string;
+            return sh;
+        case KINST:
+            sh.kinst = string;
+            return sh;
+        default:
+            throw new IllegalArgumentException("Unexpected sacHeaderEnum " + sacHeaderEnum);
         }
     }
 

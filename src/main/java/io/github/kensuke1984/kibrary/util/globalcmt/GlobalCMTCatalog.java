@@ -14,7 +14,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-
 import io.github.kensuke1984.kibrary.Environment;
 import io.github.kensuke1984.kibrary.util.FileAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
@@ -23,13 +22,13 @@ import io.github.kensuke1984.kibrary.util.GadgetAid;
  * Catalog of global CMT solutions.
  * <p>
  * The catalog can be updated using {@link GlobalCMTCatalogUpdate}.
- * Virtual events can be added to the custom catalog file using {@link }. TODO
+ * Virtual events can be added to the custom catalog file using {@link VirtualEventRegistration}.
  * <p>
  * When no catalog can be found, a default catalog that contains a list of events
  * from <b>1976 January - 2017 September</b> is downloaded.
  *
+ * @since before 2016/1/25
  * @author Kensuke Konishi
- * @since a long time ago
  */
 public final class GlobalCMTCatalog {
     private GlobalCMTCatalog() {}
@@ -74,7 +73,7 @@ public final class GlobalCMTCatalog {
 
             //~set symbolic link~//
             // check whether the symbolic link itself exists, regardless of the existence of its target
-            if(Files.exists(CATALOG_PATH, LinkOption.NOFOLLOW_LINKS)) {
+            if (Files.exists(CATALOG_PATH, LinkOption.NOFOLLOW_LINKS)) {
                 // delete symbolic link if it exists
                 Files.delete(CATALOG_PATH);
             }
@@ -129,7 +128,7 @@ public final class GlobalCMTCatalog {
         String[] lines = ndk.toLines();
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(CUSTOM_CATALOG_PATH,
                 StandardOpenOption.CREATE, StandardOpenOption.APPEND))) {
-            for (String line: lines) {
+            for (String line : lines) {
                 pw.println(line);
             }
         }

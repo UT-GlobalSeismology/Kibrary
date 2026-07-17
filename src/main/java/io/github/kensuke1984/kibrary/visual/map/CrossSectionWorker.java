@@ -12,9 +12,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
-
 import org.apache.commons.math3.util.Precision;
-
 import io.github.kensuke1984.kibrary.elastic.VariableType;
 import io.github.kensuke1984.kibrary.math.Interpolation;
 import io.github.kensuke1984.kibrary.math.Trace;
@@ -27,8 +25,8 @@ import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 /**
  * Class to create cross sections.
  *
- * @author otsuru
  * @since 2023/6/10 Separated from visual.map.CrossSectionCreator.
+ * @author otsuru
  */
 public class CrossSectionWorker {
 
@@ -154,7 +152,7 @@ public class CrossSectionWorker {
         meanRadius = Arrays.stream(radii).average().getAsDouble();
         this.marginLatitudeDeg = setMarginLatitudeByKm ? Math.toDegrees(marginLatitudeRaw / meanRadius) : marginLatitudeRaw;
         this.marginLongitudeRaw = marginLongitudeRaw;
-        this.setMarginLongitudeByKm =setMarginLongitudeByKm;
+        this.setMarginLongitudeByKm = setMarginLongitudeByKm;
         this.marginRadius = marginRadius;
 
         // other settings

@@ -13,9 +13,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
 import org.apache.commons.lang3.StringUtils;
-
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
@@ -32,8 +30,8 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
  * A {@link DataEntryListFile} shall be given as the set of data for input.
  * Paths of {@link DataLobby} folders must be set to look up the network descriptions in stationXML files.
  *
- * @author otsuru
  * @since 2023/1/10
+ * @author otsuru
  */
 public class NetworkLookup extends Operation {
 
@@ -114,56 +112,56 @@ public class NetworkLookup extends Operation {
         }
     }
 
-   @Override
-   public void run() throws IOException {
-       // read input data entry file
-       Set<DataEntry> entrySet = DataEntryListFile.readAsSet(dataEntryPath);
-       Set<GlobalCMTID> eventSet = entrySet.stream().map(DataEntry::getEvent).collect(Collectors.toSet());
+    @Override
+    public void run() throws IOException {
+        // read input data entry file
+        Set<DataEntry> entrySet = DataEntryListFile.readAsSet(dataEntryPath);
+        Set<GlobalCMTID> eventSet = entrySet.stream().map(DataEntry::getEvent).collect(Collectors.toSet());
 
-       // search for network names (descriptions) for each event
-       // Note that when event is different, the same network code can correspond to different network names.
-       System.err.println("Looking up networks ...");
-       Set<Network> networkDataSet = new HashSet<>();
-       int nEventsDone = 0;
-       for (GlobalCMTID eventID : eventSet) {
+        // search for network names (descriptions) for each event
+        // Note that when event is different, the same network code can correspond to different network names.
+        System.err.println("Looking up networks ...");
+        Set<Network> networkDataSet = new HashSet<>();
+        int nEventsDone = 0;
+        for (GlobalCMTID eventID : eventSet) {
 
-           // collect all network codes existing for this event
-           Set<String> networkCodes = entrySet.stream().filter(entry -> entry.getEvent().equals(eventID))
-                   .map(entry -> entry.getObserver().getNetwork()).collect(Collectors.toSet());
+            // collect all network codes existing for this event
+            Set<String> networkCodes = entrySet.stream().filter(entry -> entry.getEvent().equals(eventID))
+                    .map(entry -> entry.getObserver().getNetwork()).collect(Collectors.toSet());
 
-           // search up information for each network code
-           for (String networkCode : networkCodes) {
-               Network networkInformation = lookupNetworkInformation(networkCode, eventID);
-               if (networkInformation != null) {
-                   // network is added to set if it does not already exist
-                   networkDataSet.add(networkInformation);
-               } else {
-                   System.err.println("!! No description found for " + networkCode + " in " + eventID);
-               }
-           }
+            // search up information for each network code
+            for (String networkCode : networkCodes) {
+                Network networkInformation = lookupNetworkInformation(networkCode, eventID);
+                if (networkInformation != null) {
+                    // network is added to set if it does not already exist
+                    networkDataSet.add(networkInformation);
+                } else {
+                    System.err.println("!! No description found for " + networkCode + " in " + eventID);
+                }
+            }
 
-           nEventsDone++;
-           if (nEventsDone % 100 == 0)
-               System.err.print("\r " + MathAid.ceil(100.0 * nEventsDone / eventSet.size()) + "% of events done");
-       }
-       System.err.println("\r Finished handling all events.");
+            nEventsDone++;
+            if (nEventsDone % 100 == 0)
+                System.err.print("\r " + MathAid.ceil(100.0 * nEventsDone / eventSet.size()) + "% of events done");
+        }
+        System.err.println("\r Finished handling all events.");
 
-       // output
-       Path outputPath = DatasetAid.generateOutputFilePath(workPath, "network", fileTag, appendFileDate, null, ".txt");
-       System.err.println("Outputting in " + outputPath);
-       try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath))) {
-           pw.println("# network|description|DOI");
-           networkDataSet.stream().sorted().forEach(pw::println);
-       }
+        // output
+        Path outputPath = DatasetAid.generateOutputFilePath(workPath, "network", fileTag, appendFileDate, null, ".txt");
+        System.err.println("Outputting in " + outputPath);
+        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath))) {
+            pw.println("# network|description|DOI");
+            networkDataSet.stream().sorted().forEach(pw::println);
+        }
 
-       // output in fdsnws-dataselect POST request format (for generating citation list)
-       Path outputFDSNWSPath = DatasetAid.generateOutputFilePath(workPath, "networkFDSNWS", fileTag, appendFileDate, null, ".txt");
-       System.err.println("Outputting in fdsnws-dataselect format in " + outputFDSNWSPath
-               + " ; use this for generating citation list at https://www.fdsn.org/networks/citation/");
-       try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputFDSNWSPath))) {
-           networkDataSet.stream().sorted().forEach(network -> pw.println(network.toFDSNWSString()));
-       }
-   }
+        // output in fdsnws-dataselect POST request format (for generating citation list)
+        Path outputFDSNWSPath = DatasetAid.generateOutputFilePath(workPath, "networkFDSNWS", fileTag, appendFileDate, null, ".txt");
+        System.err.println("Outputting in fdsnws-dataselect format in " + outputFDSNWSPath
+                + " ; use this for generating citation list at https://www.fdsn.org/networks/citation/");
+        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputFDSNWSPath))) {
+            networkDataSet.stream().sorted().forEach(network -> pw.println(network.toFDSNWSString()));
+        }
+    }
 
     /**
      * Searches stationXML files for the given network and event until a network description and DOI is found.
@@ -174,52 +172,52 @@ public class NetworkLookup extends Operation {
      * @throws IOException
      */
     private Network lookupNetworkInformation(String networkCode, GlobalCMTID event) throws IOException {
-       String description = null;
-       String doi = null;
+        String description = null;
+        String doi = null;
 
-       // search station folder in event folder in all dataLobby folders
-       for (Path lobbyPath : lobbyPaths) {
-           Path stationPath = lobbyPath.resolve(event.toString()).resolve("station");
-           if (!Files.exists(stationPath)) {
-               continue;
-           }
+        // search station folder in event folder in all dataLobby folders
+        for (Path lobbyPath : lobbyPaths) {
+            Path stationPath = lobbyPath.resolve(event.toString()).resolve("station");
+            if (!Files.exists(stationPath)) {
+                continue;
+            }
 
-           // search stationXML file of the specified network in eventFolder/station/
-           List<Path> stationXMLPaths;
-           // CAUTION: Files.list() must be in try-with-resources.
-           try (Stream<Path> stream = Files.list(stationPath)) {
-               stationXMLPaths = stream.filter(p -> p.getFileName().toString().startsWith("station." + networkCode + "."))
-                       .collect(Collectors.toList());
-           }
-           if (stationXMLPaths.size() == 0) {
-               continue;
-           }
+            // search stationXML file of the specified network in eventFolder/station/
+            List<Path> stationXMLPaths;
+            // CAUTION: Files.list() must be in try-with-resources.
+            try (Stream<Path> stream = Files.list(stationPath)) {
+                stationXMLPaths = stream.filter(p -> p.getFileName().toString().startsWith("station." + networkCode + "."))
+                        .collect(Collectors.toList());
+            }
+            if (stationXMLPaths.size() == 0) {
+                continue;
+            }
 
-           // find network description and DOI in one of the xml files
-           for (Path xmlPath : stationXMLPaths) {
-               StationXmlFile stationInfo = new StationXmlFile(xmlPath);
-               if (!stationInfo.readStationXml()) {
-                   // if the read fails, skip the SAC file
-                   // exception log is written inside the method
-                   continue;
-               }
-               if (!StringUtils.isEmpty(stationInfo.getNetworkDescription())) {
-                   description = stationInfo.getNetworkDescription();
-               }
-               if (!StringUtils.isEmpty(stationInfo.getDOI())) {
-                   doi = stationInfo.getDOI();
-               }
+            // find network description and DOI in one of the xml files
+            for (Path xmlPath : stationXMLPaths) {
+                StationXmlFile stationInfo = new StationXmlFile(xmlPath);
+                if (!stationInfo.readStationXml()) {
+                    // if the read fails, skip the SAC file
+                    // exception log is written inside the method
+                    continue;
+                }
+                if (!StringUtils.isEmpty(stationInfo.getNetworkDescription())) {
+                    description = stationInfo.getNetworkDescription();
+                }
+                if (!StringUtils.isEmpty(stationInfo.getDOI())) {
+                    doi = stationInfo.getDOI();
+                }
 
-               // stop searching when both description and DOI are found
-               if (description != null && doi != null) break;
-           }
-           if (description != null && doi != null) break;
-       }
+                // stop searching when both description and DOI are found
+                if (description != null && doi != null) break;
+            }
+            if (description != null && doi != null) break;
+        }
 
-       // return network information; null when description is unknown
-       if (description != null) return new Network(networkCode, description, doi, event);
-       else return null;
-   }
+        // return network information; null when description is unknown
+        if (description != null) return new Network(networkCode, description, doi, event);
+        else return null;
+    }
 
     /**
      * A class to store information of network code, description, and DOI.
@@ -292,7 +290,7 @@ public class NetworkLookup extends Operation {
 
         @Override
         public String toString() {
-            return code + "|" + description + "|" + (doi != null ? doi : "") ;
+            return code + "|" + description + "|" + (doi != null ? doi : "");
         }
 
         public String toFDSNWSString() {

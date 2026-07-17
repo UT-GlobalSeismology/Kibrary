@@ -13,8 +13,8 @@ import java.util.function.Consumer;
 /**
  * Utilities for running threads.
  *
+ * @since 2021/11/21 Created when util.Utilities was split up.
  * @author otsuru
- * @since 2021/11/21 - created when Utilities.java was split up.
  */
 public final class ThreadAid {
     private ThreadAid() {}
@@ -65,7 +65,7 @@ public final class ThreadAid {
             exec.execute(() -> process.accept(eventDirectory));
         exec.shutdown();
         try {
-            if(!exec.awaitTermination(timeout, unit))
+            if (!exec.awaitTermination(timeout, unit))
                 throw new RuntimeException(timeout + " " + unit + " elapsed.");
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();

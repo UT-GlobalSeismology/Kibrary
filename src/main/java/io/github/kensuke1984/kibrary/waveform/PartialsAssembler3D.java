@@ -17,7 +17,6 @@ import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
-
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.Test_temp;
@@ -83,9 +82,17 @@ import io.github.kensuke1984.kibrary.voxel.VoxelInformationFile;
  * <p>
  * Resulting entries can be specified by a (event, observer, component, partialType, voxelPosition, timeframe)-pair.
  *
+ * @since before 2016/1/25
  * @author Kensuke Konishi
- * @since a long time ago
- * @version 2021/12/24 renamed from waveformdata.PartialDatasetMaker_v2 to waveform.PartialWaveformAssembler3D
+ *
+ * @version 2017/7/14 Recreated PartialDatasetMaker as PartialDatasetMaker_v2.
+ * @author Anselme
+ *
+ * @version 2021/12/24 Renamed from PartialDatasetMaker_v2 to PartialWaveformAssembler3D.
+ * @author rei
+ *
+ * @version 2024/4/21 Renamed from PartialWaveformAssembler3D to PartialsAssembler3D.
+ * @author otsuru
  */
 public class PartialsAssembler3D extends Operation {
 
@@ -493,7 +500,7 @@ public class PartialsAssembler3D extends Operation {
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
-                 }
+                }
             }
         }
     }

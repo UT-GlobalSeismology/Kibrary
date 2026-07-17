@@ -11,7 +11,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
-
 import edu.sc.seis.TauP.TauModelException;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
@@ -38,8 +37,9 @@ import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
  * <p>
  * Use {@link VoxelManualDesigner} to decide the position range of voxels manually.
  *
- * @author otsuru
  * @since 2022/2/11
+ * @version 2024/4/1 Renamed from VoxelLayoutDesigner to VoxelAutoDesigner.
+ * @author otsuru
  */
 public class VoxelAutoDesigner extends Operation {
 

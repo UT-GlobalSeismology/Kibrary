@@ -14,9 +14,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
-
 import org.apache.commons.math3.util.Precision;
-
 import edu.sc.seis.TauP.TauModelException;
 import edu.sc.seis.TauP.TauP_Time;
 import io.github.kensuke1984.kibrary.Operation;
@@ -58,8 +56,8 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  * Static correction information is written in binary format in "staticCorrection*.dat".
  * See {@link StaticCorrectionDataFile}.
  *
- * @author Rei Sato
  * @since 2025/12/24 <i>Merry Christmas!<i>
+ * @author Rei Sato
  */
 public class ObayashiStaticCorrection extends Operation {
     private final Property property;

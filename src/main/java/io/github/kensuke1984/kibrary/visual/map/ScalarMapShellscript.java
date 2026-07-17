@@ -7,9 +7,7 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Set;
 import java.util.stream.IntStream;
-
 import org.apache.commons.math3.util.FastMath;
-
 import io.github.kensuke1984.kibrary.elastic.VariableType;
 import io.github.kensuke1984.kibrary.perturbation.ScalarListFile;
 import io.github.kensuke1984.kibrary.perturbation.ScalarType;
@@ -19,9 +17,10 @@ import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 /**
  * Class to generate shellscript files that are to be used to map horizontal slices of perturbations using GMT.
  *
- * @author otsuru
  * @since 2022/4/12
- * @version 2022/7/17 renamed from MapperShellscript to PerturbationMapShellscript
+ * @version 2022/7/17 Renamed from MapperShellscript to PerturbationMapShellscript.
+ * @version 2024/4/22 Renamed from PerturbationMapShellscript to ScalarMapShellscript.
+ * @author otsuru
  */
 public class ScalarMapShellscript {
 
@@ -159,7 +158,7 @@ public class ScalarMapShellscript {
         int styleCode = (forSlides ? cpStyle * 10 + 1 : cpStyle * 10);
 
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath))) {
-            switch(styleCode) {
+            switch (styleCode) {
             case 0:
             case 1:
                 // red-yellow-white-skyblue-turquoise
@@ -357,9 +356,9 @@ public class ScalarMapShellscript {
             int scaleWidth = (forSlides ? 12 : 10);
             int slashSize = (forSlides ? 75 : 60);
             pw.println("gmt psscale -Ccp.cpt -DJCB+w" + scaleWidth + "/0.8+h -Y-2 -B$MP+l\""
-                        + ScalarType.createScaleLabel(variable, scalarType, slashSize) + "\"");
+                    + ScalarType.createScaleLabel(variable, scalarType, slashSize) + "\"");
             pw.println("#gmt psscale -Ccp.cpt -DJCB+w" + scaleWidth + "/0.8+h -Y-2 -B$MP+l\""
-                        + ScalarType.createScaleLabel_TeX(variable, scalarType) + "\"");
+                    + ScalarType.createScaleLabel_TeX(variable, scalarType) + "\"");
             pw.println("");
             pw.println("#------- Finalize");
             pw.println("gmt end");

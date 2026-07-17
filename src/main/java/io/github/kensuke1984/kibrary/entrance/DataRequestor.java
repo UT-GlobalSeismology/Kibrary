@@ -10,7 +10,6 @@ import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Set;
-
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.math.CircularRange;
@@ -26,8 +25,8 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTSearch;
  * Requests are made for events that satisfy specifications, and for stations included in networks specified by the user.
  * A gmail account is needed. The address must be set in the .property file in KIBRARY_HOME.
  *
+ * @since before 2016/1/25
  * @author Kensuke Konishi
- * @since a long time ago
  */
 public class DataRequestor extends Operation {
 
@@ -188,8 +187,7 @@ public class DataRequestor extends Operation {
             System.err.println("Sending requests in 5 sec.");
             System.err.println("Sent mails will be in " + sentPath);
             Thread.sleep(1000 * 5);
-        } catch (Exception e2) {
-        }
+        } catch (Exception e2) {}
         requestedEvents.forEach(event -> {
             BreakFastMail m = createBreakFastMail(event);
             try {

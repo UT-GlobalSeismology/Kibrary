@@ -1,10 +1,5 @@
 package io.github.kensuke1984.kibrary.external;
 
-import edu.sc.seis.TauP.Alert;
-import edu.sc.seis.TauP.TauModelException;
-import edu.sc.seis.TauP.TauPException;
-import io.github.kensuke1984.anisotime.Phase;
-
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -14,6 +9,10 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import edu.sc.seis.TauP.Alert;
+import edu.sc.seis.TauP.TauModelException;
+import edu.sc.seis.TauP.TauPException;
+import io.github.kensuke1984.anisotime.Phase;
 
 /**
  * successor of TauPTimeReader.
@@ -22,13 +21,14 @@ import java.util.stream.IntStream;
  * </p>
  * PREM is used for travel times.
  *
- * @author Kensuke Konishi
- * @version 0.0.1
  * @see <a href='https://www.seis.sc.edu/taup/'>TauP</a>
+ *
+ * @since before 2016/1/25
+ * @version 2018/3/23 Renamed from TaupTimeReader to TauP_Time.
+ * @author Kensuke Konishi
  */
 public final class TauP_Time extends edu.sc.seis.TauP.TauP_Time {
-    private TauP_Time() {
-    }
+    private TauP_Time() {}
 
     /**
      * @param eventR             [km] radius of seismic source !!not depth from the surface!!

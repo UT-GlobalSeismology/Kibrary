@@ -7,12 +7,10 @@ import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
-
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
-
 import io.github.kensuke1984.kibrary.Summon;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.InformationFileReader;
@@ -27,8 +25,8 @@ import io.github.kensuke1984.kibrary.util.MathAid;
  * <p>
  * This class is <b>IMMUTABLE</b>.
  *
- * @author otsuru
  * @since 2023/4/12
+ * @author otsuru
  */
 public class LayerInformationFile {
 
@@ -139,7 +137,7 @@ public class LayerInformationFile {
 
     /**
      * Create layer information file.
-     * @param args Options.
+     * @param args (String[]) Options.
      * @throws IOException
      */
     public static void main(String[] args) throws IOException {
@@ -153,7 +151,7 @@ public class LayerInformationFile {
 
     /**
      * To be called from {@link Summon}.
-     * @return options
+     * @return (Options) Options that can be specified by user.
      */
     public static Options defineOptions() {
         Options options = Summon.defaultOptions();
@@ -179,7 +177,7 @@ public class LayerInformationFile {
 
     /**
      * To be called from {@link Summon}.
-     * @param cmdLine options
+     * @param cmdLine (CommandLine) Options specified by user.
      * @throws IOException
      */
     public static void run(CommandLine cmdLine) throws IOException {

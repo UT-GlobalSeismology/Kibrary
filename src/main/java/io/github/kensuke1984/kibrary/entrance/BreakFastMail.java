@@ -5,17 +5,15 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-
 import org.apache.commons.mail.DefaultAuthenticator;
-
 import io.github.kensuke1984.kibrary.Environment;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 
 /**
  * BREQ_FAST request Mail
  *
+ * @since before 2016/1/25
  * @author Kensuke Konishi
- * @since a long time ago
  */
 public class BreakFastMail {
 
@@ -36,8 +34,8 @@ public class BreakFastMail {
     private static volatile DefaultAuthenticator authenticator;
 
     private static synchronized DefaultAuthenticator createAuthenticator() throws InterruptedException {
-        return Objects.nonNull(authenticator) ? authenticator :
-                new DefaultAuthenticator(Environment.getGmail(), GadgetAid.getPassword(Environment.getGmail()));
+        return Objects.nonNull(authenticator) ? authenticator
+                : new DefaultAuthenticator(Environment.getGmail(), GadgetAid.getPassword(Environment.getGmail()));
     }
 
     private static void sendIris(String[] lines) throws Exception {

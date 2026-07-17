@@ -12,8 +12,8 @@ import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
  * <p>
  * CAUTION, member fields in this class are <b>NOT IMMUTABLE</b>.
  *
- * @author otsuru
  * @since 2022/4/9
+ * @author otsuru
  */
 public class PerturbationVoxel {
 

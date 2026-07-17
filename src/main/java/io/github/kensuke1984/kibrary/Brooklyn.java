@@ -1,10 +1,8 @@
 package io.github.kensuke1984.kibrary;
 
 import java.util.Arrays;
-
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
-
 import io.github.kensuke1984.kibrary.abandon.LobbyCleanup;
 import io.github.kensuke1984.kibrary.abandon.ThreeDPartialCleanup;
 import io.github.kensuke1984.kibrary.correction.StaticCorrectionDataFile;
@@ -53,8 +51,8 @@ import io.github.kensuke1984.kibrary.waveform.VarianceComputer;
  * <p>
  * The value name set to this enum must be the same as its corresponding class name.
  *
- * @author otsuru
  * @since 2022/4/4
+ * @author otsuru
  */
 enum Brooklyn {
     // Environment & General 00

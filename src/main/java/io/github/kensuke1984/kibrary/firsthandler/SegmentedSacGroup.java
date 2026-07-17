@@ -10,7 +10,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
 import io.github.kensuke1984.kibrary.util.FileAid;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
 import io.github.kensuke1984.kibrary.util.sac.SACUtil;
@@ -19,8 +18,11 @@ import io.github.kensuke1984.kibrary.util.sac.SACUtil;
  * A group of SAC files with the same network, station, location, channel, and qualityID.
  * This means that they are supposed to compose part of the same waveform.
  *
+ * @since before 2016/1/25
  * @author Kensuke Konishi
- * @since a long time ago
+ *
+ * @version 2021/11/20 Renamed from SACGroup to SegmentedSacGroup.
+ * @author otsuru
  */
 class SegmentedSacGroup {
 

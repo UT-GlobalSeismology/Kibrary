@@ -8,10 +8,8 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.List;
-
 import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.RealVector;
-
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.filter.BandPassFilter;
@@ -34,9 +32,11 @@ import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
  * <p>
  * White noise can be added to the waveform.
  *
+ * @since before 2016/1/25
  * @author Kensuke Konishi
- * @since a long time ago
- * @version 2022/2/23 Moved & renamed from inversion.CheckerBoardTest to waveform.PseudoWaveformGenerator
+ *
+ * @version 2022/2/23 Moved & renamed from inversion.CheckerBoardTest to waveform.PseudoWaveformGenerator.
+ * @author otsuru
  */
 public class PseudoWaveformGenerator extends Operation {
 

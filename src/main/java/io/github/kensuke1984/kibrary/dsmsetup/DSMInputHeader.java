@@ -2,7 +2,6 @@ package io.github.kensuke1984.kibrary.dsmsetup;
 
 import java.util.ArrayList;
 import java.util.List;
-
 import org.apache.commons.math3.util.ArithmeticUtils;
 
 /**
@@ -10,9 +9,11 @@ import org.apache.commons.math3.util.ArithmeticUtils;
  * <p>
  * This class is <b>IMMUTABLE</b>
  *
+ * @since before 2016/1/25
  * @author Kensuke Konishi
- * @since a long time ago
+ *
  * @version 2021/11/18 Renamed from dsminformation.DSMheader to dsmsetup.DSMInputHeader.
+ * @author otsuru
  */
 class DSMInputHeader {
 
@@ -68,7 +69,7 @@ class DSMInputHeader {
     }
 
     DSMInputHeader(double tlen, int np, int imin, int imax, double relativeError, double ratc, double ratl,
-              double artificialDamping) {
+            double artificialDamping) {
         if (!ArithmeticUtils.isPowerOfTwo(np) || !validTlen(tlen))
             throw new IllegalArgumentException("Input TLEN:" + tlen + " or NP:" + np + " is invalid");
         this.tlen = tlen;

@@ -3,8 +3,8 @@ package io.github.kensuke1984.kibrary.elastic;
 /**
  * ID for elastic parameter C<sub>ijkl</sub>
  *
+ * @since before 2016/1/25
  * @author Kensuke Konishi
- * @version 0.0.1.1
  */
 public enum ElasticIJKL {
     C1111(1111), C1122(1122), C1133(1133), C1123(1123), C1113(1113), C1112(1112), C2211(2211), C2222(2222), C2233(2233),

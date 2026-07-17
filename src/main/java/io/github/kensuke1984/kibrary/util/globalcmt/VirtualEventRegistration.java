@@ -8,7 +8,6 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.source.MomentTensor;
@@ -19,8 +18,8 @@ import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 /**
  * Operation to register a virtual event in a custom global CMT catalog.
  *
- * @author otsuru
  * @since 2023/5/30
+ * @author otsuru
  */
 public class VirtualEventRegistration extends Operation {
 

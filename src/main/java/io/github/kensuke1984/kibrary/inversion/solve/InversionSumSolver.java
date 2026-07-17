@@ -11,11 +11,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
-
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
 import org.apache.commons.math3.util.FastMath;
-
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.inversion.ResultEvaluation;
@@ -30,8 +28,8 @@ import io.github.kensuke1984.kibrary.voxel.UnknownParameterFile;
 /**
  * Operation to solve inverse problem after adding up AtA and Atd from multiple datasets.
  *
+ * @since 2024/4/1 created by duplicating InversionSolver.
  * @author otsuru
- * @since 2024/4/1 created by duplicating InversionSolver
  */
 public class InversionSumSolver extends Operation {
 

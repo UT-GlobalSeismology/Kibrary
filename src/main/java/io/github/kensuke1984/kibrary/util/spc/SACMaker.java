@@ -9,7 +9,6 @@ import java.util.EnumSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-
 import io.github.kensuke1984.kibrary.filter.ButterworthFilter;
 import io.github.kensuke1984.kibrary.math.Trace;
 import io.github.kensuke1984.kibrary.source.SourceTimeFunction;
@@ -29,9 +28,10 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  * SPC file name must be "station.eventID(PSV, SH).spc".
  * If the eventID is included in Global CMT catalog, the information for the event is written in SAC.
  *
- * @author Kensuke Konishi
- * @since a long time ago
  * @see <a href=http://ds.iris.edu/ds/nodes/dmc/forms/sac/>SAC</a>
+ *
+ * @since before 2016/1/25
+ * @author Kensuke Konishi
  */
 public class SACMaker implements Runnable {
 
@@ -387,8 +387,7 @@ public class SACMaker implements Runnable {
 
         private Map<SACHeaderEnum, String> headerMap = new EnumMap<>(INITIAL_MAP);
 
-        private SAC() {
-        }
+        private SAC() {}
 
         @Override
         public boolean getBoolean(SACHeaderEnum sacHeaderEnum) {

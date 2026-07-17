@@ -16,8 +16,11 @@ import java.time.format.DateTimeFormatter;
  * Class for RESP files, which allows us to download RESP files from IRIS DMC IRISWS RESP Web Service.
  * @see <a href=http://service.iris.edu/irisws/resp/1/> IRIS DMC IRISWS RESP Web Service Documentation
  *
- * @author Kenji Kawai
  * @since 2021/08/25
+ * @author Kenji Kawai
+ *
+ * @version 2021/10/5 Renamed from datarequest.RespDataIRIS to entrance.RespDataFile.
+ * @author otsuru
  */
 public class RespDataFile {
 
@@ -96,7 +99,8 @@ public class RespDataFile {
         Path outPath = outDir.resolve(respName);
 
         try (ReadableByteChannel readChannel = Channels.newChannel(url.openStream());
-                FileOutputStream fos = new FileOutputStream(outPath.toFile()); FileChannel outChannel = fos.getChannel()) {
+                FileOutputStream fos = new FileOutputStream(outPath.toFile());
+                FileChannel outChannel = fos.getChannel()) {
             long size = outChannel.transferFrom(readChannel, 0, Long.MAX_VALUE);
             System.err.println("Downloaded : " + respName + " - " + size + " bytes");
 

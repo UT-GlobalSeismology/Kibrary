@@ -3,12 +3,10 @@ package io.github.kensuke1984.kibrary.inversion;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
-
 import io.github.kensuke1984.kibrary.Summon;
 import io.github.kensuke1984.kibrary.inversion.solve.ConjugateGradientMethod;
 import io.github.kensuke1984.kibrary.inversion.solve.InverseMethodEnum;
@@ -18,14 +16,14 @@ import io.github.kensuke1984.kibrary.util.DatasetAid;
 /**
  * Class to compute resolution matrix.
  *
- * @author otsuru
  * @since 2026/1/25
+ * @author otsuru
  */
 public class ResolutionMatrixComputer {
 
     /**
      * Compute resolution matrix.
-     * @param args Options.
+     * @param args (String[]) Options.
      * @throws IOException
      */
     public static void main(String[] args) throws IOException {
@@ -39,7 +37,7 @@ public class ResolutionMatrixComputer {
 
     /**
      * To be called from {@link Summon}.
-     * @return options
+     * @return (Options) Options that can be specified by user.
      */
     public static Options defineOptions() {
         Options options = Summon.defaultOptions();
@@ -62,7 +60,7 @@ public class ResolutionMatrixComputer {
 
     /**
      * To be called from {@link Summon}.
-     * @param cmdLine options
+     * @param cmdLine (CommandLine) Options specified by user.
      * @throws IOException
      */
     public static void run(CommandLine cmdLine) throws IOException {

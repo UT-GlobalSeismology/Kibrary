@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-
 import io.github.kensuke1984.kibrary.elastic.VariableType;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
@@ -18,8 +17,8 @@ import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
  * <p>
  * CAUTION, this class is <b>NOT IMMUTABLE</b>.
  *
- * @author otsuru
  * @since 2022/4/9
+ * @author otsuru
  */
 public class PerturbationModel {
 

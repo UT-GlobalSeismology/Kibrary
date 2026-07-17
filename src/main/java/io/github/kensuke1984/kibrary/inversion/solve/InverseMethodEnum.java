@@ -3,8 +3,8 @@ package io.github.kensuke1984.kibrary.inversion.solve;
 /**
  * Names of methods for inversion, such as conjugate gradient method, singular value decomposition, etc.
  *
+ * @since before 2016/1/25
  * @author Kensuke Konishi
- * @since a long time ago
  */
 public enum InverseMethodEnum {
     SINGULAR_VALUE_DECOMPOSITION, CONJUGATE_GRADIENT, LEAST_SQUARES,

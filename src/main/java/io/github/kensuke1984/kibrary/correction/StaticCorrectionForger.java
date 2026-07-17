@@ -11,7 +11,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
-
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.Test_temp;
@@ -32,8 +31,8 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
  * <li> time shift data for the (event, observer)-pair, regardless of component and startTime, is included in the input static correction file </li>
  * </ul>
  *
- * @author otsuru
  * @since 2022/10/17
+ * @author otsuru
  */
 public class StaticCorrectionForger extends Operation {
 

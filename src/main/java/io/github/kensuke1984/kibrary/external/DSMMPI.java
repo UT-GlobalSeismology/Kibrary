@@ -20,8 +20,8 @@ import java.util.concurrent.Callable;
  * so that you do not care about working folder. (If your information file is
  * tricky, ... ...)
  *
+ * @since before 2016/1/25
  * @author Kensuke Konishi
- * @version 0.0.2
  */
 public final class DSMMPI {
     public final static boolean psvExists = ExternalProcess.isInPath("mpi-tipsv");

@@ -11,7 +11,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.elastic.VariableType;
@@ -35,9 +34,10 @@ import io.github.kensuke1984.kibrary.voxel.UnknownParameterFile;
  * Creates shellscripts to map a set of inversion results.
  *
  * @see Interpolation#inEachMapLayer(Map, double, double, boolean, double, boolean, boolean)
- * @author otsuru
+ *
  * @since 2022/4/9
- * @version 2022/7/17 moved and renamed from model.VelocityModelMapper to visual.ModelSetMapper
+ * @version 2022/7/17 Moved and renamed from model.VelocityModelMapper to visual.ModelSetMapper.
+ * @author otsuru
  */
 public class ModelSetMapper extends Operation {
 
@@ -288,7 +288,7 @@ public class ModelSetMapper extends Operation {
                 continue;
             }
 
-            for (int k = basisInterval; k <= maxBasis; k += basisInterval){
+            for (int k = basisInterval; k <= maxBasis; k += basisInterval) {
                 Path answerPath = methodPath.resolve(method.simpleName() + k + ".lst");
                 if (!Files.exists(answerPath)) {
                     System.err.println("Results for " + method.simpleName() + k + " do not exist, skipping.");

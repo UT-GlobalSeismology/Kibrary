@@ -11,8 +11,8 @@ import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
  * <p>
  * sideに観測点名を入れる
  *
- * @author ?
- * @since a long time ago
+ * @since 2020/10/14
+ * @author Anselme
  */
 public class TimeReceiverSideParameter implements UnknownParameter {
     private static final ParameterType PARAMETER_TYPE = ParameterType.RECEIVER;

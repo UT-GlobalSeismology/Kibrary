@@ -4,11 +4,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-
 import org.apache.commons.math3.complex.Complex;
 import org.apache.commons.math3.complex.ComplexUtils;
 import org.apache.commons.math3.util.FastMath;
-
 import io.github.kensuke1984.kibrary.util.sac.SACFileAccess;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
@@ -22,8 +20,8 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  * <p>
  * ω=2πfδt
  *
+ * @since before 2016/1/25
  * @author Kensuke Konishi
- * @since a long time ago
  */
 public class BandPassFilter extends ButterworthFilter {
 
@@ -368,8 +366,8 @@ public class BandPassFilter extends ButterworthFilter {
     private Complex computeLambdaJ(int j) {
         int jj = (n / 2) < j ? j - n / 2 : j;
         Complex sigmaJ = ComplexUtils.polar2Complex(1, Math.PI * (2 * jj - 1) / (2 * n));
-        Complex lambdaJ = n / 2 < j ? sigmaJ.add(((sigmaJ.pow(2)).add(4 * lambda02)).sqrt()) :
-                sigmaJ.subtract(((sigmaJ.pow(2)).add(4 * lambda02)).sqrt());
+        Complex lambdaJ = n / 2 < j ? sigmaJ.add(((sigmaJ.pow(2)).add(4 * lambda02)).sqrt())
+                : sigmaJ.subtract(((sigmaJ.pow(2)).add(4 * lambda02)).sqrt());
         lambdaJ = lambdaJ.divide(2);
         return lambdaJ;
     }

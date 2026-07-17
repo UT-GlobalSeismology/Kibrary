@@ -7,7 +7,6 @@ import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.stream.Collectors;
-
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTAccess;
@@ -18,8 +17,11 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTAccess;
  * <p>
  * This class is <b>immutable</b>
  *
+ * @since before 2016/1/25
  * @author Kensuke Konishi
- * @since a long time ago
+ *
+ * @version 2021/12/24 Renamed from dsminformation.FPinfo to dsmsetup.FPInputFile.
+ * @author rei, otsuru
  */
 public class FPInputFile extends DSMInputHeader {
 
@@ -228,7 +230,7 @@ public class FPInputFile extends DSMInputHeader {
 //				if (commentPerturbationR[i])
 //					pw.println("c " + RADII[i]);
 //				else
-                    pw.println(radii[i]);
+                pw.println(radii[i]);
             }
             pw.println("end");
         }

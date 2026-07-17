@@ -2,9 +2,7 @@ package io.github.kensuke1984.kibrary.util.spc;
 
 import java.util.ArrayList;
 import java.util.List;
-
 import org.apache.commons.math3.complex.Complex;
-
 import io.github.kensuke1984.kibrary.elastic.ElasticMedium;
 import io.github.kensuke1984.kibrary.elastic.VariableType;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
@@ -17,8 +15,8 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
  * for &mu;<sub>0</sub> to q(&ne;Q<sub>&mu;</sub>) following Fuji <i>et al</i>.
  * (2010)
  *
+ * @since before 2016/1/25
  * @author Kensuke Konishi
- * @since a long time ago
  */
 public final class FujiConversion {
 

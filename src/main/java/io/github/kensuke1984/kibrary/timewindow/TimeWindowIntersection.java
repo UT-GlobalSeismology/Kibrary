@@ -5,12 +5,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashSet;
 import java.util.Set;
-
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
-
 import io.github.kensuke1984.kibrary.Summon;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 
@@ -18,10 +16,10 @@ import io.github.kensuke1984.kibrary.util.GadgetAid;
 /**
  * Pick up time windows for the same events and observers of 2 specified time window files.
  *
- * @author Rei
  * @since 2022/10/6
+ * @author Rei
  */
-public class TimeWindowIntersection  {
+public class TimeWindowIntersection {
 
     /**
      * Pick up time windows for the same events and observers.
@@ -94,7 +92,7 @@ public class TimeWindowIntersection  {
                     if (phase && !window1.getPhases().equals(window2.getPhases())) continue;
                     if (component && !window1.getComponent().equals(window2.getComponent())) continue;
 
-                    if(!outWindows2.contains(window2)) outWindows2.add(window2);
+                    if (!outWindows2.contains(window2)) outWindows2.add(window2);
                     exitIntersect = true;
                 }
             }

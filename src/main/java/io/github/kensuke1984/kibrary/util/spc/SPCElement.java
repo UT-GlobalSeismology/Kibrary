@@ -1,17 +1,18 @@
 package io.github.kensuke1984.kibrary.util.spc;
 
 import java.util.Arrays;
-
 import org.apache.commons.math3.complex.Complex;
-
 import io.github.kensuke1984.kibrary.math.FourierTransform;
 import io.github.kensuke1984.kibrary.source.SourceTimeFunction;
 
 /**
  * Data for one element in one {@link SPCBody} in a {@link SPCFile}.
  *
+ * @since before 2016/1/25
  * @author Kensuke Konishi
- * @since a long time ago
+ *
+ * @version 2024/4/14 Renamed from SPCComponent to SPCElement.
+ * @author otsuru
  */
 public class SPCElement {
 

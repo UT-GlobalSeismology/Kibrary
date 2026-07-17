@@ -3,8 +3,8 @@ package io.github.kensuke1984.kibrary.external.gnuplot;
 /**
  * Information about line appearance in gnuplot.
  *
+ * @since 2021/12/06 Created instead of external.gnuplot.LineAppearance.
  * @author otsuru
- * @since 2021/12/06
  */
 public class GnuplotLineAppearance {
 
@@ -31,8 +31,7 @@ public class GnuplotLineAppearance {
      *  linecolor black,
      *  linewidth 1
      */
-    public GnuplotLineAppearance() {
-    }
+    public GnuplotLineAppearance() {}
 
     public GnuplotLineAppearance(int dashtype, GnuplotColorName linecolor, double linewidth) {
         this.dashtype = dashtype;

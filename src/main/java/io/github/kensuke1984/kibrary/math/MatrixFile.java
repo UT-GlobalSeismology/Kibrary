@@ -8,14 +8,12 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.stream.Stream;
-
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.math3.linear.MatrixUtils;
 import org.apache.commons.math3.linear.RealMatrix;
-
 import io.github.kensuke1984.kibrary.Summon;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.InformationFileReader;
@@ -23,9 +21,9 @@ import io.github.kensuke1984.kibrary.util.InformationFileReader;
 /**
  * File with information of a matrix.
  *
- * @author otsuru
  * @since 2022/7/4
  * @version 2023/8/27 Renamed from inversion.setup.AtAFile to math.MatrixFile.
+ * @author otsuru
  */
 public class MatrixFile {
 
@@ -64,8 +62,8 @@ public class MatrixFile {
 
     /**
      * Create template matrix file.
-     * @param args Options.
-     * @throws IOException if an I/O error occurs
+     * @param args (String[]) Options.
+     * @throws IOException
      */
     public static void main(String[] args) throws IOException {
         Options options = defineOptions();
@@ -78,7 +76,7 @@ public class MatrixFile {
 
     /**
      * To be called from {@link Summon}.
-     * @return options
+     * @return (Options) Options that can be specified by user.
      */
     public static Options defineOptions() {
         Options options = Summon.defaultOptions();
@@ -112,7 +110,7 @@ public class MatrixFile {
 
     /**
      * To be called from {@link Summon}.
-     * @param cmdLine options
+     * @param cmdLine (CommandLine) Options specified by user.
      * @throws IOException
      */
     public static void run(CommandLine cmdLine) throws IOException {

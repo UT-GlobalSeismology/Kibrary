@@ -9,15 +9,14 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Objects;
 import java.util.Properties;
-
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
 
 /**
- * Runtime environment
+ * Runtime environment.
  *
+ * @since before 2016/1/25
  * @author Kensuke Konishi
- * @since a long time ago
  */
 public class Environment {
     private Environment() {}
@@ -125,7 +124,7 @@ public class Environment {
 
     /**
      * Shows environment information.
-     * @param args will be ignored
+     * @param args (String[]) - will be ignored.
      */
     public static void main(String[] args) {
         run(null);
@@ -133,7 +132,7 @@ public class Environment {
 
     /**
      * To be called from {@link Summon}.
-     * @return options
+     * @return (Options) Options that can be specified by user.
      */
     public static Options defineOptions() {
         return null;
@@ -141,7 +140,7 @@ public class Environment {
 
     /**
      * To be called from {@link Summon}.
-     * @param cmdLine options
+     * @param cmdLine (CommandLine) - will be ignored.
      */
     public static void run(CommandLine cmdLine) {
 //      System.getProperties().keySet().forEach(System.out::println);

@@ -3,8 +3,8 @@ package io.github.kensuke1984.kibrary.math;
 /**
  * Integrand utilities
  *
+ * @since before 2016/1/25
  * @author Kensuke Konishi
- * @since a long time ago
  */
 public final class Integrand {
 

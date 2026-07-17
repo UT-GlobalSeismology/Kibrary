@@ -2,16 +2,17 @@ package io.github.kensuke1984.kibrary.selection;
 
 import org.apache.commons.math3.linear.RealVector;
 import org.apache.commons.math3.util.Precision;
-
 import io.github.kensuke1984.kibrary.timewindow.TimeWindowData;
 
 /**
  * Information of values that represent the difference between observed and synthetic waveforms,
  * such as normalized variance, amplitude ratio, and correlation coefficient.
  *
- * @author ?
- * @since a long time ago
- * @version 2022/8/27 renamed from selection.DataSelectionInformation to selection.DataFeature
+ * @since 2017/4/13
+ * @author Anselme
+ *
+ * @version 2022/8/27 Renamed from selection.DataSelectionInformation to selection.DataFeature.
+ * @author otsuru
  */
 public class DataFeature {
     public static final int DECIMALS = 3;

@@ -9,13 +9,11 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
-
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.io.FileUtils;
-
 import io.github.kensuke1984.kibrary.Summon;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.EventFolder;
@@ -26,15 +24,15 @@ import io.github.kensuke1984.kibrary.util.EventFolder;
  * Alternatively, this can copy mseed/ and station/ folders to a specified directory.
  * All event directories under the current directory will be processed.
  *
- * @author otsuru
  * @since 2022/1/3
+ * @author otsuru
  */
 public class LobbyCleanup {
 
     /**
      * Clean up data lobby folders when they are not needed any more.
-     * @param args Options.
-     * @throws IOException if an I/O error occurs
+     * @param args (String[]) Options.
+     * @throws IOException
      */
     public static void main(String[] args) throws IOException {
         Options options = defineOptions();
@@ -47,7 +45,7 @@ public class LobbyCleanup {
 
     /**
      * To be called from {@link Summon}.
-     * @return options
+     * @return (Options) Options that can be specified by user.
      */
     public static Options defineOptions() {
         Options options = Summon.defaultOptions();
@@ -62,7 +60,7 @@ public class LobbyCleanup {
 
     /**
      * To be called from {@link Summon}.
-     * @param cmdLine options
+     * @param cmdLine (CommandLine) Options specified by user.
      * @throws IOException
      */
     public static void run(CommandLine cmdLine) throws IOException {

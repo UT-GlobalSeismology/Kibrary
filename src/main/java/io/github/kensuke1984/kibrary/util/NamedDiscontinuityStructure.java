@@ -12,7 +12,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-
 import io.github.kensuke1984.kibrary.elastic.VariableType;
 
 /**
@@ -21,8 +20,8 @@ import io.github.kensuke1984.kibrary.elastic.VariableType;
  * <p>
  * Xgbm Davis and Henson, 1993
  *
+ * @since before 2016/1/25
  * @author Kensuke Konishi
- * @since a long time ago
  */
 public class NamedDiscontinuityStructure implements Serializable {
 

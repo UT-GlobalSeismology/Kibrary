@@ -3,9 +3,7 @@ package io.github.kensuke1984.kibrary.waveform;
 import java.util.Arrays;
 import java.util.Set;
 import java.util.stream.Collectors;
-
 import org.apache.commons.math3.util.Precision;
-
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.math.Trace;
 import io.github.kensuke1984.kibrary.timewindow.TimeWindow;
@@ -39,8 +37,8 @@ import io.github.kensuke1984.kibrary.util.sac.WaveformType;
  * <p>
  * Caution: A BasicID instance may or may not hold waveform data, dependeing on whether it has already been set.
  *
+ * @since before 2016/1/25
  * @author Kensuke Konishi
- * @since a long time ago
  */
 public class BasicID {
 
@@ -112,7 +110,7 @@ public class BasicID {
         this.data = waveformData.clone();
     }
 
-     /**
+    /**
      * Create new ID with the provided waveform data.
      *
      * @param data (double[]) Waveform data to be set.

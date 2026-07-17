@@ -9,7 +9,6 @@ import java.util.Arrays;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
@@ -24,9 +23,11 @@ import io.github.kensuke1984.kibrary.util.spc.SPCType;
  *
  * TODO: add PAR0 (partial for density)
  *
+ * @since before 2016/1/25
  * @author Kensuke Konishi
- * @since a long time ago
- * @version 2021/11/18 Renamed from dsminformation.SshDSMInformationFileMaker to dsmsetup.OneDPartialDSMInputFile.
+ *
+ * @version 2021/12/24 Renamed from dsminformation.SshDSMinfo to dsmsetup.OneDPartialDSMInputFile.
+ * @author rei, otsuru
  */
 public class OneDPartialDSMInputFile extends SyntheticDSMInputFile {
 
@@ -48,7 +49,7 @@ public class OneDPartialDSMInputFile extends SyntheticDSMInputFile {
     private Set<HorizontalPosition> observerPositions;
 
     public OneDPartialDSMInputFile(PolynomialStructure structure, GlobalCMTAccess event, Set<Observer> observers, String outputDir,
-                      double[] perturbationR, double tlen, int np) {
+            double[] perturbationR, double tlen, int np) {
         super(structure, event, observers, outputDir, tlen, np);
         observerPositions = observers.stream().map(Observer::getPosition).collect(Collectors.toSet());
 

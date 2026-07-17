@@ -9,8 +9,8 @@ import java.util.concurrent.ThreadFactory;
  * However, when using {@link ExecutorService#execute(Runnable)}, exceptions will be caught,
  * so this class should be unneeded.
  *
- * @author otsuru
  * @since 2021/11/12
+ * @author otsuru
  * @deprecated until this becomes needed for some reason.
  */
 public class UncaughtExceptionAid {
@@ -32,7 +32,7 @@ public class UncaughtExceptionAid {
         }
     }
 
-    public static ExecutorService createAidedExecutorService () {
+    public static ExecutorService createAidedExecutorService() {
         int nThreads = Runtime.getRuntime().availableProcessors();
         System.err.println("Running on " + nThreads + " processors");
         ExecutorService es = Executors.newFixedThreadPool(nThreads, new AidedThreadFactory());

@@ -9,13 +9,11 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.stream.IntStream;
-
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.math3.util.Precision;
-
 import io.github.kensuke1984.kibrary.Summon;
 import io.github.kensuke1984.kibrary.filter.ButterworthFilter;
 import io.github.kensuke1984.kibrary.math.Trace;
@@ -25,9 +23,13 @@ import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 /**
  * SAC file (SAC: Seismic analysis code). Binary format.
  *
- * @author Kensuke Konishi
- * @since a long time ago
  * @see <a href=http://ds.iris.edu/ds/nodes/dmc/forms/sac/>SAC</a>
+ *
+ * @since before 2016/1/25
+ * @author Kensuke Konishi
+ *
+ * @version 2021/11/2 Renamed from SACData to SACFileAccess.
+ * @author otsuru
  */
 public interface SACFileAccess extends SACHeaderAccess {
 
@@ -263,8 +265,8 @@ public interface SACFileAccess extends SACHeaderAccess {
 
     /**
      * SAC files in binary format will be read and output in ascii format.
-     * @param args Options.
-     * @throws IOException if an I/O error occurs
+     * @param args (String[]) Options.
+     * @throws IOException
      */
     public static void main(String[] args) throws IOException {
         Options options = defineOptions();
@@ -277,7 +279,7 @@ public interface SACFileAccess extends SACHeaderAccess {
 
     /**
      * To be called from {@link Summon}.
-     * @return options
+     * @return (Options) Options that can be specified by user.
      */
     public static Options defineOptions() {
         Options options = Summon.defaultOptions();
@@ -292,7 +294,7 @@ public interface SACFileAccess extends SACHeaderAccess {
 
     /**
      * To be called from {@link Summon}.
-     * @param cmdLine options
+     * @param cmdLine (CommandLine) Options specified by user.
      * @throws IOException
      */
     public static void run(CommandLine cmdLine) throws IOException {

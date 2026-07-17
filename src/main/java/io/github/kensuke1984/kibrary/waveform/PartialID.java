@@ -3,9 +3,7 @@ package io.github.kensuke1984.kibrary.waveform;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-
 import org.apache.commons.math3.util.Precision;
-
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.elastic.VariableType;
 import io.github.kensuke1984.kibrary.timewindow.TimeWindow;
@@ -47,8 +45,8 @@ import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
  * <p>
  * Caution: A PartialID instance may or may not hold waveform data, dependeing on whether it has already been set.
  *
+ * @since before 2016/1/25
  * @author Kensuke Konishi
- * @since a long time ago
  */
 public class PartialID extends BasicID {
 
@@ -99,7 +97,7 @@ public class PartialID extends BasicID {
         if (!parameterType.equals(parameter.getParameterType())) return false;
         if (!variableType.equals(parameter.getVariableType())) return false;
 
-        switch(parameterType) {
+        switch (parameterType) {
         case SOURCE:
             if (eventID.equals(((TimeSourceSideParameter) parameter).getGlobalCMTID())) return true;
             else return false;
@@ -109,7 +107,7 @@ public class PartialID extends BasicID {
             bouncingOrders.add(1);
             Collections.sort(bouncingOrders);
             int lowestBouncingOrder = bouncingOrders.get(0);
-            if (observer.equals( ((TimeReceiverSideParameter) parameter).getObserver() ) &&
+            if (observer.equals(((TimeReceiverSideParameter) parameter).getObserver()) &&
                     ((TimeReceiverSideParameter) parameter).getBouncingOrder() == lowestBouncingOrder) return true;
             else return false;
         case LAYER:

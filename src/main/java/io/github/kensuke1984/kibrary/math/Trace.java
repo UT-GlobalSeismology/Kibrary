@@ -10,7 +10,6 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.function.DoubleUnaryOperator;
 import java.util.stream.IntStream;
-
 import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.apache.commons.math3.linear.ArrayRealVector;
@@ -18,7 +17,6 @@ import org.apache.commons.math3.linear.LUDecomposition;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
 import org.apache.commons.math3.util.FastMath;
-
 import io.github.kensuke1984.kibrary.timewindow.TimeWindow;
 import io.github.kensuke1984.kibrary.util.InformationFileReader;
 import io.github.kensuke1984.kibrary.util.MathAid;
@@ -30,8 +28,11 @@ import io.github.kensuke1984.kibrary.util.MathAid;
  * </p>
  * TODO sorted
  *
+ * @since before 2016/1/25
  * @author Kensuke Konishi
- * @since a long time ago
+ *
+ * @version 2023/3/13 Moved from util.Trace to math.Trace.
+ * @author otsuru
  */
 public final class Trace {
 
@@ -158,7 +159,7 @@ public final class Trace {
         for (int i = 0; i <= gapLength; i++) {
             RealVector cutVector = yVector.getSubVector(i, traceLength);
             double cutNorm = cutVector.getNorm();
-            if (cutNorm == 0)  continue;
+            if (cutNorm == 0) continue;
 
             double corr = cutVector.dotProduct(slidingVector) / cutNorm / slidingNorm;
             if (corrMax < corr) {
@@ -198,7 +199,7 @@ public final class Trace {
         for (int i = 0; i <= gapLength; i++) {
             RealVector cutVector = yVector.getSubVector(i, traceLength);
             double cutNorm = cutVector.getNorm();
-            if (cutNorm == 0)  continue;
+            if (cutNorm == 0) continue;
 
             double var = Math.pow(cutVector.subtract(slidingVector).getNorm(), 2) / cutNorm / slidingNorm;
             if (var < varMin) {
@@ -271,8 +272,8 @@ public final class Trace {
             for (int j = 0; j < trace.getLength(); j++) {
                 cor += yArray[i + j] * trace.yArray[j];
                 y2 += yArray[i + j] * yArray[i + j];
-                if (Math.abs(yArray[j+i]) > max)
-                    max = Math.abs(yArray[j+i]);
+                if (Math.abs(yArray[j + i]) > max)
+                    max = Math.abs(yArray[j + i]);
             }
             cor /= y2 * compY2;
             cor *= 2 * Math.abs(compMax - max) / (compMax + max);
@@ -896,20 +897,19 @@ public final class Trace {
 
         for (int i = lag; i < yArray.length; i++) {
 //			System.out.println(y[i] + " " + Math.abs(y[i] - avgFilter[i-1]) + " " + threshold * stdFilter[i-1]);
-             if (Math.abs(yArray[i] - avgFilter[i-1]) > threshold * stdFilter[i-1]) {
-                if (yArray[i] > avgFilter[i-1])
+            if (Math.abs(yArray[i] - avgFilter[i - 1]) > threshold * stdFilter[i - 1]) {
+                if (yArray[i] > avgFilter[i - 1])
                     signals[i] = 1;
                 else
-                  signals[i] = -1;
-                filteredY[i] = influence * yArray[i] + (1-influence) * filteredY[i-1];
-             }
-             else {
+                    signals[i] = -1;
+                filteredY[i] = influence * yArray[i] + (1 - influence) * filteredY[i - 1];
+            } else {
                 signals[i] = 0;
                 filteredY[i] = yArray[i];
-             }
-             double[] cutFiltered = Arrays.copyOfRange(filteredY, i - lag, i + 1);
-             avgFilter[i] = mean(cutFiltered);
-             stdFilter[i] = std(cutFiltered);
+            }
+            double[] cutFiltered = Arrays.copyOfRange(filteredY, i - lag, i + 1);
+            avgFilter[i] = mean(cutFiltered);
+            stdFilter[i] = std(cutFiltered);
         }
 
         List<Integer> indicesList = new ArrayList<>();

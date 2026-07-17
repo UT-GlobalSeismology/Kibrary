@@ -3,9 +3,7 @@ package io.github.kensuke1984.kibrary.correction;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
-
 import org.apache.commons.math3.util.Precision;
-
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.timewindow.TimeWindow;
 import io.github.kensuke1984.kibrary.timewindow.TimeWindowData;
@@ -32,8 +30,11 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
  * <p>
  * To identify which time window of a waveform this corresponds to, {@link #synStartTime} is also used.
  *
+ * @since before 2016/1/25
  * @author Kensuke Konishi
- * @since a long time ago
+ *
+ * @version 2021/11/3 Renamed from datacorrection.StaticCorrection to correction.StaticCorrectionData.
+ * @author otsuru
  */
 public class StaticCorrectionData implements Comparable<StaticCorrectionData> {
 

@@ -8,7 +8,6 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.List;
-
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
@@ -17,8 +16,11 @@ import io.github.kensuke1984.kibrary.util.MathAid;
 /**
  * Operation for merging datasets in multiple partial waveform folders.
  *
+ * @since 2020/10/14
+ * @author Anselme
+ *
+ * @version 2022/2/12 Recreated waveform.addons.PartialIDMerge as waveform.PartialIDMerge.
  * @author otsuru
- * @since 2022/2/12 Modified the original PartialIDMerge which was in kibrary.waveform.addons.
  */
 public class PartialIDMerge extends Operation {
 

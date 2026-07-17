@@ -7,8 +7,8 @@ import org.apache.commons.math3.util.FastMath;
 /**
  * Bandstop filter.
  *
+ * @since before 2016/1/25
  * @author Kensuke Konishi
- * @since a long time ago
  */
 public class BandStopFilter extends ButterworthFilter {
 
@@ -194,8 +194,8 @@ public class BandStopFilter extends ButterworthFilter {
         // sigmaJ**-1
         Complex sigmaJ = ComplexUtils.polar2Complex(1, -Math.PI * (2 * jj - 1) / (2 * n));
         // sigmaJ = sigmaJ.reciprocal();
-        Complex lambdaJ = n / 2 < j ? sigmaJ.negate().add(((sigmaJ.pow(2)).add(4 * lambda02)).sqrt()) :
-                sigmaJ.negate().subtract(((sigmaJ.pow(2)).add(4 * lambda02)).sqrt());
+        Complex lambdaJ = n / 2 < j ? sigmaJ.negate().add(((sigmaJ.pow(2)).add(4 * lambda02)).sqrt())
+                : sigmaJ.negate().subtract(((sigmaJ.pow(2)).add(4 * lambda02)).sqrt());
         lambdaJ = lambdaJ.divide(2);
 
         // System.out.println(j+" compute "+lambdaJ);

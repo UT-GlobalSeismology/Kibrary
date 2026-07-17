@@ -7,10 +7,8 @@ import java.util.Arrays;
 import java.util.stream.Collectors;
 import java.util.stream.DoubleStream;
 import java.util.stream.IntStream;
-
 import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
 import org.apache.commons.math3.util.Precision;
-
 import io.github.kensuke1984.kibrary.elastic.ElasticMedium;
 import io.github.kensuke1984.kibrary.elastic.VariableType;
 import io.github.kensuke1984.kibrary.util.MathAid;
@@ -35,10 +33,12 @@ import io.github.kensuke1984.kibrary.util.MathAid;
  * When you try to get values on the radius of boundaries, you will get one in the
  * isShallower layer, i.e., the layer which has the radius as rmin.
  *
- * @author Kensuke Konishi, anselme
- * @since a long time ago
- * @version 2022/2/10 moved from package dsmsetup into util.earth
- * @version 2022/6/15 recreated this file to make this class actually immutable
+ * @since before 2016/1/25
+ * @author Kensuke Konishi
+ *
+ * @version 2022/2/10 Moved from package dsmsetup into util.earth.
+ * @version 2022/6/15 Recreated this file to make this class actually immutable.
+ * @author otsuru
  */
 public final class PolynomialStructure implements Serializable {
 
@@ -309,7 +309,7 @@ public final class PolynomialStructure implements Serializable {
      */
     public PolynomialStructure withFunction(VariableType variable, int izone, PolynomialFunction function) {
         PolynomialStructure structure = new PolynomialStructure(nZone, nCoreZone, rMin, rMax, rho, vpv, vph, vsv, vsh, eta, qMu, qKappa, isDefault);
-        switch(variable) {
+        switch (variable) {
         case RHO:
             structure.rho[izone] = function;
             break;
@@ -379,7 +379,7 @@ public final class PolynomialStructure implements Serializable {
         int iZoneR1 = originalStructure.zoneOf(r1);
         int iZoneR2 = originalStructure.zoneOf(r2);
         for (int iZone = iZoneR1; iZone < iZoneR2; iZone++) {
-            switch(variable) {
+            switch (variable) {
             case RHO:
                 rhoNew[iZone] = function;
                 break;
@@ -464,7 +464,7 @@ public final class PolynomialStructure implements Serializable {
         int iZoneR1 = originalStructure.zoneOf(r1);
         int iZoneR2 = originalStructure.zoneOf(r2);
         for (int iZone = iZoneR1; iZone < iZoneR2; iZone++) {
-            switch(variable) {
+            switch (variable) {
             case RHO:
                 rhoNew[iZone] = multiplyCoefficient(rhoNew[iZone], factor);
                 break;
@@ -574,7 +574,7 @@ public final class PolynomialStructure implements Serializable {
         double upperValue = this.getAtRadius(type, rUpper);
         double a = (upperValue - lowerValue) / (xUpper - xLower);
         double b = upperValue - a * xUpper;
-        return new PolynomialFunction(new double[]{b, a});
+        return new PolynomialFunction(new double[] {b, a});
     }
 
     /**
@@ -635,7 +635,7 @@ public final class PolynomialStructure implements Serializable {
      * @since 2022/4/11
      */
     public double getAtRadius(VariableType variable, double r) {
-        switch(variable) {
+        switch (variable) {
         case RHO: return rho[zoneOf(r)].value(xFor(r));
         case Vpv: return vpv[zoneOf(r)].value(xFor(r));
         case Vph: return vph[zoneOf(r)].value(xFor(r));
@@ -658,7 +658,7 @@ public final class PolynomialStructure implements Serializable {
      * @since 2025/2/2
      */
     public double getDerivativeAtRadius(VariableType variable, double r) {
-        switch(variable) {
+        switch (variable) {
         case RHO: return rho[zoneOf(r)].polynomialDerivative().value(xFor(r));
         case Vpv: return vpv[zoneOf(r)].polynomialDerivative().value(xFor(r));
         case Vph: return vph[zoneOf(r)].polynomialDerivative().value(xFor(r));
@@ -681,7 +681,7 @@ public final class PolynomialStructure implements Serializable {
      * @since 2024/6/28
      */
     public PolynomialFunction getFunctionIn(VariableType variable, int izone) {
-        switch(variable) {
+        switch (variable) {
         case RHO:
             return rho[izone];
         case Vpv:

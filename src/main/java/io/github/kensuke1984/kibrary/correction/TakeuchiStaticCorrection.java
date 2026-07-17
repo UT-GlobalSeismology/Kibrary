@@ -11,7 +11,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
-
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.math.Trace;
@@ -32,8 +31,8 @@ import io.github.kensuke1984.kibrary.util.sac.SACFileName;
  * <p>
  * Start time for identification is a start time in the given {@link TimeWindowDataFile}.
  *
+ * @since before 2016/1/25
  * @author Kensuke Konishi
- * @since a long time ago
  */
 public class TakeuchiStaticCorrection extends Operation {
 
@@ -190,7 +189,7 @@ public class TakeuchiStaticCorrection extends Operation {
         double synAmp = (synTrace.getMaxY() - synTrace.getMinY()) / 2;
         double amplitudeRatio = obsAmp / synAmp;
         StaticCorrectionData sc = new StaticCorrectionData(station, id, component, timeWindow.getStartTime(),
-                        timeShift, amplitudeRatio, timeWindow.getPhases());
+                timeShift, amplitudeRatio, timeWindow.getPhases());
         staticCorrectionSet.add(sc);
     }
 

@@ -9,9 +9,11 @@ import java.util.stream.Collectors;
 /**
  * Reader for files which contains "#", "!" (and "c", "C", if alphabets should not exist) for comment lines.
  *
+ * @since before 2016/1/25
  * @author Kensuke Konishi
- * @since a long time ago
- * @version 2022/2/11 moved from dsmsetup to util
+ *
+ * @version 2022/2/11 Moved from dsmsetup.InformationFileReader to util.InformationFileReader.
+ * @author otsuru
  */
 public class InformationFileReader {
     /**
@@ -71,7 +73,7 @@ public class InformationFileReader {
     public String next() {
         if (readlineNum == linesNum) return null;
         String line;
-        for (; ; )
+        for (;;)
             if (!isComment(line = lines.get(readlineNum++))) return line;
     }
 

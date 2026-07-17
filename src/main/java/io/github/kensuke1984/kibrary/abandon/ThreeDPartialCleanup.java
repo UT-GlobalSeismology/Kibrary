@@ -7,13 +7,11 @@ import java.nio.file.Paths;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.io.FileUtils;
-
 import io.github.kensuke1984.kibrary.Summon;
 import io.github.kensuke1984.kibrary.util.FileAid;
 
@@ -23,15 +21,15 @@ import io.github.kensuke1984.kibrary.util.FileAid;
  * This also deletes all log files under FPpool/{@literal *}/ and BPpool/{@literal *}/.
  * Note that this class does not check the directory IDs, SPC file names, or log file names.
  *
- * @author otsuru
  * @since 2023/3/21
+ * @author otsuru
  */
 public class ThreeDPartialCleanup {
 
     /**
      * Clean up threeDPartial folders when they are not needed any more.
-     * @param args Options.
-     * @throws IOException if an I/O error occurs
+     * @param args (String[]) Options.
+     * @throws IOException
      */
     public static void main(String[] args) throws IOException {
         Options options = defineOptions();
@@ -44,7 +42,7 @@ public class ThreeDPartialCleanup {
 
     /**
      * To be called from {@link Summon}.
-     * @return options
+     * @return (Options) Options that can be specified by user.
      */
     public static Options defineOptions() {
         Options options = Summon.defaultOptions();
@@ -63,7 +61,7 @@ public class ThreeDPartialCleanup {
 
     /**
      * To be called from {@link Summon}.
-     * @param cmdLine options
+     * @param cmdLine (CommandLine) Options specified by user.
      * @throws IOException
      */
     public static void run(CommandLine cmdLine) throws IOException {

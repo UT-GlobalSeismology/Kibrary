@@ -5,12 +5,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.util.Set;
-
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
-
 import io.github.kensuke1984.kibrary.Summon;
 import io.github.kensuke1984.kibrary.math.CircularRange;
 import io.github.kensuke1984.kibrary.math.LinearRange;
@@ -21,16 +19,16 @@ import io.github.kensuke1984.kibrary.util.data.EventListFile;
 /**
  * List up {@link GlobalCMTID}s that satisfy certain criteria.
  *
- * @author otsuru
  * @since 2023/12/1
+ * @author otsuru
  */
 public class GlobalCMTListup {
     private GlobalCMTListup() {}
 
     /**
      * List up {@link GlobalCMTID}s that satisfy certain criteria.
-     * @param args Options.
-     * @throws IOException if any
+     * @param args (String[]) Options.
+     * @throws IOException
      */
     public static void main(String[] args) throws IOException {
         Options options = defineOptions();
@@ -43,7 +41,7 @@ public class GlobalCMTListup {
 
     /**
      * To be called from {@link Summon}.
-     * @return options
+     * @return (Options) Options that can be specified by user.
      */
     public static Options defineOptions() {
         Options options = Summon.defaultOptions();
@@ -85,7 +83,7 @@ public class GlobalCMTListup {
 
     /**
      * To be called from {@link Summon}.
-     * @param cmdLine options
+     * @param cmdLine (CommandLine) Options specified by user.
      * @throws IOException
      */
     public static void run(CommandLine cmdLine) throws IOException {

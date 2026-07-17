@@ -10,7 +10,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
-
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.elastic.VariableType;
@@ -38,8 +37,8 @@ import io.github.kensuke1984.kibrary.voxel.VoxelInformationFile;
  * At each voxel, each given {@link VariableType} is perturbed.
  * Then, the model parameter value for each {@link PartialType} is computed and exported as a {@link KnownParameterFile}.
  *
- * @author otsuru
  * @since 2022/10/11
+ * @author otsuru
  */
 public class BlockModelMaker extends Operation {
 
@@ -209,7 +208,7 @@ public class BlockModelMaker extends Operation {
         System.err.println("Outputting perturbation list files.");
         for (VariableType perturbVariableType : perturbVariableTypes) {
             Path paramPath = outPath.resolve(ScalarListFile.generateFileName(perturbVariableType, ScalarType.PERCENT));
-            ScalarListFile.write(model, perturbVariableType, ScalarType.PERCENT, paramPath);;
+            ScalarListFile.write(model, perturbVariableType, ScalarType.PERCENT, paramPath);
         }
 
         // set known parameters

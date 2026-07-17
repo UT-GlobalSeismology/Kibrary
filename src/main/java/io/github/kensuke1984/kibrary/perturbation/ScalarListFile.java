@@ -9,9 +9,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-
 import org.apache.commons.lang3.StringUtils;
-
 import io.github.kensuke1984.kibrary.elastic.VariableType;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.InformationFileReader;
@@ -26,8 +24,8 @@ import io.github.kensuke1984.kibrary.util.earth.FullPosition;
  * <p>
  * Each line: "latitude longitude radius value".
  *
- * @author otsuru
  * @since 2022/4/9
+ * @author otsuru
  */
 public class ScalarListFile {
 
@@ -160,7 +158,7 @@ public class ScalarListFile {
         scalarType = ScalarType.valueOf(fileNameParts[2]);
 
         InformationFileReader reader = new InformationFileReader(inputPath, true);
-        while(reader.hasNext()) {
+        while (reader.hasNext()) {
             String[] parts = reader.next().split("\\s+");
             FullPosition position = new FullPosition(Double.parseDouble(parts[0]), Double.parseDouble(parts[1]), Double.parseDouble(parts[2]));
             double perturbation = Double.parseDouble(parts[3]);

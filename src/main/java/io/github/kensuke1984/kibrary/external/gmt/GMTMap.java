@@ -3,15 +3,14 @@ package io.github.kensuke1984.kibrary.external.gmt;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.stream.Collectors;
-
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 
 /**
  * Helper for use of GMT
  *
+ * @since before 2016/1/25
  * @author Kensuke Konishi
- * @version 0.0.3.6
  */
 public final class GMTMap {
 
@@ -76,7 +75,7 @@ public final class GMTMap {
      * [additional] &gt;&gt; $psname
      */
     public static String psxy(Symbol symbol, double symbolSize, HorizontalPosition position, double value,
-                              Path colorPalletPath, String... additionalOptions) {
+            Path colorPalletPath, String... additionalOptions) {
         String cpOption = " -C" + colorPalletPath;
         return "echo " + position + " " + value + " " + symbolSize + " | psxy -V -: -J -R " + symbol.getOption() +
                 cpOption + " " + String.join(" ", additionalOptions) + " -K -O -P  >>$psname";
@@ -91,7 +90,7 @@ public final class GMTMap {
      * [additional] &gt;&gt; $psname
      */
     public static String psxy(Symbol symbol, double symbolSize, HorizontalPosition position,
-                              String... additionalOptions) {
+            String... additionalOptions) {
         String additional = Arrays.stream(additionalOptions).collect(Collectors.joining(" "));
         return "echo " + position.getLatitude() + " " + position.getLongitude() + " " + symbolSize +
                 " | psxy -V -: -J -R " + symbol.getOption() + " " + additional + " -P -K -O >>$psname";
@@ -127,7 +126,7 @@ public final class GMTMap {
      * $psname
      */
     public static String psscale(String name, double interval, double xpos, double ypos, double length, double width,
-                                 Path cptPath, String... additionalOptions) {
+            Path cptPath, String... additionalOptions) {
         String dOption = " -D" + xpos + "/" + ypos + "/" + length + "/" + width + "h";
         String bOption = " -B" + interval + "+l\"" + name + "\"";
         String additional = Arrays.stream(additionalOptions).collect(Collectors.joining(" "));

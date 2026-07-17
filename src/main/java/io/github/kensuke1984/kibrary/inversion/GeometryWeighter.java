@@ -13,9 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-
 import org.apache.commons.math3.util.Precision;
-
 import edu.sc.seis.TauP.TauModelException;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
@@ -37,8 +35,8 @@ import io.github.kensuke1984.kibrary.voxel.VoxelInformationFile;
  * the first turning point of the phase that arrives first among the specified phases will be used.
  * Mid-points of diffraction are counted as turning points.
  *
- * @author otsuru
  * @since 2025/2/23
+ * @author otsuru
  */
 public class GeometryWeighter extends Operation {
     private static final int DECIMALS = 3;

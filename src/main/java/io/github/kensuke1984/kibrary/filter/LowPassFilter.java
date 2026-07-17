@@ -14,8 +14,8 @@ import org.apache.commons.math3.util.FastMath;
  * ω=2&pi;f&Delta;t <br>
  * f: frequency [Hz] &Delta;t: sampling interval [s]
  *
+ * @since before 2016/1/25
  * @author Kensuke Konishi
- * @since a long time ago
  */
 public class LowPassFilter extends ButterworthFilter {
     /**

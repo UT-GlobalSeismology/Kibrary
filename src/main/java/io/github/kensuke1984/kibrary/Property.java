@@ -9,9 +9,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Properties;
-
 import org.apache.commons.lang3.StringUtils;
-
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 
 /**
@@ -19,9 +17,11 @@ import io.github.kensuke1984.kibrary.util.GadgetAid;
  * <p>
  * In property files, all keys must either have a non-empty value or be commented out. Keys with empty values shall not exist.
  *
+ * @since before 2016/1/25
  * @author Kensuke Konishi
- * @since a long time ago
+
  * @version 2022/1/7 Recreated the original Property to extend Properties instead of generating its instance.
+ * @author otsuru
  */
 public class Property extends Properties {
 
@@ -99,7 +99,7 @@ public class Property extends Properties {
      */
     public void write(Path path) throws IOException {
         String manhattan = (containsKey("manhattan") ? getProperty("manhattan") : "(unknown manhattan)");
-        try (BufferedWriter bw = Files.newBufferedWriter(path)){
+        try (BufferedWriter bw = Files.newBufferedWriter(path)) {
             store(bw, "Properties for " + manhattan);
         }
     }
@@ -229,7 +229,7 @@ public class Property extends Properties {
         else path = workPath.resolve(pathString).normalize();
 
         if (requireExisting && (Files.exists(path) == false))
-            throw new NoSuchFileException("The " + key +  " " + path + " does not exist");
+            throw new NoSuchFileException("The " + key + " " + path + " does not exist");
 
         return path;
     }

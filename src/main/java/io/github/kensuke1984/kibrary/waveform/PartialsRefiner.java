@@ -16,9 +16,7 @@ import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
-
 import org.apache.commons.math3.util.Precision;
-
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.elastic.VariableType;
@@ -38,8 +36,8 @@ import io.github.kensuke1984.kibrary.voxel.VoxelInformationFile;
  * Operation to make partial derivative waveforms more accurate for each voxel.
  * This conducts a pseudo-integration of partial derivative waveforms across the voxel volume.
  *
- * @author otsuru
  * @since 2025/8/18
+ * @author otsuru
  */
 public class PartialsRefiner extends Operation {
 

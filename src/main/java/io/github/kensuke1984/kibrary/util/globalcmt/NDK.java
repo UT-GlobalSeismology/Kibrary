@@ -2,9 +2,7 @@ package io.github.kensuke1984.kibrary.util.globalcmt;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-
 import org.apache.commons.lang3.StringUtils;
-
 import io.github.kensuke1984.kibrary.source.MomentTensor;
 import io.github.kensuke1984.kibrary.source.SourceTimeFunctionType;
 import io.github.kensuke1984.kibrary.util.MathAid;
@@ -61,9 +59,10 @@ import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
  * <p>
  * ============================================================================
  *
- * @author Kensuke Konishi
- * @since a long time ago
  * @see <a href=http://www.ldeo.columbia.edu/~gcmt/projects/CMT/catalog/allorder.ndk_explained>official guide</a>
+ *
+ * @since before 2016/1/25
+ * @author Kensuke Konishi
  */
 public final class NDK implements GlobalCMTAccess {
 
@@ -251,8 +250,7 @@ public final class NDK implements GlobalCMTAccess {
         this.rake1 = rake1;
     }
 
-    private NDK() {
-    }
+    private NDK() {}
 
     /**
      * Creates an NDK from 5 lines of the catalog.

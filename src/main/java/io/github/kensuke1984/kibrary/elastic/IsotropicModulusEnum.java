@@ -3,8 +3,8 @@ package io.github.kensuke1984.kibrary.elastic;
 /**
  * enum for elements in modulus
  *
+ * @since before 2016/1/25
  * @author Kensuke Konishi
- * @version 0.0.2
  */
 public enum IsotropicModulusEnum {
     LAMBDA, MU, LAMBDA2MU, ZERO;

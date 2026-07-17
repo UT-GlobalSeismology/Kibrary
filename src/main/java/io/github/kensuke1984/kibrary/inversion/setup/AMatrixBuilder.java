@@ -3,10 +3,8 @@ package io.github.kensuke1984.kibrary.inversion.setup;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
-
 import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.RealVector;
-
 import io.github.kensuke1984.kibrary.math.ParallelizedMatrix;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
@@ -23,8 +21,11 @@ import io.github.kensuke1984.kibrary.waveform.PartialID;
  * <p>
  * This class is <b>IMMUTABLE</b>.
  *
+ * @since before 2016/1/25
+ * @author Kensuke Konishi
+ *
+ * @version 2022/7/6 Created inversion.setup.AMatrixBuilder based on inversion.ObservationEquation.
  * @author otsuru
- * @since 2022/7/6 created based on inversion.ObservationEquation
  */
 public final class AMatrixBuilder {
 

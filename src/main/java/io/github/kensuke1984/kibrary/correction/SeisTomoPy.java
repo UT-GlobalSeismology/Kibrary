@@ -10,7 +10,6 @@ import java.nio.file.Paths;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.Earth;
@@ -75,8 +74,8 @@ public class SeisTomoPy {
 //				Double.parseDouble(ss[10]) +  Double.parseDouble(ss[12]); //bad
 //				Double.parseDouble(ss[10]) - Double.parseDouble(ss[12]); //bad
 
-            StaticCorrectionData correction = new StaticCorrectionData(station, new GlobalCMTID(ss[0].trim())
-            , component, Double.parseDouble(ss[8]), shift, 1., new Phase[] { Phase.create(ss[9].trim())});
+            StaticCorrectionData correction = new StaticCorrectionData(station, new GlobalCMTID(ss[0].trim()),
+                    component, Double.parseDouble(ss[8]), shift, 1., new Phase[] { Phase.create(ss[9].trim()) });
 
             corrections.add(correction);
         }

@@ -8,9 +8,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
-
 import org.apache.commons.lang3.StringUtils;
-
 import io.github.kensuke1984.kibrary.external.ExternalProcess;
 import io.github.kensuke1984.kibrary.util.MathAid;
 
@@ -19,8 +17,11 @@ import io.github.kensuke1984.kibrary.util.MathAid;
  * <p>
  * Gnuplot version 5.0 or above must be in your PATH.
  *
+ * @since before 2016/1/25
  * @author Kensuke Konishi
- * @version 0.0.1
+ *
+ * @version 2021/12/7 Renamed from external.gnuplot.PlotConfiguration to external.gnuplot.GnuplotFile.
+ * @author otsuru
  */
 public class GnuplotFile {
 
@@ -133,7 +134,7 @@ public class GnuplotFile {
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(filePath))) {
             String terminalSize;
             if (cm) {
-                terminalSize =  "size " + sizeX + "cm," + sizeY + "cm";
+                terminalSize = "size " + sizeX + "cm," + sizeY + "cm";
             } else {
                 terminalSize = "size " + sizeX + "," + sizeY;
             }
@@ -153,11 +154,11 @@ public class GnuplotFile {
             } else {
                 pw.println("unset key");
             }
-            if(marginHFlag) {
+            if (marginHFlag) {
                 pw.println("set lmargin " + lmargin);
                 pw.println("set rmargin " + rmargin);
             }
-            if(marginVFlag) {
+            if (marginVFlag) {
                 pw.println("set tmargin " + tmargin);
                 pw.println("set bmargin " + bmargin);
             }
@@ -482,7 +483,7 @@ public class GnuplotFile {
     public void setOutput(String format, String output, double sizeX, double sizeY, boolean cm) {
         if (drawStarted) throw new IllegalStateException("Output cannot be changed after drawing has started.");
 
-        switch(format) {
+        switch (format) {
         case "pdf":
             if (!cm) throw new IllegalArgumentException("For pdf, size cannot be set in pixels.");
             this.terminal = "pdfcairo enhanced";

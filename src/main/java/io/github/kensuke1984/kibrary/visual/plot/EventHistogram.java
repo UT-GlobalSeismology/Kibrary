@@ -7,12 +7,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Set;
-
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
-
 import io.github.kensuke1984.kibrary.Summon;
 import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
@@ -26,8 +24,8 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
  * Creates histogram of events, classified by depth and magnitude.
  * An {@link EventListFile} is used as input.
  *
- * @author otsuru
  * @since 2024/11/1
+ * @author otsuru
  */
 public class EventHistogram {
 
@@ -36,8 +34,8 @@ public class EventHistogram {
 
     /**
      * Creates histogram of events from an {@link EventListFile}.
-     * @param args Options.
-     * @throws IOException if an I/O error occurs
+     * @param args (String[]) Options.
+     * @throws IOException
      */
     public static void main(String[] args) throws IOException {
         Options options = defineOptions();
@@ -50,7 +48,7 @@ public class EventHistogram {
 
     /**
      * To be called from {@link Summon}.
-     * @return options
+     * @return (Options) Options that can be specified by user.
      */
     public static Options defineOptions() {
         Options options = Summon.defaultOptions();
@@ -82,7 +80,7 @@ public class EventHistogram {
 
     /**
      * To be called from {@link Summon}.
-     * @param cmdLine options
+     * @param cmdLine (CommandLine) Options specified by user.
      * @throws IOException
      */
     public static void run(CommandLine cmdLine) throws IOException {

@@ -3,8 +3,8 @@ package io.github.kensuke1984.kibrary.external.gnuplot;
 /**
  * Information about a label to be displayed in gnuplot.
  *
- * @author otsuru
  * @since 2021/12/09
+ * @author otsuru
  */
 class GnuplotLabel {
 

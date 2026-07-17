@@ -15,9 +15,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.DoubleStream;
-
 import org.apache.commons.math3.linear.ArrayRealVector;
-
 import edu.sc.seis.TauP.Arrival;
 import edu.sc.seis.TauP.TauModelException;
 import edu.sc.seis.TauP.TauP_Time;
@@ -58,8 +56,8 @@ import io.github.kensuke1984.kibrary.waveform.BasicIDPairUp;
  * Text files of stacked waveform data for each bin will be created in event folders under the output folder,
  * along with output pdf files and their corresponding plt files.
  *
+ * @since 2022/7/27 Divided from visual.RecordSectionCreater.
  * @author otsuru
- * @since 2022/7/27 divided from visual.RecordSectionCreater
  */
 public class BasicBinnedStackCreator extends Operation {
 
@@ -671,7 +669,7 @@ public class BasicBinnedStackCreator extends Operation {
             Path outputPath = eventPath.resolve(fileName);
 
             try (PrintWriter pwTrace = new PrintWriter(Files.newBufferedWriter(outputPath,
-                    StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING))){
+                    StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING))) {
                 for (int j = 0; j < obsStack.getLength(); j++) {
                     double time = obsStack.getXAt(j);
 
@@ -734,15 +732,16 @@ public class BasicBinnedStackCreator extends Operation {
             //convert RAY_PARAMETER_INTERVAL (s/degree) to interval (s/rad)
             double interval = Math.toDegrees(RAY_PARAMETER_INTERVAL);
             //set up for anisotime
-            VelocityStructure structure = property.containsKey("structurePath") ?
-                    new io.github.kensuke1984.anisotime.PolynomialStructure(structurePath) : io.github.kensuke1984.anisotime.PolynomialStructure.of(structureName);
+            VelocityStructure structure = property.containsKey("structurePath")
+                    ? new io.github.kensuke1984.anisotime.PolynomialStructure(structurePath)
+                    : io.github.kensuke1984.anisotime.PolynomialStructure.of(structureName);
             double eventR = event.getEventData().getCmtPosition().getR();
             for (int p = 0; p < displayPhases.length; p++) {
                 String phaseName = displayPhases[p];
                 Phase phase = Phase.create(phaseName, computeSV);
                 PhasePart pp = ((GeneralPart) phase.getPassParts()[1]).getPhase();
                 double velocityAtHypocenter;
-                switch(pp) {
+                switch (pp) {
                 case P:
                 case K:
                 case I:

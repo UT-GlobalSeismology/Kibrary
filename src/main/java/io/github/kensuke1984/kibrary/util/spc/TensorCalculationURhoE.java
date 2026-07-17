@@ -1,7 +1,6 @@
 package io.github.kensuke1984.kibrary.util.spc;
 
 import java.util.Arrays;
-
 import org.apache.commons.math3.complex.Complex;
 import org.apache.commons.math3.util.FastMath;
 
@@ -9,8 +8,8 @@ import org.apache.commons.math3.util.FastMath;
  * Calculation of U<sub>j</sub> &rho;</sub> &eta;<sub>ji</sub> in
  * Geller &amp; Hara (1993)
  *
- * @author Rei Sato
  * @since 2022/01/10
+ * @author Rei Sato
  */
 public class TensorCalculationURhoE {
 
@@ -100,28 +99,28 @@ public class TensorCalculationURhoE {
         double sine = Math.sin(angle);
 
         // 回転行列 前から
-        double[][] forwardMatrix = new double[][] { { 1, 0, 0 }, { 0, cosine, sine }, { 0, -sine, cosine } };
+        double[][] forwardMatrix = new double[][] {{1, 0, 0}, {0, cosine, sine}, {0, -sine, cosine}};
 
         // 回転行列 後ろから
-        double[][] backMatrix = new double[][] { { 1, 0, 0 }, { 0, cosine, -sine }, { 0, sine, cosine } };
+        double[][] backMatrix = new double[][] {{1, 0, 0}, {0, cosine, -sine}, {0, sine, cosine}};
 
         Complex[][] newETA = new Complex[3][np + 1];
 
         for (int ip = 0; ip < np + 1; ip++)
             for (int j = 0; j < 3; j++) {
-                    newETA[j][ip] = Complex.ZERO;
-                    for (int k = 0; k < 3; k++)
-                        newETA[j][ip] = newETA[j][ip].add(eta[k][ip].multiply(forwardMatrix[j][k]));
+                newETA[j][ip] = Complex.ZERO;
+                for (int k = 0; k < 3; k++)
+                    newETA[j][ip] = newETA[j][ip].add(eta[k][ip].multiply(forwardMatrix[j][k]));
             }
 
         Complex[][] rETA = new Complex[3][np + 1];
 
         for (int ip = 0; ip < np + 1; ip++)
             for (int j = 0; j < 3; j++) {
-                    rETA[j][ip] = Complex.ZERO;
-                    for (int k = 0; k < 3; k++)
-                        rETA[j][ip] = rETA[j][ip].add(newETA[k][ip].multiply(backMatrix[k][j]));
-                }
+                rETA[j][ip] = Complex.ZERO;
+                for (int k = 0; k < 3; k++)
+                    rETA[j][ip] = rETA[j][ip].add(newETA[k][ip].multiply(backMatrix[k][j]));
+            }
 
         return newETA;
     }
@@ -135,7 +134,7 @@ public class TensorCalculationURhoE {
      */
     private Complex[] calcCrossCorrelation(Complex[] u, Complex[] eta) {
         Complex[] c = new Complex[np + 1];
-        for (int i = 0; i < np +1; i++)
+        for (int i = 0; i < np + 1; i++)
             c[i] = u[i].multiply(eta[i]).multiply(FastMath.pow(2.0 * Math.PI * i / tlen, 2));
 //        Arrays.setAll(c, i -> u[i].multiply(eta[i]));
 //        Arrays.parallelSetAll(c, i -> u[i].multiply(eta[i]));

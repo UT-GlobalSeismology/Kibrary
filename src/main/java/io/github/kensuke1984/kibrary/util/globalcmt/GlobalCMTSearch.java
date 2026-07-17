@@ -6,14 +6,13 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-
 import io.github.kensuke1984.kibrary.math.CircularRange;
 import io.github.kensuke1984.kibrary.math.LinearRange;
 /**
  * Query for search of Global CMT
  *
+ * @since before 2016/1/25
  * @author Kensuke Konishi
- * @since a long time ago
  * TODO thread safe (immutable)
  */
 public class GlobalCMTSearch {

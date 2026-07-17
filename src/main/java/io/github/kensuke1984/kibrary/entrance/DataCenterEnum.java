@@ -3,9 +3,15 @@ package io.github.kensuke1984.kibrary.entrance;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * List of URLs of each data center.
+ *
+ * @since 2026/6/12
+ * @author otsuru
+ */
 enum DataCenterEnum {
 
-    IRIS("https://service.earthscope.org/fdsnws/dataselect/1/query?", "http://service.iris.edu/fdsnws/station/1/query?"),
+    IRIS("https://service.earthscope.org/fdsnws/dataselect/1/query?", "https://service.earthscope.org/fdsnws/station/1/query?"),
     ORFEUS_FED("https://federator.orfeus-eu.org/fdsnws/dataselect/1/query?", "https://federator.orfeus-eu.org/fdsnws/station/1/query?"),
     ODC("https://www.orfeus-eu.org/fdsnws/dataselect/1/query?", "https://www.orfeus-eu.org/fdsnws/station/1/query?"),
     GFZ("https://geofon.gfz.de/fdsnws/dataselect/1/query?", "https://geofon.gfz.de/fdsnws/station/1/query?"),
@@ -35,7 +41,8 @@ enum DataCenterEnum {
 
         switch (dataCenter) {
         case "IRIS":
-            dataCenterList.add(IRIS); break;
+            dataCenterList.add(IRIS);
+            break;
         case "ORFEUS":
         case "ORFEUS_EACH":
             dataCenterList.add(ODC);
@@ -50,9 +57,11 @@ enum DataCenterEnum {
             dataCenterList.add(NOA);
             dataCenterList.add(UIB);
 //            dataCenterList.add(ICGC);  TODO: SSLHandshakeException caused by SunCertPathBuilderException "unable to find valid certification path" occurs
-            dataCenterList.add(BGS); break;
+            dataCenterList.add(BGS);
+            break;
         case "ORFEUS_FED":
-            dataCenterList.add(ORFEUS_FED); break;
+            dataCenterList.add(ORFEUS_FED);
+            break;
         default:
             throw new IllegalArgumentException("Invalid datacenter name.");
         }

@@ -10,7 +10,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
@@ -23,8 +22,11 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 /**
  * Operation for merging datasets in multiple basic waveform folders.
  *
+ * @since 2020/10/14
+ * @author Anselme
+ *
+ * @version 2022/1/2 Recreated waveform.addons.BasicIDMerge as waveform.BasicIDMerge.
  * @author otsuru
- * @since 2022/1/2 Created based on the original BasicIDMerge which was in kibrary.waveform.addons.
  */
 public class BasicIDMerge extends Operation {
 

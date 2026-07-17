@@ -7,7 +7,6 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
-
 import edu.sc.seis.TauP.Arrival;
 import edu.sc.seis.TauP.SeismicPhase;
 import edu.sc.seis.TauP.TauModelException;
@@ -21,8 +20,8 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 /**
  * Utils for plotting basic waveforms.
  *
- * @author otsuru
  * @since 2023/2/12
+ * @author otsuru
  */
 class BasicPlotAid {
     private BasicPlotAid() {}

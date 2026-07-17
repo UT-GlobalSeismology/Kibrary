@@ -8,11 +8,11 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
-
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.math.CircularRange;
@@ -21,6 +21,7 @@ import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.ThreadAid;
+import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 
 /**
  * Operation to process downloaded SAC (and RESP) files so that they can be used in the inversion process.
@@ -36,8 +37,11 @@ import io.github.kensuke1984.kibrary.util.ThreadAid;
  * See also {@link EventProcessor}.
  * <p>
  *
+ * @since before 2016/1/25 Java version of First handler ported from the perl software.
+ * @author Kensuke Konishi
+ *
+ * @version 2021/09/14 Created DataKitchen as a modification of FirstHandler.
  * @author otsuru
- * @since 2021/09/14 Created as a modification of FirstHandler, which was the Java version of First handler ported from the perl software.
  */
 public class DataKitchen extends Operation {
 
@@ -148,16 +152,16 @@ public class DataKitchen extends Operation {
 
         lobbyPath = property.parsePath("lobbyPath", ".", true, workPath);
         switch (property.parseString("catalog", "cmt")) { // TODO
-            case "cmt":
-            case "CMT":
-                catalog = 0;
-                break;
-            case "pde":
-            case "PDE":
-                catalog = 0;
-                break;
-            default:
-                throw new IllegalArgumentException("Invalid catalog name.");
+        case "cmt":
+        case "CMT":
+            catalog = 0;
+            break;
+        case "pde":
+        case "PDE":
+            catalog = 0;
+            break;
+        default:
+            throw new IllegalArgumentException("Invalid catalog name.");
         }
 
         double lowerDistance = property.parseDouble("lowerDistance", "0");
@@ -194,13 +198,15 @@ public class DataKitchen extends Operation {
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
 
         // create processors for each event
+        Set<GlobalCMTID> failedSetupEvents = new HashSet<>();
         Set<EventProcessor> eps = eventDirs.stream().map(eventDir -> {
-           try {
+            try {
                 return new EventProcessor(eventDir, outPath);
             } catch (Exception e) {
                 // If there is something wrong, skip the event (suppress exceptions).
                 try {
                     System.err.println("!!! " + eventDir + " has problems. ");
+                    failedSetupEvents.add(eventDir.getGlobalCMTID());
                     e.printStackTrace();
                 } catch (Exception e1) {
                     e1.printStackTrace();
@@ -223,6 +229,12 @@ public class DataKitchen extends Operation {
         // print overall result
         boolean success = true;
         System.err.println("Overall result:");
+        if (failedSetupEvents.size() != 0) {
+            success = false;
+            for (GlobalCMTID event : failedSetupEvents) {
+                System.err.println("! " + event + " failed during setup.");
+            }
+        }
         for (EventProcessor processor : eps) {
             if (!processor.hasRun()) {
                 System.err.println("! " + processor.getEventID() + " failed.");

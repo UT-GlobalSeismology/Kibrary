@@ -2,7 +2,6 @@ package io.github.kensuke1984.kibrary.filter;
 
 import org.apache.commons.math3.complex.Complex;
 import org.apache.commons.math3.util.FastMath;
-
 import io.github.kensuke1984.kibrary.util.MathAid;
 
 /**
@@ -14,8 +13,8 @@ import io.github.kensuke1984.kibrary.util.MathAid;
  * If you want to create a causal one, use {@link #setBackward(boolean)} and set
  * true.
  *
+ * @since before 2016/1/25
  * @author Kensuke Konishi
- * @since a long time ago
  */
 public abstract class ButterworthFilter {
 
@@ -50,8 +49,7 @@ public abstract class ButterworthFilter {
     double[] b1;
     double[] b2;
 
-    ButterworthFilter() {
-    }
+    ButterworthFilter() {}
 
     /**
      * Compute a value of Saito 1.7. <br>

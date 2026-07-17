@@ -10,10 +10,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-
 import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.RealVector;
-
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.elastic.VariableType;
@@ -28,8 +26,8 @@ import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
  * The cosine similarity and L2 model distance is also computed.
  * A scatter plot between perturbations of the 2 models can be created.
  *
- * @author otsuru
  * @since 2022/12/1
+ * @author otsuru
  */
 public class PerturbationComparison extends Operation {
 

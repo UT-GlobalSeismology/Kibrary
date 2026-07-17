@@ -8,7 +8,6 @@ import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.Arrays;
-
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
@@ -23,8 +22,9 @@ import javax.swing.WindowConstants;
  * This class is based on a class provided as a Sample by Oracle. The copyright
  * is stated in the Kibrary License statement.
  *
+ * @since before 2016/1/25
+ * @version 2018/3/23 Moved from datarequest.PasswordInput to util.PasswordInput.
  * @author Kensuke Konishi
- * @since a long time ago
  */
 class PasswordInput extends JPanel implements ActionListener {
     /**

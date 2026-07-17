@@ -4,28 +4,28 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionGroup;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
-
 import io.github.kensuke1984.kibrary.Summon;
 
 /**
  * Class to handle files produced by SPECFEM.
  *
+ * @since 2017/9/4
  * @author Anselme
- * @since a long time ago
- * @version 2024/11/4 Renamed from specfem.ProcessResult to external.specfem.SPECFEMPostProcess
+ *
+ * @version 2024/11/4 Renamed from specfem.ProcessResult to external.specfem.SPECFEMPostProcess.
+ * @author otsuru
  */
 public class SPECFEMPostProcess {
 
     /**
      * Create scripts to post-process results of SPECFEM.
-     * @param args Options.
-     * @throws IOException if an I/O error occurs
+     * @param args (String[]) Options.
+     * @throws IOException
      */
     public static void main(String[] args) throws IOException {
         Options options = defineOptions();
@@ -38,7 +38,7 @@ public class SPECFEMPostProcess {
 
     /**
      * To be called from {@link Summon}.
-     * @return options
+     * @return (Options) Options that can be specified by user.
      */
     public static Options defineOptions() {
         Options options = Summon.defaultOptions();
@@ -57,7 +57,7 @@ public class SPECFEMPostProcess {
 
     /**
      * To be called from {@link Summon}.
-     * @param cmdLine options
+     * @param cmdLine (CommandLine) Options specified by user.
      * @throws IOException
      */
     public static void run(CommandLine cmdLine) throws IOException {

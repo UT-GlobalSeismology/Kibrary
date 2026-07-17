@@ -9,13 +9,11 @@ import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-
 import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.apache.commons.math3.linear.MatrixUtils;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.util.Precision;
-
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.elastic.VariableType;
@@ -26,8 +24,8 @@ import io.github.kensuke1984.kibrary.util.DatasetAid;
  * <p>
  * Perturbations can be added to a certain variable within a specified radius range.
  *
- * @author otsuru
  * @since 2022/8/25
+ * @author otsuru
  */
 public class PolynomialStructurePerturber extends Operation {
 
@@ -137,119 +135,119 @@ public class PolynomialStructurePerturber extends Operation {
         percent = property.parseDouble("percent", "2");
     }
 
-   @Override
-   public void run() throws IOException {
-       // set structure
-       PolynomialStructure structure = PolynomialStructure.setupFromFileOrName(structurePath, structureName);
+    @Override
+    public void run() throws IOException {
+        // set structure
+        PolynomialStructure structure = PolynomialStructure.setupFromFileOrName(structurePath, structureName);
 
-       // list up each individual variable for Vp and Vs
-       List<VariableType> variableList = transformVariable(variable);
-       // decide factor
-       double factor = 1.0 + percent / 100.0;
+        // list up each individual variable for Vp and Vs
+        List<VariableType> variableList = transformVariable(variable);
+        // decide factor
+        double factor = 1.0 + percent / 100.0;
 
-       if (lowerTieInRadius < lowerRadius) {
-           if (variable == VariableType.Qkappa || variable == VariableType.Qmu) {
-               throw new IllegalArgumentException("Qkappa and Qmu cannot be tied in.");
+        if (lowerTieInRadius < lowerRadius) {
+            if (variable == VariableType.Qkappa || variable == VariableType.Qmu) {
+                throw new IllegalArgumentException("Qkappa and Qmu cannot be tied in.");
 
-           } else {
-               // get x values
-               double x0 = structure.xFor(lowerTieInRadius);
-               double x1 = structure.xFor(lowerRadius);
-               // crete x matrix
-               double[] row0 = {1.0,  x0,  x0 * x0,  x0 * x0 * x0};
-               double[] row1 = {0.0, 1.0, 2.0 * x0, 3.0 * x0 * x0};
-               double[] row2 = {1.0,  x1,  x1 * x1,  x1 * x1 * x1};
-               double[] row3 = {0.0, 1.0, 2.0 * x1, 3.0 * x1 * x1};
-               RealMatrix xMatrix = new Array2DRowRealMatrix(4, 4);
-               xMatrix.setRow(0, row0);
-               xMatrix.setRow(1, row1);
-               xMatrix.setRow(2, row2);
-               xMatrix.setRow(3, row3);
-               // compute inverse
-               RealMatrix inverseMatrix = MatrixUtils.inverse(xMatrix).transpose();
+            } else {
+                // get x values
+                double x0 = structure.xFor(lowerTieInRadius);
+                double x1 = structure.xFor(lowerRadius);
+                // crete x matrix
+                double[] row0 = {1.0, x0, x0 * x0, x0 * x0 * x0};
+                double[] row1 = {0.0, 1.0, 2.0 * x0, 3.0 * x0 * x0};
+                double[] row2 = {1.0, x1, x1 * x1, x1 * x1 * x1};
+                double[] row3 = {0.0, 1.0, 2.0 * x1, 3.0 * x1 * x1};
+                RealMatrix xMatrix = new Array2DRowRealMatrix(4, 4);
+                xMatrix.setRow(0, row0);
+                xMatrix.setRow(1, row1);
+                xMatrix.setRow(2, row2);
+                xMatrix.setRow(3, row3);
+                // compute inverse
+                RealMatrix inverseMatrix = MatrixUtils.inverse(xMatrix).transpose();
 
-               // compute and set new function for each individual variable
-               for (VariableType currentVariable : variableList) {
-                   // get y values
-                   double y0 = structure.getAtRadius(currentVariable, lowerTieInRadius);
-                   double y0p = structure.getDerivativeAtRadius(currentVariable, lowerTieInRadius);
-                   double y1 = structure.getAtRadius(currentVariable, lowerRadius) * factor;
-                   double y1p = structure.getDerivativeAtRadius(currentVariable, lowerRadius) * factor;
-                   // create y vector
-                   double[] yArray = {y0, y0p, y1, y1p};
-                   // compute coefficients
-                   double[] coefArray = inverseMatrix.preMultiply(yArray);
-                   coefArray = Arrays.stream(coefArray).map(v -> Precision.round(v, 4)).toArray();
-                   // set new function
-                   PolynomialFunction function = new PolynomialFunction(coefArray);
-                   structure = structure.withFunction(lowerTieInRadius, lowerRadius, currentVariable, function);
-               }
-           }
-       }
+                // compute and set new function for each individual variable
+                for (VariableType currentVariable : variableList) {
+                    // get y values
+                    double y0 = structure.getAtRadius(currentVariable, lowerTieInRadius);
+                    double y0p = structure.getDerivativeAtRadius(currentVariable, lowerTieInRadius);
+                    double y1 = structure.getAtRadius(currentVariable, lowerRadius) * factor;
+                    double y1p = structure.getDerivativeAtRadius(currentVariable, lowerRadius) * factor;
+                    // create y vector
+                    double[] yArray = {y0, y0p, y1, y1p};
+                    // compute coefficients
+                    double[] coefArray = inverseMatrix.preMultiply(yArray);
+                    coefArray = Arrays.stream(coefArray).map(v -> Precision.round(v, 4)).toArray();
+                    // set new function
+                    PolynomialFunction function = new PolynomialFunction(coefArray);
+                    structure = structure.withFunction(lowerTieInRadius, lowerRadius, currentVariable, function);
+                }
+            }
+        }
 
-       if (lowerRadius < upperRadius) {
-           structure = structure.withPerturbation(lowerRadius, upperRadius, variable, percent);
-       }
+        if (lowerRadius < upperRadius) {
+            structure = structure.withPerturbation(lowerRadius, upperRadius, variable, percent);
+        }
 
-       if (upperRadius < upperTieInRadius) {
-           if (variable == VariableType.Qkappa || variable == VariableType.Qmu) {
-               throw new IllegalArgumentException("Qkappa and Qmu cannot be tied in.");
+        if (upperRadius < upperTieInRadius) {
+            if (variable == VariableType.Qkappa || variable == VariableType.Qmu) {
+                throw new IllegalArgumentException("Qkappa and Qmu cannot be tied in.");
 
-           } else {
-               // get x values
-               double x0 = structure.xFor(upperRadius);
-               double x1 = structure.xFor(upperTieInRadius);
-               // crete x matrix
-               double[] row0 = {1.0,  x0,  x0 * x0,  x0 * x0 * x0};
-               double[] row1 = {0.0, 1.0, 2.0 * x0, 3.0 * x0 * x0};
-               double[] row2 = {1.0,  x1,  x1 * x1,  x1 * x1 * x1};
-               double[] row3 = {0.0, 1.0, 2.0 * x1, 3.0 * x1 * x1};
-               RealMatrix xMatrix = new Array2DRowRealMatrix(4, 4);
-               xMatrix.setRow(0, row0);
-               xMatrix.setRow(1, row1);
-               xMatrix.setRow(2, row2);
-               xMatrix.setRow(3, row3);
-               // compute inverse
-               RealMatrix inverseMatrix = MatrixUtils.inverse(xMatrix).transpose();
+            } else {
+                // get x values
+                double x0 = structure.xFor(upperRadius);
+                double x1 = structure.xFor(upperTieInRadius);
+                // crete x matrix
+                double[] row0 = {1.0, x0, x0 * x0, x0 * x0 * x0};
+                double[] row1 = {0.0, 1.0, 2.0 * x0, 3.0 * x0 * x0};
+                double[] row2 = {1.0, x1, x1 * x1, x1 * x1 * x1};
+                double[] row3 = {0.0, 1.0, 2.0 * x1, 3.0 * x1 * x1};
+                RealMatrix xMatrix = new Array2DRowRealMatrix(4, 4);
+                xMatrix.setRow(0, row0);
+                xMatrix.setRow(1, row1);
+                xMatrix.setRow(2, row2);
+                xMatrix.setRow(3, row3);
+                // compute inverse
+                RealMatrix inverseMatrix = MatrixUtils.inverse(xMatrix).transpose();
 
-               // compute and set new function for each individual variable
-               for (VariableType currentVariable : variableList) {
-                   // get y values
-                   double y0 = structure.getAtRadius(currentVariable, upperRadius) * factor;
-                   double y0p = structure.getDerivativeAtRadius(currentVariable, upperRadius) * factor;
-                   double y1 = structure.getAtRadius(currentVariable, upperTieInRadius);
-                   double y1p = structure.getDerivativeAtRadius(currentVariable, upperTieInRadius);
-                   // create y vector
-                   double[] yArray = {y0, y0p, y1, y1p};
-                   // compute coefficients
-                   double[] coefArray = inverseMatrix.preMultiply(yArray);
-                   coefArray = Arrays.stream(coefArray).map(v -> Precision.round(v, 4)).toArray();
-                   // set new function
-                   PolynomialFunction function = new PolynomialFunction(coefArray);
-                   structure = structure.withFunction(upperRadius, upperTieInRadius, currentVariable, function);
-               }
-           }
-       }
+                // compute and set new function for each individual variable
+                for (VariableType currentVariable : variableList) {
+                    // get y values
+                    double y0 = structure.getAtRadius(currentVariable, upperRadius) * factor;
+                    double y0p = structure.getDerivativeAtRadius(currentVariable, upperRadius) * factor;
+                    double y1 = structure.getAtRadius(currentVariable, upperTieInRadius);
+                    double y1p = structure.getDerivativeAtRadius(currentVariable, upperTieInRadius);
+                    // create y vector
+                    double[] yArray = {y0, y0p, y1, y1p};
+                    // compute coefficients
+                    double[] coefArray = inverseMatrix.preMultiply(yArray);
+                    coefArray = Arrays.stream(coefArray).map(v -> Precision.round(v, 4)).toArray();
+                    // set new function
+                    PolynomialFunction function = new PolynomialFunction(coefArray);
+                    structure = structure.withFunction(upperRadius, upperTieInRadius, currentVariable, function);
+                }
+            }
+        }
 
-       Path outputPath = DatasetAid.generateOutputFilePath(workPath, nameRoot, fileTag, appendFileDate, null, ".structure");
-       PolynomialStructureFile.write(structure, outputPath);
-   }
+        Path outputPath = DatasetAid.generateOutputFilePath(workPath, nameRoot, fileTag, appendFileDate, null, ".structure");
+        PolynomialStructureFile.write(structure, outputPath);
+    }
 
-   private List<VariableType> transformVariable(VariableType variable) {
-       List<VariableType> variableList = new ArrayList<>();
-       switch (variable) {
-       case Vp:
-           variableList.add(VariableType.Vpv);
-           variableList.add(VariableType.Vph);
-           break;
-       case Vs:
-           variableList.add(VariableType.Vsv);
-           variableList.add(VariableType.Vsh);
-           break;
-       default:
-           variableList.add(variable);
-       }
-       return variableList;
-   }
+    private List<VariableType> transformVariable(VariableType variable) {
+        List<VariableType> variableList = new ArrayList<>();
+        switch (variable) {
+        case Vp:
+            variableList.add(VariableType.Vpv);
+            variableList.add(VariableType.Vph);
+            break;
+        case Vs:
+            variableList.add(VariableType.Vsv);
+            variableList.add(VariableType.Vsh);
+            break;
+        default:
+            variableList.add(variable);
+        }
+        return variableList;
+    }
 
 }

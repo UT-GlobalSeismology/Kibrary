@@ -10,9 +10,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
-
 import org.apache.commons.math3.util.Precision;
-
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.elastic.VariableType;
@@ -40,8 +38,8 @@ import io.github.kensuke1984.kibrary.voxel.VoxelInformationFile;
  * dLatitudes must all be uniform,
  * and dLongitudes must be uniform at each latitude.
  *
- * @author otsuru
  * @since 2022/3/4
+ * @author otsuru
  */
 public class CheckerboardMaker extends Operation {
 

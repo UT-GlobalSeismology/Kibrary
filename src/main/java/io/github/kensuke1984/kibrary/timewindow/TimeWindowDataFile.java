@@ -19,13 +19,11 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.lang3.StringUtils;
-
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.Summon;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
@@ -71,9 +69,11 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
  * When the main method of this class is executed,
  * the input binary-format file is output in ascii format.
  *
+ * @since before 2016/1/25
  * @author Kensuke Konishi
- * @since a long time ago
- * @version 2021/11/2 Renamed from timewindow.TimewindowInformationFile to timewindow.TimewindowDataFile.
+ *
+ * @version 2021/11/2 Renamed from TimewindowInformationFile to TimewindowDataFile.
+ * @author otsuru
  */
 public final class TimeWindowDataFile {
     private TimeWindowDataFile() {}
@@ -104,7 +104,7 @@ public final class TimeWindowDataFile {
         GlobalCMTID[] events = timeWindowSet.stream().map(TimeWindowData::getGlobalCMTID).distinct().sorted()
                 .toArray(GlobalCMTID[]::new);
         Phase[] phases = timeWindowSet.stream().map(TimeWindowData::getPhases).flatMap(p -> Stream.of(p))
-            .distinct().toArray(Phase[]::new);
+                .distinct().toArray(Phase[]::new);
 
         Map<Observer, Integer> observerMap = new HashMap<>();
         Map<GlobalCMTID, Integer> eventMap = new HashMap<>();
@@ -139,9 +139,9 @@ public final class TimeWindowDataFile {
                 for (int i = 0; i < 10; i++) {
                     if (i < infophases.length) {
                         dos.writeShort(phaseMap.get(infophases[i]));
-                    }
-                    else
+                    } else {
                         dos.writeShort(-1);
+                    }
                 }
                 dos.writeByte(info.getComponent().getNumber());
                 float startTime = (float) info.startTime;
@@ -268,8 +268,8 @@ public final class TimeWindowDataFile {
 
     /**
      * The binary-format time window information file is output in ascii format.
-     * @param args Options.
-     * @throws IOException if an I/O error occurs
+     * @param args (String[]) Options.
+     * @throws IOException
      */
     public static void main(String[] args) throws IOException {
         Options options = defineOptions();
@@ -282,7 +282,7 @@ public final class TimeWindowDataFile {
 
     /**
      * To be called from {@link Summon}.
-     * @return options
+     * @return (Options) Options that can be specified by user.
      */
     public static Options defineOptions() {
         Options options = Summon.defaultOptions();
@@ -299,7 +299,7 @@ public final class TimeWindowDataFile {
 
     /**
      * To be called from {@link Summon}.
-     * @param cmdLine options
+     * @param cmdLine (CommandLine) Options specified by user.
      * @throws IOException
      */
     public static void run(CommandLine cmdLine) throws IOException {

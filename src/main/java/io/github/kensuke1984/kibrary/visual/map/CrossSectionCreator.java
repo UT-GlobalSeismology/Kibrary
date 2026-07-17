@@ -8,7 +8,6 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.Map;
 import java.util.Set;
-
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.elastic.VariableType;
@@ -20,8 +19,8 @@ import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 /**
  * Operation that creates a cross section from a {@link ScalarListFile}.
  *
- * @author otsuru
  * @since 2023/3/24
+ * @author otsuru
  */
 public class CrossSectionCreator extends Operation {
 

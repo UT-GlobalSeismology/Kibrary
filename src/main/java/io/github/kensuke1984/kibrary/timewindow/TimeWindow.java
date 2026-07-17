@@ -8,8 +8,8 @@ import org.apache.commons.math3.util.Precision;
  * <p>
  * This class is <b>IMMUTABLE</b>.
  *
+ * @since before 2016/1/25
  * @author Kensuke Konishi
- * @since a long time ago
  */
 public class TimeWindow implements Comparable<TimeWindow> {
 

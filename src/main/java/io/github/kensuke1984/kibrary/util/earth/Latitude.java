@@ -2,7 +2,6 @@ package io.github.kensuke1984.kibrary.util.earth;
 
 import org.apache.commons.math3.util.FastMath;
 import org.apache.commons.math3.util.Precision;
-
 import io.github.kensuke1984.kibrary.util.MathAid;
 
 /**
@@ -11,8 +10,8 @@ import io.github.kensuke1984.kibrary.util.MathAid;
  *<p>
  * This class is <b>IMMUTABLE</b>.
  *
+ * @since before 2016/1/25
  * @author Kensuke Konishi
- * @since a long time ago
  */
 public final class Latitude implements Comparable<Latitude> {
 
@@ -90,7 +89,7 @@ public final class Latitude implements Comparable<Latitude> {
         if (getClass() != obj.getClass()) return false;
         Latitude other = (Latitude) obj;
 
-        return Precision.equals(geographicLatitude, other.geographicLatitude, FastMath.pow(10, -DECIMALS)/2);
+        return Precision.equals(geographicLatitude, other.geographicLatitude, FastMath.pow(10, -DECIMALS) / 2);
     }
 
     @Override

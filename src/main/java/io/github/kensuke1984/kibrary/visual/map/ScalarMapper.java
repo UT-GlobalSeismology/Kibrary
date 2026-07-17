@@ -8,7 +8,6 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.Map;
 import java.util.Set;
-
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.elastic.VariableType;
@@ -24,8 +23,10 @@ import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
  * Creates shellscripts to map {@link ScalarListFile}.
  *
  * @see Interpolation#inEachMapLayer(Map, double, double, boolean, double, boolean, boolean)
- * @author otsuru
+ *
  * @since 2022/7/18
+ * @version 2024/4/22 Renamed from PerturbationMapper to ScalarMapper.
+ * @author otsuru
  */
 public class ScalarMapper extends Operation {
 

@@ -17,11 +17,9 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-
 import org.apache.commons.math3.complex.Complex;
 import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.RealVector;
-
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
@@ -75,9 +73,11 @@ import io.github.kensuke1984.kibrary.util.sac.WaveformType;
  * <p>
  * This class does not apply a digital filter, but extracts information about the passband written in SAC files.
  *
+ * @since before 2016/1/25
  * @author Kensuke Konishi
- * @since a long time ago
- * @version 2021/11/3 renamed from waveformdata.ObservedSyntheticDatasetMaker to waveform.ActualWaveformCompiler
+ *
+ * @version 2021/11/18 Renamed from waveformdata.ObservedSyntheticDatasetMaker to waveform.ActualWaveformCompiler.
+ * @author otsuru
  */
 public class ActualWaveformCompiler extends Operation {
 
@@ -433,7 +433,7 @@ public class ActualWaveformCompiler extends Operation {
         int fnpts = (int) ((highFreq - lowFreq) / df);
         double[] spcAmp = fourier.getLogA();
         return new Trace(IntStream.range(0, fnpts).mapToDouble(i -> (i + iStart) * df).toArray(),
-            IntStream.range(0, fnpts).mapToDouble(i -> spcAmp[i + iStart]).toArray());
+                IntStream.range(0, fnpts).mapToDouble(i -> spcAmp[i + iStart]).toArray());
     }
     /**
      * @param sac
@@ -459,7 +459,7 @@ public class ActualWaveformCompiler extends Operation {
         int fnpts = (int) ((highFreq - lowFreq) / df);
         double[] spcAmp = fourier.getLogA();
         return new Trace(IntStream.range(0, fnpts).mapToDouble(i -> (i + iStart) * df).toArray(),
-            IntStream.range(0, fnpts).mapToDouble(i -> spcAmp[i + iStart]).toArray());
+                IntStream.range(0, fnpts).mapToDouble(i -> spcAmp[i + iStart]).toArray());
     }
     /**
      * @param spcAmp
@@ -475,14 +475,13 @@ public class ActualWaveformCompiler extends Operation {
             int j1;
             if (j0 == 0) {
                 j1 = 1;
-            }
-            else if (j0 == refSpcAmp.getLength() - 1) {
+            } else if (j0 == refSpcAmp.getLength() - 1) {
                 j1 = refSpcAmp.getLength() - 2;
-            }
-            else
+            } else {
                 j1 = refSpcAmp.getXAt(j0) < x ? j0 + 1 : j0 - 1;
-            double refSpcAmpAti = Interpolation.linear(x, new double[] {refSpcAmp.getXAt(j0), refSpcAmp.getXAt(j1)}
-                , new double[] {refSpcAmp.getYAt(j0), refSpcAmp.getYAt(j1)});
+            }
+            double refSpcAmpAti = Interpolation.linear(x, new double[] {refSpcAmp.getXAt(j0), refSpcAmp.getXAt(j1)},
+                    new double[] {refSpcAmp.getYAt(j0), refSpcAmp.getYAt(j1)});
             spcAmpCorr[i] = spcAmp.getYAt(i) - refSpcAmpAti;
         }
         return spcAmpCorr;
@@ -592,8 +591,12 @@ public class ActualWaveformCompiler extends Operation {
                 }
                 if (correctTime) shift = sc.getTimeshift();
                 switch (amplitudeCorrectionType) {
-                case 1: ratio = sc.getAmplitudeRatio(); break;
-                case 2: ratio = amplitudeCorrEventMap.get(timeWindow.getGlobalCMTID()); break;
+                case 1:
+                    ratio = sc.getAmplitudeRatio();
+                    break;
+                case 2:
+                    ratio = amplitudeCorrEventMap.get(timeWindow.getGlobalCMTID());
+                    break;
                 }
             }
             if (correctMantle) {
@@ -617,8 +620,7 @@ public class ActualWaveformCompiler extends Operation {
                     System.err.println();
                     System.err.println("!! Reference time window does not exist, skipping: " + timeWindow);
                     return;
-                }
-                else {
+                } else {
                     windowRef = tmpWindows.get(0);
                 }
 
@@ -655,8 +657,7 @@ public class ActualWaveformCompiler extends Operation {
             if (addNoise) {
                 obsSpcAmpTrace = cutSpcAmpSacAddNoise(obsSac, startTime - shift, npts);
                 synSpcAmpTrace = cutSpcAmpSac(synSac, startTime, npts);
-            }
-            else {
+            } else {
                 obsSpcAmpTrace = cutSpcAmpSac(obsSac, startTime - shift, npts);
                 synSpcAmpTrace = cutSpcAmpSac(synSac, startTime, npts);
             }
@@ -679,8 +680,7 @@ public class ActualWaveformCompiler extends Operation {
                 if (addNoise) {
                     refObsSpcAmpTrace = cutSpcAmpSacAddNoise(obsSac, windowRef.getStartTime(), nptsRef);
                     refSynSpcAmpTrace = cutSpcAmpSac(synSac, windowRef.getStartTime(), nptsRef);
-                }
-                else {
+                } else {
                     refObsSpcAmpTrace = cutSpcAmpSac(obsSac, windowRef.getStartTime(), nptsRef);
                     refSynSpcAmpTrace = cutSpcAmpSac(synSac, windowRef.getStartTime(), nptsRef);
                 }
@@ -688,15 +688,13 @@ public class ActualWaveformCompiler extends Operation {
                 if (amplitudeCorrectionType > 0) {
                     obsSpcAmp = correctSpcAmp(obsSpcAmpTrace, refObsSpcAmpTrace);
                     synSpcAmp = correctSpcAmp(synSpcAmpTrace, refSynSpcAmpTrace);
-                }
-                else {
+                } else {
                     obsSpcAmp = obsSpcAmpTrace.getY();
                     synSpcAmp = synSpcAmpTrace.getY();
                     double corrratio = amplitudeCorrEventMap.get(timeWindow.getGlobalCMTID());
                     obsSpcAmp = Arrays.stream(obsSpcAmp).map(d -> d - Math.log(corrratio)).toArray();
                 }
-            }
-            else {
+            } else {
                 obsSpcAmp = obsSpcAmpTrace.getY();
                 synSpcAmp = synSpcAmpTrace.getY();
             }

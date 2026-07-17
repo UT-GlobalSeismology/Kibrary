@@ -8,14 +8,13 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
 import io.github.kensuke1984.kibrary.util.MathAid;
 
 /**
  * Utilities for collecting SPC files.
  *
+ * @since 2021/11/21 Created when util.Utilities was split up.
  * @author otsuru
- * @since 2021/11/21 - created when Utilities.java was split up.
  */
 public final class SPCFileAid {
     private SPCFileAid() {}
@@ -37,7 +36,7 @@ public final class SPCFileAid {
         // CAUTION: Files.list() must be in try-with-resources.
         try (Stream<Path> stream = Files.list(path)) {
             fileNameList = stream.filter(p -> (p.getFileName().toString().endsWith("PF..." + spcMode + ".spc")
-                            || p.getFileName().toString().endsWith("PB..." + spcMode + ".spc")))
+                    || p.getFileName().toString().endsWith("PB..." + spcMode + ".spc")))
                     .sorted(Comparator.comparing(filePath -> filePath.getFileName().toString()))
                     .filter(SPCFileName::isFormatted).map(FormattedSPCFileName::new).collect(Collectors.toList());
         }
@@ -52,7 +51,7 @@ public final class SPCFileAid {
         // CAUTION: Files.list() must be in try-with-resources.
         try (Stream<Path> stream = Files.list(path)) {
             fileNameList = stream.filter(p -> (p.getFileName().toString().endsWith("UF..." + spcMode + ".spc")
-                            || p.getFileName().toString().endsWith("UB..." + spcMode + ".spc")))
+                    || p.getFileName().toString().endsWith("UB..." + spcMode + ".spc")))
                     .sorted(Comparator.comparing(filePath -> filePath.getFileName().toString()))
                     .filter(SPCFileName::isFormatted).map(FormattedSPCFileName::new).collect(Collectors.toList());
         }

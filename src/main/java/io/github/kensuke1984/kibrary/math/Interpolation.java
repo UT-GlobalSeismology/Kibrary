@@ -10,10 +10,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-
 import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
 import org.apache.commons.math3.util.Precision;
-
 import io.github.kensuke1984.kibrary.math.geometry.CoordinateConverter;
 import io.github.kensuke1984.kibrary.math.geometry.IntegerXY;
 import io.github.kensuke1984.kibrary.math.geometry.XY;
@@ -24,8 +22,8 @@ import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 /**
  * Methods concerning interpolation of values on a line or surface.
  *
- * @author ?
- * @since a long time ago
+ * @since 2019/10/6
+ * @author Anselme
  */
 public class Interpolation {
 
@@ -292,7 +290,7 @@ public class Interpolation {
                 int lastX = (int) Math.round(trace.getMaxX());
                 double[] valueArray = trace.getY();
 
-                for (int i = -1 ; i <= lastX - firstX; i++) {
+                for (int i = -1; i <= lastX - firstX; i++) {
                     IntegerXY xy = new IntegerXY(i + firstX, j);
                     segmentFunctionMap.put(xy, cubic(valueArray, i));
                 }
@@ -312,7 +310,7 @@ public class Interpolation {
 
             // list up segments at this x with closest 4 y's that exist in segment map
             List<IntegerXY> segmentXYs = new ArrayList<>();
-            for (int j = -1 ; j <= 2; j++) {
+            for (int j = -1; j <= 2; j++) {
                 IntegerXY segmentXY = new IntegerXY(leftX, lowerY + j);
                 if (segmentFunctionMap.containsKey(segmentXY)) segmentXYs.add(segmentXY);
             }

@@ -10,9 +10,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
-
 import org.apache.commons.math3.linear.RealVector;
-
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.external.gnuplot.GnuplotColorName;
@@ -36,8 +34,8 @@ import io.github.kensuke1984.kibrary.voxel.UnknownParameterFile;
  * Orthogonality is checked by computing the correlation coefficient between two partial waveforms.
  * This is the same as saying "the cosine of the angle between the two vectors of partial derivatives".
  *
- * @author otsuru
  * @since 2022/11/22
+ * @author otsuru
  */
 public class OrthogonalityTest extends Operation {
 

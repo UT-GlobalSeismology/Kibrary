@@ -10,7 +10,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
-
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
@@ -22,9 +21,11 @@ import io.github.kensuke1984.kibrary.util.spc.SPCMode;
 /**
  * Class for creating input files for TIPSV and TISH.
  *
+ * @since before 2016/1/25
  * @author Kensuke Konishi
- * @since a long time ago
- * @version 2021/11/18 Renamed from dsminformation.DSMheader to dsmsetup.SyntheticDSMInputFile.
+ *
+ * @version 2021/11/18 Renamed from dsminformation.SyntheticDSMInfo to dsmsetup.SyntheticDSMInputFile.
+ * @author otsuru
  */
 public class SyntheticDSMInputFile extends DSMInputHeader {
 
@@ -48,7 +49,7 @@ public class SyntheticDSMInputFile extends DSMInputHeader {
      * @param np        NP
      */
     public SyntheticDSMInputFile(PolynomialStructure structure, GlobalCMTAccess event, Set<Observer> observers, String outputDir,
-                            double tlen, int np) {
+            double tlen, int np) {
         super(tlen, np);
         this.structure = structure;
         this.event = event;

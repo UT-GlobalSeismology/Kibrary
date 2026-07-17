@@ -2,7 +2,6 @@ package io.github.kensuke1984.kibrary.util.earth;
 
 import org.apache.commons.math3.util.FastMath;
 import org.apache.commons.math3.util.Precision;
-
 import io.github.kensuke1984.kibrary.math.LinearRange;
 import io.github.kensuke1984.kibrary.math.geometry.Ellipse;
 import io.github.kensuke1984.kibrary.util.MathAid;
@@ -10,8 +9,8 @@ import io.github.kensuke1984.kibrary.util.MathAid;
 /**
  * Earth utility.
  *
+ * @since before 2016/1/25
  * @author Kensuke Konishi
- * @since a long time ago
  */
 public final class Earth {
     private Earth() {}

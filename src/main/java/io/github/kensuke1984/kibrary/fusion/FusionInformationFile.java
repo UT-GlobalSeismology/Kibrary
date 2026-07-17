@@ -8,7 +8,6 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-
 import io.github.kensuke1984.kibrary.util.InformationFileReader;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameterFile;
@@ -16,8 +15,8 @@ import io.github.kensuke1984.kibrary.voxel.UnknownParameterFile;
 /**
  * File with information of fused parameters.
  *
- * @author otsuru
  * @since 2022/8/3
+ * @author otsuru
  */
 public class FusionInformationFile {
     private FusionInformationFile() {}

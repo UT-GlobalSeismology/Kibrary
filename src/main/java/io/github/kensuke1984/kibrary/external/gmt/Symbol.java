@@ -3,8 +3,8 @@ package io.github.kensuke1984.kibrary.external.gmt;
 /**
  * Symbols in GMT
  *
- * @author kensuke
- * @version 0.0.1
+ * @since before 2016/1/25
+ * @author Kensuke Konishi
  */
 public enum Symbol {
     XDASH("-S-"), // x-dash（x軸方向の直線）

@@ -15,7 +15,6 @@ import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
-
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.source.SourceTimeFunction;
@@ -50,9 +49,11 @@ import io.github.kensuke1984.kibrary.util.sac.SACFileAccess;
  * The waveform in time domain will be sampled in {@link #samplingHz},
  * so the number of data points will become [time length x samplingHz].
  *
- * @author Kensuke Konishi
- * @since a long time ago
  * @see <a href=http://ds.iris.edu/ds/nodes/dmc/forms/sac/>SAC</a>
+ *
+ * @since before 2016/1/25
+ * @version 2017/12/14 Renamed from SpcSAC to SPC_SAC.
+ * @author Kensuke Konishi
  */
 public final class SPC_SAC extends Operation {
 

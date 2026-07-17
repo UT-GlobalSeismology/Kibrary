@@ -15,13 +15,11 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
-
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionGroup;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
-
 import io.github.kensuke1984.kibrary.Summon;
 import io.github.kensuke1984.kibrary.timewindow.TimeWindowData;
 import io.github.kensuke1984.kibrary.timewindow.TimeWindowDataFile;
@@ -43,8 +41,8 @@ import io.github.kensuke1984.kibrary.waveform.BasicIDFile;
  * <p>
  * Here, "station network latitude longitude" is for the observer.
  *
- * @author otsuru
  * @since 2022/5/25
+ * @author otsuru
  */
 public class DataEntryListFile {
 
@@ -106,8 +104,8 @@ public class DataEntryListFile {
      * and creates a data entry list file under the working folder.
      * The input source may be SAC files in event directories under a dataset folder,
      * a time window file, or a basic waveform folder.
-     * @param args Options.
-     * @throws IOException if an I/O error occurs
+     * @param args (String[]) Options.
+     * @throws IOException
      */
     public static void main(String[] args) throws IOException {
         Options options = defineOptions();
@@ -120,7 +118,7 @@ public class DataEntryListFile {
 
     /**
      * To be called from {@link Summon}.
-     * @return options
+     * @return (Options) Options that can be specified by user.
      */
     public static Options defineOptions() {
         Options options = Summon.defaultOptions();
@@ -156,7 +154,7 @@ public class DataEntryListFile {
 
     /**
      * To be called from {@link Summon}.
-     * @param cmdLine options
+     * @param cmdLine (CommandLine) Options specified by user.
      * @throws IOException
      */
     public static void run(CommandLine cmdLine) throws IOException {

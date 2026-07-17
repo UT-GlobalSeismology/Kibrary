@@ -10,9 +10,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
-
 import org.apache.commons.math3.util.Precision;
-
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.elastic.VariableType;
@@ -34,8 +32,8 @@ import io.github.kensuke1984.kibrary.voxel.UnknownParameterFile;
  *
  * TODO: only checked for 3D. May or may not work for 1D.
  *
- * @author otsuru
  * @since 2022/1/19
+ * @author otsuru
  */
 public class CoarseGridDesigner extends Operation {
 

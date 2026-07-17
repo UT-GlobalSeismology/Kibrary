@@ -10,14 +10,12 @@ import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.RealVector;
-
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.Summon;
 import io.github.kensuke1984.kibrary.inversion.setup.DVectorBuilder;
@@ -38,8 +36,9 @@ import io.github.kensuke1984.kibrary.waveform.BasicID;
  *
  * CAUTION: {@link RealVector} is not immutable, so be careful when handing it over to other methods without deep-copying!
  *
+ * @since 2022/7/7 Created based on part of inversion.Dvector.
+ * @version 2023/5/13 created WeightingHandler based on inversion.setup.Weighting.
  * @author otsuru
- * @since 2023/5/13 created based on inversion.setup.Weighting, which was created based on part of inversion.Dvector
  */
 public class WeightingHandler {
 
@@ -69,8 +68,8 @@ public class WeightingHandler {
 
     /**
      * Create default properties file.
-     * @param args Options.
-     * @throws IOException if an I/O error occurs
+     * @param args (String[]) Options.
+     * @throws IOException
      */
     public static void main(String[] args) throws IOException {
         Options options = defineOptions();
@@ -83,7 +82,7 @@ public class WeightingHandler {
 
     /**
      * To be called from {@link Summon}.
-     * @return options
+     * @return (Options) Options that can be specified by user.
      */
     public static Options defineOptions() {
         Options options = Summon.defaultOptions();
@@ -97,7 +96,7 @@ public class WeightingHandler {
 
     /**
      * To be called from {@link Summon}.
-     * @param cmdLine options
+     * @param cmdLine (CommandLine) Options specified by user.
      * @throws IOException
      */
     public static void run(CommandLine cmdLine) throws IOException {
@@ -160,7 +159,7 @@ public class WeightingHandler {
         System.err.print("factorZ=" + factorForZComponent + ", ");
         System.err.print("factorR=" + factorForRComponent + ", ");
         System.err.print("factorT=" + factorForTComponent + ", ");
-        System.err.println(MathAid.switchSingularPlural(weightMaps.size(), "weight file.",  "weight files."));
+        System.err.println(MathAid.switchSingularPlural(weightMaps.size(), "weight file.", "weight files."));
         if (weightedComponent != null) System.err.println("  (weighted for " + weightedComponent + " component)");
     }
 
@@ -219,9 +218,15 @@ public class WeightingHandler {
         int numZ = 0, numR = 0, numT = 0;
         for (int i = 0; i < dVector.getNTimeWindow(); i++) {
             switch (dVector.getObsID(i).getSacComponent()) {
-            case Z: numZ++; break;
-            case R: numR++; break;
-            case T: numT++; break;
+            case Z:
+                numZ++;
+                break;
+            case R:
+                numR++;
+                break;
+            case T:
+                numT++;
+                break;
             }
         }
 

@@ -11,7 +11,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
-
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.math.LinearRange;
@@ -25,8 +24,9 @@ import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
  * <p>
  * Use {@link VoxelAutoDesigner} to decide the positions of voxels based on a dataset.
  *
- * @author otsuru
  * @since 2023/6/5
+ * @version 2024/4/1 Renamed from VoxelFileMaker to VoxelManualDesigner.
+ * @author otsuru
  */
 public class VoxelManualDesigner extends Operation {
 

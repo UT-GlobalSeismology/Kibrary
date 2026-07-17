@@ -19,18 +19,16 @@ import java.nio.file.Path;
 import java.util.Objects;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
-
 import javax.swing.JFrame;
 import javax.swing.JProgressBar;
 import javax.swing.WindowConstants;
-
 import org.apache.commons.io.IOUtils;
 
 /**
  * Utilities to handle files.
  *
+ * @since 2021/11/21 Created when util.Utilities was split up.
  * @author otsuru
- * @since 2021/11/21 - created when Utilities.java was split up.
  */
 public final class FileAid {
     private FileAid() {}
@@ -88,7 +86,7 @@ public final class FileAid {
      * @throws IOException if any
      */
     public static void createLinkInDirectory(Path targetPath, Path destDirectory, boolean createDestDir,
-                                             CopyOption... options) throws IOException {
+            CopyOption... options) throws IOException {
         System.out.println(destDirectory.resolve(targetPath.getFileName()));
         if (createDestDir) Files.createDirectories(destDirectory);
         Files.createSymbolicLink(destDirectory.resolve(targetPath.getFileName()), targetPath.toAbsolutePath());
@@ -98,8 +96,7 @@ public final class FileAid {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             try {
                 Files.deleteIfExists(path);
-            } catch (IOException ignored) {
-            }
+            } catch (IOException ignored) {}
         }));
     }
 
@@ -132,7 +129,8 @@ public final class FileAid {
     public static Path download(URL url) throws IOException {
         Path out = Files.createTempFile("dl", "tmp");
         try (ReadableByteChannel rbc = Channels.newChannel(url.openStream());
-                FileOutputStream fos = new FileOutputStream(out.toFile()); FileChannel fc = fos.getChannel()) {
+                FileOutputStream fos = new FileOutputStream(out.toFile());
+                FileChannel fc = fos.getChannel()) {
             fc.transferFrom(rbc, 0, Long.MAX_VALUE);
         }
         return out;

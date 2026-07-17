@@ -4,8 +4,9 @@ import java.util.Arrays;
 
 /**
  * Types of source time functions.
- * @author otsuru
+ *
  * @since 2022/11/3
+ * @author otsuru
  */
 public enum SourceTimeFunctionType {
     NONE(0), BOXCAR(1), TRIANGLE(2), ASYMMETRIC_TRIANGLE(3), AUTO(4), GAUSSIAN(5);

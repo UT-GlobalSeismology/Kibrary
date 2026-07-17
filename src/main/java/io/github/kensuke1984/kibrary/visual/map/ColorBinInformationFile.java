@@ -6,13 +6,11 @@ import java.nio.file.Files;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionGroup;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
-
 import io.github.kensuke1984.kibrary.Summon;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.InformationFileReader;
@@ -23,8 +21,8 @@ import io.github.kensuke1984.kibrary.util.InformationFileReader;
  * Odd lines: (int) value of limit of interval.
  * Even lines: name of color.
  *
- * @author otsuru
  * @since 2022/6/24
+ * @author otsuru
  */
 public class ColorBinInformationFile {
 
@@ -61,7 +59,7 @@ public class ColorBinInformationFile {
         values = new int[nSections + 1];
         colors = new String[nSections];
 
-        for (int i = 0 ; i < nSections + 1; i++) {
+        for (int i = 0; i < nSections + 1; i++) {
             values[i] = Integer.parseInt(reader.next());
             if (i == nSections) break;
             colors[i] = reader.next();
@@ -85,8 +83,8 @@ public class ColorBinInformationFile {
 
     /**
      * Creates a template color bin information file.
-     * @param args Options.
-     * @throws IOException if an I/O error occurs
+     * @param args (String[]) Options.
+     * @throws IOException
      */
     public static void main(String[] args) throws IOException {
         Options options = defineOptions();
@@ -99,7 +97,7 @@ public class ColorBinInformationFile {
 
     /**
      * To be called from {@link Summon}.
-     * @return options
+     * @return (Options) Options that can be specified by user.
      */
     public static Options defineOptions() {
         Options options = Summon.defaultOptions();
@@ -124,7 +122,7 @@ public class ColorBinInformationFile {
 
     /**
      * To be called from {@link Summon}.
-     * @param cmdLine options
+     * @param cmdLine (CommandLine) Options specified by user.
      * @throws IOException
      */
     public static void run(CommandLine cmdLine) throws IOException {

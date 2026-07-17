@@ -3,7 +3,6 @@ package io.github.kensuke1984.kibrary.util.sac;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-
 import io.github.kensuke1984.kibrary.util.data.DataEntry;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
@@ -15,9 +14,13 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
  * The SAC header is described
  * <A href=https://ds.iris.edu/files/sac-manual/manual/file_format.html>here</a>
  *
- * @author Kensuke Konishi
- * @since a long time ago
  * @see <a href=http://ds.iris.edu/ds/nodes/dmc/forms/sac/>SAC</a>
+ *
+ * @since before 2016/1/25
+ * @author Kensuke Konishi
+ *
+ * @version 2021/11/2 Renamed from SACHeaderData to SACHeaderAccess.
+ * @author otsuru
  */
 public interface SACHeaderAccess {
 
@@ -87,18 +90,18 @@ public interface SACHeaderAccess {
      */
     default SACComponent getComponent() {
         switch (getSACString(SACHeaderEnum.KCMPNM)) {
-            case "Z":
-            case "BHZ": //TODO erase: this is set here because DataKitchen hadn't placed "vertical" in Sac headers before.
-            case "vertical": //TODO erase: old format. This is here for backward compatibility.
-                return SACComponent.Z;
-            case "R":
-            case "radial": //TODO erase: old format. This is here for backward compatibility.
-                return SACComponent.R;
-            case "T":
-            case "trnsvers": //TODO erase: old format. This is here for backward compatibility.
-                return SACComponent.T;
-            default:
-                throw new RuntimeException("KCMPNM is invalid; must be Z, R, or T.");
+        case "Z":
+        case "BHZ": //TODO erase: this is set here because DataKitchen hadn't placed "vertical" in Sac headers before.
+        case "vertical": //TODO erase: old format. This is here for backward compatibility.
+            return SACComponent.Z;
+        case "R":
+        case "radial": //TODO erase: old format. This is here for backward compatibility.
+            return SACComponent.R;
+        case "T":
+        case "trnsvers": //TODO erase: old format. This is here for backward compatibility.
+            return SACComponent.T;
+        default:
+            throw new RuntimeException("KCMPNM is invalid; must be Z, R, or T.");
         }
     }
 

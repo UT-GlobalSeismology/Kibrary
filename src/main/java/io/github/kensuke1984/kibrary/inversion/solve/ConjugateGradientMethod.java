@@ -3,12 +3,10 @@ package io.github.kensuke1984.kibrary.inversion.solve;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-
 import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.MatrixUtils;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
-
 import io.github.kensuke1984.kibrary.math.MatrixFile;
 
 /**
@@ -16,10 +14,11 @@ import io.github.kensuke1984.kibrary.math.MatrixFile;
  * <p>
  * See Appendix 3 of Kawai et al. (2014) for further information.
  *
- * @author Kensuke Konishi
- * @since a long time ago
  * @see <a href=https://ja.wikipedia.org/wiki/%E5%85%B1%E5%BD%B9%E5%8B%BE%E9%85%8D%E6%B3%95>Japanese wiki</a>,
  * <a href=https://en.wikipedia.org/wiki/Conjugate_gradient_method>English wiki</a>
+ *
+ * @since before 2016/1/25
+ * @author Kensuke Konishi
  */
 public class ConjugateGradientMethod extends InversionMethod {
 
@@ -119,7 +118,7 @@ public class ConjugateGradientMethod extends InversionMethod {
     @Override
     public RealMatrix computeCovariance(double sigmaD, int j) {
         RealMatrix covariance = MatrixUtils.createRealMatrix(getNParameter(), getNParameter());
-        for (int i = 0; i < j ; i++) {
+        for (int i = 0; i < j; i++) {
             // p_i^T A^T A p_i
             double paap = p.getColumnVector(i).dotProduct(ata.operate(p.getColumnVector(i)));
             double coeff = sigmaD * sigmaD / paap;
@@ -143,7 +142,7 @@ public class ConjugateGradientMethod extends InversionMethod {
             RealVector pjVec = p.getColumnVector(j);
             double paap = pjVec.dotProduct(ata.operate(pjVec));
             RealMatrix pjMat = p.getColumnMatrix(j);
-            plp = plp.add(pjMat.multiply(pjMat.transpose()).scalarMultiply(1/paap));
+            plp = plp.add(pjMat.multiply(pjMat.transpose()).scalarMultiply(1 / paap));
         }
 
         // compute resolution matrix and output

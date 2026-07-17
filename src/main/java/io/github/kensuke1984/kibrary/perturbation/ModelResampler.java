@@ -14,9 +14,7 @@ import java.util.Map;
 import java.util.OptionalDouble;
 import java.util.Set;
 import java.util.stream.Collectors;
-
 import org.apache.commons.math3.util.Precision;
-
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.elastic.VariableType;
@@ -36,8 +34,8 @@ import io.github.kensuke1984.kibrary.voxel.VoxelInformationFile;
  * <p>
  * Currently, only resampling for longitude can be done. Resampling for radius and latitude is not supported.
  *
- * @author otsuru
  * @since 2025/3/12
+ * @author otsuru
  */
 public class ModelResampler extends Operation {
 

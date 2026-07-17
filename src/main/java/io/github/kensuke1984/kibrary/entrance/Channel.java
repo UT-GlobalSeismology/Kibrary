@@ -3,7 +3,6 @@ package io.github.kensuke1984.kibrary.entrance;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
-
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 
 /**
@@ -21,10 +20,10 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
  * <p>
  * For OHP request, TTTT is now only one digit.
  *
+ * @see <a href=http://www.iris.edu/dms/nodes/dmc/manuals/breq_fast>official guide</a>
+ *
+ * @since before 2016/1/25
  * @author Kensuke Konishi
- * @since a long time ago
- * @see <a href=http://www.iris.edu/dms/nodes/dmc/manuals/breq_fast>official
- * guide</a>
  */
 public class Channel {
 
@@ -53,11 +52,11 @@ public class Channel {
     private final String[] CHANNELS;
 
     public Channel(String stationName, String networkName, LocalDateTime startTime, LocalDateTime endTime) {
-        this(stationName, networkName, startTime, endTime, new String[]{"BH?"});
+        this(stationName, networkName, startTime, endTime, new String[] {"BH?"});
     }
 
     public Channel(String stationName, String networkName, LocalDateTime startTime, LocalDateTime endTime,
-                   String[] channels) {
+            String[] channels) {
         STATION = stationName;
         NETWORK = networkName;
         START = startTime;
@@ -97,7 +96,7 @@ public class Channel {
      * @return channels for the input
      */
     public static Channel[] listChannels(String[] network, GlobalCMTID id, ChronoUnit headUnit, int headAdjustment,
-                                         ChronoUnit footUnit, int footAdjustment) {
+            ChronoUnit footUnit, int footAdjustment) {
         Channel[] channels = new Channel[network.length];
         LocalDateTime cmtTime = id.getEventData().getCMTTime();
         LocalDateTime startTime = cmtTime.plus(headAdjustment, headUnit);

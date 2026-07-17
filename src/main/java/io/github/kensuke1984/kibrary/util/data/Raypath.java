@@ -3,9 +3,7 @@ package io.github.kensuke1984.kibrary.util.data;
 
 import java.util.ArrayList;
 import java.util.List;
-
 import org.apache.commons.math3.util.Precision;
-
 import io.github.kensuke1984.kibrary.util.earth.Earth;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
@@ -15,9 +13,11 @@ import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
  * Multiple points along the raypath can be stored (e.g., pierce points, turning points).
  * This class is <b>IMMUTABLE</b>.
  *
+ * @since before 2016/1/25
  * @author Kensuke Konishi
- * @since a long time ago
+ *
  * @version 2022/9/8 Modified almost whole file.
+ * @author otsuru
  */
 public final class Raypath {
 

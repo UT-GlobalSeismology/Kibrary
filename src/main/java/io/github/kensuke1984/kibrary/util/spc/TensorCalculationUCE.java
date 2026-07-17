@@ -1,17 +1,15 @@
 package io.github.kensuke1984.kibrary.util.spc;
 
 import java.util.Arrays;
-
 import org.apache.commons.math3.complex.Complex;
-
 import io.github.kensuke1984.kibrary.elastic.WeightingFactor;
 
 /**
  * Calculation of U<sub>j,q</sub> C<sub>jqrs</sub> &eta;<sub>ri,s</sub> in
  * Geller &amp; Hara (1993)
  *
+ * @since before 2016/1/25
  * @author Kensuke Konishi
- * @since a long time ago
  */
 class TensorCalculationUCE {
 
@@ -150,10 +148,10 @@ class TensorCalculationUCE {
         double sine = Math.sin(angle);
 
         // 回転行列 前から
-        double[][] forwardMatrix = new double[][] { { 1, 0, 0 }, { 0, cosine, sine }, { 0, -sine, cosine } };
+        double[][] forwardMatrix = new double[][] {{1, 0, 0}, {0, cosine, sine}, {0, -sine, cosine}};
 
         // 回転行列 後ろから
-        double[][] backMatrix = new double[][] { { 1, 0, 0 }, { 0, cosine, -sine }, { 0, sine, cosine } };
+        double[][] backMatrix = new double[][] {{1, 0, 0}, {0, cosine, -sine}, {0, sine, cosine}};
 
         Complex[][][] newETA = new Complex[3][3][np + 1];
 
@@ -189,8 +187,7 @@ class TensorCalculationUCE {
         Complex[] c = new Complex[np + 1];
         if (parallel) {
             Arrays.parallelSetAll(c, i -> u[i].multiply(eta[i]));
-        }
-        else {
+        } else {
             Arrays.setAll(c, i -> u[i].multiply(eta[i]));
         }
         return c;

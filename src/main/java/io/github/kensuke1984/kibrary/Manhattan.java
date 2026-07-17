@@ -1,7 +1,6 @@
 package io.github.kensuke1984.kibrary;
 
 import java.util.Arrays;
-
 import io.github.kensuke1984.kibrary.correction.FujiStaticCorrection;
 import io.github.kensuke1984.kibrary.correction.ObayashiStaticCorrection;
 import io.github.kensuke1984.kibrary.correction.StaticCorrectionForger;
@@ -80,9 +79,11 @@ import io.github.kensuke1984.kibrary.waveform.PseudoWaveformGenerator;
  * <p>
  * The value name set to this enum must be the same as its corresponding class name.
  *
+ * @since before 2016/1/25
  * @author Kensuke Konishi
- * @since a long time ago
+ *
  * @version 2022/1/7 Recreated based on the original Manhattan.
+ * @author otsuru
  */
 enum Manhattan {
     // Environment & General 00
@@ -124,7 +125,7 @@ enum Manhattan {
     DataFeatureHistogram(48, DataFeatureHistogram.class),
     // Voxel 50
     VoxelAutoDesigner(50, VoxelAutoDesigner.class),
-    VoxelManualDesigner(51,VoxelManualDesigner.class),
+    VoxelManualDesigner(51, VoxelManualDesigner.class),
     CoarseGridDesigner(52, CoarseGridDesigner.class),
     AdaptiveGridDesigner(53, AdaptiveGridDesigner.class),
     GeometryWeighter(58, GeometryWeighter.class),

@@ -2,7 +2,6 @@ package io.github.kensuke1984.kibrary.math;
 
 import java.util.Arrays;
 import java.util.Comparator;
-
 import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
 import org.apache.commons.math3.complex.Complex;
 
@@ -11,8 +10,8 @@ import org.apache.commons.math3.complex.Complex;
  * <p>
  * This class is <b>immutable</b>
  *
+ * @since before 2016/1/25
  * @author Kensuke Konishi
- * @since a long time ago
  */
 public class LinearEquation {
 

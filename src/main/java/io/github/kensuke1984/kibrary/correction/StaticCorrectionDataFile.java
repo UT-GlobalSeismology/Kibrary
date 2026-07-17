@@ -20,13 +20,11 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
-
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.lang3.StringUtils;
-
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.Summon;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
@@ -71,8 +69,11 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
  * When the main method of this class is executed,
  * the input binary-format file is output in ascii format in the standard output.
  *
+ * @since before 2016/1/25
  * @author Kensuke Konishi
- * @since a long time ago
+ *
+ * @version 2021/11/3 Renamed from datacorrection.StaticCorrectionFile to correction.StaticCorrectionDataFile.
+ * @author otsuru
  */
 public final class StaticCorrectionDataFile {
     private StaticCorrectionDataFile() {}
@@ -135,9 +136,9 @@ public final class StaticCorrectionDataFile {
                 for (int i = 0; i < 10; i++) {
                     if (i < Infophases.length) {
                         dos.writeShort(phaseMap.get(Infophases[i]));
-                    }
-                    else
+                    } else {
                         dos.writeShort(-1);
+                    }
                 }
                 dos.writeByte(correction.getComponent().getNumber());
                 dos.writeFloat((float) correction.getSynStartTime());
@@ -228,8 +229,8 @@ public final class StaticCorrectionDataFile {
 
     /**
      * Shows all static corrections in a file.
-     * @param args Options.
-     * @throws IOException if an I/O error occurs
+     * @param args (String[]) Options.
+     * @throws IOException
      */
     public static void main(String[] args) throws IOException {
         Options options = defineOptions();
@@ -242,7 +243,7 @@ public final class StaticCorrectionDataFile {
 
     /**
      * To be called from {@link Summon}.
-     * @return options
+     * @return (Options) Options that can be specified by user.
      */
     public static Options defineOptions() {
         Options options = Summon.defaultOptions();
@@ -259,7 +260,7 @@ public final class StaticCorrectionDataFile {
 
     /**
      * To be called from {@link Summon}.
-     * @param cmdLine options
+     * @param cmdLine (CommandLine) Options specified by user.
      * @throws IOException
      */
     public static void run(CommandLine cmdLine) throws IOException {

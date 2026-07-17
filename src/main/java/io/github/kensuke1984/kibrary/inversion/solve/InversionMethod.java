@@ -4,19 +4,20 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
-
 import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
-
 import io.github.kensuke1984.kibrary.voxel.KnownParameterFile;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
 
 /**
  * Abstract parent class of various inversion methods to solve the problem A<sup>T</sup>A<b>m</b> = A<sup>T</sup><b>d</b>.
  *
+ * @since before 2016/1/25
  * @author Kensuke Konishi
- * @since a long time ago
+ *
+ * @version 2023/9/2 Renamed from inversion.InverseProblem to inversion.solve.InversionMethod.
+ * @author otsuru
  */
 public abstract class InversionMethod {
 
@@ -87,7 +88,7 @@ public abstract class InversionMethod {
         Files.createDirectories(outPath);
         System.err.println("Outputting the answer files in " + outPath);
         for (int i = 0; i < getNAnswer(); i++) {
-            Path outputPath = outPath.resolve(getEnum().simpleName() + (i+1) + ".lst");
+            Path outputPath = outPath.resolve(getEnum().simpleName() + (i + 1) + ".lst");
             double[] m = answer.getColumn(i);
             KnownParameterFile.write(unknowns, m, outputPath);
         }

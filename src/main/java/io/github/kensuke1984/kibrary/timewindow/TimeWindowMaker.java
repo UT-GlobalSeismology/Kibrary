@@ -15,7 +15,6 @@ import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
 import edu.sc.seis.TauP.Arrival;
 import edu.sc.seis.TauP.TauModelException;
 import edu.sc.seis.TauP.TauP_Time;
@@ -67,8 +66,8 @@ import io.github.kensuke1984.kibrary.util.sac.SACFileName;
  * Travel time information is written in "travelTime*.inf".
  * See {@link TimeWindowDataFile}.
  *
+ * @since before 2016/1/25
  * @author Kensuke Konishi
- * @since a long time ago
  */
 public class TimeWindowMaker extends Operation {
 
@@ -239,15 +238,15 @@ public class TimeWindowMaker extends Operation {
         avoidFrontShift = property.parseDouble("avoidFrontShift", "5");
         avoidRearShift = property.parseDouble("avoidRearShift", "60");
         minLength = property.parseDouble("minLength", "0");
-        allowSplitWindows = property.parseBoolean("allowSplitWindows","false");
+        allowSplitWindows = property.parseBoolean("allowSplitWindows", "false");
         structureName = property.parseString("structureName", "prem").toLowerCase();
         majorArc = property.parseBoolean("majorArc", "false");
-        useDuplicatePhases = property.parseBoolean("useDuplicatePhases","true");
+        useDuplicatePhases = property.parseBoolean("useDuplicatePhases", "true");
     }
 
     private static Set<Phase> phaseSet(String arg) {
-        return (arg == null || arg.isEmpty()) ? Collections.emptySet() :
-                Arrays.stream(arg.split("\\s+")).map(Phase::create).collect(Collectors.toSet());
+        return (arg == null || arg.isEmpty()) ? Collections.emptySet()
+                : Arrays.stream(arg.split("\\s+")).map(Phase::create).collect(Collectors.toSet());
     }
 
     @Override
@@ -307,7 +306,7 @@ public class TimeWindowMaker extends Operation {
                 Set<DataEntry> correspondingEntrySet = entrySet.stream()
                         .filter(entry -> entry.getEvent().equals(event) && components.contains(entry.getComponent()))
                         .collect(Collectors.toSet());
-                for (DataEntry entry: correspondingEntrySet) {
+                for (DataEntry entry : correspondingEntrySet) {
                     makeTimeWindows(entry, timeTool);
                 }
                 System.err.print(".");
@@ -507,8 +506,8 @@ public class TimeWindowMaker extends Operation {
     private static TimeWindow cutWindow(TimeWindow useWindow, TimeWindow avoidWindow) {
         if (!useWindow.overlaps(avoidWindow)) return useWindow;
         if (avoidWindow.startTime <= useWindow.startTime) {
-            return useWindow.endTime <= avoidWindow.endTime ? null :
-                    new TimeWindow(avoidWindow.endTime, useWindow.endTime);
+            return useWindow.endTime <= avoidWindow.endTime ? null
+                    : new TimeWindow(avoidWindow.endTime, useWindow.endTime);
         } else {
             return new TimeWindow(useWindow.startTime, avoidWindow.startTime);
         }

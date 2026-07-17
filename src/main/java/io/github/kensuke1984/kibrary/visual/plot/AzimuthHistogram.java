@@ -10,14 +10,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionGroup;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.math3.util.Precision;
-
 import edu.sc.seis.TauP.TauModelException;
 import io.github.kensuke1984.kibrary.Summon;
 import io.github.kensuke1984.kibrary.external.TauPPierceWrapper;
@@ -42,16 +40,18 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
  * (ex. A record with azimuth 240 is counted as having azimuth 60.)
  * This can be suppressed by setting the "expand" option.
  *
- * @author ?
- * @since a long time ago
- * @version 2022/8/12 renamed and moved from util.statistics.HistogramAzimuth to visual.AzimuthHistogram
+ * @since 2017/10/12
+ * @author Anselme
+ *
+ * @version 2022/8/12 Renamed and moved from util.statistics.HistogramAzimuth to visual.AzimuthHistogram.
+ * @author otsuru
  */
 public class AzimuthHistogram {
 
     /**
      * Creates histogram of azimuth based on a {@link DataEntryListFile}.
-     * @param args Options.
-     * @throws IOException if an I/O error occurs
+     * @param args (String[]) Options.
+     * @throws IOException
      */
     public static void main(String[] args) throws IOException {
         Options options = defineOptions();
@@ -64,7 +64,7 @@ public class AzimuthHistogram {
 
     /**
      * To be called from {@link Summon}.
-     * @return options
+     * @return (Options) Options that can be specified by user.
      */
     public static Options defineOptions() {
         Options options = Summon.defaultOptions();
@@ -119,7 +119,7 @@ public class AzimuthHistogram {
 
     /**
      * To be called from {@link Summon}.
-     * @param cmdLine options
+     * @param cmdLine (CommandLine) Options specified by user.
      * @throws IOException
      */
     public static void run(CommandLine cmdLine) throws IOException {

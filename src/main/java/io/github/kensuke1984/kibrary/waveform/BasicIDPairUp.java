@@ -5,14 +5,13 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
-
 import io.github.kensuke1984.kibrary.util.sac.WaveformType;
 
 /**
  * Pairs up observed and synthetic BasicIDs included inside an array with random order.
  *
+ * @since 2022/7/5 Extracted BasicIDFile.pairUp() into a class.
  * @author otsuru
- * @since 2022/7/5 extracted BasicIDFile.pairUp() into a class
  */
 public class BasicIDPairUp {
 

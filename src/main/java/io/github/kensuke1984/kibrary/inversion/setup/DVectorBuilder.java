@@ -3,10 +3,8 @@ package io.github.kensuke1984.kibrary.inversion.setup;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.IntStream;
-
 import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.RealVector;
-
 import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.sac.WaveformType;
 import io.github.kensuke1984.kibrary.waveform.BasicID;
@@ -18,8 +16,11 @@ import io.github.kensuke1984.kibrary.waveform.BasicIDPairUp;
  * This class is substantially <b>IMMUTABLE</b>.
  * Caution: {@link RealVector} is not immutable, so don't hand it over without deep-copying!
  *
+ * @since before 2016/1/25
+ * @author Kensuke Konishi
+ *
+ * @since 2022/7/5 Recreated inversion.setup.DVectorBuilder from inversion.Dvector.
  * @author otsuru
- * @since 2022/7/5 recreated inversion.Dvector
  */
 public final class DVectorBuilder {
     private static final double START_TIME_DELAY_LIMIT = 15.0;

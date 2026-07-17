@@ -8,7 +8,6 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.InformationFileReader;
 
@@ -28,8 +27,8 @@ import io.github.kensuke1984.kibrary.util.InformationFileReader;
  * <p>
  * TODO ３次元と１次元の混在をさける
  *
+ * @since before 2016/1/25
  * @author Kensuke Konishi
- * @since a long time ago
  */
 public class UnknownParameterFile {
     private UnknownParameterFile() {}

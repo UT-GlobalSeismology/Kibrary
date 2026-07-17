@@ -4,13 +4,11 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
-
 import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.EigenDecomposition;
 import org.apache.commons.math3.linear.MatrixUtils;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
-
 import io.github.kensuke1984.kibrary.math.MatrixFile;
 
 /**
@@ -36,10 +34,11 @@ import io.github.kensuke1984.kibrary.math.MatrixFile;
  * <p>
  * See Fuji et al. (2010) for further explanations.
  *
- * @author Kensuke Konishi
- * @since a long time ago
  * @see <a href=https://ja.wikipedia.org/wiki/%E7%89%B9%E7%95%B0%E5%80%A4%E5%88%86%E8%A7%A3>Japanese wiki</a>,
  * <a href=https://en.wikipedia.org/wiki/Singular_value_decomposition>English wiki</a>
+ *
+ * @since before 2016/1/25
+ * @author Kensuke Konishi
  */
 public class SingularValueDecomposition extends InversionMethod {
 

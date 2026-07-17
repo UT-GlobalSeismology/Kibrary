@@ -10,7 +10,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
-
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.elastic.VariableType;
@@ -27,8 +26,8 @@ import io.github.kensuke1984.kibrary.util.earth.PolynomialStructure;
  * 6 variables (RHO, Vpv, Vph, Vsv, Vsh, ETA) can be plotted on a single graph.
  * Multiple {@link PolynomialStructure}s can be overlaid on the same graph.
  *
- * @author otsuru
  * @since 2022/8/30
+ * @author otsuru
  */
 public class PolynomialStructurePlotter extends Operation {
 
@@ -159,74 +158,74 @@ public class PolynomialStructurePlotter extends Operation {
         }
     }
 
-   @Override
-   public void run() throws IOException {
-       // set structures
-       List<PolynomialStructure> structures = new ArrayList<>();
-       List<StructurePlotAid.Color> colors = new ArrayList<>();
-       for (int i = 0; i < MAX_INPUT ; i++) {
-           if (structurePaths[i] != null || structureNames[i] != null) {
-               PolynomialStructure structure = PolynomialStructure.setupFromFileOrName(structurePaths[i], structureNames[i]);
-               structures.add(structure);
-               colors.add(structureColors[i]);
-           }
-       }
+    @Override
+    public void run() throws IOException {
+        // set structures
+        List<PolynomialStructure> structures = new ArrayList<>();
+        List<StructurePlotAid.Color> colors = new ArrayList<>();
+        for (int i = 0; i < MAX_INPUT; i++) {
+            if (structurePaths[i] != null || structureNames[i] != null) {
+                PolynomialStructure structure = PolynomialStructure.setupFromFileOrName(structurePaths[i], structureNames[i]);
+                structures.add(structure);
+                colors.add(structureColors[i]);
+            }
+        }
 
-       // create script
-       Path scriptPath = DatasetAid.generateOutputFilePath(workPath, "polynomial", fileTag, appendFileDate, null, ".plt");
-       createScript(scriptPath, structures, colors);
-   }
+        // create script
+        Path scriptPath = DatasetAid.generateOutputFilePath(workPath, "polynomial", fileTag, appendFileDate, null, ".plt");
+        createScript(scriptPath, structures, colors);
+    }
 
-   private void createScript(Path scriptPath, List<PolynomialStructure> structures, List<StructurePlotAid.Color> colors) throws IOException {
-       String fileNameRoot = FileAid.extractNameRoot(scriptPath);
-       StructurePlotAid plotAid = new StructurePlotAid(structureDistinguisher, StructurePlotAid.Distinguisher.NONE, variableDistinguisher, variableTypes);
-       plotAid.setColors(colors);
+    private void createScript(Path scriptPath, List<PolynomialStructure> structures, List<StructurePlotAid.Color> colors) throws IOException {
+        String fileNameRoot = FileAid.extractNameRoot(scriptPath);
+        StructurePlotAid plotAid = new StructurePlotAid(structureDistinguisher, StructurePlotAid.Distinguisher.NONE, variableDistinguisher, variableTypes);
+        plotAid.setColors(colors);
 
-       try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(scriptPath))) {
-           pw.println("set samples 1000");
-           pw.println("set trange [" + lowerRadius + ":" + upperRadius + "]");
-           pw.println("set yrange [" + lowerRadius + ":" + upperRadius + "]");
-           pw.println("set xrange [" + lowerValue + ":" + upperValue + "]");
-           pw.println("#set ytics 1000");
-           pw.println("#set xtics 2");
-           pw.println("set xlabel \"Velocity (km/s)\\nDensity (g/cm^3)\"");
-           pw.println("set ylabel 'Radius (km)'");
-           pw.println("set parametric");
-           pw.println("set term pngcairo enhanced size 600,1200 font 'Helvetica,20'");
-           pw.println("set output '" + fileNameRoot + ".png'");
-           pw.println("set xlabel font 'Helvetica,20'");
-           pw.println("set ylabel font 'Helvetica,20'");
-           pw.println("set tics font 'Helvetica,20'");
-           pw.println("set key font 'Helvetica,20'");
-           pw.println("set key samplen 1");
-           pw.println("");
+        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(scriptPath))) {
+            pw.println("set samples 1000");
+            pw.println("set trange [" + lowerRadius + ":" + upperRadius + "]");
+            pw.println("set yrange [" + lowerRadius + ":" + upperRadius + "]");
+            pw.println("set xrange [" + lowerValue + ":" + upperValue + "]");
+            pw.println("#set ytics 1000");
+            pw.println("#set xtics 2");
+            pw.println("set xlabel \"Velocity (km/s)\\nDensity (g/cm^3)\"");
+            pw.println("set ylabel 'Radius (km)'");
+            pw.println("set parametric");
+            pw.println("set term pngcairo enhanced size 600,1200 font 'Helvetica,20'");
+            pw.println("set output '" + fileNameRoot + ".png'");
+            pw.println("set xlabel font 'Helvetica,20'");
+            pw.println("set ylabel font 'Helvetica,20'");
+            pw.println("set tics font 'Helvetica,20'");
+            pw.println("set key font 'Helvetica,20'");
+            pw.println("set key samplen 1");
+            pw.println("");
 
-           // define functions
-           for (int i = 0; i < structures.size(); i++) {
-               // define functions
-               PolynomialStructure structure = structures.get(i);
-               for (VariableType variable : variableTypes) {
-                   StructurePlotAid.defineFunction(variable, structure, i, pw);
-               }
-           }
-           pw.println("");
+            // define functions
+            for (int i = 0; i < structures.size(); i++) {
+                // define functions
+                PolynomialStructure structure = structures.get(i);
+                for (VariableType variable : variableTypes) {
+                    StructurePlotAid.defineFunction(variable, structure, i, pw);
+                }
+            }
+            pw.println("");
 
-           // plot the defined functions
-           pw.print("p");
-           for (int i = 0; i < structures.size(); i++) {
-               for (VariableType variable : variableTypes) {
-                   // show key for last structure
-                   String titleString = (i == structures.size() - 1) ? ("title '" + StructurePlotAid.labelStringFor(variable) + "'") : "notitle";
-                   pw.println("  " + variable.toString().toLowerCase() + i + "(t),t w l lw 2 " + plotAid.lineTypeFor(i, 0, variable, structures.size())
-                           + " " + titleString + ", \\");
-               }
-           }
+            // plot the defined functions
+            pw.print("p");
+            for (int i = 0; i < structures.size(); i++) {
+                for (VariableType variable : variableTypes) {
+                    // show key for last structure
+                    String titleString = (i == structures.size() - 1) ? ("title '" + StructurePlotAid.labelStringFor(variable) + "'") : "notitle";
+                    pw.println("  " + variable.toString().toLowerCase() + i + "(t),t w l lw 2 " + plotAid.lineTypeFor(i, 0, variable, structures.size())
+                            + " " + titleString + ", \\");
+                }
+            }
 
-           pw.println("  0,t w l lw 1 dt 1 lc rgb 'black' notitle");
-       }
+            pw.println("  0,t w l lw 1 dt 1 lc rgb 'black' notitle");
+        }
 
-       GnuplotFile plot = new GnuplotFile(scriptPath);
-       plot.execute();
-   }
+        GnuplotFile plot = new GnuplotFile(scriptPath);
+        plot.execute();
+    }
 
 }

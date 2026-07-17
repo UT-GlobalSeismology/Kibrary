@@ -15,8 +15,8 @@ import java.util.List;
  * <p>
  * You may have to {@link #join()} after the external program finishes (ex. {@link ExternalProcess#waitFor()}).
  *
+ * @since before 2016/1/25
  * @author Kensuke Konishi
- * @version 0.0.2.1
  */
 public class InputStreamThread extends Thread {
 
@@ -41,7 +41,7 @@ public class InputStreamThread extends Thread {
         // By using try-with-resources, br will certainly be closed.
         // INPUT_STREAM_READER, and also the InputStream used to make it, will then be closed as well.
         try (BufferedReader br = new BufferedReader(inputStreamReader)) {
-            for (; ; ) {
+            for (;;) {
                 String line = br.readLine();
                 if (line == null) break;
                 inputStringList.add(line);

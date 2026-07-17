@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
-
 import io.github.kensuke1984.kibrary.util.FileAid;
 import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.spc.SPCMode;
@@ -12,8 +11,8 @@ import io.github.kensuke1984.kibrary.util.spc.SPCMode;
 /**
  * Class for automatically generating shellscript files to execute DSM programs such as TIPSV, SHFP, etc.
  *
- * @author otsuru
  * @since 2021/12/23
+ * @author otsuru
  */
 class DSMShellscript {
 

@@ -10,10 +10,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
-
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
-
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.inversion.setup.MatrixAssembly;
@@ -33,8 +31,11 @@ import io.github.kensuke1984.kibrary.voxel.UnknownParameterFile;
  * (WA')<sup>T</sup>(WA')m = (WA')<sup>T</sup>Wd'<br>
  * where A = WA' is the weighted partial waveform matrix and d = Wd' is the weighted residual vector.
  *
+ * @since before 2016/1/25
+ * @author Kensuke Konishi
+ *
+ * @version 2022/4/28 Recreated based on former inversion.LetMeInvert.
  * @author otsuru
- * @since 2022/4/28 recreated former inversion.LetMeInvert
  */
 public class LetMeInvert extends Operation {
 
