@@ -51,7 +51,8 @@ public class LobbyCleanup {
         Options options = Summon.defaultOptions();
 
         options.addOption(Option.builder("c").hasArg().argName("outPath")
-                .desc("Copy mseeds and stationXMLs into new dataset folder.").build());
+                .desc("Copy mseeds and stationXMLs into new dataset folder, "
+                        + "which will have the same name as current folder and will be created under specified path.").build());
         options.addOption(Option.builder("d").longOpt("delete")
                 .desc("Delete sacs and resps.").build());
 
@@ -74,7 +75,6 @@ public class LobbyCleanup {
      * @throws IOException
      */
     private static void copyNeeded(String output) throws IOException {
-        Path outPath = Paths.get(output);
         Path inPath = Paths.get(".");
         List<EventFolder> inEventDirs = DatasetAid.eventFolderSet(inPath).stream()
                 .sorted(Comparator.comparing(EventFolder::getGlobalCMTID)).collect(Collectors.toList());
@@ -82,7 +82,12 @@ public class LobbyCleanup {
             return;
         }
 
-        Files.createDirectories(outPath);
+        // create directory of name of current directory under specified path
+        // Here, inPath.toAbsolutePath().getFileName() is ".", so we need to get parent.
+        String currentFolderName = inPath.toAbsolutePath().getParent().getFileName().toString();
+        Path outPath = Paths.get(output).resolve(currentFolderName);
+        // The following is intentionally not Files.createDirectories() so that Exception is thrown when already exists.
+        Files.createDirectory(outPath);
         System.err.println("Output folder is " + outPath);
 
         int n = 0;
@@ -91,19 +96,25 @@ public class LobbyCleanup {
             System.err.print("\r " + inEventDir.getGlobalCMTID() + " (" + n + " / " + inEventDirs.size() + ")");
 
             // copy mseed/...
-            Path outMseedDirPath = outPath.resolve(inEventDir.toString()).resolve("mseed");
-            try (DirectoryStream<Path> inMseedPaths = Files.newDirectoryStream(inEventDir.toPath().resolve("mseed"), "*.mseed")) {
-                for (Path inMseedPath : inMseedPaths) {
-                    Files.createDirectories(outMseedDirPath);
-                    Files.copy(inMseedPath, outMseedDirPath.resolve(inMseedPath.getFileName().toString()));
+            Path inMseedDirPath = inEventDir.toPath().resolve("mseed");
+            if (Files.exists(inMseedDirPath)) {
+                Path outMseedDirPath = outPath.resolve(inEventDir.toString()).resolve("mseed");
+                try (DirectoryStream<Path> inMseedPaths = Files.newDirectoryStream(inMseedDirPath, "*.mseed")) {
+                    for (Path inMseedPath : inMseedPaths) {
+                        Files.createDirectories(outMseedDirPath);
+                        Files.copy(inMseedPath, outMseedDirPath.resolve(inMseedPath.getFileName().toString()));
+                    }
                 }
             }
             // copy station/...
-            Path outStationDirPath = outPath.resolve(inEventDir.toString()).resolve("station");
-            try (DirectoryStream<Path> inXmlPaths = Files.newDirectoryStream(inEventDir.toPath().resolve("station"), "*.xml")) {
-                for (Path inXmlPath : inXmlPaths) {
-                    Files.createDirectories(outStationDirPath);
-                    Files.copy(inXmlPath, outStationDirPath.resolve(inXmlPath.getFileName().toString()));
+            Path inStationDirPath = inEventDir.toPath().resolve("station");
+            if (Files.exists(inStationDirPath)) {
+                Path outStationDirPath = outPath.resolve(inEventDir.toString()).resolve("station");
+                try (DirectoryStream<Path> inXmlPaths = Files.newDirectoryStream(inStationDirPath, "*.xml")) {
+                    for (Path inXmlPath : inXmlPaths) {
+                        Files.createDirectories(outStationDirPath);
+                        Files.copy(inXmlPath, outStationDirPath.resolve(inXmlPath.getFileName().toString()));
+                    }
                 }
             }
         }
