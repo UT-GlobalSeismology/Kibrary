@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.apache.commons.cli.CommandLine;
@@ -16,6 +17,7 @@ import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACExtension;
+import io.github.kensuke1984.kibrary.util.sac.SACFileAccess;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
 
 /**
@@ -87,26 +89,37 @@ public class UpdateSacDataset {
 
             System.err.println(eventDir.getGlobalCMTID().toString());
 
-            // collect SAC files
-            Set<SACFileName> sacFileNames = eventDir.sacFileSet().stream().collect(Collectors.toSet());
+            // collect observed SAC files
+            Set<SACFileName> obsSacFileNames = eventDir.sacFileSet().stream().filter(sfn -> sfn.isOBS()).collect(Collectors.toSet());
 
             // create output event folder
             Path outEventPath = outPath.resolve(eventDir.getGlobalCMTID().toString());
             Files.createDirectories(outEventPath);
 
-            for (SACFileName sacFileName : sacFileNames) {
-                GlobalCMTID event = sacFileName.getGlobalCMTID();
-                SACExtension extension = sacFileName.getExtension();
-                Observer observer = sacFileName.readHeader().getObserver();
+            for (SACFileName obsSacFileName : obsSacFileNames) {
+                // collect info from obs SAC, since network of syn SAC may be "DSM"
+                Observer observer = obsSacFileName.readHeader().getObserver();
+                GlobalCMTID event = obsSacFileName.getGlobalCMTID();
+                SACExtension obsExtension = obsSacFileName.getExtension();
+
+                // generate corresponding syn SAC file name
+                SACExtension synExtension = SACExtension.valueOfConvolutedSynthetic(obsExtension.getComponent());
+                String synSacFileString = SACFileName.generate(obsSacFileName, synExtension);
+                SACFileName synSacFileName = new SACFileName(eventDir.toPath().resolve(synSacFileString));
 
                 // generate new name including network
-                String newSacFileString = SACFileName.generate(observer, event, extension);
+                String newObsSacFileString = SACFileName.generate(observer, event, obsExtension);
+                String newSynSacFileString = SACFileName.generate(observer, event, synExtension);
 
-                //copy SAC file
-                Files.copy(sacFileName.toPath(), outEventPath.resolve(newSacFileString));
+                // copy SAC files
+                Files.copy(obsSacFileName.toPath(), outEventPath.resolve(newObsSacFileString));
+                if (Files.exists(synSacFileName.toPath())) {
+                    SACFileAccess synSacFile = synSacFileName.read();
+                    // overwrite observer, in case network of syn sac is "DSM"
+                    synSacFile.withObserver(observer).writeSAC(outEventPath.resolve(newSynSacFileString), StandardOpenOption.CREATE_NEW);
+                }
             }
         }
-
     }
 
 }
