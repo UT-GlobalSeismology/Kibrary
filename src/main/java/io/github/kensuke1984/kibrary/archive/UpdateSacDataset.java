@@ -16,9 +16,11 @@ import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.data.Observer;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
+import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.sac.SACExtension;
 import io.github.kensuke1984.kibrary.util.sac.SACFileAccess;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
+import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
 
 /**
  * Update SAC file name style of dataset to new style.
@@ -101,9 +103,10 @@ public class UpdateSacDataset {
                 Observer observer = obsSacFileName.readHeader().getObserver();
                 GlobalCMTID event = obsSacFileName.getGlobalCMTID();
                 SACExtension obsExtension = obsSacFileName.getExtension();
+                SACComponent component = obsExtension.getComponent();
 
                 // generate corresponding syn SAC file name
-                SACExtension synExtension = SACExtension.valueOfConvolutedSynthetic(obsExtension.getComponent());
+                SACExtension synExtension = SACExtension.valueOfConvolutedSynthetic(component);
                 String synSacFileString = SACFileName.generate(obsSacFileName, synExtension);
                 SACFileName synSacFileName = new SACFileName(eventDir.toPath().resolve(synSacFileString));
 
@@ -111,12 +114,21 @@ public class UpdateSacDataset {
                 String newObsSacFileString = SACFileName.generate(observer, event, obsExtension);
                 String newSynSacFileString = SACFileName.generate(observer, event, synExtension);
 
-                // copy SAC files
-                Files.copy(obsSacFileName.toPath(), outEventPath.resolve(newObsSacFileString));
+                // copy obs SAC file
+                SACFileAccess obsSacFile = obsSacFileName.read();
+                // overwrite event in case it has "C" prepended; overwrite component in case it is "BHR", etc.
+                obsSacFile.withSACString(SACHeaderEnum.KEVNM, event.toString())
+                        .withSACString(SACHeaderEnum.KCMPNM, component.toString())
+                        .writeSAC(outEventPath.resolve(newObsSacFileString), StandardOpenOption.CREATE_NEW);
+
+                // copy syn SAC file
                 if (Files.exists(synSacFileName.toPath())) {
                     SACFileAccess synSacFile = synSacFileName.read();
-                    // overwrite observer, in case network of syn sac is "DSM"
-                    synSacFile.withObserver(observer).writeSAC(outEventPath.resolve(newSynSacFileString), StandardOpenOption.CREATE_NEW);
+                    // overwrite observer in case network of syn sac is "DSM"
+                    synSacFile.withSACString(SACHeaderEnum.KEVNM, event.toString())
+                            .withSACString(SACHeaderEnum.KCMPNM, component.toString())
+                            .withObserver(observer)
+                            .writeSAC(outEventPath.resolve(newSynSacFileString), StandardOpenOption.CREATE_NEW);
                 }
             }
         }
