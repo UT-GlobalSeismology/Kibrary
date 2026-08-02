@@ -1,5 +1,6 @@
 package io.github.kensuke1984.kibrary.voxel;
 
+import io.github.kensuke1984.kibrary.math.geometry.IntegerXY;
 import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.earth.Latitude;
@@ -38,6 +39,10 @@ public class HorizontalPixel {
 
     public double getDLongitude() {
         return dLongitude;
+    }
+
+    public IntegerXY getIntegerXY() {
+        return new IntegerXY(iLongitude, iLatitude);
     }
 
     public int getILatitude() {

@@ -1,7 +1,8 @@
 package io.github.kensuke1984.kibrary.math.geometry;
 
 /**
- * xy plane
+ * Coordinate on xy plane.
+ * <p>
  * This class is <b>immutable</b>
  *
  * @author Kensuke Konishi
@@ -10,7 +11,6 @@ package io.github.kensuke1984.kibrary.math.geometry;
 public class XY {
 
     final double x;
-
     final double y;
 
     public XY(double x, double y) {

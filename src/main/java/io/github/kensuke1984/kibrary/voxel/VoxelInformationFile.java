@@ -12,6 +12,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import io.github.kensuke1984.kibrary.math.geometry.IntegerXY;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.InformationFileReader;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
@@ -53,8 +54,8 @@ public class VoxelInformationFile {
     /**
      * Writes a voxel information file given arrays of radii and positions.
      * @param layerThicknesses (double[]) Must be in the same order as layerRadii.
-     * @param layerRadii (double[])  The radii. They should be sorted, and there should be no duplication.
-     * @param horizontalPixels (List of {@link HorizontalPixel}) Pixels.
+     * @param layerRadii (double[]) The radii. They should be sorted, and there should be no duplication.
+     * @param horizontalPixels (List of {@link HorizontalPixel}) Pixels. They will not be sorted upon output.
      * @param outputPath (Path) Output file.
      * @param options (OpenOption...) Options for write.
      * @throws IOException if an I/O error occurs
@@ -134,6 +135,14 @@ public class VoxelInformationFile {
      */
     public List<HorizontalPosition> getHorizontalPositions() {
         return horizontalPixels.stream().map(HorizontalPixel::getPosition).collect(Collectors.toList());
+    }
+
+    /**
+     * Get horizontal coordinate indices. They may not be sorted. There may be duplication.
+     * @return (List of {@link IntegerXY}) Horizontal coordinate indices.
+     */
+    public List<IntegerXY> getIntegerXYs() {
+        return horizontalPixels.stream().map(HorizontalPixel::getIntegerXY).collect(Collectors.toList());
     }
 
     /**

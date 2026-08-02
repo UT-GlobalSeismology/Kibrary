@@ -38,6 +38,7 @@ import io.github.kensuke1984.kibrary.visual.plot.EventHistogram;
 import io.github.kensuke1984.kibrary.visual.plot.RecordNumberPlot;
 import io.github.kensuke1984.kibrary.voxel.LayerInformationFile;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameterSetter;
+import io.github.kensuke1984.kibrary.voxel.VoxelOctopus;
 import io.github.kensuke1984.kibrary.waveform.BasicIDFile;
 import io.github.kensuke1984.kibrary.waveform.PartialIDFile;
 import io.github.kensuke1984.kibrary.waveform.VarianceComputer;
@@ -90,6 +91,7 @@ enum Brooklyn {
     LayerInformationFile(50, LayerInformationFile.class),
     VoxelMapper(51, VoxelMapper.class),
     UnknownParameterSetter(52, UnknownParameterSetter.class),
+    VoxelOctopus(53, VoxelOctopus.class),
     // Partial 60
     PartialIDFile(60, PartialIDFile.class),
     ThreeDPartialCleanup(69, ThreeDPartialCleanup.class),
