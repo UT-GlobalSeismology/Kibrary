@@ -92,6 +92,7 @@ public class RaypathSelection extends Operation {
     private LinearRange eventDepthRange;
     private LinearRange eventLatitudeRange;
     private CircularRange eventLongitudeRange;
+    private int lowerGroupSize;
     /**
      * Networks of observers.
      */
@@ -176,6 +177,8 @@ public class RaypathSelection extends Operation {
             pw.println("#lowerEventLongitude ");
             pw.println("##(double) Upper limit of event longitude [deg], exclusive; [-180:360]. (180)");
             pw.println("#upperEventLongitude ");
+            pw.println("##(double) Lower number of entries per event, inclusive; [0:). (0)");
+            pw.println("#lowerGroupSize ");
             pw.println("##########Selection criteria of observers##########");
             pw.println("##Observer IDs, in form \"sta_net\", listed using spaces, when using as criterion.");
             pw.println("#observerIDs ");
@@ -257,6 +260,7 @@ public class RaypathSelection extends Operation {
         double lowerEventLongitude = property.parseDouble("lowerEventLongitude", "-180");
         double upperEventLongitude = property.parseDouble("upperEventLongitude", "180");
         eventLongitudeRange = new CircularRange("Event longitude", lowerEventLongitude, upperEventLongitude, -180.0, 360.0);
+        lowerGroupSize = property.parseInt("lowerGroupSize", "0");
 
         if (property.containsKey("observerIDs"))
             observerIDs = Arrays.stream(property.parseStringArray("observerIDs", null)).collect(Collectors.toSet());
@@ -394,6 +398,22 @@ public class RaypathSelection extends Operation {
             // the entry is selected, so add it
             if (!eliminationMode) {
                 selectedEntrySet.add(entry);
+            }
+        }
+
+        // number of records per event
+        if (lowerGroupSize > 0) {
+            Set<GlobalCMTID> eventSet = selectedEntrySet.stream().map(DataEntry::getEvent).collect(Collectors.toSet());
+            for (GlobalCMTID event : eventSet) {
+                // collect entries for this event
+                Set<DataEntry> entriesForEvent = selectedEntrySet.stream().filter(entry -> entry.getEvent().equals(event)).collect(Collectors.toSet());
+                int nEntry = entriesForEvent.size();
+                // in selection mode, remove all entries of event that does not have enough entries;
+                // in elimination mode, remove all entries of event that has enough entries
+                if ((nEntry < lowerGroupSize) ^ eliminationMode) {
+                    System.err.println("Eliminating " + event + " (" + MathAid.switchSingularPlural(nEntry, "entry", "entries") + ")");
+                    entriesForEvent.forEach(entry -> selectedEntrySet.remove(entry));
+                }
             }
         }
 
