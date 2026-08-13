@@ -6,6 +6,7 @@ import org.apache.commons.cli.Options;
 import io.github.kensuke1984.kibrary.abandon.LobbyCleanup;
 import io.github.kensuke1984.kibrary.abandon.ThreeDPartialCleanup;
 import io.github.kensuke1984.kibrary.archive.UpdateSacDataset;
+import io.github.kensuke1984.kibrary.archive.UpdateVoxel;
 import io.github.kensuke1984.kibrary.correction.StaticCorrectionDataFile;
 import io.github.kensuke1984.kibrary.entrance.DataAligner;
 import io.github.kensuke1984.kibrary.entrance.DataTransfer;
@@ -108,6 +109,7 @@ enum Brooklyn {
     // Temporal 100
     RecordNumberPlot(100, RecordNumberPlot.class),
     UpdateSacDataset(111, UpdateSacDataset.class),
+    UpdateVoxel(112, UpdateVoxel.class),
     ;
 
     private final Class<?> classObject;
