@@ -69,7 +69,9 @@ public class GeometryWeighter extends Operation {
     private Path voxelPath;
 
     private double distanceInterval;
+    private double distanceBinOffset;
     private double azimuthInterval;
+    private double azimuthBinOffset;
     private boolean expandAzimuth;
 
     /**
@@ -131,8 +133,12 @@ public class GeometryWeighter extends Operation {
             pw.println("#voxelPath voxel.inf");
             pw.println("##(double) The width of each epicentral distance bin [deg]. (5)");
             pw.println("#distanceInterval ");
+            pw.println("##(double) The offset of epicentral distance bin border [deg]; [0:distanceInterval). (0)");
+            pw.println("#distanceBinOffset ");
             pw.println("##(double) The width of each azimuth bin [deg]. (30)");
             pw.println("#azimuthInterval ");
+            pw.println("##(double) The offset of azimuth bin border [deg]; [0:azimuthInterval). (0)");
+            pw.println("#azimuthBinOffset ");
             pw.println("##(boolean) Whether to expand azimuth range to [0:360), not overlapping onto [0:180) range. (false)");
             pw.println("#expandAzimuth ");
             pw.println("##########Parameters for turning point computation##########");
@@ -173,7 +179,15 @@ public class GeometryWeighter extends Operation {
         }
 
         distanceInterval = property.parseDouble("distanceInterval", "5");
+        if (distanceInterval <= 0) throw new IllegalArgumentException("distanceInterval must be positive.");
+        distanceBinOffset = property.parseDouble("distanceBinOffset", "0");
+        if (distanceBinOffset < 0 || distanceInterval <= distanceBinOffset)
+            throw new IllegalArgumentException("distanceBinOffset must be in [0:distanceInterval).");
         azimuthInterval = property.parseDouble("azimuthInterval", "30");
+        if (azimuthInterval <= 0) throw new IllegalArgumentException("azimuthInterval must be positive.");
+        azimuthBinOffset = property.parseDouble("azimuthBinOffset", "0");
+        if (azimuthBinOffset < 0 || azimuthInterval <= azimuthBinOffset)
+            throw new IllegalArgumentException("azimuthBinOffset must be in [0:azimuthInterval).");
         expandAzimuth = property.parseBoolean("expandAzimuth", "false");
 
         structureName = property.parseString("structureName", "prem");
@@ -213,9 +227,10 @@ public class GeometryWeighter extends Operation {
         }
 
         // set up bins and counters
-        int nDistanceBin = (int) MathAid.ceil(360 / distanceInterval);
+        // The "+1" is to account for bin offsets.
+        int nDistanceBin = (int) MathAid.ceil(360 / distanceInterval) + 1;
         int azimuthDomainWidth = expandAzimuth ? 360 : 180;
-        int nAzimuthBin = (int) MathAid.ceil(azimuthDomainWidth / azimuthInterval);
+        int nAzimuthBin = (int) MathAid.ceil(azimuthDomainWidth / azimuthInterval) + 1;
         int nVoxelBin = (voxelPath != null ? voxelPositions.size() : 1);
         int[][][] numberOfRecords = new int[nDistanceBin][nAzimuthBin][nVoxelBin];
         Map<DataEntry, Integer> iDistanceMap = new HashMap<>();
@@ -242,8 +257,10 @@ public class GeometryWeighter extends Operation {
             }
             if (!expandAzimuth && azimuth > 180) azimuth -= 180;
 
-            int iDistance = (int) (epicentralDistance / distanceInterval);
-            int iAzimuth = (int) (azimuth / azimuthInterval);
+            // decide which bin this record is in
+            // The "+1" is to account for bin offsets.
+            int iDistance = (int) ((epicentralDistance - distanceBinOffset) / distanceInterval) + 1;
+            int iAzimuth = (int) ((azimuth - azimuthBinOffset) / azimuthInterval) + 1;
             int iVoxel = (voxelPath != null ? findIVoxel(turnPosition) : 0);
             numberOfRecords[iDistance][iAzimuth][iVoxel]++;
 
@@ -352,7 +369,7 @@ public class GeometryWeighter extends Operation {
 
         // record all distance bins needed in the plot
         for (int i = 0; i < nDistanceBin; i++) {
-            double distance = Precision.round(i * distanceInterval, DECIMALS);
+            double distance = Precision.round((i - 1) * distanceInterval + distanceBinOffset, DECIMALS);
             double nextDistance = Precision.round(distance + distanceInterval, DECIMALS);
             if (lowerDistance < nextDistance && distance < upperDistance) {
                 plotDistanceIndices[nPlotDistance] = i;
@@ -368,7 +385,7 @@ public class GeometryWeighter extends Operation {
         // record all azimuth bins needed in the plot
         for (int loop = minLoop; loop <= maxLoop; loop++) {
             for (int j = 0; j < nAzimuthBin; j++) {
-                double azimuth = Precision.round(j * azimuthInterval + loop * azimuthDomainWidth, DECIMALS);
+                double azimuth = Precision.round((j - 1) * azimuthInterval + azimuthBinOffset + loop * azimuthDomainWidth, DECIMALS);
                 double nextAzimuth = Precision.round(azimuth + azimuthInterval, DECIMALS);
                 if (lowerAzimuth < nextAzimuth && azimuth < upperAzimuth) {
                     plotAzimuthIndices[nPlotAzimuth] = j;

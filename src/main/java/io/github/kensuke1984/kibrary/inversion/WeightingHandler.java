@@ -111,7 +111,7 @@ public class WeightingHandler {
             pw.println("##Type of waveform, from {OBS,SYN}, when to multiply reciprocal of its amplitude.");
             pw.println("#reciprocalType OBS");
             pw.println("##Path of entry amplitude list file, when to multiply reciprocal of the amplitude.");
-            pw.println("#amplitudePath ");
+            pw.println("#amplitudePath entryAmplitude.lst");
             pw.println("##Use amplitude of a specific component when multiplying reciprocal, from {Z, R, T}.");
             pw.println("#standardComponent ");
             pw.println("##(boolean) Whether to weigh the number of time windows of each component. (false)");
