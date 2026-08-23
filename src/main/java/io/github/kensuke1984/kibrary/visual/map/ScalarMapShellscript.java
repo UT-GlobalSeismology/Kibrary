@@ -46,7 +46,18 @@ public class ScalarMapShellscript {
      * The displayed value of each layer boundary. This may be radius, depth, or height from a certain discontinuity.
      */
     private final double[] boundaries;
-    private final String mapRegion;
+    /**
+     * Region covered by the data, in the form 'lonMin/lonMax/latMin/latMax'.
+     */
+    private final String coveredRegion;
+    /**
+     * Code for GMT map region in the form 'lonMin/lonMax/latMin/latMax' or 'BLLon/BLLat/TRLon/TRLat+r'.
+     */
+    private final String mapRegionCode;
+    /**
+     * Code for GMT map projection following '-J'. (ex.: Q15).
+     */
+    private String mapProjectionCode;
     /**
      * Interval of interpolation when mapping [deg].
      */
@@ -84,18 +95,20 @@ public class ScalarMapShellscript {
     private boolean forSlides = false;
 
     ScalarMapShellscript(VariableType variable, ScalarType scalarType, double[] radii, double[] boundaries,
-            String mapRegion, double positionInterval, double scale, int nPanelsPerRow) {
-        this(variable, scalarType, null, radii, boundaries, mapRegion, positionInterval, scale, nPanelsPerRow);
+            String coveredRegion, String mapRegionCode, String mapProjectionCode, double positionInterval, double scale, int nPanelsPerRow) {
+        this(variable, scalarType, null, radii, boundaries, coveredRegion, mapRegionCode, mapProjectionCode, positionInterval, scale, nPanelsPerRow);
     }
 
     ScalarMapShellscript(VariableType variable, ScalarType scalarType, String tag, double[] radii, double[] boundaries,
-            String mapRegion, double positionInterval, double scale, int nPanelsPerRow) {
+            String coveredRegion, String mapRegionCode, String mapProjectionCode, double positionInterval, double scale, int nPanelsPerRow) {
         this.variable = variable;
         this.scalarType = scalarType;
         this.tag = tag;
         this.radii = radii;
         this.boundaries = boundaries;
-        this.mapRegion = mapRegion;
+        this.coveredRegion = coveredRegion;
+        this.mapRegionCode = mapRegionCode;
+        this.mapProjectionCode = mapProjectionCode;
         this.positionInterval = positionInterval;
         this.scale = scale;
         this.nPanelsPerRow = nPanelsPerRow;
@@ -284,13 +297,13 @@ public class ScalarMapShellscript {
             // grid model
             pw.println("    grep \"$depth\" " + scalarFileName + " | \\");
             pw.println("    awk '{print $2,$1,$4}' | \\");
-            pw.println("    gmt xyz2grd -G$dep\\model.grd -R" + mapRegion + " -I" + positionInterval + " -di0");
+            pw.println("    gmt xyz2grd -G$dep\\model.grd -R" + coveredRegion + " -I" + positionInterval + " -di0");
 
             // grid mask
             if (maskExists) {
                 pw.println("    grep \"$depth\" " + maskFileName + " | \\");
                 pw.println("    awk '{print $2,$1,$4}' | \\");
-                pw.println("    gmt xyz2grd -G$dep\\mask.grd -R" + mapRegion + " -I" + positionInterval + " -di0");
+                pw.println("    gmt xyz2grd -G$dep\\mask.grd -R" + coveredRegion + " -I" + positionInterval + " -di0");
             }
 
             pw.println("done");
@@ -314,9 +327,9 @@ public class ScalarMapShellscript {
             pw.println("gmt set FONT_LABEL " + (forSlides ? "50" : "40") + "p,Helvetica,black");
             pw.println("");
             pw.println("#------- Map parameters");
-            pw.println("R='-R" + mapRegion + "'");
-            pw.println("J='-JQ15'");
-            pw.println("B='-B" + decideTickSpacing(mapRegion) + " -BwESn'");
+            pw.println("R='-R" + mapRegionCode + "'");
+            pw.println("J='-J" + mapProjectionCode + "'");
+            pw.println("B='-B" + decideTickSpacing(coveredRegion) + " -BwESn'");
             pw.println("");
             pw.println("#------- Color palette");
             pw.println("MP=" + scale);
