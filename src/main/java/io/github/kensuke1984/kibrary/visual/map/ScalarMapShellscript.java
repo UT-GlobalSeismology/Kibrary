@@ -275,7 +275,7 @@ public class ScalarMapShellscript {
             pw.println("0 black " + maskThreshold + " black");
             pw.println("B black");
             pw.println("F white");
-            pw.println("N 127.5");
+            pw.println("N black");
         }
     }
 

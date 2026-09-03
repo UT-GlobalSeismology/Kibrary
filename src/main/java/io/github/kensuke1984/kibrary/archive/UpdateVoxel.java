@@ -18,6 +18,14 @@ import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
 import io.github.kensuke1984.kibrary.voxel.HorizontalPixel;
 import io.github.kensuke1984.kibrary.voxel.VoxelInformationFile;
 
+/**
+ * Class to create {@link VoxelInformationFile} from old pointLocation.inf file, containing "lat lon".
+ *
+ * NOTE: There are some in-code parameters specific for a certain case!!
+ *
+ * @since 2026/8/13
+ * @author otsuru
+ */
 public class UpdateVoxel {
 
     /**
@@ -98,11 +106,10 @@ public class UpdateVoxel {
                 double longitude = position.getLongitude();
                 int j = (int) Math.round((longitude - baseLongitude) / dLongitude);
 
-                HorizontalPosition shiftedPosition = new HorizontalPosition(latitude, longitude + 5.0);
-                HorizontalPixel pixel = new HorizontalPixel(shiftedPosition, 3.0, dLongitude, m - i, j);
+                HorizontalPosition shiftedPosition = new HorizontalPosition(latitude, longitude + 5.0);/////////////CAUTION!!
+                HorizontalPixel pixel = new HorizontalPixel(shiftedPosition, 3.0, dLongitude, m - i, j);/////////////CAUTION!!
                 horizontalPixels.add(pixel);
             }
-
         }
 
         // output
