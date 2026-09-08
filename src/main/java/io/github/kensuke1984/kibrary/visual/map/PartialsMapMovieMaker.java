@@ -6,6 +6,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -14,6 +15,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.elastic.VariableType;
@@ -22,6 +24,8 @@ import io.github.kensuke1984.kibrary.math.geometry.CoordinateConverter;
 import io.github.kensuke1984.kibrary.perturbation.ScalarListFile;
 import io.github.kensuke1984.kibrary.perturbation.ScalarType;
 import io.github.kensuke1984.kibrary.timewindow.TimeWindow;
+import io.github.kensuke1984.kibrary.timewindow.TravelTimeInformation;
+import io.github.kensuke1984.kibrary.timewindow.TravelTimeInformationFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.util.earth.FullPosition;
@@ -39,6 +43,9 @@ import io.github.kensuke1984.kibrary.waveform.PartialIDFile;
  * as a set of horizontal map layers (as in {@link SensitivityKernelMapper3D} with map=true)
  * instead of as a cross section.
  * <p>
+ * The elapsed time is written at the bottom left of each snapshot, and the phases arriving at that time
+ * (when a travel time information file is given) are written at the bottom right.
+ * <p>
  * The "convert" command of ImageMagick must be installed to run the script produced by this program.
  * <p>
  * NOTE: the voxel volume is NOT multiplied.
@@ -47,6 +54,15 @@ import io.github.kensuke1984.kibrary.waveform.PartialIDFile;
  * @since 2026/9/4
  */
 public class PartialsMapMovieMaker extends Operation {
+
+    /**
+     * Half of the time to display arriving phase.
+     */
+    private static final double HALF_PHASE_TIME = 5.0;
+    /**
+     * Font size of the time and phase annotations placed on each snapshot [pt].
+     */
+    private static final int ANNOTATION_FONT_SIZE = 200;
 
     private final Property property;
     /**
@@ -81,6 +97,10 @@ public class PartialsMapMovieMaker extends Operation {
      * Observers to work for.
      */
     private Set<String> tendObservers = new HashSet<>();
+    /**
+     * Path of a travel time information file.
+     */
+    private Path travelTimePath;
 
     /**
      * Path of coordinate converter file to be used when interpolating.
@@ -138,6 +158,8 @@ public class PartialsMapMovieMaker extends Operation {
             pw.println("#tendEvents ");
             pw.println("##Observers to work for, in the form STA_NET, listed using spaces, must be set.");
             pw.println("#tendObservers ");
+            pw.println("##Path of a travel time information file, if displaying travel times.");
+            pw.println("#travelTimePath travelTime.inf");
             pw.println("##########The following are parameters for the map.");
             pw.println("##Path of coordinate converter file, when interpolating on curvilinear grid.");
             pw.println("#converterPath converter.inf");
@@ -188,6 +210,8 @@ public class PartialsMapMovieMaker extends Operation {
         tendEvents = Arrays.stream(property.parseStringArray("tendEvents", null)).map(GlobalCMTID::new)
                 .collect(Collectors.toSet());
         tendObservers = Arrays.stream(property.parseStringArray("tendObservers", null)).collect(Collectors.toSet());
+        if (property.containsKey("travelTimePath"))
+            travelTimePath = property.parsePath("travelTimePath", null, true, workPath);
 
         if (property.containsKey("converterPath")) {
             converterPath = property.parsePath("converterPath", null, true, workPath);
@@ -234,6 +258,12 @@ public class PartialsMapMovieMaker extends Operation {
                 .collect(Collectors.toSet());
         double[] radii = discretePositions.stream().mapToDouble(FullPosition::getR).distinct().sorted().toArray();
 
+        // read travel time information
+        Set<TravelTimeInformation> travelTimeInfoSet = null;
+        if (travelTimePath != null) {
+            travelTimeInfoSet = TravelTimeInformationFile.read(travelTimePath);
+        }
+
         // read coordinate converter file
         CoordinateConverter converter = (converterPath != null) ? new CoordinateConverter(converterPath) : null;
 
@@ -264,6 +294,14 @@ public class PartialsMapMovieMaker extends Operation {
                                 .collect(Collectors.toList());
                         if (partialsForEntry.size() == 0) continue;
                         System.err.println("Working for " + component + " " + variable + " " + event + " " + observerName);
+
+                        // find travel time info for this event and observer
+                        TravelTimeInformation travelTimeInfo = null;
+                        if (travelTimeInfoSet != null) {
+                            travelTimeInfo = travelTimeInfoSet.stream()
+                                    .filter(info -> info.getEvent().equals(event) && info.getObserver().toString().equals(observerName))
+                                    .findFirst().orElse(null);
+                        }
 
                         double[] startTimes = partialsForEntry.stream().mapToDouble(PartialID::getStartTime).distinct().sorted().toArray();
 
@@ -331,6 +369,25 @@ public class PartialsMapMovieMaker extends Operation {
 
                                 // output interpolated perturbation file, in range [0:360) when crossDateLine==true so that mapping will succeed
                                 ScalarListFile.write(interpolatedMap, crossDateLine, outSnapshotPath.resolve(scalarFileNameXY));
+
+                                // write out time, to be placed at bottom left of map
+                                Files.write(outSnapshotPath.resolve("textL.txt"), ("t = " + time).getBytes());
+
+                                // write out phases arriving at this time, to be placed at bottom right of map
+                                if (travelTimeInfo != null) {
+                                    List<String> arrivingPhases = new ArrayList<>();
+                                    for (Map.Entry<Phase, Double> entry : travelTimeInfo.getUsePhases().entrySet()) {
+                                        if (Math.abs(time - entry.getValue()) < HALF_PHASE_TIME)
+                                            arrivingPhases.add(entry.getKey().toString());
+                                    }
+                                    for (Map.Entry<Phase, Double> entry : travelTimeInfo.getAvoidPhases().entrySet()) {
+                                        if (Math.abs(time - entry.getValue()) < HALF_PHASE_TIME)
+                                            arrivingPhases.add(entry.getKey().toString());
+                                    }
+                                    Files.write(outSnapshotPath.resolve("textR.txt"), String.join(", ", arrivingPhases).getBytes());
+                                } else {
+                                    Files.write(outSnapshotPath.resolve("textR.txt"), "".getBytes());
+                                }
                             }
 
                             // write shellscript to map each snapshot and convert them to gif movie
@@ -360,6 +417,10 @@ public class PartialsMapMovieMaker extends Operation {
             pw.println("    wait");
             pw.println("    sh " + fileNameRoot + "Map.sh");
             pw.println("    wait");
+            pw.println("    convert " + fileNameRoot + "Map.png \\");
+            pw.println("        -gravity SouthWest -pointsize " + ANNOTATION_FONT_SIZE + " -fill black -annotate +50+50 \"$(cat textL.txt)\" \\");
+            pw.println("        -gravity SouthEast -pointsize " + ANNOTATION_FONT_SIZE + " -fill black -annotate +50+50 \"$(cat textR.txt)\" \\");
+            pw.println("        " + fileNameRoot + "Map.png");
             pw.println("    unlink " + fileNameRoot + "Grid.sh");
             pw.println("    unlink " + fileNameRoot + "Map.sh");
             pw.println("    unlink cp_master.cpt");
