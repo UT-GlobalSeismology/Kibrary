@@ -47,6 +47,12 @@ gradle.tar
 # Maven
 target
 
+# AI
+AGENTS.md
+CLAUDE.md
+.github/
+docs/
+
 # Other
 *.log
 *.swp

@@ -46,6 +46,7 @@ import io.github.kensuke1984.kibrary.visual.map.GreatArcMapper;
 import io.github.kensuke1984.kibrary.visual.map.ModelMapper;
 import io.github.kensuke1984.kibrary.visual.map.ModelSetMapper;
 import io.github.kensuke1984.kibrary.visual.map.PartialsMovieMaker;
+import io.github.kensuke1984.kibrary.visual.map.PartialsMapMovieMaker;
 import io.github.kensuke1984.kibrary.visual.map.RaypathMapper;
 import io.github.kensuke1984.kibrary.visual.map.ScalarMapper;
 import io.github.kensuke1984.kibrary.visual.map.SensitivityKernelMapper3D;
@@ -99,7 +100,7 @@ enum Manhattan {
     DataRequestor(11, DataRequestor.class),
     DataKitchen(12, DataKitchen.class),
     NetworkLookup(19, NetworkLookup.class),
-    // Synthetic  20
+    // Synthetic 20
     SyntheticDSMSetup(20, SyntheticDSMSetup.class),
     SPC_SAC(21, SPC_SAC.class),
     SourceTimeFunctionConvolver(22, SourceTimeFunctionConvolver.class),
@@ -165,6 +166,7 @@ enum Manhattan {
     ScalarResampler(94, ScalarResampler.class),
     SensitivityKernelPlotter1D(96, SensitivityKernelPlotter1D.class),
     SensitivityKernelMapper3D(97, SensitivityKernelMapper3D.class),
+    PartialsMapMovieMaker(98, PartialsMapMovieMaker.class),
     PartialsMovieMaker(99, PartialsMovieMaker.class),
     // Temporal 100
     PartialsShiftComputer(100, PartialsShiftComputer.class),
