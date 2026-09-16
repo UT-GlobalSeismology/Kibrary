@@ -27,12 +27,12 @@ import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
  * The answer is
  *  <b>m</b> = (A<sup>T</sup>A + &lambda; T<sup>T</sup>T)<sup>-1</sup> A<sup>T</sup><b>d</b> .
  * <p>
- * By setting an additional vector <b>&eta;</b>, we can make T<b>m</b>+<b>&eta;</b> get close to 0. <br>
+ * By setting an additional vector <b>&eta;</b>, we can make T<b>m</b>-<b>&eta;</b> get close to 0. <br>
  * In this case,
- *  |<b>d</b>-A<b>m</b>|<sup>2</sup> + &lambda; |T<b>m</b>+<b>&eta;</b>|<sup>2</sup> is minimized.<br>
+ *  |<b>d</b>-A<b>m</b>|<sup>2</sup> + &lambda; |T<b>m</b>-<b>&eta;</b>|<sup>2</sup> is minimized.<br>
  * The answer is
  *  <b>m</b> = (A<sup>T</sup>A + &lambda; T<sup>T</sup>T)<sup>-1</sup>
- *   (A<sup>T</sup><b>d</b> - &lambda; T<sup>T</sup><b>&eta;</b>)
+ *   (A<sup>T</sup><b>d</b> + &lambda; T<sup>T</sup><b>&eta;</b>)
  *
  * @since 2016/4/16
  * @author Kensuke Konishi
@@ -65,7 +65,7 @@ public class LeastSquaresMethod extends InversionMethod {
     }
 
     /**
-     * Find m which gives minimum |d-<b>A</b>m|<sup>2</sup> + &lambda;|<b>T</b>m+&eta;|<sup>2</sup>.
+     * Find m which gives minimum |d-<b>A</b>m|<sup>2</sup> + &lambda;|<b>T</b>m-&eta;|<sup>2</sup>.
      *
      * @param ata (RealMatrix) A<sup>T</sup>A.
      * @param atd (RealVector) A<sup>T</sup>d.
@@ -102,8 +102,8 @@ public class LeastSquaresMethod extends InversionMethod {
                 RealMatrix tt = t.transpose();
                 // At A + lambda Tt T
                 j = j.add(tt.multiply(t).scalarMultiply(lambda));
-                // At d - lambda Tt eta
-                if (eta != null) k = k.subtract(tt.operate(eta).mapMultiply(lambda));
+                // At d + lambda Tt eta
+                if (eta != null) k = k.add(tt.operate(eta).mapMultiply(lambda));
             }
             answer.setColumnVector(i, MatrixUtils.inverse(j).operate(k));
         }

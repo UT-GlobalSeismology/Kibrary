@@ -25,6 +25,16 @@ public abstract class InversionMethod {
     RealMatrix ata;
     RealVector atd;
 
+    /**
+     * @param inverseMethod
+     * @param ata (RealMatrix) A<sup>T</sup>A.
+     * @param atd (RealVector) A<sup>T</sup>d.
+     * @param lambdas_LS (double[]) Values of &lambda; to compute for.
+     * @param t_LS (RealMatrix) T. When null, identity matrix is used.
+     * @param eta_LS (RealVector) &eta;. When null, it will not be used.
+     * @param m0_CG
+     * @return
+     */
     public static InversionMethod construct(InverseMethodEnum inverseMethod, RealMatrix ata, RealVector atd,
             double[] lambdas_LS, RealMatrix t_LS, RealVector eta_LS, RealVector m0_CG) {
         if (!ata.isSquare()) throw new IllegalArgumentException("AtA must be square.");
