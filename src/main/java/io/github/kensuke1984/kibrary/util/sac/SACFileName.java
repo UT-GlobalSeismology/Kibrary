@@ -121,12 +121,16 @@ public class SACFileName extends File {
             return false;
 
         // must include station and network
-        if (fields.length != 2)
+        if (fields.length == 0 || 2 < fields.length) {
             return false;
+        } else if (fields.length == 1) {
+            System.err.println(" ! Caution, old style of SAC file name: " + fileName);  //TODO This is here for backward compatibility
+        } else {
 
-        // station and network must be 8 letters or shorter.
-        if (8 < fields[0].length() || 8 < fields[1].length())
-            return false;
+            // station and network must be 8 letters or shorter.
+            if (8 < fields[0].length() || 8 < fields[1].length())
+                return false;
+        }
 
         // test if it is a global cmt id
         if (!GlobalCMTID.isGlobalCMTID(parts[1]))
