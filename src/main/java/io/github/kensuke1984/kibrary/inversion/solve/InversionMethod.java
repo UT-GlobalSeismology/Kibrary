@@ -5,6 +5,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import org.apache.commons.math3.linear.ArrayRealVector;
+import org.apache.commons.math3.linear.MatrixUtils;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
 import io.github.kensuke1984.kibrary.voxel.KnownParameterFile;
@@ -12,6 +13,19 @@ import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
 
 /**
  * Abstract parent class of various inversion methods to solve the problem A<sup>T</sup>A<b>m</b> = A<sup>T</sup><b>d</b>.
+ * <p>
+ * The (typical) regularized inverse problem can be written as
+ *  (A<sup>T</sup>A + &lambda; I) <b>m</b> = A<sup>T</sup><b>d</b> . <br>
+ * In this case,
+ *  |<b>d</b>-A<b>m</b>|<sup>2</sup> + &lambda; |<b>m</b>|<sup>2</sup> is minimized.
+ * <p>
+ * By setting the matrix T, Tikhonov regularization can be applied. This makes T<b>m</b> get close to 0.<br>
+ * In this case,
+ *  |<b>d</b>-A<b>m</b>|<sup>2</sup> + &lambda; |T<b>m</b>|<sup>2</sup> is minimized.
+ * <p>
+ * By setting an additional vector <b>&eta;</b>, we can make T<b>m</b>-<b>&eta;</b> get close to 0. <br>
+ * In this case,
+ *  |<b>d</b>-A<b>m</b>|<sup>2</sup> + &lambda; |T<b>m</b>-<b>&eta;</b>|<sup>2</sup> is minimized.
  *
  * @since before 2016/1/25
  * @author Kensuke Konishi
@@ -26,19 +40,39 @@ public abstract class InversionMethod {
     RealVector atd;
 
     /**
-     * @param inverseMethod
+     * Construct an inversion method after applying common regularization.
+     *
+     * @param inverseMethod ({@link InverseMethodEnum}) Inverse method.
      * @param ata (RealMatrix) A<sup>T</sup>A.
      * @param atd (RealVector) A<sup>T</sup>d.
-     * @param lambdas_LS (double[]) Values of &lambda; to compute for.
-     * @param t_LS (RealMatrix) T. When null, identity matrix is used.
-     * @param eta_LS (RealVector) &eta;. When null, it will not be used.
-     * @param m0_CG
-     * @return
+     * @param lambda_common (double) Common regularization parameter.
+     * @param t_common (RealMatrix) Common regularization matrix. When null, identity matrix is used.
+     * @param eta_common (RealVector) Common target vector. When null, it will not be used.
+     * @param lambdas_LS (double[]) LS regularization parameter values.
+     * @param t_LS (RealMatrix) LS regularization matrix. When null, identity matrix is used.
+     * @param eta_LS (RealVector) LS target vector. When null, it will not be used.
+     * @param m0_CG (RealVector) CG initial vector.
+     * @return ({@link InversionMethod}) Constructed inversion method.
      */
     public static InversionMethod construct(InverseMethodEnum inverseMethod, RealMatrix ata, RealVector atd,
-            double[] lambdas_LS, RealMatrix t_LS, RealVector eta_LS, RealVector m0_CG) {
+            double lambda_common, RealMatrix t_common, RealVector eta_common, double[] lambdas_LS,
+            RealMatrix t_LS, RealVector eta_LS, RealVector m0_CG) {
         if (!ata.isSquare()) throw new IllegalArgumentException("AtA must be square.");
         if (ata.getRowDimension() != atd.getDimension()) throw new IllegalArgumentException("Dimension of AtA and Atd do not match.");
+        if (t_common != null && t_common.getColumnDimension() != ata.getColumnDimension())
+            throw new IllegalArgumentException("Dimension of common T is invalid.");
+        if (eta_common != null && (t_common == null ? eta_common.getDimension() != ata.getColumnDimension()
+                : eta_common.getDimension() != t_common.getRowDimension()))
+            throw new IllegalArgumentException("Dimension of common eta and T do not match.");
+
+        if (lambda_common != 0.) {
+            RealMatrix t = (t_common != null) ? t_common : MatrixUtils.createRealIdentityMatrix(ata.getColumnDimension());
+            RealMatrix tt = t.transpose();
+            // At A + lambda Tt T
+            ata = ata.add(tt.multiply(t).scalarMultiply(lambda_common));
+            // At d + lambda Tt eta_LS
+            if (eta_common != null) atd = atd.add(tt.operate(eta_common).mapMultiply(lambda_common));
+        }
 
         RealVector conditioner = null;
 

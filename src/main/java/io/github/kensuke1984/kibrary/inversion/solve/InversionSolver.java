@@ -12,6 +12,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
+import org.apache.commons.math3.util.Precision;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.inversion.ResultEvaluation;
@@ -20,6 +21,7 @@ import io.github.kensuke1984.kibrary.math.MatrixFile;
 import io.github.kensuke1984.kibrary.math.VectorFile;
 import io.github.kensuke1984.kibrary.util.DatasetAid;
 import io.github.kensuke1984.kibrary.util.GadgetAid;
+import io.github.kensuke1984.kibrary.util.MathAid;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameter;
 import io.github.kensuke1984.kibrary.voxel.UnknownParameterFile;
 
@@ -40,6 +42,10 @@ public class InversionSolver extends Operation {
      * A tag to include in output folder names. When this is empty, no tag is used.
      */
     private String folderTag;
+
+    private double[] lambdas_common;
+    private Path tMatrixPath_common;
+    private Path etaVectorPath_common;
 
     /**
      * Solvers for equation.
@@ -74,6 +80,12 @@ public class InversionSolver extends Operation {
             pw.println("#workPath ");
             pw.println("##(String) A tag to include in output folder names. If no tag is needed, leave this unset.");
             pw.println("#folderTag ");
+            pw.println("##(double[]) Common regularization parameters, listed using spaces. (0)");
+            pw.println("#lambdas_common ");
+            pw.println("##(Path) Path of matrix for common regularization patterns, when needed.");
+            pw.println("#tMatrixPath_common ");
+            pw.println("##(Path) Path of vector that common Tm should approach, when needed.");
+            pw.println("#etaVectorPath_common ");
             pw.println("##Names of inverse methods, listed using spaces, from {CG,SVD,LS,NNLS,BCGS,FCG,FCGD,NCG,CCG}. (CG)");
             pw.println("#inverseMethods ");
             pw.println("##(double[]) The empirical redundancy parameter alpha to compute AIC for, listed using spaces. (1 100 500 1000)");
@@ -103,6 +115,12 @@ public class InversionSolver extends Operation {
         workPath = property.parsePath("workPath", ".", true, Paths.get(""));
         if (property.containsKey("folderTag")) folderTag = property.parseStringSingle("folderTag", null);
 
+        lambdas_common = property.parseDoubleArray("lambdas_common", "0");
+        if (property.containsKey("tMatrixPath_common"))
+            tMatrixPath_common = property.parsePath("tMatrixPath_common", null, true, workPath);
+        if (property.containsKey("etaVectorPath_common"))
+            etaVectorPath_common = property.parsePath("etaVectorPath_common", null, true, workPath);
+
         inverseMethods = Arrays.stream(property.parseStringArray("inverseMethods", "CG")).map(InverseMethodEnum::of)
                 .collect(Collectors.toSet());
         alpha = property.parseDoubleArray("alpha", "1 100 500 1000");
@@ -122,6 +140,8 @@ public class InversionSolver extends Operation {
         String dateString = GadgetAid.getTemporaryString();
 
         // read input
+        RealMatrix tMatrix_common = (tMatrixPath_common != null) ? MatrixFile.read(tMatrixPath_common) : null;
+        RealVector etaVector_common = (etaVectorPath_common != null) ? VectorFile.read(etaVectorPath_common) : null;
         RealMatrix tMatrix_LS = (tMatrixPath_LS != null) ? MatrixFile.read(tMatrixPath_LS) : null;
         RealVector etaVector_LS = (etaVectorPath_LS != null) ? VectorFile.read(etaVectorPath_LS) : null;
         RealVector m0Vector_CG = (m0VectorPath_CG != null) ? VectorFile.read(m0VectorPath_CG) : null;
@@ -133,21 +153,26 @@ public class InversionSolver extends Operation {
         // solve inversion and evaluate
         ResultEvaluation evaluation = new ResultEvaluation(ata, atd, dInfo[0], dInfo[1], dInfo[2]);
         for (InverseMethodEnum method : inverseMethods) {
-            Path outMethodPath = DatasetAid.createOutputFolder(workPath, method.simpleName(), folderTag, false, dateString);
+            for (double lambda_common : lambdas_common) {
+                String suffix = (!Precision.equals(lambda_common, 0.0)) ? "_" + MathAid.simplestString(lambda_common) : "";
+                Path outMethodPath = DatasetAid.createOutputFolder(workPath,
+                        method.simpleName() + suffix, folderTag, false, dateString);
 
-            // solve problem
-            InversionMethod inversion = InversionMethod.construct(method, ata, atd, lambdas_LS, tMatrix_LS, etaVector_LS, m0Vector_CG);
-            inversion.compute();
-            inversion.outputAnswers(unknowns, outMethodPath);
-            inversion.outputBasisVectors(outMethodPath);
+                // solve problem
+                InversionMethod inversion = InversionMethod.construct(method, ata, atd, lambda_common,
+                        tMatrix_common, etaVector_common, lambdas_LS, tMatrix_LS, etaVector_LS, m0Vector_CG);
+                inversion.compute();
+                inversion.outputAnswers(unknowns, outMethodPath);
+                inversion.outputBasisVectors(outMethodPath);
 
-            // compute normalized variance and AIC
-            switch (method) {
-            case LEAST_SQUARES:
-                evaluation.evaluate_LS(inversion.getAnswers(), lambdas_LS, outMethodPath);
-                break;
-            default:
-                evaluation.evaluate(inversion.getAnswers(), evaluateNum, alpha, outMethodPath);
+                // compute normalized variance and AIC
+                switch (method) {
+                case LEAST_SQUARES:
+                    evaluation.evaluate_LS(inversion.getAnswers(), lambdas_LS, outMethodPath);
+                    break;
+                default:
+                    evaluation.evaluate(inversion.getAnswers(), evaluateNum, alpha, outMethodPath);
+                }
             }
         }
     }

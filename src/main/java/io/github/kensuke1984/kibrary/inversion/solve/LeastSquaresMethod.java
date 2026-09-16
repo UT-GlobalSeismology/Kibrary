@@ -42,15 +42,15 @@ public class LeastSquaresMethod extends InversionMethod {
     /**
      * Values of &lambda; : reguralization parameter.
      */
-    private final double[] lambdas;
+    private final double[] lambdas_LS;
     /**
      * <b>T</b> : matrix that allows for more complex regularization patterns in Tikhonov regularization.
      */
-    private final RealMatrix t;
+    private final RealMatrix t_LS;
     /**
-     * &eta; : vector value that <b>T</b>m should approach.
+     * &eta_LS; : vector value that <b>T</b>m should approach.
      */
-    private final RealVector eta;
+    private final RealVector eta_LS;
 
 
     /**
@@ -60,50 +60,50 @@ public class LeastSquaresMethod extends InversionMethod {
      * @param atd (RealVector) A<sup>T</sup>d.
      */
     public LeastSquaresMethod(RealMatrix ata, RealVector atd) {
-        // Note: by default, new arrays contain the value 0, so here, lambdas={0.0}.
+        // Note: by default, new arrays contain the value 0, so here, lambdas_LS={0.0}.
         this(ata, atd, new double[1], null, null);
     }
 
     /**
-     * Find m which gives minimum |d-<b>A</b>m|<sup>2</sup> + &lambda;|<b>T</b>m-&eta;|<sup>2</sup>.
+     * Find m which gives minimum |d-<b>A</b>m|<sup>2</sup> + &lambda;|<b>T</b>m-&eta_LS;|<sup>2</sup>.
      *
      * @param ata (RealMatrix) A<sup>T</sup>A.
      * @param atd (RealVector) A<sup>T</sup>d.
-     * @param lambdas (double[]) Values of &lambda; to compute for.
-     * @param t (RealMatrix) T. When null, identity matrix is used.
-     * @param eta (RealVector) &eta;. When null, it will not be used.
+     * @param lambdas_LS (double[]) LS regularization parameter values.
+     * @param t_LS (RealMatrix) LS regularization matrix. When null, identity matrix is used.
+     * @param eta_LS (RealVector) LS target vector. When null, it will not be used.
      */
-    public LeastSquaresMethod(RealMatrix ata, RealVector atd, double[] lambdas, RealMatrix t, RealVector eta) {
-        if (t != null && t.getColumnDimension() != ata.getColumnDimension())
+    public LeastSquaresMethod(RealMatrix ata, RealVector atd, double[] lambdas_LS, RealMatrix t_LS, RealVector eta_LS) {
+        if (t_LS != null && t_LS.getColumnDimension() != ata.getColumnDimension())
             throw new IllegalArgumentException("Dimension of T is invalid.");
-        if (eta != null && t != null && eta.getDimension() != t.getRowDimension())
-            throw new IllegalArgumentException("Dimension of eta and T do not match.");
+        if (eta_LS != null && t_LS != null && eta_LS.getDimension() != t_LS.getRowDimension())
+            throw new IllegalArgumentException("Dimension of eta and T for LS do not match.");
         this.ata = ata;
         this.atd = atd;
-        this.lambdas = lambdas;
+        this.lambdas_LS = lambdas_LS;
         // when T is not set, set it as identity
-        this.t = (t != null) ? t : MatrixUtils.createRealIdentityMatrix(ata.getColumnDimension());
-        this.eta = eta;
+        this.t_LS = (t_LS != null) ? t_LS : MatrixUtils.createRealIdentityMatrix(ata.getColumnDimension());
+        this.eta_LS = eta_LS;
 
         // set up answer matrix
         int dimension = ata.getColumnDimension();
-        answer = MatrixUtils.createRealMatrix(dimension, lambdas.length);
+        answer = MatrixUtils.createRealMatrix(dimension, lambdas_LS.length);
     }
 
     @Override
     public void compute() {
         System.err.println("Solving by LS (least squares) method.");
 
-        for (int i = 0; i < lambdas.length; i++) {
-            double lambda = lambdas[i];
+        for (int i = 0; i < lambdas_LS.length; i++) {
+            double lambda_LS = lambdas_LS[i];
             RealMatrix j = ata.copy();
             RealVector k = atd.copy();
-            if (0 < lambda) {
-                RealMatrix tt = t.transpose();
+            if (0 < lambda_LS) {
+                RealMatrix tt = t_LS.transpose();
                 // At A + lambda Tt T
-                j = j.add(tt.multiply(t).scalarMultiply(lambda));
-                // At d + lambda Tt eta
-                if (eta != null) k = k.add(tt.operate(eta).mapMultiply(lambda));
+                j = j.add(tt.multiply(t_LS).scalarMultiply(lambda_LS));
+                // At d + lambda Tt eta_LS
+                if (eta_LS != null) k = k.add(tt.operate(eta_LS).mapMultiply(lambda_LS));
             }
             answer.setColumnVector(i, MatrixUtils.inverse(j).operate(k));
         }
@@ -115,8 +115,8 @@ public class LeastSquaresMethod extends InversionMethod {
 
         Files.createDirectories(outPath);
         System.err.println("Outputting the answer files in " + outPath);
-        for (int i = 0; i < lambdas.length; i++) {
-            Path outputPath = outPath.resolve(getEnum().simpleName() + MathAid.simplestString(lambdas[i]) + ".lst");
+        for (int i = 0; i < lambdas_LS.length; i++) {
+            Path outputPath = outPath.resolve(getEnum().simpleName() + MathAid.simplestString(lambdas_LS[i]) + ".lst");
             double[] m = answer.getColumn(i);
             KnownParameterFile.write(unknowns, m, outputPath);
         }
