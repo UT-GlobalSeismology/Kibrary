@@ -240,7 +240,7 @@ public class LetMeInvert extends Operation {
         ResultEvaluation evaluation = new ResultEvaluation(ata, atd, numIndependent, dNorm, obsNorm);
         for (InverseMethodEnum method : inverseMethods) {
             for (double lambda_common : lambdas_common) {
-                String suffix = (!Precision.equals(lambda_common, 0.0)) ? "_" + MathAid.simplestString(lambda_common) : "";
+                String suffix = (!Precision.equals(lambda_common, 0.0)) ? "-" + MathAid.simplestString(lambda_common) : "";
                 Path outMethodPath = outPath.resolve(method.simpleName() + suffix);
 
                 // solve problem

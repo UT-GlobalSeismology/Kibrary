@@ -154,7 +154,7 @@ public class InversionSolver extends Operation {
         ResultEvaluation evaluation = new ResultEvaluation(ata, atd, dInfo[0], dInfo[1], dInfo[2]);
         for (InverseMethodEnum method : inverseMethods) {
             for (double lambda_common : lambdas_common) {
-                String suffix = (!Precision.equals(lambda_common, 0.0)) ? "_" + MathAid.simplestString(lambda_common) : "";
+                String suffix = (!Precision.equals(lambda_common, 0.0)) ? "-" + MathAid.simplestString(lambda_common) : "";
                 Path outMethodPath = DatasetAid.createOutputFolder(workPath,
                         method.simpleName() + suffix, folderTag, false, dateString);
 
