@@ -48,7 +48,7 @@ public class LeastSquaresMethod extends InversionMethod {
      */
     private final RealMatrix t_LS;
     /**
-     * &eta_LS; : vector value that <b>T</b>m should approach.
+     * &eta; : vector value that <b>T</b>m should approach.
      */
     private final RealVector eta_LS;
 
@@ -65,7 +65,7 @@ public class LeastSquaresMethod extends InversionMethod {
     }
 
     /**
-     * Find m which gives minimum |d-<b>A</b>m|<sup>2</sup> + &lambda;|<b>T</b>m-&eta_LS;|<sup>2</sup>.
+     * Find m which gives minimum |d-<b>A</b>m|<sup>2</sup> + &lambda;|<b>T</b>m-&eta;|<sup>2</sup>.
      *
      * @param ata (RealMatrix) A<sup>T</sup>A.
      * @param atd (RealVector) A<sup>T</sup>d.
