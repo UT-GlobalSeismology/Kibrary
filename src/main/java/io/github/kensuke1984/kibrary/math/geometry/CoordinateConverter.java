@@ -7,9 +7,12 @@ import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import io.github.kensuke1984.kibrary.util.InformationFileReader;
 import io.github.kensuke1984.kibrary.util.earth.HorizontalPosition;
+import io.github.kensuke1984.kibrary.voxel.HorizontalPixel;
 
 /**
  * Class to recast {@link HorizontalPosition} to {@link XY} on a curvilinear grid.
+ * <p>
+ * The x-axis is in the longitude direction. The y-axis is in the COLATITUDE direction.
  *
  * TODO: coordinate rotation for regions near pole
  *
@@ -80,24 +83,57 @@ public class CoordinateConverter {
         this.crossDateLine = crossDateLine;
     }
 
+    public CoordinateConverter(double dLatitude, double baseLatitude, double dLongitudeVal, boolean setLongitudeByKm, double baseLongitude,
+            double centerRadius, boolean crossDateLine) {
+        this.dLatitude = dLatitude;
+        this.baseLatitude = baseLatitude;
+        this.dLongitudeVal = dLongitudeVal;
+        this.setLongitudeByKm = setLongitudeByKm;
+        this.baseLongitude = baseLongitude;
+        this.centerRadius = centerRadius;
+        this.crossDateLine = crossDateLine;
+    }
+
+    public CoordinateConverter withDeltas(double dLatitude, double dLongitudeVal) {
+        return new CoordinateConverter(dLatitude, baseLatitude, dLongitudeVal, setLongitudeByKm, baseLongitude, centerRadius, crossDateLine);
+    }
+
     public XY computeXY(HorizontalPosition position) {
         double latitude = position.getLatitude();
-        double y = (position.getLatitude() - baseLatitude) / dLatitude;
+        double y = -(latitude - baseLatitude) / dLatitude;
+        double x = (position.getLongitude(crossDateLine) - baseLongitude) / computeDLongitudeForLat(latitude);
+        return new XY(x, y);
+    }
 
-        double dLongitudeForLat;
+    /**
+     * Create Pixel at the given index coordinate.
+     * @param integerXY ({@link IntegerXY}) Coordinate of indices.
+     * @return ({@link HorizontalPixel}) Pixel at input coordinate.
+     */
+    public HorizontalPixel createHorizontalPixel(IntegerXY integerXY) {
+        // Note: y increases in colatitude direction
+        double latitude = -integerXY.y() * dLatitude + baseLatitude;
+        double dLongitude = computeDLongitudeForLat(latitude);
+        double longitude = integerXY.x() * dLongitude + baseLongitude;
+        HorizontalPosition horizontalPosition = new HorizontalPosition(latitude, longitude);
+        return new HorizontalPixel(horizontalPosition, dLatitude, dLongitude, integerXY.y(), integerXY.x());
+    }
+
+    private double computeDLongitudeForLat(double latitude) {
         if (setLongitudeByKm) {
             double smallCircleRadius = centerRadius * Math.cos(Math.toRadians(latitude));
-            dLongitudeForLat = Math.toDegrees(dLongitudeVal / smallCircleRadius);
+            return Math.toDegrees(dLongitudeVal / smallCircleRadius);
         } else {
-            dLongitudeForLat = dLongitudeVal;
+            return dLongitudeVal;
         }
-        double x = (position.getLongitude(crossDateLine) - baseLongitude) / dLongitudeForLat;
-
-        return new XY(x, y);
     }
 
     public double getDLatitude() {
         return dLatitude;
+    }
+
+    public double getDLongitudeVal() {
+        return dLongitudeVal;
     }
 
     public double getLargestDLongitude() {

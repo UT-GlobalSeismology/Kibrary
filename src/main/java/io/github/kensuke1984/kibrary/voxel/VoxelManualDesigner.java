@@ -227,8 +227,9 @@ public class VoxelManualDesigner extends Operation {
         // when using dLatitudeKm, set dLatitude in degrees using the (roughly) median radius of target region
         double dLatitude = setLatitudeByKm ? Math.toDegrees(dLatitudeKm / centerRadius) : dLatitudeDeg;
 
-        int lowerLatitudeIndex = getLowerIndex(lowerLatitude, dLatitude, latitudeOffset);
-        int upperLatitudeIndex = getUpperIndex(upperLatitude, dLatitude, latitudeOffset);
+        // Note: y index is in opposite direction as latitude.
+        int lowerLatitudeIndex = -getUpperIndex(upperLatitude, dLatitude, latitudeOffset);
+        int upperLatitudeIndex = -getLowerIndex(lowerLatitude, dLatitude, latitudeOffset);
 
         //~decide the longitude at which to align voxels
         if (Double.isNaN(baseLongitude)) {
@@ -239,7 +240,7 @@ public class VoxelManualDesigner extends Operation {
         List<HorizontalPixel> horizontalPixels = new ArrayList<>();
         for (int i = lowerLatitudeIndex; i <= upperLatitudeIndex; i++) {
             // compute center latitude of the voxel row
-            double latitude = i * dLatitude + latitudeOffset;
+            double latitude = -i * dLatitude + latitudeOffset;
 
             // decide longitude interval for current latitude
             double dLongitudeForRow;
@@ -260,7 +261,7 @@ public class VoxelManualDesigner extends Operation {
                 double longitude = baseLongitude + j * dLongitudeForRow;
 
                 // add horizontal pixel to list
-                horizontalPixels.add(new HorizontalPixel(new HorizontalPosition(latitude, longitude), dLatitude, dLongitudeForRow, -i, j));
+                horizontalPixels.add(new HorizontalPixel(new HorizontalPosition(latitude, longitude), dLatitude, dLongitudeForRow, i, j));
             }
 
         }
