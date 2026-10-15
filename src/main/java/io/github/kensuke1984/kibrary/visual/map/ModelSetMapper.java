@@ -6,6 +6,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -287,51 +288,64 @@ public class ModelSetMapper extends Operation {
         // create output folder
         Path outPath = DatasetAid.createOutputFolder(workPath, "modelMaps", folderTag, appendFolderDate, null);
         property.write(outPath.resolve("_" + this.getClass().getSimpleName() + ".properties"));
+        List<String> methodDirectoryNames = new ArrayList<>();
 
         // write list files
         for (InverseMethodEnum method : inverseMethods) {
-            Path methodPath = resultPath.resolve(method.simpleName());
-            if (!Files.exists(methodPath)) {
+            String methodName = method.simpleName();
+            List<Path> methodPaths;
+            try (java.util.stream.Stream<Path> paths = Files.list(resultPath)) {
+                methodPaths = paths.filter(Files::isDirectory)
+                        .filter(path -> path.getFileName().toString().equals(methodName)
+                                || path.getFileName().toString().startsWith(methodName + "-"))
+                        .collect(Collectors.toList());
+            }
+            if (methodPaths.isEmpty()) {
                 System.err.println("Results for " + method.simpleName() + " do not exist, skipping.");
                 continue;
             }
 
-            for (int k = basisInterval; k <= maxBasis; k += basisInterval) {
-                Path answerPath = methodPath.resolve(method.simpleName() + k + ".lst");
-                if (!Files.exists(answerPath)) {
-                    System.err.println("Results for " + method.simpleName() + k + " do not exist, skipping.");
-                    continue;
-                }
-                List<KnownParameter> knowns = KnownParameterFile.read(answerPath);
+            for (Path methodPath : methodPaths) {
+                String methodDirectoryName = methodPath.getFileName().toString();
+                for (int k = basisInterval; k <= maxBasis; k += basisInterval) {
+                    Path answerPath = methodPath.resolve(methodName + k + ".lst");
+                    if (!Files.exists(answerPath)) {
+                        System.err.println("Results for " + methodDirectoryName + "/" + methodName + k
+                                + ".lst do not exist, skipping.");
+                        continue;
+                    }
+                    List<KnownParameter> knowns = KnownParameterFile.read(answerPath);
 
-                if (fusionPath != null) knowns = fusionDesign.reverseFusion(knowns);
+                    if (fusionPath != null) knowns = fusionDesign.reverseFusion(knowns);
 
-                PerturbationModel model = new PerturbationModel(knowns, initialStructure);
-                if (!referenceStructure.equals(initialStructure)) {
-                    model = model.withReferenceStructureAs(referenceStructure);
-                }
-
-                Path outBasisPath = outPath.resolve(method.simpleName() + k);
-                Files.createDirectories(outBasisPath);
-
-                for (VariableType variable : variableTypes) {
-                    // output discrete perturbation file
-                    Map<FullPosition, Double> discreteMap = model.getValueMap(variable, ScalarType.PERCENT);
-                    Path outputDiscretePath = outBasisPath.resolve(ScalarListFile.generateFileName(variable, ScalarType.PERCENT));
-                    ScalarListFile.write(discreteMap, outputDiscretePath);
-
-                    // interpolate
-                    Map<FullPosition, Double> interpolatedMap;
-                    if (converterPath != null) {
-                        interpolatedMap = Interpolation.curvilinearInEachMapLayer(discreteMap, gridInterval, converter, mosaic);
-                    } else {
-                        interpolatedMap = Interpolation.inEachMapLayer(discreteMap, gridInterval,
-                                marginLatitudeRaw, setMarginLatitudeByKm, marginLongitudeRaw, setMarginLongitudeByKm, crossDateLine, mosaic);
+                    PerturbationModel model = new PerturbationModel(knowns, initialStructure);
+                    if (!referenceStructure.equals(initialStructure)) {
+                        model = model.withReferenceStructureAs(referenceStructure);
                     }
 
-                    // output interpolated perturbation file, in range [0:360) when crossDateLine==true so that mapping will succeed
-                    Path outputInterpolatedPath = outBasisPath.resolve(ScalarListFile.generateFileName(variable, ScalarType.PERCENT, "XY"));
-                    ScalarListFile.write(interpolatedMap, crossDateLine, outputInterpolatedPath);
+                    Path outBasisPath = outPath.resolve(methodDirectoryName + "_" + k);
+                    Files.createDirectories(outBasisPath);
+                    if (!methodDirectoryNames.contains(methodDirectoryName)) methodDirectoryNames.add(methodDirectoryName);
+
+                    for (VariableType variable : variableTypes) {
+                        // output discrete perturbation file
+                        Map<FullPosition, Double> discreteMap = model.getValueMap(variable, ScalarType.PERCENT);
+                        Path outputDiscretePath = outBasisPath.resolve(ScalarListFile.generateFileName(variable, ScalarType.PERCENT));
+                        ScalarListFile.write(discreteMap, outputDiscretePath);
+
+                        // interpolate
+                        Map<FullPosition, Double> interpolatedMap;
+                        if (converterPath != null) {
+                            interpolatedMap = Interpolation.curvilinearInEachMapLayer(discreteMap, gridInterval, converter, mosaic);
+                        } else {
+                            interpolatedMap = Interpolation.inEachMapLayer(discreteMap, gridInterval,
+                                    marginLatitudeRaw, setMarginLatitudeByKm, marginLongitudeRaw, setMarginLongitudeByKm, crossDateLine, mosaic);
+                        }
+
+                        // output interpolated perturbation file, in range [0:360) when crossDateLine==true so that mapping will succeed
+                        Path outputInterpolatedPath = outBasisPath.resolve(ScalarListFile.generateFileName(variable, ScalarType.PERCENT, "XY"));
+                        ScalarListFile.write(interpolatedMap, crossDateLine, outputInterpolatedPath);
+                    }
                 }
             }
         }
@@ -345,19 +359,19 @@ public class ModelSetMapper extends Operation {
             script.setForSlides(forSlides);
             script.write(outPath);
             String fileNameRoot = script.getPlotFileNameRoot();
-            writeParentShellscript(fileNameRoot, outPath.resolve(fileNameRoot + "AllMap.sh"));
+            writeParentShellscript(fileNameRoot, outPath.resolve(fileNameRoot + "AllMap.sh"), methodDirectoryNames);
             System.err.println("After this finishes, please enter " + outPath + "/ and run " + fileNameRoot + "AllMap.sh");
         }
     }
 
-    private void writeParentShellscript(String fileNameRoot, Path outputPath) throws IOException {
+    private void writeParentShellscript(String fileNameRoot, Path outputPath, List<String> methodDirectoryNames) throws IOException {
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputPath))) {
             pw.println("#!/bin/sh");
-            for (InverseMethodEnum method : inverseMethods) {
+            for (String methodDirectoryName : methodDirectoryNames) {
                 pw.println("");
                 pw.println("for i in `seq " + basisInterval + " " + basisInterval + " " + maxBasis + "`");
                 pw.println("do");
-                pw.println("    cd " + method.simpleName() + "$i");
+                pw.println("    cd " + methodDirectoryName + "_$i");
                 pw.println("    ln -s ../" + fileNameRoot + "Grid.sh .");
                 pw.println("    ln -s ../" + fileNameRoot + "Map.sh .");
                 pw.println("    ln -s ../cp_master.cpt .");

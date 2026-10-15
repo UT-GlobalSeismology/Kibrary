@@ -116,6 +116,10 @@ public class PartialsMapMovieMaker extends Operation {
      * Map region in the form lonMin/lonMax/latMin/latMax, when it is set manually.
      */
     private String mapRegion;
+    /**
+     * Code for GMT map projection following '-J'. (ex.: Q15).
+     */
+    private String mapProjectionCode;
     private boolean forSlides;
 
     private double marginLatitude;
@@ -172,6 +176,8 @@ public class PartialsMapMovieMaker extends Operation {
             pw.println("#nPanelsPerRow ");
             pw.println("##To specify the map region, set it in the form lonMin/lonMax/latMin/latMax.");
             pw.println("#mapRegion -180/180/-90/90");
+            pw.println("##Code for GMT map projection following '-J'. (Q15)");
+            pw.println("#mapProjectionCode ");
             pw.println("##(boolean) Whether to enlarge labels and use stronger colors for slides. (true)");
             pw.println("#forSlides ");
             pw.println("##########The following should be set to half of dLatitude and dLongitude used to design voxels (or smaller).");
@@ -220,6 +226,7 @@ public class PartialsMapMovieMaker extends Operation {
         if (property.containsKey("displayLayers")) displayLayers = property.parseIntArray("displayLayers", null);
         nPanelsPerRow = property.parseInt("nPanelsPerRow", "4");
         if (property.containsKey("mapRegion")) mapRegion = property.parseString("mapRegion", null);
+        mapProjectionCode = property.parseString("mapProjectionCode", "Q15");
         forSlides = property.parseBoolean("forSlides", "true");
 
         if (property.containsKey("marginLatitudeKm")) {
@@ -268,7 +275,8 @@ public class PartialsMapMovieMaker extends Operation {
         CoordinateConverter converter = (converterPath != null) ? new CoordinateConverter(converterPath) : null;
 
         // decide map region
-        if (mapRegion == null) mapRegion = ScalarMapShellscript.decideMapRegion(discretePositions);
+        String coveredRegion = ScalarMapShellscript.decideMapRegion(discretePositions);
+        if (mapRegion == null) mapRegion = coveredRegion;
         boolean crossDateLine = HorizontalPosition.crossesDateLine(discretePositions);
         double gridInterval = ScalarMapShellscript.decideGridSampling(discretePositions);
 
@@ -331,7 +339,7 @@ public class PartialsMapMovieMaker extends Operation {
 
                             // write shellscripts for mapping each snapshot
                             ScalarMapShellscript script = new ScalarMapShellscript(variable, scalarType, "normalized", radii, boundaries,
-                                    mapRegion, gridInterval, scale, nPanelsPerRow);
+                                    coveredRegion, mapRegion, mapProjectionCode, gridInterval, scale, nPanelsPerRow);
                             if (displayLayers != null) script.setDisplayLayers(displayLayers);
                             script.setForSlides(forSlides);
                             script.write(seriesPath);

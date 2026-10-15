@@ -221,50 +221,64 @@ public class ModelStructurePlotter extends Operation {
         // instance to decide plot ranges for each variable
         Map<VariableType, PlotRange> variablePlotRanges = new HashMap<>();
         for (VariableType variable : variableTypes) variablePlotRanges.put(variable, new PlotRange());
+        List<String> modelNames = new java.util.ArrayList<>();
 
         //~write list files
         // loop for each inversion method
         for (InverseMethodEnum method : inverseMethods) {
-            Path methodPath = resultPath.resolve(method.simpleName());
-            if (!Files.exists(methodPath)) {
+            String methodName = method.simpleName();
+            List<Path> methodPaths;
+            try (java.util.stream.Stream<Path> paths = Files.list(resultPath)) {
+                methodPaths = paths.filter(Files::isDirectory)
+                        .filter(path -> path.getFileName().toString().equals(methodName)
+                                || path.getFileName().toString().startsWith(methodName + "-"))
+                        .collect(Collectors.toList());
+            }
+            if (methodPaths.isEmpty()) {
                 System.err.println("!! Results for " + method.simpleName() + " do not exist, skipping.");
                 continue;
             }
 
-            // loop for each vector
-            for (String indexString : indexStrings) {
-                Path answerPath = methodPath.resolve(method.simpleName() + indexString + ".lst");
-                if (!Files.exists(answerPath)) {
-                    System.err.println("!! Results for " + method.simpleName() + indexString + " do not exist, skipping.");
-                    continue;
+            for (Path methodPath : methodPaths) {
+                String methodDirectoryName = methodPath.getFileName().toString();
+
+                // loop for each vector
+                for (String indexString : indexStrings) {
+                    Path answerPath = methodPath.resolve(methodName + indexString + ".lst");
+                    if (!Files.exists(answerPath)) {
+                        System.err.println("!! Results for " + methodDirectoryName + "/" + methodName + indexString
+                                + ".lst do not exist, skipping.");
+                        continue;
+                    }
+
+                    // read model
+                    List<KnownParameter> knowns = KnownParameterFile.read(answerPath);
+                    PerturbationModel model = new PerturbationModel(knowns, initialStructure);
+
+                    // create output folder for this model
+                    Path outBasisPath = outPath.resolve(methodDirectoryName + "_" + indexString);
+                    Files.createDirectories(outBasisPath);
+                    modelNames.add(methodDirectoryName + "_" + indexString);
+
+                    // instance to decide plot range for this model
+                    PlotRange modelPlotRange = new PlotRange();
+
+                    // compute values of the model for each variable type
+                    for (VariableType variable : variableTypes) {
+                        String variableName = variable.toString().toLowerCase();
+                        // output discrete perturbation file
+                        Map<FullPosition, Double> discreteMap = model.getValueMap(variable, ScalarType.ABSOLUTE);
+                        Path outputDiscretePath = outBasisPath.resolve(variableName + "Absolute.lst");
+                        ScalarListFile.write(discreteMap, outputDiscretePath);
+                        // update plot range based on these values
+                        modelPlotRange.update(discreteMap);
+                        variablePlotRanges.get(variable).update(discreteMap);
+                    }
+
+                    // create gnuplot script
+                    Path outputScriptPath = outBasisPath.resolve("modelPlot.plt");
+                    createModelScript(outputScriptPath, initialStructure, modelPlotRange);
                 }
-
-                // read model
-                List<KnownParameter> knowns = KnownParameterFile.read(answerPath);
-                PerturbationModel model = new PerturbationModel(knowns, initialStructure);
-
-                // create output folder for this model
-                Path outBasisPath = outPath.resolve(method.simpleName() + indexString);
-                Files.createDirectories(outBasisPath);
-
-                // instance to decide plot range for this model
-                PlotRange modelPlotRange = new PlotRange();
-
-                // compute values of the model for each variable type
-                for (VariableType variable : variableTypes) {
-                    String variableName = variable.toString().toLowerCase();
-                    // output discrete perturbation file
-                    Map<FullPosition, Double> discreteMap = model.getValueMap(variable, ScalarType.ABSOLUTE);
-                    Path outputDiscretePath = outBasisPath.resolve(variableName + "Absolute.lst");
-                    ScalarListFile.write(discreteMap, outputDiscretePath);
-                    // update plot range based on these values
-                    modelPlotRange.update(discreteMap);
-                    variablePlotRanges.get(variable).update(discreteMap);
-                }
-
-                // create gnuplot script
-                Path outputScriptPath = outBasisPath.resolve("modelPlot.plt");
-                createModelScript(outputScriptPath, initialStructure, modelPlotRange);
             }
         }
 
@@ -277,7 +291,7 @@ public class ModelStructurePlotter extends Operation {
 
             // create gnuplot script
             Path outputScriptPath = outBasisPath.resolve("modelPlot.plt");
-            createVariableScript(outputScriptPath, variable, initialStructure, variablePlotRanges.get(variable));
+            createVariableScript(outputScriptPath, variable, initialStructure, variablePlotRanges.get(variable), modelNames);
         }
     }
 
@@ -330,7 +344,8 @@ public class ModelStructurePlotter extends Operation {
         plot.execute();
     }
 
-    private void createVariableScript(Path scriptPath, VariableType variable, PolynomialStructure structure, PlotRange plotRange) throws IOException {
+    private void createVariableScript(Path scriptPath, VariableType variable, PolynomialStructure structure,
+            PlotRange plotRange, List<String> modelNames) throws IOException {
         String fileNameRoot = FileAid.extractNameRoot(scriptPath);
         StructurePlotAid plotAid = new StructurePlotAid(structureDistinguisher, modelDistinguisher, variableDistinguisher, variableTypes);
 
@@ -362,13 +377,10 @@ public class ModelStructurePlotter extends Operation {
             pw.println("  " + variable.toString().toLowerCase() + "0(t),t w l lw 2 " + plotAid.lineTypeFor(0, 0, variable, 2) + " title 'initial', \\");
 
             // plot models
-            int i = 0;
-            for (InverseMethodEnum method : inverseMethods) {
-                for (String indexString : indexStrings) {
-                    String modelName = method.simpleName() + indexString;
-                    pw.println("  \"../" + modelName + "/" + variable.toString().toLowerCase() + "Absolute.lst\" u 4:3 w l lw 2 "
-                            + plotAid.lineTypeFor(1, i++, variable, 2) + " title '" + modelName + "', \\");
-                }
+            for (int i = 0; i < modelNames.size(); i++) {
+                String modelName = modelNames.get(i);
+                pw.println("  \"../" + modelName + "/" + variable.toString().toLowerCase() + "Absolute.lst\" u 4:3 w l lw 2 "
+                        + plotAid.lineTypeFor(1, i, variable, 2) + " title '" + modelName + "', \\");
             }
 
             pw.println("  0,t w l lw 1 dt 1 lc rgb 'black' notitle");
